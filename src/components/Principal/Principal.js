@@ -14,7 +14,7 @@ ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 const Principal = () => {
     const navigate = useNavigate();
-    const [barThickness, setBarThickness] = useState(40); // Grosor de barras
+    const [barThickness, setBarThickness] = useState(40); 
     const userName = localStorage.getItem('userName') || 'Usuario';
     const userRol = localStorage.getItem('userRol') || 'EMPLEADO';
 
