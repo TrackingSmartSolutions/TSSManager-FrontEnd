@@ -1,0 +1,667 @@
+/* Variables de colores basadas en la paleta proporcionada */
+/* Define colores personalizados para usar en todo el proyecto */
+:root {
+  --dark-blue-1: #00133b;
+  --dark-blue-2: #001959;
+  --dark-blue-3: #0f1575;
+  --medium-blue-1: #00347f;
+  --medium-blue-2: #0057c9;
+  --light-blue-1: #037ce0;
+  --light-blue-2: #38b6ff;
+  --orange: #f27100;
+  --lavender: #af86ff;
+  --deep-purple: #3000b3;
+  --sky-blue: #2a5cf8;
+  --bright-purple: #9c16f7;
+  --card-bg: rgba(175, 134, 255, 0.15);
+  --card-border: rgba(175, 134, 255, 0.3);
+  --white: #ffffff;
+  --input-bg: rgba(255, 255, 255, 0.9);
+}
+
+/* Estilos globales */
+/* Resetea márgenes, padding y aplica box-sizing y fuente por defecto */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+/* Contenedor principal del mapa y fondo */
+.map-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--dark-blue-1);
+}
+
+/* Imagen de fondo */
+.background-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+/* Capa de superposición con gradiente */
+.map-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(0, 10, 30, 0.85), rgba(0, 15, 50, 0.85));
+  z-index: 2;
+}
+
+/* Estilo base de los marcadores de ubicación */
+.marker {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--white);
+  box-shadow: 0 0 20px var(--light-blue-2), 0 0 40px rgba(56, 182, 255, 0.5);
+  z-index: 3;
+  animation: pulse 3s infinite;
+}
+
+/* Punto central de los marcadores */
+.marker::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--light-blue-2);
+}
+
+/* Posicionamiento individual de marcadores */
+.marker-1 {
+  top: 15%;
+  left: 20%;
+  animation-delay: 0.5s;
+}
+
+.marker-2 {
+  top: 25%;
+  right: 15%;
+  animation-delay: 1.2s;
+}
+
+.marker-3 {
+  bottom: 20%;
+  left: 10%;
+  animation-delay: 0.8s;
+}
+
+.marker-4 {
+  bottom: 30%;
+  right: 25%;
+  animation-delay: 1.5s;
+}
+
+.marker-5 {
+  top: 40%;
+  left: 85%;
+  animation-delay: 0.3s;
+}
+
+.marker-6 {
+  top: 75%;
+  left: 50%;
+  animation-delay: 1s;
+}
+
+/* Líneas punteadas decorativas */
+.dotted-line {
+  position: absolute;
+  z-index: 3;
+  opacity: 0.8;
+  animation: fadeInOut 4s infinite;
+}
+
+/* Estilos individuales de líneas */
+.line-1 {
+  top: 20%;
+  left: 25%;
+  width: 200px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--light-blue-2) 50%, transparent);
+  transform: rotate(30deg);
+  animation-delay: 0.3s;
+}
+
+.line-2 {
+  bottom: 35%;
+  right: 30%;
+  width: 150px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--light-blue-2) 50%, transparent);
+  transform: rotate(-45deg);
+  animation-delay: 1.2s;
+}
+
+.line-3 {
+  top: 60%;
+  left: 60%;
+  width: 180px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--light-blue-2) 50%, transparent);
+  transform: rotate(15deg);
+  animation-delay: 0.7s;
+}
+
+/* Tarjeta de login */
+.login-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.95);
+  width: 320px;
+  background: rgba(175, 134, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(175, 134, 255, 0.3);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+/* Estado visible de la tarjeta de login */
+.login-card.loaded {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Contenedor del logo */
+.logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 0px;
+}
+
+/* Contenedor del logo y ondas */
+.logo {
+  text-align: center;
+  margin-bottom: 0px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Imagen del logo de la empresa */
+.logo img.company-logo {
+  width: 200px;
+  height: 200px;
+}
+
+/* Contenedor de las ondas decorativas del logo */
+.logo-waves {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 25px;
+  margin-bottom: 5px;
+  order: -1;
+}
+
+/* Estilo de las ondas decorativas */
+.wave {
+  width: 4px;
+  height: 15px;
+  margin: 0 2px;
+  border-radius: 2px;
+  background-color: var(--bright-purple);
+  animation: wave 1.5s infinite;
+}
+
+/* Retraso y altura de las ondas */
+.wave-1 {
+  animation-delay: 0.1s;
+  height: 15px;
+}
+
+.wave-2 {
+  animation-delay: 0.3s;
+  height: 20px;
+  background-color: var(--lavender);
+}
+
+.wave-3 {
+  animation-delay: 0.5s;
+  height: 25px;
+  background-color: var(--light-blue-2);
+}
+
+/* Ícono de usuario */
+.user-icon {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: var(--white);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 8px 0;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+/* Imagen dentro del ícono de usuario */
+.user-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Formulario de login */
+.login-form {
+  width: 100%;
+}
+
+/* Grupo de campos del formulario */
+.form-group-login {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+/* Etiquetas de los campos */
+.form-group-login label {
+  display: block;
+  font-size: 13px;
+  color: var(--white);
+  margin-bottom: 6px;
+}
+
+/* Campos de entrada */
+.form-control-login {
+  width: 100%;
+  height: 36px;
+  background-color: rgba(255, 255, 255, 0.95);
+  border: none;
+  border-radius: 18px;
+  padding: 0 40px 0 12px;
+  font-size: 13px;
+  color: var(--dark-blue-1);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Efecto al enfocar los campos */
+.form-control-login:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--light-blue-2);
+}
+
+/* Toggle para mostrar/ocultar contraseña */
+.toggle-password {
+  position: absolute;
+  right: 5px;
+  top: 36.5px;
+  transform: translate(-50%);
+}
+
+/* Oculta el input del toggle */
+.toggle-password input {
+  display: none;
+}
+
+/* Ícono del toggle de contraseña */
+.toggle-password label {
+  display: block;
+  width: 18px;
+  height: 18px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300347f'%3E%3Cpath d='M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z'/%3E%3C/svg%3E");
+  cursor: pointer;
+}
+
+/* Ícono cuando la contraseña está oculta */
+.toggle-password input:checked + label {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300347f'%3E%3Cpath d='M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z'/%3E%3C/svg%3E");
+}
+
+/* Botón de login */
+.login-btn {
+  width: 100%;
+  height: 40px;
+  background-color: var(--orange);
+  color: var(--white);
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 8px;
+  box-shadow: 0 4px 15px rgba(242, 113, 0, 0.5);
+}
+
+/* Efecto hover del botón de login */
+.login-btn:hover {
+  background-color: #ff8c2a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(242, 113, 0, 0.6);
+}
+
+/* Efecto al hacer clic en el botón */
+.login-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 5px rgba(242, 113, 0, 0.4);
+}
+
+/* Enlace de contraseña olvidada */
+.forgot-password {
+  text-align: center;
+  margin-top: 15px;
+}
+
+/* Estilo del enlace de contraseña olvidada */
+.forgot-password a {
+  color: var(--white);
+  font-size: 12px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+/* Efecto hover del enlace */
+.forgot-password a:hover {
+  color: var(--light-blue-2);
+  text-decoration: underline;
+}
+
+/* Capa de carga */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 10, 30, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+/* Animación del spinner de carga */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--light-blue-2);
+  border-top: 4px solid var(--orange);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Animaciones */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+}
+
+@keyframes fadeInOut {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes wave {
+  0%,
+  100% {
+    transform: scaleY(0.5);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* Responsive */
+
+/* Pantallas extra pequeñas (móviles en vertical) */
+@media (max-width: 320px) {
+  .login-card {
+    width: 90%;
+    padding: 15px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .user-icon {
+    width: 50px;
+    height: 50px;
+    margin: 6px 0;
+  }
+
+  .form-group-login label {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .form-control-login {
+    height: 32px;
+    font-size: 12px;
+    border-radius: 16px;
+    padding: 0 10px;
+  }
+
+  .toggle-password {
+    top: 34px;
+    right: 10px;
+  }
+
+  .toggle-password label {
+    width: 16px;
+    height: 16px;
+  }
+
+  .login-btn {
+    height: 36px;
+    font-size: 13px;
+    border-radius: 18px;
+  }
+
+  .forgot-password a {
+    font-size: 10px;
+  }
+
+  .marker {
+    width: 15px;
+    height: 15px;
+  }
+
+  .marker::before {
+    width: 7px;
+    height: 7px;
+  }
+
+  .dotted-line {
+    display: none;
+  }
+
+  .company-logo {
+    width: 100px;
+  }
+}
+
+/* Pantallas pequeñas (móviles en vertical) */
+@media (min-width: 321px) and (max-width: 480px) {
+  .login-card {
+    width: 90%;
+    padding: 15px;
+  }
+
+  .user-icon {
+    width: 55px;
+    height: 55px;
+  }
+
+  .form-group-login label {
+    font-size: 12px;
+    margin-bottom: 5px;
+  }
+
+  .form-control-login {
+    height: 34px;
+    font-size: 12px;
+  }
+
+  .toggle-password {
+    top: 36px;
+    right: 10px;
+  }
+
+  .login-btn {
+    height: 38px;
+    font-size: 13px;
+  }
+
+  .company-logo {
+    width: 110px;
+  }
+
+  .marker {
+    width: 18px;
+    height: 18px;
+  }
+
+  .marker::before {
+    width: 9px;
+    height: 9px;
+  }
+
+  .dotted-line {
+    width: 120px;
+  }
+}
+
+/* Pantallas medianas (móviles en horizontal y tablets) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .login-card {
+    width: 350px;
+    padding: 20px;
+  }
+
+  .user-icon {
+    width: 65px;
+    height: 65px;
+  }
+
+  .marker {
+    width: 22px;
+    height: 22px;
+  }
+
+  .marker::before {
+    width: 11px;
+    height: 11px;
+  }
+
+  .company-logo {
+    width: 110px;
+  }
+}
+
+/* Orientación horizontal en dispositivos móviles */
+@media (max-height: 500px) and (orientation: landscape) {
+  .login-card {
+    width: 90%;
+    max-width: 400px;
+    padding: 12px 20px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .logo-container {
+    margin-bottom: 5px;
+  }
+
+  .user-icon {
+    width: 50px;
+    height: 50px;
+    margin: 5px 0;
+  }
+
+  .form-group-login {
+    margin-bottom: 10px;
+  }
+
+  .form-group-login label {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+
+  .form-control-login {
+    height: 34px;
+    font-size: 12px;
+  }
+
+  .toggle-password {
+    top: 36px;
+    right: 10px;
+  }
+
+  .login-btn {
+    height: 38px;
+    font-size: 13px;
+  }
+
+  .forgot-password {
+    margin-top: 8px;
+  }
+
+  .company-logo {
+    width: 100px;
+  }
+}
+
+/* Soporte para preferencias de reducción de movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .marker,
+  .dotted-line,
+  .wave {
+    animation: none;
+  }
+
+  .login-card,
+  .login-btn {
+    transition: none;
+  }
+}

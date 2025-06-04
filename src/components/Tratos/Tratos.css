@@ -1,0 +1,714 @@
+/* Variables globales */
+:root {
+  --color-dark-blue-1: #00133b;
+  --color-dark-blue-2: #001959;
+  --color-dark-blue-3: #0f1575;
+  --color-blue-1: #00347f;
+  --color-blue-2: #0057c9;
+  --color-blue-3: #037ce0;
+  --color-light-blue: #38b6ff;
+  --color-orange: #f27100;
+  --color-light-purple: #af86ff;
+  --color-dark-purple: #3000b3;
+  --color-blue-4: #2a5cf8;
+  --color-purple: #9c16f7;
+  --primary-color: var(--color-dark-blue-1);
+  --secondary-color: var(--color-blue-3);
+  --accent-color: var(--color-orange);
+  --background-color: #f0f4ff;
+  --panel-background: #ffffff;
+  --text-color: #333333;
+  --text-color-2: #ffffff;
+  --text-light: #666666;
+  --border-color: #e0e0e0;
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 0.75rem;
+  --spacing-lg: 1rem;
+  --spacing-xl: 1.5rem;
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --font-family: "Arial", sans-serif;
+  --font-size-xs: 0.65rem;
+  --font-size-sm: 0.8rem;
+  --font-size-md: 0.9rem;
+  --font-size-lg: 1.1rem;
+  --font-size-xl: 1.3rem;
+  --font-size-xxl: 1.8rem;
+}
+
+/* Restablecimiento y Estilos Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--background-color);
+  color: var(--text-color);
+  line-height: 1.6;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* ===== ESTILOS ESPECÍFICOS PARA TRATOS ===== */
+
+/* Layout Principal */
+.main-content {
+  padding: var(--spacing-lg) var(--spacing-xl);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  background-color: var(--background-color);
+  min-height: calc(100vh - 60px);
+}
+
+.tratos-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  width: 100%;
+}
+
+/* Controles y filtros */
+.tratos-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.tratos-filters {
+  display: flex;
+  gap: var(--spacing-lg);
+  align-items: center;
+}
+
+.filter-dropdown {
+  position: relative;
+}
+
+.user-select {
+  appearance: none;
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  min-width: 180px;
+  box-shadow: var(--box-shadow);
+  padding-right: 30px; /* Espacio para el icono de desplegar */
+}
+
+.user-select:focus {
+  outline: none;
+  border-color: var(--secondary-color);
+  box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
+/* Icono Desplegar en el select de usuario */
+.filter-dropdown .icon-deploy {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
+.date-range-container {
+  display: flex;
+  align-items: center;
+}
+
+.date-filter-btn {
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  box-shadow: var(--box-shadow);
+  min-width: 200px;
+  justify-content: space-between;
+}
+
+.date-filter-btn:hover {
+  background-color: #f5f5f5;
+}
+
+/* Icono de Calendario en el botón de fecha */
+.date-filter-btn .icon-calendar {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  padding-top: 5px;
+}
+
+.btn-crear-trato {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  box-shadow: var(--box-shadow);
+}
+
+.btn-crear-trato:hover {
+  background-color: #d86600;
+  transform: translateY(-1px);
+}
+
+/* Kanban Board */
+.kanban-board {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: var(--spacing-md);
+  padding-top: var(--spacing-md);
+}
+
+.kanban-column {
+  flex: 0 0 auto;
+  background-color: var(--panel-background);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  width: 80px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+}
+
+.kanban-column.expanded {
+  width: 320px;
+}
+
+/* Línea de color arriba de cada fase */
+.column-color-line {
+  height: 4px;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+}
+
+.column-header {
+  height: 250px;
+  width: 60px;
+  border-radius: 30px;
+  margin: 15px auto 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+/* Modificar el estilo del contador para que no se solape */
+.kanban-column.expanded .column-header {
+  height: 60px;
+  width: calc(100% - 20px);
+  border-radius: var(--border-radius-md);
+  margin: 10px;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 0 var(--spacing-lg);
+  align-items: center;
+}
+
+.column-header:hover {
+  transform: translateY(-2px);
+}
+
+.column-title {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.vertical-text {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  text-align: center;
+}
+
+.kanban-column.expanded .vertical-text {
+  writing-mode: horizontal-tb;
+  transform: none;
+  font-size: var(--font-size-lg);
+}
+
+.column-count {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  font-weight: bold;
+  margin-top: 15px;
+}
+
+.kanban-column.expanded .column-count {
+  margin-top: 0;
+  margin-left: var(--spacing-md);
+}
+
+.column-content {
+  padding: var(--spacing-lg);
+  max-height: 500px;
+  overflow-y: auto;
+  background-color: white;
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--box-shadow);
+  margin: 10px;
+  display: none;
+  min-height: 200px;
+}
+
+.kanban-column.expanded .column-content {
+  display: block;
+}
+
+.empty-column {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-light);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.column-navigation {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  margin-top: auto;
+}
+
+.nav-icon {
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.3s;
+  padding: var(--spacing-xs);
+}
+
+.nav-icon:hover {
+  color: var(--secondary-color);
+  transform: scale(1.2);
+}
+
+/* Iconos de Expandir/Contraer en las columnas del Kanban */
+.nav-icon img.icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.nav-icon:hover img.icon {
+  transform: scale(1.1);
+}
+
+/* Tarjetas de trato */
+.trato-card {
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s, transform 0.2s;
+  position: relative;
+  min-height: 120px;
+  cursor: grab;
+}
+
+.trato-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.trato-card.dragging {
+  opacity: 0.5;
+  transform: rotate(5deg);
+  cursor: grabbing;
+}
+
+.trato-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
+}
+
+.trato-nombre {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+  flex: 1;
+  padding-right: var(--spacing-lg);
+}
+
+.trato-actions {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+}
+
+/* Iconos de actividad en las Trato Cards */
+.trato-activity-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--background-color);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-color);
+}
+
+.trato-activity-icon .activity-icon {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.trato-activity-icon .activity-icon.add-activity-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Se eliminaron los estilos de .trato-action-btn y .ingreso-icon ya que no se usan actualmente */
+/* Se eliminaron .ingreso-icon ya que no se usa actualmente */
+
+.trato-details {
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+  line-height: 1.5;
+}
+
+.trato-details p {
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.trato-details strong {
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.trato-ingreso {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  font-size: var(--font-size-md);
+  color: var(--secondary-color);
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Drag and Drop */
+.column-content.drag-over {
+  background-color: rgba(3, 124, 224, 0.1);
+  border: 2px dashed var(--secondary-color);
+}
+
+.drop-zone {
+  min-height: 50px;
+  border: 2px dashed transparent;
+  border-radius: var(--border-radius-md);
+  transition: all 0.3s;
+}
+
+.drop-zone.drag-over {
+  border-color: var(--secondary-color);
+  background-color: rgba(3, 124, 224, 0.05);
+}
+
+/* Colores específicos para cada columna */
+.clasificacion {
+  background-color: #E180F4;
+}
+
+.primer-contacto {
+  background-color: #C680F4;
+}
+
+.envio-informacion {
+  background-color: #AB80F4;
+}
+
+.reunion {
+  background-color: #9280F4;
+}
+
+.cotizacion-propuesta {
+  background-color: #8098F4;
+}
+
+.negociacion-revision {
+  background-color: #80C0F4;
+}
+
+.cerrado-ganado {
+  background-color: #69ED95;
+}
+
+.respuesta-correo {
+  background-color: #EFD47B;
+}
+
+.interes-futuro {
+  background-color: #FFBC79;
+}
+
+.cerrado-perdido {
+  background-color: #FA8585;
+}
+
+/* Líneas de color específicas */
+.clasificacion-line {
+  background-color: #E180F4;
+}
+
+.primer-contacto-line {
+  background-color: #C680F4;
+}
+
+.envio-informacion-line {
+  background-color: #AB80F4;
+}
+
+.reunion-line {
+  background-color: #9280F4;
+}
+
+.cotizacion-propuesta-line {
+  background-color: #8098F4;
+}
+
+.negociacion-revision-line {
+  background-color: #80C0F4;
+}
+
+.cerrado-ganado-line {
+  background-color: #69ED95;
+}
+
+.respuesta-correo-line {
+  background-color: #EFD47B;
+}
+
+.interes-futuro-line {
+  background-color: #FFBC79;
+}
+
+.cerrado-perdido-line {
+  background-color: #FA8585;
+}
+
+/* Responsive Design */
+
+/* Media query para pantallas extra grandes (desktops grandes y TVs) */
+@media (min-width: 1921px) {
+  /* Se ajusta el tamaño de la fuente base para pantallas muy grandes */
+  html {
+    font-size: 18px;
+  }
+
+  /* El contenido principal puede tener un padding mayor */
+  .main-content {
+    padding: var(--spacing-xl) 3rem;
+  }
+
+  /* Las columnas expandidas pueden ser un poco más anchas */
+  .kanban-column.expanded {
+    width: 380px;
+  }
+}
+
+/* Media query para pantallas grandes (desktops y laptops) */
+@media (max-width: 1920px) {
+  /* Se asegura que el tamaño de fuente base sea el predeterminado para este rango */
+  html {
+    font-size: 16px;
+  }
+}
+
+/* Media query para pantallas de tamaño medio (laptops y tablets grandes) */
+@media (max-width: 1200px) {
+  /* En pantallas más pequeñas, los controles de tratos se apilan verticalmente */
+  .tratos-controls {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    align-items: flex-start;
+  }
+
+  /* Los filtros de tratos ocupan todo el ancho y se justifican al espacio entre ellos */
+  .tratos-filters {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  /* Ajuste de ancho para las columnas en su estado normal */
+  .kanban-column {
+    width: 75px;
+  }
+
+  /* Ajuste de ancho para las columnas cuando están expandidas */
+  .kanban-column.expanded {
+    width: 300px;
+  }
+}
+
+/* Media query para pantallas pequeñas (tablets y móviles) */
+@media (max-width: 768px) {
+  /* El padding del contenido principal se reduce */
+  .main-content {
+    padding: var(--spacing-md);
+  }
+
+  /* Los filtros de tratos se apilan verticalmente */
+  .tratos-filters {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    width: 100%;
+  }
+
+  /* Los desplegables de filtro y contenedores de fecha ocupan todo el ancho */
+  .filter-dropdown,
+  .date-range-container {
+    width: 100%;
+  }
+
+  /* Los elementos de selección de usuario y botones de filtro de fecha ocupan todo el ancho */
+  .user-select,
+  .date-filter-btn {
+    width: 100%;
+  }
+
+  /* El botón de crear trato ocupa todo el ancho */
+  .btn-crear-trato {
+    width: 100%;
+  }
+
+  /* El espacio entre las columnas del kanban se reduce */
+  .kanban-board {
+    gap: 15px;
+  }
+
+  /* Las columnas del kanban en estado normal son más estrechas */
+  .kanban-column {
+    width: 70px;
+  }
+
+  /* Las columnas del kanban expandidas son más estrechas */
+  .kanban-column.expanded {
+    width: 280px;
+  }
+
+  /* Se ajusta el tamaño de la fuente para un mejor ajuste en pantallas pequeñas */
+  html {
+    font-size: 15px;
+  }
+}
+
+/* Media query para pantallas muy pequeñas (móviles) */
+@media (max-width: 576px) {
+  /* El espacio entre las columnas del kanban se reduce aún más */
+  .kanban-board {
+    gap: 10px;
+  }
+
+  /* Las columnas del kanban en estado normal son muy estrechas */
+  .kanban-column {
+    width: 60px;
+  }
+
+  /* Las columnas del kanban expandidas son más estrechas */
+  .kanban-column.expanded {
+    width: 250px;
+  }
+
+  /* La altura y el ancho del encabezado de la columna se reducen */
+  .column-header {
+    width: 40px;
+    height: 180px;
+  }
+
+  /* El tamaño del contador de la columna se reduce */
+  .column-count {
+    width: 24px;
+    height: 24px;
+    font-size: var(--font-size-xs);
+  }
+
+  /* El tamaño del texto vertical se reduce */
+  .vertical-text {
+    font-size: var(--font-size-xs);
+  }
+
+  /* Se ajusta aún más el tamaño de la fuente para pantallas muy pequeñas */
+  html {
+    font-size: 14px;
+  }
+}
+
+/* Media query para pantallas mínimas */
+@media (max-width: 400px) {
+  /* Se reduce el padding general para dejar más espacio al contenido */
+  .main-content {
+    padding: var(--spacing-sm);
+  }
+
+  /* Ajuste final para las columnas del kanban en pantallas extremadamente pequeñas */
+  .kanban-column {
+    width: 55px;
+  }
+
+  .kanban-column.expanded {
+    width: 220px;
+  }
+
+  /* Reducción del tamaño de fuente base para dispositivos muy pequeños */
+  html {
+    font-size: 13px;
+  }
+}

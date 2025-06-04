@@ -1,0 +1,175 @@
+/* Estilos base de Mapa */
+/* Define la pantalla principal del mapa ocupando toda la altura y ancho de la ventana */
+.mapa-screen {
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Contenedor principal que organiza el mapa y la barra lateral */
+.mapa-content {
+    flex-grow: 1;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+}
+
+/* Contenedor del mapa, ocupa el espacio disponible */
+.mapa-container {
+    flex: 1;
+    height: 100%;
+    z-index: 500;
+}
+
+/* Estilo del mapa Leaflet, asegura que ocupe todo el contenedor */
+.leaflet-map {
+    height: 100%;
+    width: 100%;
+    z-index: 500;
+}
+
+/* Estilo para mensajes de error, posicionados en la esquina superior izquierda */
+.mapa-error {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: #f44336;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 1em;
+}
+
+/* Barra lateral con información adicional */
+.mapa-sidebar {
+    width: 300px;
+    /* Ancho fijo para escritorio */
+    background: white;
+    padding: 15px;
+    border-left: 1px solid #ccc;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    scrollbar-gutter: stable;
+    height: 100%;
+}
+
+/* Estilo para el título de la barra lateral */
+.mapa-sidebar h3 {
+    margin: 0;
+    font-size: 1.2em;
+    color: #333;
+}
+
+/* Estilo para los párrafos de detalles en la barra lateral */
+.mapa-details p {
+    margin: 5px 0;
+    font-size: 0.95em;
+}
+
+/* Estilo para los enlaces en los detalles */
+.mapa-details a {
+    color: #0057c9;
+    text-decoration: none;
+}
+
+/* Efecto hover para los enlaces */
+.mapa-details a:hover {
+    text-decoration: underline;
+}
+
+/* Contenedor para el botón de direcciones */
+.mapa-directions-button {
+    margin-top: 10px;
+}
+
+/* Botón de direcciones sin fondo ni borde */
+.mapa-btn-directions {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+/* Tamaño del ícono de coche */
+.mapa-car-icon {
+    width: 24px;
+    height: 24px;
+}
+
+/* Estilo base para botones */
+.mapa-btn {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.95em;
+}
+
+/* Estilo para botones secundarios */
+.mapa-btn-secondary {
+    background: #ccc;
+    color: #333;
+}
+
+/* Efecto hover para botones secundarios */
+.mapa-btn-secondary:hover {
+    background: #b0b0b0;
+}
+
+/* Ajustes para pantallas más pequeñas (móviles y tablets pequeñas) */
+@media (max-width: 767px) {
+
+    /* Cambia la disposición a vertical para mapa y barra lateral */
+    .mapa-content {
+        flex-direction: column;
+    }
+
+    /* Ajusta la altura del contenedor del mapa */
+    .mapa-container {
+        height: 60vh;
+        min-height: 250px;
+    }
+
+    /* Barra lateral ocupa todo el ancho en móviles */
+    .mapa-sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 40vh;
+        border-top: 1px solid #ccc;
+        border-left: none;
+        justify-content: space-between;
+        scrollbar-gutter: stable;
+    }
+
+    /* Ajusta el tamaño del título en la barra lateral */
+    .mapa-sidebar h3 {
+        font-size: 1.1em;
+    }
+
+    /* Ajusta el tamaño de los párrafos en los detalles */
+    .mapa-details p {
+        font-size: 0.9em;
+    }
+
+    /* Ajusta el tamaño del texto de error */
+    .mapa-error {
+        font-size: 0.85em;
+    }
+
+    /* Ajusta el tamaño del ícono de coche */
+    .mapa-car-icon {
+        width: 22px;
+        height: 22px;
+    }
+
+    /* Ajusta el padding y tamaño de fuente de los botones */
+    .mapa-btn {
+        padding: 8px 12px;
+        font-size: 0.9em;
+    }
+}
