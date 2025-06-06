@@ -310,7 +310,6 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={mode === "add" ? "Nueva Empresa" : "Editar Empresa"} size="lg">
       <form onSubmit={handleSubmit} className="modal-form">
-        <h3>Datos de la Empresa</h3>
         {mode === "edit" && (
           <div className="modal-form-row">
             <div className="modal-form-group">
@@ -1648,6 +1647,7 @@ const Empresas = () => {
               <>
                 <div className="company-form">
                   <div className="form-header">
+                     <h3>Datos de la Empresa</h3>
                     <div className="form-actions">
                       <button className="btn btn-add" onClick={handleEditCompany}>
                         Editar empresa

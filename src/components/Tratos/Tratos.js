@@ -4,15 +4,15 @@ import { useState, useEffect } from "react"
 import "./Tratos.css"
 import Header from "../Header/Header"
 import Swal from "sweetalert2"
-import expandIcon from '../../assets/icons/expandir.png';
-import contractIcon from '../../assets/icons/contraer.png';
-import calendarFilter from '../../assets/icons/calendario3.png';
-import deploy from '../../assets/icons/desplegar.png';
-import addActivity from '../../assets/icons/agregar.png';
-import activityCall from '../../assets/icons/llamada.png';
-import activityMeeting from '../../assets/icons/reunion.png';
-import activityTask from '../../assets/icons/tarea.png';
-import neglectedTreatment from '../../assets/icons/desatendido.png';
+import expandIcon from "../../assets/icons/expandir.png"
+import contractIcon from "../../assets/icons/contraer.png"
+import calendarFilter from "../../assets/icons/calendario3.png"
+import deploy from "../../assets/icons/desplegar.png"
+import addActivity from "../../assets/icons/agregar.png"
+import activityCall from "../../assets/icons/llamada.png"
+import activityMeeting from "../../assets/icons/reunion.png"
+import activityTask from "../../assets/icons/tarea.png"
+import neglectedTreatment from "../../assets/icons/desatendido.png"
 
 // Importar react-datepicker y su CSS
 import DatePicker from "react-datepicker"
@@ -37,7 +37,809 @@ const fetchWithToken = async (url, options = {}) => {
   return response
 }
 
-const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick }) => {
+// Componente Modal Base
+const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = "unset"
+    }
+
+    return () => {
+      document.body.style.overflow = "unset"
+    }
+  }, [isOpen])
+
+  if (!isOpen) return null
+
+  const sizeClasses = {
+    sm: "modal-sm",
+    md: "modal-md",
+    lg: "modal-lg",
+    xl: "modal-xl",
+  }
+
+  return (
+    <div className="tratos-modal-overlay" onClick={canClose ? onClose : () => {}}>
+      <div className={`modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2 className="modal-title">{title}</h2>
+          {canClose && (
+            <button className="modal-close" onClick={onClose}>
+              ✕
+            </button>
+          )}
+        </div>
+        <div className="modal-body">{children}</div>
+      </div>
+    </div>
+  )
+}
+
+// Modal para seleccionar tipo de actividad
+const SeleccionarActividadModal = ({ isOpen, onClose, onSelectActivity }) => {
+  const handleSelectActivity = (tipo) => {
+    onSelectActivity(tipo)
+    onClose()
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Selecciona el tipo de actividad" size="sm">
+      <div className="actividad-selector">
+        <button className="btn-actividad-tipo" onClick={() => handleSelectActivity("llamada")}>
+          Llamada
+        </button>
+        <button className="btn-actividad-tipo" onClick={() => handleSelectActivity("reunion")}>
+          Reunión
+        </button>
+        <button className="btn-actividad-tipo" onClick={() => handleSelectActivity("tarea")}>
+          Tarea
+        </button>
+      </div>
+    </Modal>
+  )
+}
+
+// Modal para crear nuevo trato
+const NuevoTratoModal = ({ isOpen, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    nombreTrato: "",
+    nombreEmpresa: "",
+    nombreContacto: "",
+    ingresosEsperados: "",
+    numeroUnidades: "",
+    descripcion: "",
+  })
+
+  const [errors, setErrors] = useState({})
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        nombreTrato: "",
+        nombreEmpresa: "",
+        nombreContacto: "",
+        ingresosEsperados: "",
+        numeroUnidades: "",
+        descripcion: "",
+      })
+      setErrors({})
+    }
+  }, [isOpen])
+
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }))
+    }
+  }
+
+  const validateForm = () => {
+    const newErrors = {}
+
+    if (!formData.nombreTrato.trim()) {
+      newErrors.nombreTrato = "Este campo es obligatorio"
+    }
+
+    if (!formData.nombreEmpresa.trim()) {
+      newErrors.nombreEmpresa = "Este campo es obligatorio"
+    }
+
+    if (!formData.nombreContacto.trim()) {
+      newErrors.nombreContacto = "Este campo es obligatorio"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!validateForm()) return
+
+    onSave(formData)
+    onClose()
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Nuevo Trato" size="md">
+      <form onSubmit={handleSubmit} className="modal-form">
+        <div className="modal-form-group">
+          <label htmlFor="nombreTrato">
+            Nombre trato: <span className="required">*</span>
+          </label>
+          <input
+            type="text"
+            id="nombreTrato"
+            value={formData.nombreTrato}
+            onChange={(e) => handleInputChange("nombreTrato", e.target.value)}
+            className={`modal-form-control ${errors.nombreTrato ? "error" : ""}`}
+            placeholder="Nombre del trato"
+          />
+          {errors.nombreTrato && <span className="error-message">{errors.nombreTrato}</span>}
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="nombreEmpresa">
+            Nombre empresa: <span className="required">*</span>
+          </label>
+          <div className="modal-select-wrapper">
+            <select
+              id="nombreEmpresa"
+              value={formData.nombreEmpresa}
+              onChange={(e) => handleInputChange("nombreEmpresa", e.target.value)}
+              className={`modal-form-control ${errors.nombreEmpresa ? "error" : ""}`}
+            >
+              <option value="">Ninguna seleccionada</option>
+              <option value="Empresa 1">Empresa 1</option>
+              <option value="Empresa 2">Empresa 2</option>
+              <option value="Empresa 3">Empresa 3</option>
+            </select>
+            <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
+          </div>
+          {errors.nombreEmpresa && <span className="error-message">{errors.nombreEmpresa}</span>}
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="nombreContacto">
+            Nombre contacto: <span className="required">*</span>
+          </label>
+          <div className="modal-select-wrapper">
+            <select
+              id="nombreContacto"
+              value={formData.nombreContacto}
+              onChange={(e) => handleInputChange("nombreContacto", e.target.value)}
+              className={`modal-form-control ${errors.nombreContacto ? "error" : ""}`}
+            >
+              <option value="">Ninguna seleccionada</option>
+              <option value="Contacto 1">Contacto 1</option>
+              <option value="Contacto 2">Contacto 2</option>
+              <option value="Contacto 3">Contacto 3</option>
+            </select>
+            <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
+          </div>
+          {errors.nombreContacto && <span className="error-message">{errors.nombreContacto}</span>}
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="ingresosEsperados">Ingresos esperados:</label>
+          <div className="input-with-prefix">
+            <span className="input-prefix">$</span>
+            <input
+              type="number"
+              id="ingresosEsperados"
+              value={formData.ingresosEsperados}
+              onChange={(e) => handleInputChange("ingresosEsperados", e.target.value)}
+              className="modal-form-control"
+              placeholder="0"
+            />
+          </div>
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="numeroUnidades">Número de unidades:</label>
+          <input
+            type="number"
+            id="numeroUnidades"
+            value={formData.numeroUnidades}
+            onChange={(e) => handleInputChange("numeroUnidades", e.target.value)}
+            className="modal-form-control"
+            placeholder="0"
+          />
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="descripcion">Descripción:</label>
+          <textarea
+            id="descripcion"
+            value={formData.descripcion}
+            onChange={(e) => handleInputChange("descripcion", e.target.value)}
+            className="modal-form-control textarea"
+            placeholder="Descripción del trato"
+            rows="4"
+          />
+        </div>
+
+        <div className="modal-form-actions">
+          <button type="button" onClick={onClose} className="btn btn-secondary">
+            Cancelar
+          </button>
+          <button type="submit" className="btn btn-primary">
+            Agregar trato
+          </button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
+// Modal para programar llamada
+const ProgramarLlamadaModal = ({ isOpen, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    asignadoA: "Dagoberto Nieto",
+    nombreContacto: "",
+    fecha: "",
+    hora: "",
+    finalidad: "",
+  })
+
+  const [errors, setErrors] = useState({})
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        asignadoA: "Dagoberto Nieto",
+        nombreContacto: "",
+        fecha: "",
+        hora: "",
+        finalidad: "",
+      })
+      setErrors({})
+    }
+  }, [isOpen])
+
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }))
+    }
+  }
+
+  const validateForm = () => {
+    const newErrors = {}
+
+    if (!formData.nombreContacto.trim()) {
+      newErrors.nombreContacto = "Este campo es obligatorio"
+    }
+
+    if (!formData.fecha.trim()) {
+      newErrors.fecha = "Este campo es obligatorio"
+    }
+
+    if (!formData.hora.trim()) {
+      newErrors.hora = "Este campo es obligatorio"
+    }
+
+    if (!formData.finalidad.trim()) {
+      newErrors.finalidad = "Este campo es obligatorio"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!validateForm()) return
+
+    onSave(formData)
+    onClose()
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Programar llamada" size="md">
+      <form onSubmit={handleSubmit} className="modal-form">
+        <div className="modal-form-group">
+          <label htmlFor="asignadoA">
+            Asignado a: <span className="required">*</span>
+          </label>
+          <div className="modal-select-wrapper">
+            <select
+              id="asignadoA"
+              value={formData.asignadoA}
+              onChange={(e) => handleInputChange("asignadoA", e.target.value)}
+              className="modal-form-control"
+            >
+              <option value="Dagoberto Nieto">Dagoberto Nieto</option>
+              <option value="Usuario 1">Usuario 1</option>
+              <option value="Usuario 2">Usuario 2</option>
+            </select>
+            <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
+          </div>
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="nombreContacto">
+            Nombre contacto: <span className="required">*</span>
+          </label>
+          <div className="modal-select-wrapper">
+            <select
+              id="nombreContacto"
+              value={formData.nombreContacto}
+              onChange={(e) => handleInputChange("nombreContacto", e.target.value)}
+              className={`modal-form-control ${errors.nombreContacto ? "error" : ""}`}
+            >
+              <option value="">Ninguna seleccionada</option>
+              <option value="Contacto 1">Contacto 1</option>
+              <option value="Contacto 2">Contacto 2</option>
+              <option value="Contacto 3">Contacto 3</option>
+            </select>
+            <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
+          </div>
+          {errors.nombreContacto && <span className="error-message">{errors.nombreContacto}</span>}
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="fecha">
+            Fecha: <span className="required">*</span>
+          </label>
+          <input
+            type="date"
+            id="fecha"
+            value={formData.fecha}
+            onChange={(e) => handleInputChange("fecha", e.target.value)}
+            className={`modal-form-control ${errors.fecha ? "error" : ""}`}
+          />
+          {errors.fecha && <span className="error-message">{errors.fecha}</span>}
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="hora">
+            Hora: <span className="required">*</span>
+          </label>
+          <input
+            type="time"
+            id="hora"
+            value={formData.hora}
+            onChange={(e) => handleInputChange("hora", e.target.value)}
+            className={`modal-form-control ${errors.hora ? "error" : ""}`}
+          />
+          {errors.hora && <span className="error-message">{errors.hora}</span>}
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="finalidad">
+            Finalidad: <span className="required">*</span>
+          </label>
+          <div className="modal-select-wrapper">
+            <select
+              id="finalidad"
+              value={formData.finalidad}
+              onChange={(e) => handleInputChange("finalidad", e.target.value)}
+              className={`modal-form-control ${errors.finalidad ? "error" : ""}`}
+            >
+              <option value="">Ninguna seleccionada</option>
+              <option value="Seguimiento">Seguimiento</option>
+              <option value="Presentación">Presentación</option>
+              <option value="Negociación">Negociación</option>
+              <option value="Cierre">Cierre</option>
+            </select>
+            <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
+          </div>
+          {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
+        </div>
+
+        <div className="modal-form-actions">
+          <button type="button" onClick={onClose} className="btn btn-secondary">
+            Cancelar
+          </button>
+          <button type="submit" className="btn btn-primary">
+            Agregar llamada
+          </button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
+// Modal para programar reunión
+const ProgramarReunionModal = ({ isOpen, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    asignadoA: "Dagoberto Nieto",
+    nombreContacto: "",
+    fecha: "",
+    horaInicio: "",
+    horaFin: "",
+    modalidad: "",
+    finalidad: "",
+  })
+
+  const [errors, setErrors] = useState({})
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        asignadoA: "Dagoberto Nieto",
+        nombreContacto: "",
+        fecha: "",
+        horaInicio: "",
+        horaFin: "",
+        modalidad: "",
+        finalidad: "",
+      })
+      setErrors({})
+    }
+  }, [isOpen])
+
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }))
+    }
+  }
+
+  const validateForm = () => {
+    const newErrors = {}
+
+    if (!formData.nombreContacto.trim()) {
+      newErrors.nombreContacto = "Este campo es obligatorio"
+    }
+
+    if (!formData.fecha.trim()) {
+      newErrors.fecha = "Este campo es obligatorio"
+    }
+
+    if (!formData.horaInicio.trim()) {
+      newErrors.horaInicio = "Este campo es obligatorio"
+    }
+
+    if (!formData.horaFin.trim()) {
+      newErrors.horaFin = "Este campo es obligatorio"
+    }
+
+    if (!formData.modalidad.trim()) {
+      newErrors.modalidad = "Este campo es obligatorio"
+    }
+
+    if (!formData.finalidad.trim()) {
+      newErrors.finalidad = "Este campo es obligatorio"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!validateForm()) return
+
+    onSave(formData)
+    onClose()
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Programar reunión" size="md">
+      <form onSubmit={handleSubmit} className="modal-form">
+        <div className="modal-form-group">
+          <label htmlFor="asignadoA">
+            Asignado a: <span className="required">*</span>
+          </label>
+          <div className="modal-select-wrapper">
+            <select
+              id="asignadoA"
+              value={formData.asignadoA}
+              onChange={(e) => handleInputChange("asignadoA", e.target.value)}
+              className="modal-form-control"
+            >
+              <option value="Dagoberto Nieto">Dagoberto Nieto</option>
+              <option value="Usuario 1">Usuario 1</option>
+              <option value="Usuario 2">Usuario 2</option>
+            </select>
+            <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
+          </div>
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="nombreContacto">
+            Nombre contacto: <span className="required">*</span>
+          </label>
+          <div className="modal-select-wrapper">
+            <select
+              id="nombreContacto"
+              value={formData.nombreContacto}
+              onChange={(e) => handleInputChange("nombreContacto", e.target.value)}
+              className={`modal-form-control ${errors.nombreContacto ? "error" : ""}`}
+            >
+              <option value="">Ninguna seleccionada</option>
+              <option value="Contacto 1">Contacto 1</option>
+              <option value="Contacto 2">Contacto 2</option>
+              <option value="Contacto 3">Contacto 3</option>
+            </select>
+            <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
+          </div>
+          {errors.nombreContacto && <span className="error-message">{errors.nombreContacto}</span>}
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="fecha">
+            Fecha: <span className="required">*</span>
+          </label>
+          <input
+            type="date"
+            id="fecha"
+            value={formData.fecha}
+            onChange={(e) => handleInputChange("fecha", e.target.value)}
+            className={`modal-form-control ${errors.fecha ? "error" : ""}`}
+          />
+          {errors.fecha && <span className="error-message">{errors.fecha}</span>}
+        </div>
+
+        <div className="modal-form-row">
+          <div className="modal-form-group">
+            <label htmlFor="horaInicio">
+              Hora inicio: <span className="required">*</span>
+            </label>
+            <input
+              type="time"
+              id="horaInicio"
+              value={formData.horaInicio}
+              onChange={(e) => handleInputChange("horaInicio", e.target.value)}
+              className={`modal-form-control ${errors.horaInicio ? "error" : ""}`}
+            />
+            {errors.horaInicio && <span className="error-message">{errors.horaInicio}</span>}
+          </div>
+
+          <div className="modal-form-group">
+            <label htmlFor="horaFin">
+              Hora fin: <span className="required">*</span>
+            </label>
+            <input
+              type="time"
+              id="horaFin"
+              value={formData.horaFin}
+              onChange={(e) => handleInputChange("horaFin", e.target.value)}
+              className={`modal-form-control ${errors.horaFin ? "error" : ""}`}
+            />
+            {errors.horaFin && <span className="error-message">{errors.horaFin}</span>}
+          </div>
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="modalidad">
+            Modalidad: <span className="required">*</span>
+          </label>
+          <div className="modal-select-wrapper">
+            <select
+              id="modalidad"
+              value={formData.modalidad}
+              onChange={(e) => handleInputChange("modalidad", e.target.value)}
+              className={`modal-form-control ${errors.modalidad ? "error" : ""}`}
+            >
+              <option value="">Ninguna seleccionada</option>
+              <option value="Presencial">Presencial</option>
+              <option value="Virtual">Virtual</option>
+              <option value="Híbrida">Híbrida</option>
+            </select>
+            <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
+          </div>
+          {errors.modalidad && <span className="error-message">{errors.modalidad}</span>}
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="finalidad">
+            Finalidad: <span className="required">*</span>
+          </label>
+          <div className="modal-select-wrapper">
+            <select
+              id="finalidad"
+              value={formData.finalidad}
+              onChange={(e) => handleInputChange("finalidad", e.target.value)}
+              className={`modal-form-control ${errors.finalidad ? "error" : ""}`}
+            >
+              <option value="">Ninguna seleccionada</option>
+              <option value="Presentación">Presentación</option>
+              <option value="Negociación">Negociación</option>
+              <option value="Seguimiento">Seguimiento</option>
+              <option value="Cierre">Cierre</option>
+            </select>
+            <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
+          </div>
+          {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
+        </div>
+
+        <div className="modal-form-actions">
+          <button type="button" onClick={onClose} className="btn btn-secondary">
+            Cancelar
+          </button>
+          <button type="submit" className="btn btn-primary">
+            Agregar reunión
+          </button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
+// Modal para programar tarea
+const ProgramarTareaModal = ({ isOpen, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    asignadoA: "Dagoberto Nieto",
+    nombreContacto: "",
+    fechaLimite: "",
+    tipo: "",
+    finalidad: "",
+  })
+
+  const [errors, setErrors] = useState({})
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        asignadoA: "Dagoberto Nieto",
+        nombreContacto: "",
+        fechaLimite: "",
+        tipo: "",
+        finalidad: "",
+      })
+      setErrors({})
+    }
+  }, [isOpen])
+
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }))
+    }
+  }
+
+  const validateForm = () => {
+    const newErrors = {}
+
+    if (!formData.nombreContacto.trim()) {
+      newErrors.nombreContacto = "Este campo es obligatorio"
+    }
+
+    if (!formData.fechaLimite.trim()) {
+      newErrors.fechaLimite = "Este campo es obligatorio"
+    }
+
+    if (!formData.tipo.trim()) {
+      newErrors.tipo = "Este campo es obligatorio"
+    }
+
+    if (!formData.finalidad.trim()) {
+      newErrors.finalidad = "Este campo es obligatorio"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!validateForm()) return
+
+    onSave(formData)
+    onClose()
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Programar tarea" size="md">
+      <form onSubmit={handleSubmit} className="modal-form">
+        <div className="modal-form-group">
+          <label htmlFor="asignadoA">
+            Asignado a: <span className="required">*</span>
+          </label>
+          <div className="modal-select-wrapper">
+            <select
+              id="asignadoA"
+              value={formData.asignadoA}
+              onChange={(e) => handleInputChange("asignadoA", e.target.value)}
+              className="modal-form-control"
+            >
+              <option value="Dagoberto Nieto">Dagoberto Nieto</option>
+              <option value="Usuario 1">Usuario 1</option>
+              <option value="Usuario 2">Usuario 2</option>
+            </select>
+            <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
+          </div>
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="nombreContacto">
+            Nombre contacto: <span className="required">*</span>
+          </label>
+          <div className="modal-select-wrapper">
+            <select
+              id="nombreContacto"
+              value={formData.nombreContacto}
+              onChange={(e) => handleInputChange("nombreContacto", e.target.value)}
+              className={`modal-form-control ${errors.nombreContacto ? "error" : ""}`}
+            >
+              <option value="">Ninguna seleccionada</option>
+              <option value="Contacto 1">Contacto 1</option>
+              <option value="Contacto 2">Contacto 2</option>
+              <option value="Contacto 3">Contacto 3</option>
+            </select>
+            <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
+          </div>
+          {errors.nombreContacto && <span className="error-message">{errors.nombreContacto}</span>}
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="fechaLimite">
+            Fecha límite: <span className="required">*</span>
+          </label>
+          <input
+            type="date"
+            id="fechaLimite"
+            value={formData.fechaLimite}
+            onChange={(e) => handleInputChange("fechaLimite", e.target.value)}
+            className={`modal-form-control ${errors.fechaLimite ? "error" : ""}`}
+          />
+          {errors.fechaLimite && <span className="error-message">{errors.fechaLimite}</span>}
+        </div>
+
+        <div className="modal-form-group">
+          <label>
+            Tipo: <span className="required">*</span>
+          </label>
+          <div className="tipo-buttons">
+            <button
+              type="button"
+              className={`btn-tipo ${formData.tipo === "Correo" ? "active" : ""}`}
+              onClick={() => handleInputChange("tipo", "Correo")}
+            >
+              Correo
+            </button>
+            <button
+              type="button"
+              className={`btn-tipo ${formData.tipo === "Mensaje" ? "active" : ""}`}
+              onClick={() => handleInputChange("tipo", "Mensaje")}
+            >
+              Mensaje
+            </button>
+          </div>
+          {errors.tipo && <span className="error-message">{errors.tipo}</span>}
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="finalidad">
+            Finalidad: <span className="required">*</span>
+          </label>
+          <div className="modal-select-wrapper">
+            <select
+              id="finalidad"
+              value={formData.finalidad}
+              onChange={(e) => handleInputChange("finalidad", e.target.value)}
+              className={`modal-form-control ${errors.finalidad ? "error" : ""}`}
+            >
+              <option value="">Ninguna seleccionada</option>
+              <option value="Seguimiento">Seguimiento</option>
+              <option value="Información">Información</option>
+              <option value="Propuesta">Propuesta</option>
+              <option value="Recordatorio">Recordatorio</option>
+            </select>
+            <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
+          </div>
+          {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
+        </div>
+
+        <div className="modal-form-actions">
+          <button type="button" onClick={onClose} className="btn btn-secondary">
+            Cancelar
+          </button>
+          <button type="submit" className="btn btn-primary">
+            Agregar tarea
+          </button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
+const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdded }) => {
   const [isDragging, setIsDragging] = useState(false)
 
   const handleDragStart = (e) => {
@@ -62,6 +864,20 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick }) => {
   const getActivityIcon = () => {
     if (trato.isNeglected) {
       return <img src={neglectedTreatment || "/placeholder.svg"} alt="Trato Desatendido" className="activity-icon" />
+    } else if (trato.hasActivities) {
+      // Si tiene actividades, mostrar el ícono correspondiente al tipo de actividad más reciente
+      const iconMap = {
+        llamada: activityCall,
+        reunion: activityMeeting,
+        tarea: activityTask,
+      }
+      return (
+        <img
+          src={iconMap[trato.lastActivityType] || addActivity}
+          alt="Actividad Programada"
+          className="activity-icon"
+        />
+      )
     } else {
       return (
         <img
@@ -70,7 +886,7 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick }) => {
           className="activity-icon add-activity-btn"
           onClick={(e) => {
             e.stopPropagation() // Evitar que se active el clic de la tarjeta
-            Swal.fire("Agregar Actividad", "Modal para agregar actividad en desarrollo", "info")
+            onActivityAdded && onActivityAdded(trato.id)
           }}
         />
       )
@@ -86,11 +902,11 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick }) => {
       onClick={handleCardClick}
       style={{ cursor: isDragging ? "grabbing" : "pointer" }}
     >
-      <div className="trato-actions">
-        <div className="trato-activity-icon">{getActivityIcon()}</div>
-      </div>
       <div className="trato-header">
         <h4 className="trato-nombre">{trato.nombre}</h4>
+        <div className="trato-actions">
+          <div className="trato-activity-icon">{getActivityIcon()}</div>
+        </div>
       </div>
       <div className="trato-details">
         <p>
@@ -119,9 +935,18 @@ const Tratos = () => {
   const navigate = useNavigate()
   const [expandedColumns, setExpandedColumns] = useState([])
   const [selectedUser, setSelectedUser] = useState("Todos los usuarios")
-  const [dateRangeText, setDateRangeText] = useState("Rango de fecha del trato") // Cambiado el nombre para evitar confusión con el estado del DatePicker
+  const [dateRangeText, setDateRangeText] = useState("Rango de fecha del trato")
   const [columnas, setColumnas] = useState([])
   const [draggedTrato, setDraggedTrato] = useState(null)
+
+  // Estados para modales
+  const [modals, setModals] = useState({
+    nuevoTrato: { isOpen: false },
+    seleccionarActividad: { isOpen: false, tratoId: null },
+    programarLlamada: { isOpen: false },
+    programarReunion: { isOpen: false },
+    programarTarea: { isOpen: false },
+  })
 
   // Nuevos estados para el rango de fechas
   const [startDate, setStartDate] = useState(null)
@@ -143,6 +968,8 @@ const Tratos = () => {
             empresa: "Empresa X",
             numero: "TRT-001",
             isNeglected: false,
+            hasActivities: false,
+            lastActivityType: null,
           },
         ],
         count: 1,
@@ -169,6 +996,8 @@ const Tratos = () => {
             empresa: "Empresa Y",
             numero: "TRT-002",
             isNeglected: true,
+            hasActivities: false,
+            lastActivityType: null,
           },
         ],
         count: 1,
@@ -195,6 +1024,8 @@ const Tratos = () => {
             empresa: "Empresa Z",
             numero: "TRT-003",
             isNeglected: false,
+            hasActivities: false,
+            lastActivityType: null,
           },
           {
             id: 4,
@@ -204,6 +1035,8 @@ const Tratos = () => {
             empresa: "Empresa W",
             numero: "TRT-004",
             isNeglected: false,
+            hasActivities: false,
+            lastActivityType: null,
           },
         ],
         count: 2,
@@ -223,6 +1056,8 @@ const Tratos = () => {
             numero: "TRT-005",
             ingresoEsperado: "5,000",
             isNeglected: false,
+            hasActivities: false,
+            lastActivityType: null,
           },
         ],
         count: 1,
@@ -241,6 +1076,8 @@ const Tratos = () => {
             empresa: "Empresa U",
             numero: "TRT-006",
             isNeglected: false,
+            hasActivities: false,
+            lastActivityType: null,
           },
           {
             id: 7,
@@ -250,6 +1087,8 @@ const Tratos = () => {
             empresa: "Empresa T",
             numero: "TRT-007",
             isNeglected: false,
+            hasActivities: false,
+            lastActivityType: null,
           },
         ],
         count: 2,
@@ -276,6 +1115,8 @@ const Tratos = () => {
             empresa: "Empresa S",
             numero: "TRT-008",
             isNeglected: false,
+            hasActivities: false,
+            lastActivityType: null,
           },
         ],
         count: 1,
@@ -294,6 +1135,8 @@ const Tratos = () => {
             empresa: "Empresa R",
             numero: "TRT-009",
             isNeglected: false,
+            hasActivities: false,
+            lastActivityType: null,
           },
           {
             id: 10,
@@ -303,6 +1146,8 @@ const Tratos = () => {
             empresa: "Empresa Q",
             numero: "TRT-010",
             isNeglected: false,
+            hasActivities: false,
+            lastActivityType: null,
           },
         ],
         count: 2,
@@ -323,6 +1168,21 @@ const Tratos = () => {
     }
   }, [startDate, endDate])
 
+  // Funciones para manejar modales
+  const openModal = (modalType, data = {}) => {
+    setModals((prev) => ({
+      ...prev,
+      [modalType]: { isOpen: true, ...data },
+    }))
+  }
+
+  const closeModal = (modalType) => {
+    setModals((prev) => ({
+      ...prev,
+      [modalType]: { isOpen: false },
+    }))
+  }
+
   const handleToggleColumn = (columnId) => {
     setExpandedColumns((prev) => {
       if (prev.includes(columnId)) {
@@ -334,10 +1194,51 @@ const Tratos = () => {
   }
 
   const handleCrearTrato = () => {
+    openModal("nuevoTrato")
+  }
+
+  const handleActivityAdded = (tratoId) => {
+    openModal("seleccionarActividad", { tratoId })
+  }
+
+  const handleSelectActivity = (tipo) => {
+    const modalMap = {
+      llamada: "programarLlamada",
+      reunion: "programarReunion",
+      tarea: "programarTarea",
+    }
+    openModal(modalMap[tipo])
+  }
+
+  const handleSaveNuevoTrato = (data) => {
+    console.log("Nuevo trato:", data)
     Swal.fire({
-      title: "Crear Trato",
-      text: "Funcionalidad en desarrollo",
-      icon: "info",
+      title: "¡Trato creado!",
+      text: "El trato se ha creado exitosamente",
+      icon: "success",
+    })
+  }
+
+  const handleSaveActividad = (data, tipo) => {
+    console.log(`Nueva ${tipo}:`, data)
+
+    // Actualizar el trato para mostrar que tiene actividades
+    const tratoId = modals.seleccionarActividad.tratoId
+    if (tratoId) {
+      setColumnas((prev) =>
+        prev.map((columna) => ({
+          ...columna,
+          tratos: columna.tratos.map((trato) =>
+            trato.id === tratoId ? { ...trato, hasActivities: true, lastActivityType: tipo } : trato,
+          ),
+        })),
+      )
+    }
+
+    Swal.fire({
+      title: `¡${tipo.charAt(0).toUpperCase() + tipo.slice(1)} programada!`,
+      text: `La ${tipo} se ha programado exitosamente`,
+      icon: "success",
     })
   }
 
@@ -417,6 +1318,18 @@ const Tratos = () => {
     navigate(`/detallestrato`)
   }
 
+  // Determinar si todas las columnas están expandidas
+  const allExpanded = expandedColumns.length === columnas.length
+
+  const handleToggleAllColumns = () => {
+    if (allExpanded) {
+      setExpandedColumns([])
+    } else {
+      const allColumnIds = columnas.map((columna) => columna.id)
+      setExpandedColumns(allColumnIds)
+    }
+  }
+
   return (
     <>
       <Header />
@@ -456,9 +1369,14 @@ const Tratos = () => {
               </div>
             </div>
 
-            <button className="btn-crear-trato" onClick={handleCrearTrato}>
-              Crear Trato
-            </button>
+            <div className="tratos-actions">
+              <button className="btn-toggle-all" onClick={handleToggleAllColumns}>
+                {allExpanded ? "Contraer Todos" : "Expandir Todos"}
+              </button>
+              <button className="btn-crear-trato" onClick={handleCrearTrato}>
+                Crear Trato
+              </button>
+            </div>
           </div>
 
           <div className="kanban-board">
@@ -484,6 +1402,7 @@ const Tratos = () => {
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
                         onTratoClick={handleTratoClick}
+                        onActivityAdded={handleActivityAdded}
                       />
                     ))
                   ) : (
@@ -506,6 +1425,37 @@ const Tratos = () => {
             ))}
           </div>
         </div>
+
+        {/* Modales */}
+        <NuevoTratoModal
+          isOpen={modals.nuevoTrato.isOpen}
+          onClose={() => closeModal("nuevoTrato")}
+          onSave={handleSaveNuevoTrato}
+        />
+
+        <SeleccionarActividadModal
+          isOpen={modals.seleccionarActividad.isOpen}
+          onClose={() => closeModal("seleccionarActividad")}
+          onSelectActivity={handleSelectActivity}
+        />
+
+        <ProgramarLlamadaModal
+          isOpen={modals.programarLlamada.isOpen}
+          onClose={() => closeModal("programarLlamada")}
+          onSave={(data) => handleSaveActividad(data, "llamada")}
+        />
+
+        <ProgramarReunionModal
+          isOpen={modals.programarReunion.isOpen}
+          onClose={() => closeModal("programarReunion")}
+          onSave={(data) => handleSaveActividad(data, "reunion")}
+        />
+
+        <ProgramarTareaModal
+          isOpen={modals.programarTarea.isOpen}
+          onClose={() => closeModal("programarTarea")}
+          onSave={(data) => handleSaveActividad(data, "tarea")}
+        />
       </main>
     </>
   )

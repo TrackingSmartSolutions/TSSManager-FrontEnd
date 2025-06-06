@@ -60,8 +60,6 @@ body {
   overflow-x: hidden;
 }
 
-/* ===== ESTILOS ESPECÍFICOS PARA TRATOS ===== */
-
 /* Layout Principal */
 .main-content {
   padding: var(--spacing-lg) var(--spacing-xl);
@@ -119,7 +117,7 @@ body {
 /* Icono Desplegar en el select de usuario */
 .filter-dropdown .icon-deploy {
   position: absolute;
-  right: 10px;
+  right: 15px; /* Cambiado de 10px a 15px para moverlo más a la izquierda */
   top: 50%;
   transform: translateY(-50%);
   width: 16px;
@@ -270,12 +268,12 @@ body {
 .column-count {
   background-color: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  width: 40px; /* Cambiado de 35px a 40px */
+  height: 40px; /* Cambiado de 35px a 40px */
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md); /* Cambiado de sm a md */
   font-weight: bold;
   margin-top: 15px;
 }
@@ -386,9 +384,9 @@ body {
 }
 
 .trato-actions {
-  position: absolute;
-  top: var(--spacing-md);
-  right: var(--spacing-md);
+  position: relative;
+  top: 0;
+  right: 0;
 }
 
 /* Iconos de actividad en las Trato Cards */
@@ -413,9 +411,6 @@ body {
 .trato-activity-icon .activity-icon.add-activity-btn:hover {
   transform: scale(1.1);
 }
-
-/* Se eliminaron los estilos de .trato-action-btn y .ingreso-icon ya que no se usan actualmente */
-/* Se eliminaron .ingreso-icon ya que no se usa actualmente */
 
 .trato-details {
   font-size: var(--font-size-sm);
@@ -464,84 +459,444 @@ body {
 
 /* Colores específicos para cada columna */
 .clasificacion {
-  background-color: #E180F4;
+  background-color: #e180f4;
 }
 
 .primer-contacto {
-  background-color: #C680F4;
+  background-color: #c680f4;
 }
 
 .envio-informacion {
-  background-color: #AB80F4;
+  background-color: #ab80f4;
 }
 
 .reunion {
-  background-color: #9280F4;
+  background-color: #9280f4;
 }
 
 .cotizacion-propuesta {
-  background-color: #8098F4;
+  background-color: #8098f4;
 }
 
 .negociacion-revision {
-  background-color: #80C0F4;
+  background-color: #80c0f4;
 }
 
 .cerrado-ganado {
-  background-color: #69ED95;
+  background-color: #69ed95;
 }
 
 .respuesta-correo {
-  background-color: #EFD47B;
+  background-color: #efd47b;
 }
 
 .interes-futuro {
-  background-color: #FFBC79;
+  background-color: #ffbc79;
 }
 
 .cerrado-perdido {
-  background-color: #FA8585;
+  background-color: #fa8585;
 }
 
 /* Líneas de color específicas */
 .clasificacion-line {
-  background-color: #E180F4;
+  background-color: #e180f4;
 }
 
 .primer-contacto-line {
-  background-color: #C680F4;
+  background-color: #c680f4;
 }
 
 .envio-informacion-line {
-  background-color: #AB80F4;
+  background-color: #ab80f4;
 }
 
 .reunion-line {
-  background-color: #9280F4;
+  background-color: #9280f4;
 }
 
 .cotizacion-propuesta-line {
-  background-color: #8098F4;
+  background-color: #8098f4;
 }
 
 .negociacion-revision-line {
-  background-color: #80C0F4;
+  background-color: #80c0f4;
 }
 
 .cerrado-ganado-line {
-  background-color: #69ED95;
+  background-color: #69ed95;
 }
 
 .respuesta-correo-line {
-  background-color: #EFD47B;
+  background-color: #efd47b;
 }
 
 .interes-futuro-line {
-  background-color: #FFBC79;
+  background-color: #ffbc79;
 }
 
 .cerrado-perdido-line {
-  background-color: #FA8585;
+  background-color: #fa8585;
+}
+
+/* ===== ESTILOS DE MODALES ESPECÍFICOS PARA TRATOS ===== */
+
+/* Modal Overlay específico para tratos */
+.tratos-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-lg);
+}
+
+/* Modal Content específico para tratos */
+.tratos-modal-overlay .modal-content {
+  background-color: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  max-height: 90vh;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tratos-modal-overlay .modal-content.modal-sm {
+  max-width: 400px;
+}
+
+.tratos-modal-overlay .modal-content.modal-md {
+  max-width: 500px;
+}
+
+.tratos-modal-overlay .modal-content.modal-lg {
+  max-width: 700px;
+}
+
+.tratos-modal-overlay .modal-content.modal-xl {
+  max-width: 900px;
+}
+
+/* Modal Header específico para tratos */
+.tratos-modal-overlay .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg) 0 var(--spacing-lg) 0;
+  border-bottom: 1px solid var(--border-color);
+  background-color: white;
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin: 0;
+}
+
+.tratos-modal-overlay .modal-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+  padding-left: var(--spacing-lg);
+}
+
+.tratos-modal-overlay .modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--text-light);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius-sm);
+  transition: color 0.3s, background-color 0.3s;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--spacing-lg);
+}
+
+.tratos-modal-overlay .modal-close:hover {
+  color: var(--text-color);
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Modal Body específico para tratos */
+.tratos-modal-overlay .modal-body {
+  padding: 0;
+  background-color: white;
+  border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+  overflow-y: auto;
+  flex: 1;
+  width: 100%;
+}
+
+/* Modal Form específico para tratos */
+.tratos-modal-overlay .modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  width: 100%;
+  padding: 0;
+}
+
+.tratos-modal-overlay .modal-form-row {
+  display: flex;
+  gap: var(--spacing-lg);
+}
+
+.tratos-modal-overlay .modal-form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--spacing-md);
+  margin-bottom: var(--spacing-xs);
+  width: 100%;
+}
+
+.tratos-modal-overlay .modal-form-group.full-width {
+  flex: 1 1 100%;
+}
+
+.tratos-modal-overlay .modal-form-group label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: var(--spacing-xs);
+  display: block;
+}
+
+.tratos-modal-overlay .modal-form-control {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+  background-color: white;
+  color: var(--text-color);
+  transition: border-color 0.3s, box-shadow 0.3s;
+  box-sizing: border-box;
+}
+
+.tratos-modal-overlay .modal-form-control:focus {
+  outline: none;
+  border-color: var(--secondary-color);
+  box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
+.tratos-modal-overlay .modal-form-control.error {
+  border-color: #f44336;
+}
+
+.tratos-modal-overlay .modal-form-control.readonly {
+  background-color: #f8f9fa;
+  color: var(--text-light);
+  cursor: not-allowed;
+}
+
+.tratos-modal-overlay .modal-form-control.textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Wrapper para selects en modales de tratos */
+.tratos-modal-overlay .modal-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.tratos-modal-overlay .modal-select-wrapper .deploy-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.tratos-modal-overlay .modal-select-wrapper select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 35px; /* Espacio para el icono */
+}
+
+/* Required field indicator específico para tratos */
+.tratos-modal-overlay .required {
+  color: #f44336;
+  font-weight: bold;
+}
+
+/* Error messages específico para tratos */
+.tratos-modal-overlay .error-message {
+  color: #f44336;
+  font-size: var(--font-size-xs);
+  margin-top: var(--spacing-xs);
+}
+
+/* Help text específico para tratos */
+.tratos-modal-overlay .help-text {
+  color: var(--text-light);
+  font-size: var(--font-size-xs);
+  margin-top: var(--spacing-xs);
+}
+
+/* Input with prefix específico para tratos */
+.tratos-modal-overlay .input-with-prefix {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.tratos-modal-overlay .input-prefix {
+  position: absolute;
+  left: var(--spacing-md);
+  color: var(--text-light);
+  font-size: var(--font-size-sm);
+  z-index: 1;
+}
+
+.tratos-modal-overlay .input-with-prefix .modal-form-control {
+  padding-left: calc(var(--spacing-md) + 20px);
+}
+
+/* Modal Form Actions específico para tratos */
+.tratos-modal-overlay .modal-form-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+  padding: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  margin-top: 0;
+  width: 100%;
+}
+
+/* Button styles for modals específico para tratos */
+.tratos-modal-overlay .btn {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  min-width: 100px;
+}
+
+.tratos-modal-overlay .btn-primary {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.tratos-modal-overlay .btn-primary:hover {
+  background-color: #d86600;
+  transform: translateY(-1px);
+}
+
+.tratos-modal-overlay .btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.tratos-modal-overlay .btn-secondary:hover {
+  background-color: #5a6268;
+  transform: translateY(-1px);
+}
+
+/* Estilos específicos para modales de actividades de tratos */
+
+/* Selector de actividad específico para tratos */
+.tratos-modal-overlay .actividad-selector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  width: 100%;
+}
+
+.tratos-modal-overlay .btn-actividad-tipo {
+  width: 100%;
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-lg);
+  font-size: var(--font-size-md);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+}
+
+.tratos-modal-overlay .btn-actividad-tipo:hover {
+  background-color: var(--background-color);
+  border-color: var(--secondary-color);
+}
+
+/* Botones de tipo para tareas específico para tratos */
+.tratos-modal-overlay .tipo-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.tratos-modal-overlay .btn-tipo {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  background-color: white;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: var(--font-size-sm);
+}
+
+.tratos-modal-overlay .btn-tipo:hover {
+  background-color: var(--background-color);
+  border-color: var(--secondary-color);
+}
+
+.tratos-modal-overlay .btn-tipo.active {
+  background-color: var(--secondary-color);
+  color: white;
+  border-color: var(--secondary-color);
+}
+
+/* Estilos para los controles de tratos */
+.tratos-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+
+.btn-toggle-all {
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  box-shadow: var(--box-shadow);
+  white-space: nowrap;
+}
+
+.btn-toggle-all:hover {
+  background-color: #0266b3;
+  transform: translateY(-1px);
 }
 
 /* Responsive Design */
@@ -600,6 +955,26 @@ body {
 
 /* Media query para pantallas pequeñas (tablets y móviles) */
 @media (max-width: 768px) {
+  /* Los controles de tratos se reorganizan */
+  .tratos-controls {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    align-items: stretch;
+  }
+
+  .tratos-actions {
+    flex-direction: row;
+    gap: var(--spacing-sm);
+  }
+
+  .btn-toggle-all {
+    flex: 1;
+  }
+
+  .btn-crear-trato {
+    flex: 1;
+  }
+
   /* El padding del contenido principal se reduce */
   .main-content {
     padding: var(--spacing-md);
@@ -624,11 +999,6 @@ body {
     width: 100%;
   }
 
-  /* El botón de crear trato ocupa todo el ancho */
-  .btn-crear-trato {
-    width: 100%;
-  }
-
   /* El espacio entre las columnas del kanban se reduce */
   .kanban-board {
     gap: 15px;
@@ -648,46 +1018,48 @@ body {
   html {
     font-size: 15px;
   }
+
+  /* Modal responsive específico para tratos */
+  .tratos-modal-overlay .modal-form-row {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .tratos-modal-overlay .tipo-buttons {
+    flex-direction: column;
+  }
 }
 
 /* Media query para pantallas muy pequeñas (móviles) */
 @media (max-width: 576px) {
-  /* El espacio entre las columnas del kanban se reduce aún más */
-  .kanban-board {
-    gap: 10px;
+  .tratos-actions {
+    flex-direction: column;
+    gap: var(--spacing-xs);
   }
 
-  /* Las columnas del kanban en estado normal son muy estrechas */
-  .kanban-column {
-    width: 60px;
-  }
-
-  /* Las columnas del kanban expandidas son más estrechas */
-  .kanban-column.expanded {
-    width: 250px;
-  }
-
-  /* La altura y el ancho del encabezado de la columna se reducen */
-  .column-header {
-    width: 40px;
-    height: 180px;
-  }
-
-  /* El tamaño del contador de la columna se reduce */
+  /* El tamaño del contador de la columna se ajusta para móvil */
   .column-count {
-    width: 24px;
-    height: 24px;
-    font-size: var(--font-size-xs);
+    width: 35px;
+    height: 35px;
+    font-size: var(--font-size-sm);
   }
 
-  /* El tamaño del texto vertical se reduce */
-  .vertical-text {
-    font-size: var(--font-size-xs);
+  /* Modal ultra compacto específico para tratos */
+  .tratos-modal-overlay {
+    padding: var(--spacing-xs);
   }
 
-  /* Se ajusta aún más el tamaño de la fuente para pantallas muy pequeñas */
-  html {
-    font-size: 14px;
+  .tratos-modal-overlay .modal-content {
+    max-width: 95vw;
+  }
+
+  .tratos-modal-overlay .modal-body {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .tratos-modal-overlay .modal-form-actions {
+    flex-direction: column;
+    gap: var(--spacing-sm);
   }
 }
 

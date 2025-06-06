@@ -254,16 +254,57 @@ body {
   margin-bottom: var(--spacing-xl);
 }
 
+/* Modificar el margin-top del form-header para reducir el espacio con el borde superior */
 .form-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: var(--spacing-lg);
+  margin-top: var(--spacing-md);
+}
+
+.form-header h3 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--primary-color);
+  margin: 0;
 }
 
 .form-actions {
   display: flex;
   gap: var(--spacing-sm);
   align-items: center;
+}
+
+/* Responsive para el título en form-header */
+@media (max-width: 992px) {
+  .form-header h3 {
+    font-size: var(--font-size-lg);
+  }
+}
+
+@media (max-width: 768px) {
+  .form-header {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .form-header h3 {
+    font-size: var(--font-size-md);
+    order: -1;
+  }
+
+  .form-actions {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .form-header h3 {
+    font-size: var(--font-size-sm);
+  }
 }
 
 .btn-ver-en-el-mapa {
@@ -1018,11 +1059,6 @@ body {
     gap: var(--spacing-md);
   }
 
-  .form-actions {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
   .address-input-container {
     flex-direction: column;
     align-items: stretch;
@@ -1082,17 +1118,6 @@ body {
   .company-form {
     width: 100%;
     margin-bottom: var(--spacing-md);
-  }
-
-  .form-header {
-    justify-content: center;
-    margin-bottom: var(--spacing-sm);
-  }
-
-  .form-actions {
-    flex-direction: column;
-    gap: var(--spacing-sm);
-    align-items: stretch;
   }
 
   .btn-add,
