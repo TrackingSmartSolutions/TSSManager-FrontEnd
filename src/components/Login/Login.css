@@ -325,7 +325,7 @@
   display: block;
   width: 18px;
   height: 18px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300347f'%3E%3Cpath d='M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300347f'%3E%3Cpath d='M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3-1.34-3-3-3z'/%3E%3C/svg%3E");
   cursor: pointer;
 }
 
@@ -458,44 +458,50 @@
 /* Pantallas extra pequeñas (móviles en vertical) */
 @media (max-width: 320px) {
   .login-card {
-    width: 90%;
-    padding: 15px;
+    width: 80%; 
+    padding: 15px; 
     max-height: 90vh;
     overflow-y: auto;
+    transform: translate(-50%, -50%) scale(0.9); 
+  }
+
+  .logo img.company-logo {
+    width: 150px; 
+    height: 150px; 
   }
 
   .user-icon {
-    width: 50px;
-    height: 50px;
-    margin: 6px 0;
+    width: 45px; 
+    height: 45px; 
+    margin: 5px 0; 
   }
 
   .form-group-login label {
     font-size: 11px;
-    margin-bottom: 4px;
+    margin-bottom: 3px; 
   }
 
   .form-control-login {
-    height: 32px;
-    font-size: 12px;
-    border-radius: 16px;
-    padding: 0 10px;
+    height: 30px; 
+    font-size: 11px; 
+    border-radius: 15px; 
+    padding: 0 8px; 
   }
 
   .toggle-password {
-    top: 34px;
-    right: 10px;
+    top: 28px; 
+    right: 8px;
   }
 
   .toggle-password label {
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px; 
   }
 
   .login-btn {
-    height: 36px;
-    font-size: 13px;
-    border-radius: 18px;
+    height: 34px;
+    font-size: 12px; 
+    border-radius: 17px; 
   }
 
   .forgot-password a {
@@ -524,32 +530,38 @@
 /* Pantallas pequeñas (móviles en vertical) */
 @media (min-width: 321px) and (max-width: 480px) {
   .login-card {
-    width: 90%;
-    padding: 15px;
+    width: 80%; 
+    padding: 16px; 
+    transform: translate(-50%, -50%) scale(0.92); 
+  }
+
+  .logo img.company-logo {
+    width: 160px; 
+    height: 160px; 
   }
 
   .user-icon {
-    width: 55px;
-    height: 55px;
+    width: 50px; 
+    height: 50px; 
   }
 
   .form-group-login label {
-    font-size: 12px;
-    margin-bottom: 5px;
+    font-size: 11px; 
+    margin-bottom: 4px;
   }
 
   .form-control-login {
-    height: 34px;
+    height: 32px; 
     font-size: 12px;
   }
 
   .toggle-password {
-    top: 36px;
-    right: 10px;
+    top: 30px; 
+    right: 8px;
   }
 
   .login-btn {
-    height: 38px;
+    height: 36px; 
     font-size: 13px;
   }
 
@@ -576,7 +588,7 @@
 @media (min-width: 481px) and (max-width: 768px) {
   .login-card {
     width: 350px;
-    padding: 20px;
+    padding: 24px;
   }
 
   .user-icon {
@@ -602,53 +614,59 @@
 /* Orientación horizontal en dispositivos móviles */
 @media (max-height: 500px) and (orientation: landscape) {
   .login-card {
-    width: 90%;
-    max-width: 400px;
-    padding: 12px 20px;
+    width: 75%;
+    max-width: 320px;
+    padding: 12px 18px;
     max-height: 90vh;
     overflow-y: auto;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+
+  .logo img.company-logo {
+    width: 140px;
+    height: 140px;
   }
 
   .logo-container {
-    margin-bottom: 5px;
+    margin-bottom: 3px;
   }
 
   .user-icon {
-    width: 50px;
-    height: 50px;
-    margin: 5px 0;
+    width: 45px;
+    height: 45px;
+    margin: 4px 0;
   }
 
   .form-group-login {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
 
   .form-group-login label {
-    font-size: 12px;
-    margin-bottom: 4px;
+    font-size: 11px;
+    margin-bottom: 3px;
   }
 
   .form-control-login {
-    height: 34px;
-    font-size: 12px;
-  }
+    height: 32px;
+    font-size: 11px;
 
-  .toggle-password {
-    top: 36px;
-    right: 10px;
-  }
+    .toggle-password {
+      top: 30px;
+      right: 8px;
+    }
 
-  .login-btn {
-    height: 38px;
-    font-size: 13px;
-  }
+    .login-btn {
+      height: 34px;
+      font-size: 12px;
+    }
 
-  .forgot-password {
-    margin-top: 8px;
-  }
+    .forgot-password {
+      margin-top: 6px; 
+    }
 
-  .company-logo {
-    width: 100px;
+    .company-logo {
+      width: 100px;
+    }
   }
 }
 
