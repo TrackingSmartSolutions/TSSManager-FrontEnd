@@ -525,10 +525,9 @@ const ContactoModal = ({
     telefonos: [""],
     celular: "",
     rol: "RECEPCION",
-    propietarioId: null,
-  })
+  });
 
-  const [errors, setErrors] = useState({})
+  const [errors, setErrors] = useState({});
 
   const rolesOptions = [
     "RECEPCION",
@@ -539,12 +538,12 @@ const ContactoModal = ({
     "SECRETARIO",
     "GERENTE",
     "DIRECTOR",
-  ]
+  ];
 
   useEffect(() => {
     if (contacto && mode === "edit") {
-      const correos = contacto.correos?.length > 0 ? contacto.correos.map((item) => item.correo || "") : [""]
-      const telefonos = contacto.telefonos?.length > 0 ? contacto.telefonos.map((item) => item.telefono || "") : [""]
+      const correos = contacto.correos?.length > 0 ? contacto.correos.map((item) => item.correo || "") : [""];
+      const telefonos = contacto.telefonos?.length > 0 ? contacto.telefonos.map((item) => item.telefono || "") : [""];
 
       setFormData({
         nombre: contacto.nombre || "",
@@ -552,8 +551,7 @@ const ContactoModal = ({
         telefonos,
         celular: contacto.celular || "",
         rol: contacto.rol || "RECEPCION",
-        propietarioId: contacto.propietario?.id || null,
-      })
+      });
     } else {
       setFormData({
         nombre: "",
@@ -561,71 +559,70 @@ const ContactoModal = ({
         telefonos: [""],
         celular: "",
         rol: "RECEPCION",
-        propietarioId: null,
-      })
+      });
     }
-    setErrors({})
-  }, [contacto, mode, isOpen])
+    setErrors({});
+  }, [contacto, mode, isOpen]);
 
   const handleInputChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }))
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
-  }
+  };
 
   const handleArrayChange = (field, index, value) => {
     setFormData((prev) => ({
       ...prev,
       [field]: prev[field].map((item, i) => (i === index ? value : item)),
-    }))
+    }));
     if (errors[field]?.[index]) {
       setErrors((prev) => ({
         ...prev,
         [field]: prev[field].map((err, i) => (i === index ? "" : err)),
-      }))
+      }));
     }
-  }
+  };
 
   const addArrayItem = (field) => {
     setFormData((prev) => ({
       ...prev,
       [field]: [...prev[field], ""],
-    }))
+    }));
     setErrors((prev) => ({
       ...prev,
       [field]: [...(prev[field] || []), ""],
-    }))
-  }
+    }));
+  };
 
   const removeArrayItem = (field, index) => {
     if (formData[field].length > 1) {
       setFormData((prev) => ({
         ...prev,
         [field]: prev[field].filter((_, i) => i !== index),
-      }))
+      }));
       setErrors((prev) => ({
         ...prev,
         [field]: (prev[field] || []).filter((_, i) => i !== index),
-      }))
+      }));
     }
-  }
+  };
 
   const validateForm = () => {
-    const newErrors = {}
+    const newErrors = {};
 
     // Validación Nombre: Solo letras (incluye Ñ/ñ y acentos), opcional
     if (formData.nombre && !/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(formData.nombre.trim())) {
-      newErrors.nombre = "Este campo solo debe contener letras"
+      newErrors.nombre = "Este campo solo debe contener letras";
     }
 
     // Validación Correos
     newErrors.correos = formData.correos.map((correo) => {
       if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
-        return "Este campo debe ser un correo válido (ej. usuario@dominio.com)"
+        return "Este campo debe ser un correo válido (ej. usuario@dominio.com)";
       }
-      return ""
-    })
+      return "";
+    });
 
     // Validación Teléfonos: 10 dígitos
     newErrors.telefonos = formData.telefonos.map((telefono) => {
@@ -653,28 +650,28 @@ const ContactoModal = ({
 
     // Validación Rol
     if (!formData.rol) {
-      newErrors.rol = "Este campo es obligatorio"
+      newErrors.rol = "Este campo es obligatorio";
     }
 
-    setErrors(newErrors)
+    setErrors(newErrors);
     return !Object.values(newErrors)
       .flat()
-      .some((error) => error)
-  }
+      .some((error) => error);
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateForm()) {
-      return
+      return;
     }
 
-    let nombreFinal = formData.nombre.trim()
+    let nombreFinal = formData.nombre.trim();
     if (!nombreFinal) {
-      nombreFinal = `Contacto de ${formData.rol}`
+      nombreFinal = `Contacto de ${formData.rol}`;
     }
 
-    const username = localStorage.getItem("username") || "unknown"
+    const username = localStorage.getItem("username") || "unknown";
 
     const contactoData = {
       nombre: nombreFinal,
@@ -682,39 +679,38 @@ const ContactoModal = ({
       telefonos: formData.telefonos.filter((tel) => tel.trim()).map((tel) => ({ telefono: tel })),
       celular: formData.celular || null,
       rol: formData.rol,
-      ...(mode === "edit" && { propietarioId: formData.propietarioId || null }),
       modificadoPor: username,
-    }
+    };
 
     try {
-      let response
+      let response;
       if (mode === "add") {
         response = await fetchWithToken(`${API_BASE_URL}/empresas/${empresaId}/contactos`, {
           method: "POST",
           body: JSON.stringify(contactoData),
-        })
+        });
       } else {
         response = await fetchWithToken(`${API_BASE_URL}/empresas/contactos/${contacto.id}`, {
           method: "PUT",
           body: JSON.stringify(contactoData),
-        })
+        });
       }
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Error al guardar el contacto")
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Error al guardar el contacto");
       }
 
-      const savedContacto = await response.json()
-      onSave(savedContacto)
+      const savedContacto = await response.json();
+      onSave(savedContacto);
     } catch (error) {
       Swal.fire({
         icon: "error",
         title: "Error",
         text: error.message,
-      })
+      });
     }
-  }
+  };
 
   return (
     <Modal
@@ -724,36 +720,13 @@ const ContactoModal = ({
         isInitialContact
           ? "Agregar Contacto Inicial (Obligatorio)"
           : mode === "add"
-            ? "Nuevo Contacto"
-            : "Editar Contacto"
+          ? "Nuevo Contacto"
+          : "Editar Contacto"
       }
       size="md"
       canClose={!isInitialContact}
     >
       <form onSubmit={handleSubmit} className="modal-form">
-        {mode === "edit" && (
-          <div className="modal-form-row">
-            <div className="modal-form-group">
-              <label htmlFor="propietario">
-                Propietario <span className="required">*</span>
-              </label>
-              <select
-                id="propietario"
-                value={formData.propietarioId || ""}
-                onChange={(e) => handleInputChange("propietarioId", e.target.value ? Number(e.target.value) : null)}
-                className="modal-form-control"
-              >
-                <option value="">Seleccione un propietario</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.nombreUsuario}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
-
         <div className="modal-form-row">
           <div className="modal-form-group">
             <label htmlFor="nombre">Nombre</label>
@@ -907,8 +880,8 @@ const ContactoModal = ({
         </div>
       </form>
     </Modal>
-  )
-}
+  );
+};
 
 // Modal de Detalles de Empresa
 const DetallesEmpresaModal = ({ isOpen, onClose, empresa }) => {
