@@ -1,4 +1,3 @@
-"use client"
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import "./DetallesTrato.css"
@@ -16,8 +15,33 @@ import editIcon from "../../assets/icons/editar.png"
 import checkIcon from "../../assets/icons/ganado.png"
 import closeIcon from "../../assets/icons/perdido.png"
 import deploy from "../../assets/icons/desplegar.png"
+import { API_BASE_URL } from "../Config/Config";
 
-// Modal Base Component for DetallesTrato
+const fetchWithToken = async (url, options = {}) => {
+  const token = localStorage.getItem("token");
+  const headers = {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+  const response = await fetch(url, { ...options, headers });
+  if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`);
+  return response;
+};
+
+
+const fetchTrato = async (id) => {
+  try {
+    const response = await fetchWithToken(`${API_BASE_URL}/tratos/${id}`);
+    if (!response.ok) throw new Error('Error fetching trato');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching trato:', error);
+    throw error;
+  }
+};
+
+// Modal Base para DetallesTrato
 const DetallesTratoModal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
   useEffect(() => {
     if (isOpen) {
@@ -41,7 +65,7 @@ const DetallesTratoModal = ({ isOpen, onClose, title, children, size = "md", can
   }
 
   return (
-    <div className="detalles-trato-modal-overlay" onClick={canClose ? onClose : () => {}}>
+    <div className="detalles-trato-modal-overlay" onClick={canClose ? onClose : () => { }}>
       <div className={`modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">{title}</h2>
@@ -250,14 +274,16 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave }) => {
   )
 }
 
-// Modal para programar reunión (copiado de tratos.js)
+// Modal para programar reunión con duración en lugar de hora fin
 const ProgramarReunionModal = ({ isOpen, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     asignadoA: "Dagoberto Nieto",
     nombreContacto: "",
     fecha: "",
     horaInicio: "",
-    horaFin: "",
+    duracionHoras: "",
+    duracionMinutos: "",
+    duracionSegundos: "",
     modalidad: "",
     finalidad: "",
   })
@@ -271,7 +297,9 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave }) => {
         nombreContacto: "",
         fecha: "",
         horaInicio: "",
-        horaFin: "",
+        duracionHoras: "",
+        duracionMinutos: "",
+        duracionSegundos: "",
         modalidad: "",
         finalidad: "",
       })
@@ -301,8 +329,8 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave }) => {
       newErrors.horaInicio = "Este campo es obligatorio"
     }
 
-    if (!formData.horaFin.trim()) {
-      newErrors.horaFin = "Este campo es obligatorio"
+    if (!formData.duracionHoras && !formData.duracionMinutos && !formData.duracionSegundos) {
+      newErrors.duracion = "Debe especificar al menos una unidad de tiempo"
     }
 
     if (!formData.modalidad.trim()) {
@@ -398,17 +426,48 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave }) => {
           </div>
 
           <div className="modal-form-group">
-            <label htmlFor="horaFin">
-              Hora fin: <span className="required">*</span>
+            <label>
+              Duración: <span className="required">*</span>
             </label>
-            <input
-              type="time"
-              id="horaFin"
-              value={formData.horaFin}
-              onChange={(e) => handleInputChange("horaFin", e.target.value)}
-              className={`modal-form-control ${errors.horaFin ? "error" : ""}`}
-            />
-            {errors.horaFin && <span className="error-message">{errors.horaFin}</span>}
+            <div className="duracion-container">
+              <div className="duracion-field">
+                <input
+                  type="number"
+                  value={formData.duracionHoras}
+                  onChange={(e) => handleInputChange("duracionHoras", e.target.value)}
+                  className="modal-form-control duracion-input"
+                  min="0"
+                  max="23"
+                  placeholder="0"
+                />
+                <label>Horas</label>
+              </div>
+              <div className="duracion-field">
+                <input
+                  type="number"
+                  value={formData.duracionMinutos}
+                  onChange={(e) => handleInputChange("duracionMinutos", e.target.value)}
+                  className="modal-form-control duracion-input"
+                  min="0"
+                  max="59"
+                  placeholder="0"
+                />
+                <label>Minutos</label>
+              </div>
+              <div className="duracion-field">
+                <input
+                  type="number"
+                  value={formData.duracionSegundos}
+                  onChange={(e) => handleInputChange("duracionSegundos", e.target.value)}
+                  className="modal-form-control duracion-input"
+                  min="0"
+                  max="59"
+                  placeholder="0"
+                />
+                <label>Segundos</label>
+              </div>
+            </div>
+            {errors.duracion && <span className="error-message">{errors.duracion}</span>}
           </div>
         </div>
 
@@ -809,14 +868,16 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
   )
 }
 
-// Modal para reprogramar reunión
+// Modal para reprogramar reunión con duración
 const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
   const [formData, setFormData] = useState({
     asignadoA: "Dagoberto Nieto",
     nombreContacto: "",
     nuevaFecha: "",
     nuevaHoraInicio: "",
-    nuevaHoraFin: "",
+    duracionHoras: "",
+    duracionMinutos: "",
+    duracionSegundos: "",
     modalidad: "",
     medio: "",
     finalidad: "",
@@ -831,7 +892,9 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
         nombreContacto: "Antonio Vazquez",
         nuevaFecha: "",
         nuevaHoraInicio: "",
-        nuevaHoraFin: "",
+        duracionHoras: "",
+        duracionMinutos: "",
+        duracionSegundos: "",
         modalidad: "",
         medio: "",
         finalidad: "",
@@ -858,8 +921,8 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
       newErrors.nuevaHoraInicio = "Este campo es obligatorio"
     }
 
-    if (!formData.nuevaHoraFin.trim()) {
-      newErrors.nuevaHoraFin = "Este campo es obligatorio"
+    if (!formData.duracionHoras && !formData.duracionMinutos && !formData.duracionSegundos) {
+      newErrors.duracion = "Debe especificar al menos una unidad de tiempo"
     }
 
     if (!formData.modalidad.trim()) {
@@ -957,17 +1020,48 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
           </div>
 
           <div className="modal-form-group">
-            <label htmlFor="nuevaHoraFin">
-              Nueva Hora fin: <span className="required">*</span>
+            <label>
+              Duración: <span className="required">*</span>
             </label>
-            <input
-              type="time"
-              id="nuevaHoraFin"
-              value={formData.nuevaHoraFin}
-              onChange={(e) => handleInputChange("nuevaHoraFin", e.target.value)}
-              className={`modal-form-control ${errors.nuevaHoraFin ? "error" : ""}`}
-            />
-            {errors.nuevaHoraFin && <span className="error-message">{errors.nuevaHoraFin}</span>}
+            <div className="duracion-container">
+              <div className="duracion-field">
+                <input
+                  type="number"
+                  value={formData.duracionHoras}
+                  onChange={(e) => handleInputChange("duracionHoras", e.target.value)}
+                  className="modal-form-control duracion-input"
+                  min="0"
+                  max="23"
+                  placeholder="0"
+                />
+                <label>Horas</label>
+              </div>
+              <div className="duracion-field">
+                <input
+                  type="number"
+                  value={formData.duracionMinutos}
+                  onChange={(e) => handleInputChange("duracionMinutos", e.target.value)}
+                  className="modal-form-control duracion-input"
+                  min="0"
+                  max="59"
+                  placeholder="0"
+                />
+                <label>Minutos</label>
+              </div>
+              <div className="duracion-field">
+                <input
+                  type="number"
+                  value={formData.duracionSegundos}
+                  onChange={(e) => handleInputChange("duracionSegundos", e.target.value)}
+                  className="modal-form-control duracion-input"
+                  min="0"
+                  max="59"
+                  placeholder="0"
+                />
+                <label>Segundos</label>
+              </div>
+            </div>
+            {errors.duracion && <span className="error-message">{errors.duracion}</span>}
           </div>
         </div>
 
@@ -1221,7 +1315,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
   )
 }
 
-// Modal para completar actividad
+// Modal para completar actividad con mejoras en el diseño
 const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad }) => {
   const [formData, setFormData] = useState({
     respuesta: "",
@@ -1315,33 +1409,44 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad }) => {
             Interés: <span className="required">*</span>
           </label>
           <div className="interest-container">
-            <div className="interest-buttons">
-              <button
-                type="button"
-                className={`btn-interest ${formData.interes === "bajo" ? "active low" : ""}`}
-                onClick={() => handleInputChange("interes", "bajo")}
-              >
-                ●
-              </button>
-              <button
-                type="button"
-                className={`btn-interest ${formData.interes === "medio" ? "active medium" : ""}`}
-                onClick={() => handleInputChange("interes", "medio")}
-              >
-                ●
-              </button>
-              <button
-                type="button"
-                className={`btn-interest ${formData.interes === "alto" ? "active high" : ""}`}
-                onClick={() => handleInputChange("interes", "alto")}
-              >
-                ●
-              </button>
-            </div>
-            <div className="interest-labels">
-              <span>Bajo</span>
-              <span>Medio</span>
-              <span>Alto</span>
+            <div className="interest-options">
+
+              {/* Opción Bajo */}
+              <div className="interest-option">
+                <button
+                  type="button"
+                  className={`btn-interest ${formData.interes === "bajo" ? "active low" : ""}`}
+                  onClick={() => handleInputChange("interes", "bajo")}
+                >
+                  ●
+                </button>
+                <span>Bajo</span>
+              </div>
+
+              {/* Opción Medio */}
+              <div className="interest-option">
+                <button
+                  type="button"
+                  className={`btn-interest ${formData.interes === "medio" ? "active medium" : ""}`}
+                  onClick={() => handleInputChange("interes", "medio")}
+                >
+                  ●
+                </button>
+                <span>Medio</span>
+              </div>
+
+              {/* Opción Alto */}
+              <div className="interest-option">
+                <button
+                  type="button"
+                  className={`btn-interest ${formData.interes === "alto" ? "active high" : ""}`}
+                  onClick={() => handleInputChange("interes", "alto")}
+                >
+                  ●
+                </button>
+                <span>Alto</span>
+              </div>
+
             </div>
           </div>
           {errors.interes && <span className="error-message">{errors.interes}</span>}
@@ -1614,13 +1719,30 @@ const EditarTratoModal = ({ isOpen, onClose, onSave, trato }) => {
 const DetallesTrato = () => {
   const params = useParams()
   const navigate = useNavigate()
-  const [trato, setTrato] = useState(null)
+  const [trato, setTrato] = useState({
+    nombre: "",
+    contacto: { nombre: "", telefono: "", whatsapp: "", email: "" },
+    propietario: "",
+    numeroTrato: "",
+    nombreEmpresa: "",
+    descripcion: "",
+    domicilio: "",
+    ingresosEsperados: "",
+    sitioWeb: "",
+    sector: "",
+    fechaCreacion: "",
+    fechaCierre: "",
+    fases: [],
+    actividadesAbiertas: { tareas: [], llamadas: [], reuniones: [] },
+    historialInteracciones: [],
+    notas: [],
+  });
   const [loading, setLoading] = useState(true)
   const [activeEmailTab, setActiveEmailTab] = useState("correos")
   const [nuevaNota, setNuevaNota] = useState("")
-  const [filtroNotas, setFiltroNotas] = useState("recientes")
   const [editingNoteId, setEditingNoteId] = useState(null)
   const [editingNoteText, setEditingNoteText] = useState("")
+
 
   // Estados para modales
   const [modals, setModals] = useState({
@@ -1633,6 +1755,7 @@ const DetallesTrato = () => {
     reprogramarTarea: { isOpen: false, actividad: null },
     completarActividad: { isOpen: false, actividad: null },
     editarTrato: { isOpen: false },
+    crearNuevaActividad: { isOpen: false },
   })
 
   // Funciones para manejar modales
@@ -1659,122 +1782,209 @@ const DetallesTrato = () => {
     openModal(modalMap[tipo])
   }
 
-  const handleSaveActividad = (data, tipo) => {
-    console.log(`Nueva ${tipo}:`, data)
-    Swal.fire({
-      title: `¡${tipo.charAt(0).toUpperCase() + tipo.slice(1)} programada!`,
-      text: `La ${tipo} se ha programado exitosamente`,
-      icon: "success",
-    })
-  }
+  const handleSaveActividad = async (data, tipo) => {
+    const actividad = {
+      ...data,
+      id: Date.now(),
+      tipo,
+      estado: "Programada",
+    };
 
-  const handleSaveReprogramar = (data, tipo) => {
-    console.log(`${tipo} reprogramada:`, data)
-    Swal.fire({
-      title: "¡Actividad reprogramada!",
-      text: `La ${tipo} se ha reprogramado exitosamente`,
-      icon: "success",
-    })
-  }
-
-  const handleSaveCompletarActividad = (data) => {
-    console.log("Actividad completada:", data)
-    Swal.fire({
-      title: "¡Actividad completada!",
-      text: "El reporte de actividad se ha guardado exitosamente",
-      icon: "success",
-    })
-  }
-
-  const handleSaveEditarTrato = (data) => {
-    console.log("Trato editado:", data)
-    Swal.fire({
-      title: "¡Trato actualizado!",
-      text: "Los cambios se han guardado exitosamente",
-      icon: "success",
-    })
-  }
-
-  // Datos de ejemplo del trato
-  useEffect(() => {
-    // Simular carga de datos
-    setTimeout(() => {
-      setTrato({
-        id: params.id,
-        nombre: "Nombre trato",
-        propietario: "Dagoberto",
-        numeroTrato: "1",
-        descripcion: "Descripción ejemplo",
-        nombreEmpresa: "Empresa 1",
-        domicilio: "Estancia 175 local 6, Villa Magna, 372",
-        ingresosEsperados: "$50,000",
-        sitioWeb: "https://trackings.com.mx",
-        sector: "Tecnología",
-        fechaCreacion: "08/04/2025",
-        fechaCierre: "04/06/2025",
-        faseActual: "Cotización propuesta/precio",
-        fases: [
-          { nombre: "Primer contacto", completada: true },
-          { nombre: "Envío de información", completada: true },
-          { nombre: "Reunión", completada: true },
-          { nombre: "Cotización propuesta/precio", completada: false, actual: true },
-          { nombre: "Negociación/revisión", completada: false },
-          { nombre: "Respuesta por correo", completada: false },
-          { nombre: "Interés futuro", completada: false },
+    setTrato((prev) => ({
+      ...prev,
+      actividadesAbiertas: {
+        ...prev.actividadesAbiertas,
+        [tipo === "llamada" ? "llamadas" : tipo === "reunion" ? "reuniones" : "tareas"]: [
+          ...prev.actividadesAbiertas[tipo === "llamada" ? "llamadas" : tipo === "reunion" ? "reuniones" : "tareas"],
+          actividad,
         ],
-        contacto: {
-          nombre: "Nombre del contacto",
-          telefono: "477 569 76 54",
-          whatsapp: "55 3042 7319",
-          email: "contacto@empresa.com",
-        },
-        notas: [
-          {
-            id: 1,
-            texto: "Nota de ejemplo",
-            autor: "Dagoberto",
-            fecha: "Mar 26 por Dagoberto",
-          },
-        ],
+      },
+    }));
+
+    try {
+      await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}/actividades`, {
+        method: 'POST',
+        body: JSON.stringify(actividad),
+      });
+      Swal.fire({
+        title: `¡${tipo.charAt(0).toUpperCase() + tipo.slice(1)} programada!`,
+        text: `La ${tipo} se ha programado exitosamente`,
+        icon: "success",
+      });
+    } catch (error) {
+      Swal.fire({
+        title: 'Error',
+        text: `No se pudo programar la ${tipo}`,
+        icon: 'error',
+      });
+    }
+  };
+
+  const handleSaveReprogramar = async (data, tipo) => {
+    const actividadReprogramada = {
+      ...data,
+      id: modals[`reprogramar${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`].actividad.id,
+      tipo,
+      estado: "Reprogramada",
+    };
+
+    setTrato((prev) => {
+      const updatedActividades = prev.actividadesAbiertas[tipo === "llamada" ? "llamadas" : tipo === "reunion" ? "reuniones" : "tareas"].map((a) =>
+        a.id === actividadReprogramada.id ? actividadReprogramada : a
+      );
+      return {
+        ...prev,
         actividadesAbiertas: {
-          tareas: [],
-          llamadas: [
-            {
-              id: 1,
-              titulo: "Llamada saliente a Contacto 1",
-              descripcion: "Nombre trato",
-              fecha: "12/04/2025",
-              hora: "10:55 AM",
-              responsable: "Dagoberto Nieto",
-              estado: "Completada",
-              tipo: "Programada",
-            },
-          ],
-          reuniones: [],
+          ...prev.actividadesAbiertas,
+          [tipo === "llamada" ? "llamadas" : tipo === "reunion" ? "reuniones" : "tareas"]: updatedActividades,
         },
-        actividadesCerradas: {
-          tareas: [],
-          llamadas: [
-            {
-              id: 2,
-              titulo: "Llamada saliente a Contacto 1",
-              descripcion: "Nombre trato",
-              fecha: "12/04/2025",
-              hora: "10:55 AM",
-              responsable: "Dagoberto Nieto",
-            },
-          ],
-          reuniones: [],
-        },
-        correos: {
-          correos: [],
-          borradores: [],
-          programados: [],
-        },
-      })
-      setLoading(false)
-    }, 1000)
-  }, [params.id])
+      };
+    });
+
+    try {
+      await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}/actividades/${actividadReprogramada.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(actividadReprogramada),
+      });
+      Swal.fire({
+        title: "¡Actividad reprogramada!",
+        text: `La ${tipo} se ha reprogramado exitosamente`,
+        icon: "success",
+      });
+    } catch (error) {
+      Swal.fire({
+        title: 'Error',
+        text: `No se pudo reprogramar la ${tipo}`,
+        icon: 'error',
+      });
+    }
+  };
+
+  const handleSaveCompletarActividad = async (data) => {
+    const actividadCompletada = {
+      id: Date.now(),
+      fecha: new Date().toLocaleDateString(),
+      hora: new Date().toLocaleTimeString(),
+      responsable: "Dagoberto Nieto",
+      tipo: "Llamada",
+      medio: "Teléfono",
+      resultado: data.respuesta === "positiva" ? "Positivo" : "Negativo",
+      interes: data.interes,
+      notas: data.notas,
+    };
+
+    setTrato((prev) => ({
+      ...prev,
+      historialInteracciones: [...(prev.historialInteracciones || []), actividadCompletada],
+      actividadesAbiertas: {
+        ...prev.actividadesAbiertas,
+        llamadas: prev.actividadesAbiertas.llamadas.filter((l) => l.id !== modals.completarActividad.actividad?.id),
+      },
+    }));
+
+    try {
+      await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}/actividades`, {
+        method: 'POST',
+        body: JSON.stringify(actividadCompletada),
+      });
+      Swal.fire({
+        title: "¡Actividad completada!",
+        text: "El reporte de actividad se ha guardado exitosamente",
+        icon: "success",
+        showCancelButton: true,
+        confirmButtonText: "Crear nueva actividad",
+        cancelButtonText: "Cerrar",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          openModal("crearNuevaActividad");
+        }
+      });
+    } catch (error) {
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudo guardar la actividad en el servidor',
+        icon: 'error',
+      });
+    }
+  };
+
+  const handleSaveEditarTrato = async (data) => {
+    setTrato((prev) => ({
+      ...prev,
+      ...data,
+      ingresosEsperados: `$${data.ingresosEsperados || "0"}`,
+    }));
+
+    try {
+      await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+      Swal.fire({
+        title: "¡Trato actualizado!",
+        text: "Los cambios se han guardado exitosamente",
+        icon: "success",
+      });
+    } catch (error) {
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudo actualizar el trato',
+        icon: 'error',
+      });
+    }
+  };
+
+  useEffect(() => {
+    const loadTrato = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchTrato(params.id);
+        setTrato((prev) => ({
+          ...prev,
+          id: data.id || "",
+          nombre: data.nombre || "",
+          contacto: data.contacto || { nombre: "", telefono: "", whatsapp: "", email: "" },
+          propietario: data.propietarioNombre || "",
+          numeroTrato: data.noTrato || "",
+          nombreEmpresa: data.empresaNombre || "",
+          descripcion: data.descripcion || "",
+          domicilio: data.domicilio || "",
+          ingresosEsperados: data.ingresosEsperados ? `$${data.ingresosEsperados.toFixed(2)}` : "",
+          sitioWeb: data.sitioWeb || "",
+          sector: data.sector || "",
+          fechaCreacion: data.fechaCreacion ? new Date(data.fechaCreacion).toLocaleDateString() : "",
+          fechaCierre: data.fechaCierre ? new Date(data.fechaCierre).toLocaleDateString() : "",
+          fase: data.fase || "", 
+          fases: data.fases || [],
+          actividadesAbiertas: {
+            tareas: data.actividadesAbiertas.tareas || [],
+            llamadas: data.actividadesAbiertas.llamadas || [],
+            reuniones: data.actividadesAbiertas.reuniones || [],
+          },
+          historialInteracciones: data.historialInteracciones || [],
+          notas: data.notas.map((n) => ({
+            id: n.id,
+            texto: n.nota.replace(/\\"/g, '"').replace(/^"|"$/g, ''),
+            autor: n.autorNombre,
+            fecha: n.fechaCreacion ? new Date(n.fechaCreacion).toLocaleDateString() : "",
+            editadoPor: n.editadoPorNombre || null,
+            fechaEdicion: n.fechaEdicion ? new Date(n.fechaEdicion).toLocaleDateString() : null,
+          })) || [],
+        }));
+      } catch (error) {
+        console.error("Error fetching trato:", error);
+        Swal.fire({
+          title: "Error",
+          text: "No se pudo cargar el trato",
+          icon: "error",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadTrato();
+  }, [params.id]);
+
 
   const handleVolver = () => {
     navigate("/tratos")
@@ -1785,21 +1995,44 @@ const DetallesTrato = () => {
     openModal("editarTrato")
   }
 
-  const handleAgregarNota = () => {
+  const handleAgregarNota = async () => {
     if (nuevaNota.trim()) {
-      const nuevaNotaObj = {
-        id: Date.now(),
-        texto: nuevaNota,
-        autor: "Usuario Actual",
-        fecha: new Date().toLocaleDateString(),
+      try {
+        const cleanedText = nuevaNota.replace(/\\"/g, '"').replace(/^"|"$/g, '');
+        const response = await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}/notas`, {
+          method: 'POST',
+          body: JSON.stringify(cleanedText),
+        });
+        const savedNota = await response.json();
+        console.log("Respuesta del backend:", savedNota);
+        const newNota = {
+          id: savedNota.id,
+          texto: savedNota.nota.replace(/\\"/g, '"').replace(/^"|"$/g, ''),
+          autor: savedNota.autorNombre || "Usuario Desconocido",
+          fecha: new Date(savedNota.fechaCreacion).toLocaleDateString(),
+          editadoPor: savedNota.editadoPorNombre || null,
+          fechaEdicion: savedNota.fechaEdicion ? new Date(savedNota.fechaEdicion).toLocaleDateString() : null,
+        };
+        setTrato((prev) => ({
+          ...prev,
+          notas: [...prev.notas, newNota],
+        }));
+        setNuevaNota("");
+        Swal.fire({
+          title: "¡Éxito!",
+          text: "Nota agregada correctamente",
+          icon: "success",
+        });
+      } catch (error) {
+        Swal.fire({
+          title: 'Error',
+          text: 'No se pudo agregar la nota',
+          icon: 'error',
+        });
+        console.error(error);
       }
-      setTrato((prev) => ({
-        ...prev,
-        notas: [...prev.notas, nuevaNotaObj],
-      }))
-      setNuevaNota("")
     }
-  }
+  };
 
   const handleEliminarNota = (notaId) => {
     Swal.fire({
@@ -1811,20 +2044,37 @@ const DetallesTrato = () => {
       cancelButtonColor: "#d33",
       confirmButtonText: "Sí, eliminar",
       cancelButtonText: "Cancelar",
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        setTrato((prev) => ({
-          ...prev,
-          notas: prev.notas.filter((nota) => nota.id !== notaId),
-        }))
+        try {
+          await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}/notas/${notaId}`, {
+            method: 'DELETE',
+          });
+          setTrato((prev) => ({
+            ...prev,
+            notas: prev.notas.filter((nota) => nota.id !== notaId),
+          }));
+          Swal.fire({
+            title: "¡Éxito!",
+            text: "Nota eliminada correctamente",
+            icon: "success",
+          });
+        } catch (error) {
+          Swal.fire({
+            title: 'Error',
+            text: 'No se pudo eliminar la nota',
+            icon: 'error',
+          });
+        }
       }
-    })
-  }
+    });
+  };
 
-  // Cambiar la función handleAgregarActividad para usar el modal de selección
+
   const handleAgregarActividad = (tipo) => {
     openModal("seleccionarActividad")
   }
+
 
   // Agregar nueva función para correos electrónicos
   const handleAgregarCorreo = () => {
@@ -1835,59 +2085,78 @@ const DetallesTrato = () => {
     })
   }
 
-  const handleMarcarGanado = () => {
-    Swal.fire({
-      title: "Marcar como Ganado",
-      text: "¿Estás seguro de que quieres marcar este trato como ganado?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#4caf50",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí, marcar como ganado",
-      cancelButtonText: "Cancelar",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        Swal.fire("¡Éxito!", "Trato marcado como ganado", "success")
-      }
-    })
-  }
-
-  const handleMarcarPerdido = () => {
-    Swal.fire({
-      title: "Marcar como Perdido",
-      text: "¿Estás seguro de que quieres marcar este trato como perdido?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#f44336",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí, marcar como perdido",
-      cancelButtonText: "Cancelar",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        Swal.fire("Marcado", "Trato marcado como perdido", "info")
-      }
-    })
-  }
+  const handleCambiarFase = async (nuevaFase) => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}/mover-fase?nuevaFase=${nuevaFase}`, {
+        method: 'PUT',
+      });
+      const updatedTrato = await response.json();
+      setTrato((prev) => ({
+        ...prev,
+        fase: updatedTrato.fase, // Asegúrate de que la API devuelva 'fase'
+        fases: updatedTrato.fases, // Asegúrate de que 'fases' se actualice si es necesario
+      }));
+      Swal.fire({
+        title: "¡Éxito!",
+        text: `Fase cambiada a ${nuevaFase.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}`,
+        icon: "success",
+      });
+    } catch (error) {
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudo cambiar la fase',
+        icon: 'error',
+      });
+      console.error(error);
+    }
+  };
 
   // Funciones para editar notas inline
   const handleEditarNota = (notaId) => {
-    const nota = trato.notas.find((n) => n.id === notaId)
+    const nota = trato.notas.find((n) => n.id === notaId);
     if (nota) {
-      setEditingNoteId(notaId)
-      setEditingNoteText(nota.texto)
+      setEditingNoteId(notaId);
+      setEditingNoteText(nota.texto);
     }
-  }
+  };
 
-  const handleSaveEditNota = (notaId) => {
+  const handleSaveEditNota = async (notaId) => {
     if (editingNoteText.trim()) {
-      setTrato((prev) => ({
-        ...prev,
-        notas: prev.notas.map((nota) => (nota.id === notaId ? { ...nota, texto: editingNoteText.trim() } : nota)),
-      }))
-      setEditingNoteId(null)
-      setEditingNoteText("")
+      try {
+        const cleanedText = editingNoteText.replace(/\\"/g, '"').replace(/^"|"$/g, '');
+        const response = await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}/notas/${notaId}`, {
+          method: 'PUT',
+          body: JSON.stringify(cleanedText),
+        });
+        const updatedNota = await response.json();
+        console.log("Nota actualizada desde backend:", updatedNota);
+        const newNota = {
+          ...trato.notas.find((n) => n.id === notaId),
+          texto: updatedNota.nota,
+          editadoPor: updatedNota.editadoPorNombre || null,
+          fechaEdicion: updatedNota.fechaEdicion ? new Date(updatedNota.fechaEdicion).toLocaleDateString() : null,
+        };
+        setTrato((prev) => ({
+          ...prev,
+          notas: prev.notas.map((n) => (n.id === notaId ? newNota : n)),
+        }));
+        setEditingNoteId(null);
+        setEditingNoteText("");
+        Swal.fire({
+          title: "¡Éxito!",
+          text: "Nota editada correctamente",
+          icon: "success",
+        });
+      } catch (error) {
+        Swal.fire({
+          title: 'Error',
+          text: 'No se pudo editar la nota',
+          icon: 'error',
+        });
+        console.error(error);
+      }
     }
-  }
+  };
 
   const handleCancelEditNota = () => {
     setEditingNoteId(null)
@@ -1906,7 +2175,6 @@ const DetallesTrato = () => {
       cancelButtonText: "Cancelar",
     }).then((result) => {
       if (result.isConfirmed) {
-        // Aquí puedes integrar con un sistema de llamadas
         window.open(`tel:${telefono}`, "_self")
         Swal.fire("Llamada iniciada", `Llamando a ${telefono}`, "success")
       }
@@ -2034,10 +2302,10 @@ const DetallesTrato = () => {
               {trato.fases.map((fase, index) => (
                 <button
                   key={index}
-                  className={`fase-item ${fase.completada ? "completada" : ""} ${fase.actual ? "actual" : ""}`}
-                  onClick={() => handleClickFase(index, fase)}
+                  className={`fase-item ${trato.fase === fase.nombre ? 'actual' : ''}`}
+                  onClick={() => handleCambiarFase(fase.nombre)}
                 >
-                  <span>{fase.nombre}</span>
+                  <span>{fase.nombre.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}</span>
                 </button>
               ))}
             </div>
@@ -2045,10 +2313,16 @@ const DetallesTrato = () => {
               <span>FINAL</span>
               <span className="fecha">{trato.fechaCierre}</span>
               <div className="iconos-estado">
-                <button className="btn-estado ganado" onClick={handleMarcarGanado}>
+                <button
+                  className={`btn-estado ganado ${trato.fase === 'CERRADO_GANADO' ? 'activo' : ''}`}
+                  onClick={() => handleCambiarFase('CERRADO_GANADO')}
+                >
                   <img src={checkIcon || "/placeholder.svg"} alt="Marcar como ganado" />
                 </button>
-                <button className="btn-estado perdido" onClick={handleMarcarPerdido}>
+                <button
+                  className={`btn-estado perdido ${trato.fase === 'CERRADO_PERDIDO' ? 'activo' : ''}`}
+                  onClick={() => handleCambiarFase('CERRADO_PERDIDO')}
+                >
                   <img src={closeIcon || "/placeholder.svg"} alt="Marcar como perdido" />
                 </button>
               </div>
@@ -2056,49 +2330,51 @@ const DetallesTrato = () => {
           </div>
 
           {/* Persona de contacto */}
-          <div className="seccion persona-contacto">
-            <div className="seccion-header">
-              <h2>Persona de contacto</h2>
-              <label className="checkbox-container">
-                <input type="checkbox" />
-                <span>Recibir emails de seguimiento</span>
-              </label>
-            </div>
-            <div className="contacto-info">
-              <div className="contacto-avatar">
-                <div className="avatar-circle">
-                  <span>{trato.contacto.nombre.charAt(0)}</span>
-                </div>
-                <span className="contacto-nombre">{trato.contacto.nombre}</span>
+          {trato.contacto && (
+            <div className="seccion persona-contacto">
+              <div className="seccion-header">
+                <h2>Persona de contacto</h2>
+                <label className="checkbox-container">
+                  <input type="checkbox" />
+                  <span>Recibir emails de seguimiento</span>
+                </label>
               </div>
-              <div className="contacto-detalles">
-                <div className="contacto-item">
-                  <button
-                    className="btn-contacto telefono"
-                    onClick={() => handleLlamarContacto(trato.contacto.telefono)}
-                    title="Llamar"
-                  >
-                    <img src={phoneIcon || "/placeholder.svg"} alt="Teléfono" className="contacto-icon" />
-                  </button>
-                  <span>{trato.contacto.telefono}</span>
+              <div className="contacto-info">
+                <div className="contacto-avatar">
+                  <div className="avatar-circle">
+                    <span>{(trato.contacto.nombre || "").charAt(0) || "C"}</span>
+                  </div>
+                  <span className="contacto-nombre">{trato.contacto.nombre || "Sin contacto"}</span>
                 </div>
-                <div className="contacto-item">
-                  <button
-                    className="btn-contacto whatsapp"
-                    onClick={() => handleWhatsAppContacto(trato.contacto.whatsapp)}
-                    title="Enviar WhatsApp"
-                  >
-                    <img src={whatsappIcon || "/placeholder.svg"} alt="WhatsApp" className="contacto-icon" />
-                  </button>
-                  <span>{trato.contacto.whatsapp}</span>
-                </div>
-                <div className="contacto-item">
-                  <img src={emailIcon || "/placeholder.svg"} alt="Email" className="contacto-icon" />
-                  <span>{trato.contacto.email}</span>
+                <div className="contacto-detalles">
+                  <div className="contacto-item">
+                    <button
+                      className="btn-contacto telefono"
+                      onClick={() => handleLlamarContacto(trato.contacto.telefono || "")}
+                      title="Llamar"
+                    >
+                      <img src={phoneIcon || "/placeholder.svg"} alt="Teléfono" className="contacto-icon" />
+                    </button>
+                    <span>{trato.contacto.telefono || "N/A"}</span>
+                  </div>
+                  <div className="contacto-item">
+                    <button
+                      className="btn-contacto whatsapp"
+                      onClick={() => handleWhatsAppContacto(trato.contacto.whatsapp || "")}
+                      title="Enviar WhatsApp"
+                    >
+                      <img src={whatsappIcon || "/placeholder.svg"} alt="WhatsApp" className="contacto-icon" />
+                    </button>
+                    <span>{trato.contacto.whatsapp || "N/A"}</span>
+                  </div>
+                  <div className="contacto-item">
+                    <img src={emailIcon || "/placeholder.svg"} alt="Email" className="contacto-icon" />
+                    <span>{trato.contacto.email || "N/A"}</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Detalles del trato */}
           <div className="seccion detalles-trato">
@@ -2145,16 +2421,12 @@ const DetallesTrato = () => {
           <div className="seccion notas">
             <div className="seccion-header">
               <h2>Notas</h2>
-              <select value={filtroNotas} onChange={(e) => setFiltroNotas(e.target.value)} className="filtro-notas">
-                <option value="recientes">Recientes primero</option>
-                <option value="antiguas">Antiguas primero</option>
-              </select>
             </div>
             <div className="notas-lista">
               {trato.notas.map((nota) => (
                 <div key={nota.id} className="nota-item">
                   <div className="nota-avatar">
-                    <span>{nota.autor.charAt(0)}</span>
+                    <span>{(nota.autor || "U").charAt(0)}</span>
                   </div>
                   <div className="nota-contenido">
                     {editingNoteId === nota.id ? (
@@ -2166,9 +2438,9 @@ const DetallesTrato = () => {
                           className="input-nota-edit"
                           onKeyPress={(e) => {
                             if (e.key === "Enter") {
-                              handleSaveEditNota(nota.id)
+                              handleSaveEditNota(nota.id);
                             } else if (e.key === "Escape") {
-                              handleCancelEditNota()
+                              handleCancelEditNota();
                             }
                           }}
                           autoFocus
@@ -2185,7 +2457,12 @@ const DetallesTrato = () => {
                     ) : (
                       <>
                         <p>{nota.texto}</p>
-                        <span className="nota-fecha">{nota.fecha}</span>
+                        <span className="nota-fecha">Creado por {nota.autor} el {nota.fecha}</span>
+                        {nota.editadoPor && (
+                          <span className="nota-editado">
+                            Editado por {nota.editadoPor} el {nota.fechaEdicion}
+                          </span>
+                        )}
                       </>
                     )}
                   </div>
@@ -2298,67 +2575,52 @@ const DetallesTrato = () => {
             </div>
           </div>
 
-          {/* Actividades cerradas */}
-          <div className="seccion actividades-cerradas">
-            <h2>Actividades cerradas</h2>
-            <div className="actividades-grid">
-              <div className="actividad-columna">
-                <div className="columna-header">
-                  <img src={taskIcon || "/placeholder.svg"} alt="Tareas" />
-                  <span>Tareas cerradas</span>
-                </div>
-                <div className="actividades-lista">
-                  {trato.actividadesCerradas.tareas.length === 0 ? (
-                    <p className="no-actividades">No se encontraron registros</p>
-                  ) : (
-                    trato.actividadesCerradas.tareas.map((tarea) => (
-                      <div key={tarea.id} className="actividad-item">
-                        {/* Contenido de tarea */}
-                      </div>
-                    ))
-                  )}
-                </div>
+          {/* Historial de interacciones */}
+          <div className="seccion historial-interacciones">
+            <h2>Historial de interacciones</h2>
+            <div className="historial-tabla">
+              <div className="tabla-header">
+                <div className="header-cell">Fecha</div>
+                <div className="header-cell">Responsable</div>
+                <div className="header-cell">Tipo</div>
+                <div className="header-cell">Medio</div>
+                <div className="header-cell">Resultado</div>
+                <div className="header-cell">Interés</div>
+                <div className="header-cell">Notas</div>
               </div>
-              <div className="actividad-columna">
-                <div className="columna-header">
-                  <img src={callIcon || "/placeholder.svg"} alt="Llamadas" />
-                  <span>Llamadas cerradas</span>
-                </div>
-                <div className="actividades-lista">
-                  {trato.actividadesCerradas.llamadas.length === 0 ? (
-                    <p className="no-actividades">No se encontraron registros</p>
-                  ) : (
-                    trato.actividadesCerradas.llamadas.map((llamada) => (
-                      <div key={llamada.id} className="actividad-item llamada">
-                        <h4>{llamada.titulo}</h4>
-                        <p>{llamada.descripcion}</p>
-                        <div className="actividad-detalles">
-                          <span>
-                            {llamada.fecha} {llamada.hora}
-                          </span>
-                          <span>{llamada.responsable}</span>
+              <div className="tabla-body">
+                {trato.historialInteracciones && trato.historialInteracciones.length > 0 ? (
+                  trato.historialInteracciones.map((interaccion) => (
+                    <div key={interaccion.id} className="tabla-row">
+                      <div className="cell">
+                        <div className="fecha-hora">
+                          <span className="fecha">{interaccion.fecha}</span>
+                          <span className="hora">{interaccion.hora}</span>
                         </div>
                       </div>
-                    ))
-                  )}
-                </div>
-              </div>
-              <div className="actividad-columna">
-                <div className="columna-header">
-                  <img src={meetingIcon || "/placeholder.svg"} alt="Reuniones" />
-                  <span>Reuniones cerradas</span>
-                </div>
-                <div className="actividades-lista">
-                  {trato.actividadesCerradas.reuniones.length === 0 ? (
-                    <p className="no-actividades">No se encontraron registros</p>
-                  ) : (
-                    trato.actividadesCerradas.reuniones.map((reunion) => (
-                      <div key={reunion.id} className="actividad-item">
-                        {/* Contenido de reunión */}
+                      <div className="cell">{interaccion.responsable}</div>
+                      <div className="cell">
+                        <span className={`tipo-badge ${interaccion.tipo.toLowerCase()}`}>{interaccion.tipo}</span>
                       </div>
-                    ))
-                  )}
-                </div>
+                      <div className="cell">{interaccion.medio}</div>
+                      <div className="cell">
+                        <span className={`resultado-badge ${interaccion.resultado.toLowerCase()}`}>
+                          {interaccion.resultado}
+                        </span>
+                      </div>
+                      <div className="cell">
+                        <span className={`interes-badge ${interaccion.interes}`}>{interaccion.interes}</span>
+                      </div>
+                      <div className="cell notas-cell">{interaccion.notas}</div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="tabla-row">
+                    <div className="cell-empty" colSpan="7">
+                      <p className="no-actividades">No se encontraron registros</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -2409,6 +2671,12 @@ const DetallesTrato = () => {
       <SeleccionarActividadModal
         isOpen={modals.seleccionarActividad.isOpen}
         onClose={() => closeModal("seleccionarActividad")}
+        onSelectActivity={handleSelectActivity}
+      />
+
+      <SeleccionarActividadModal
+        isOpen={modals.crearNuevaActividad.isOpen}
+        onClose={() => closeModal("crearNuevaActividad")}
         onSelectActivity={handleSelectActivity}
       />
 

@@ -91,6 +91,21 @@ body {
   align-items: center;
 }
 
+/* Añadir estilos para los grupos de filtros y etiquetas */
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.filter-label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-light);
+  margin: 0;
+  margin-bottom: var(--spacing-xs);
+}
+
 .filter-dropdown {
   position: relative;
 }
@@ -117,7 +132,7 @@ body {
 /* Icono Desplegar en el select de usuario */
 .filter-dropdown .icon-deploy {
   position: absolute;
-  right: 15px; /* Cambiado de 10px a 15px para moverlo más a la izquierda */
+  right: 35px; 
   top: 50%;
   transform: translateY(-50%);
   width: 16px;
@@ -268,14 +283,17 @@ body {
 .column-count {
   background-color: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
-  width: 40px; /* Cambiado de 35px a 40px */
-  height: 40px; /* Cambiado de 35px a 40px */
+  width: 50px; /* Aumentado de 40px a 50px */
+  height: 50px; /* Aumentado de 40px a 50px */
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-md); /* Cambiado de sm a md */
+  font-size: var(--font-size-lg); /* Aumentado de md a lg */
   font-weight: bold;
   margin-top: 15px;
+  line-height: 1;
+  text-align: center;
+  padding-bottom: 2px; /* Ajuste fino para centrar verticalmente el número */
 }
 
 .kanban-column.expanded .column-count {
@@ -408,9 +426,31 @@ body {
   transition: transform 0.2s ease-in-out;
 }
 
-.trato-activity-icon .activity-icon.add-activity-btn:hover {
-  transform: scale(1.1);
+.activity-icon {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
 }
+
+.activity-icon.neglected {
+  filter: grayscale(100%);
+  opacity: 0.7;
+}
+
+.activity-icon.add-activity-btn:hover {
+  opacity: 0.8;
+}
+
+.activity-vencida {
+  border: 2px solid red;
+  border-radius: 50%;
+}
+
+.activity-proxima {
+  border: 2px solid orange;
+  border-radius: 50%;
+}
+
 
 .trato-details {
   font-size: var(--font-size-sm);
@@ -466,7 +506,7 @@ body {
   background-color: #c680f4;
 }
 
-.envio-informacion {
+.envio-de-informacion {
   background-color: #ab80f4;
 }
 
@@ -474,7 +514,7 @@ body {
   background-color: #9280f4;
 }
 
-.cotizacion-propuesta {
+.cotizacion-propuesta-practica {
   background-color: #8098f4;
 }
 
@@ -486,7 +526,7 @@ body {
   background-color: #69ed95;
 }
 
-.respuesta-correo {
+.respuesta-por-correo {
   background-color: #efd47b;
 }
 
@@ -507,7 +547,7 @@ body {
   background-color: #c680f4;
 }
 
-.envio-informacion-line {
+.envio-de-informacion-line {
   background-color: #ab80f4;
 }
 
@@ -515,7 +555,7 @@ body {
   background-color: #9280f4;
 }
 
-.cotizacion-propuesta-line {
+.cotizacion-propuesta-practica-line {
   background-color: #8098f4;
 }
 
@@ -527,7 +567,7 @@ body {
   background-color: #69ed95;
 }
 
-.respuesta-correo-line {
+.respuesta-por-correo-line {
   background-color: #efd47b;
 }
 
@@ -707,6 +747,104 @@ body {
 .tratos-modal-overlay .modal-form-control.textarea {
   resize: vertical;
   min-height: 80px;
+}
+
+.filter-legend {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  margin-top: var(--spacing-xs);
+}
+
+input[type="number"].modal-form-control::-webkit-outer-spin-button,
+input[type="number"].modal-form-control::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Estilos para el contenedor de duración */
+.duracion-container {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: end;
+}
+
+.duracion-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  flex: 1;
+}
+
+.duracion-field label {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  text-align: center;
+  margin: 0;
+}
+
+.duracion-input {
+  text-align: center;
+  padding: var(--spacing-sm);
+}
+
+/* Mejorar el contador de la columna para que se vea bien en todas las dimensiones */
+.column-count {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+  margin-top: 15px;
+  line-height: 1;
+  text-align: center;
+  padding: 0;
+  min-width: 50px;
+  min-height: 50px;
+  box-sizing: border-box;
+}
+
+/* Asegurar que el contador se vea bien en todas las dimensiones */
+@media (max-width: 576px) {
+  .column-count {
+    width: 45px;
+    height: 45px;
+    min-width: 45px;
+    min-height: 45px;
+    font-size: var(--font-size-md);
+  }
+}
+
+@media (max-width: 400px) {
+  .column-count {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* Responsive para el contenedor de duración */
+@media (max-width: 768px) {
+  .duracion-container {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .duracion-field {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .duracion-field label {
+    min-width: 60px;
+    text-align: left;
+  }
 }
 
 /* Wrapper para selects en modales de tratos */
@@ -987,6 +1125,10 @@ body {
     width: 100%;
   }
 
+  .filter-group {
+    width: 100%;
+  }
+
   /* Los desplegables de filtro y contenedores de fecha ocupan todo el ancho */
   .filter-dropdown,
   .date-range-container {
@@ -1039,9 +1181,9 @@ body {
 
   /* El tamaño del contador de la columna se ajusta para móvil */
   .column-count {
-    width: 35px;
-    height: 35px;
-    font-size: var(--font-size-sm);
+    width: 40px; /* Mantenemos un tamaño adecuado incluso en móvil */
+    height: 40px;
+    font-size: var(--font-size-md); /* Mantenemos un tamaño de fuente legible */
   }
 
   /* Modal ultra compacto específico para tratos */

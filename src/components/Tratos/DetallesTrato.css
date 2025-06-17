@@ -117,6 +117,7 @@
   box-shadow: var(--box-shadow);
   margin-bottom: var(--spacing-xl);
   overflow-x: auto;
+  min-height: 60px; 
 }
 
 .fecha-inicio,
@@ -155,24 +156,22 @@
 
 .fase-item {
   background-color: #e0e0e0;
-  color: var(--text-light);
+  color: var(--text-color);
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--border-radius-sm);
   font-size: var(--font-size-xs);
   white-space: nowrap;
   margin-right: var(--spacing-sm);
+  border: 1px solid transparent; 
   position: relative;
-}
-
-.fase-item.completada {
-  background-color: var(--secondary-color);
-  color: white;
+  transition: all 0.3s ease;
 }
 
 .fase-item.actual {
   background-color: var(--accent-color);
-  color: white;
+  color: var(--text-color-2); 
   font-weight: 600;
+  border-color: var(--accent-color);
 }
 
 .fase-item:not(:last-child)::after {
@@ -180,6 +179,7 @@
   position: absolute;
   right: -15px;
   color: var(--text-light);
+  font-size: var(--font-size-sm);
 }
 
 /* Secciones */
@@ -363,8 +363,9 @@
 }
 
 .fase-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  background-color: #d0d0d0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .fase-item:active {
@@ -423,15 +424,6 @@
 }
 
 /* Notas */
-.filtro-notas {
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-sm);
-  font-size: var(--font-size-sm);
-  background-color: white;
-  cursor: pointer;
-}
-
 .notas-lista {
   margin-bottom: var(--spacing-lg);
 }
@@ -473,6 +465,15 @@
 .nota-fecha {
   font-size: var(--font-size-xs);
   color: var(--text-light);
+  display: block;
+  margin-bottom: var(--spacing-xs);
+}
+
+.nota-editado {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  font-style: italic;
+  display: block;
 }
 
 .nota-acciones {
@@ -694,6 +695,157 @@
   color: white;
 }
 
+/* Historial de interacciones */
+.historial-tabla {
+  width: 100%;
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.tabla-header {
+  display: grid;
+  grid-template-columns: 120px 150px 100px 120px 100px 80px 1fr;
+  background-color: var(--background-color);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--text-color);
+}
+
+.header-cell {
+  padding: var(--spacing-md);
+  border-right: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.header-cell:last-child {
+  border-right: none;
+}
+
+.tabla-body {
+  background-color: white;
+}
+
+.tabla-row {
+  display: grid;
+  grid-template-columns: 120px 150px 100px 120px 100px 80px 1fr;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tabla-row:last-child {
+  border-bottom: none;
+}
+
+.cell {
+  padding: var(--spacing-md);
+  border-right: 1px solid var(--border-color);
+  font-size: var(--font-size-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.cell:last-child {
+  border-right: none;
+  text-align: left;
+  justify-content: flex-start;
+}
+
+.cell-empty {
+  grid-column: 1 / -1;
+  padding: var(--spacing-xl);
+  text-align: center;
+}
+
+.fecha-hora {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.fecha {
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.hora {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+}
+
+.tipo-badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.tipo-badge.llamada {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.tipo-badge.reunion {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.tipo-badge.tarea {
+  background-color: #e8f5e8;
+  color: #388e3c;
+}
+
+.resultado-badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.resultado-badge.positivo {
+  background-color: #e8f5e8;
+  color: #388e3c;
+}
+
+.resultado-badge.negativo {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.interes-badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.interes-badge.bajo {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.interes-badge.medio {
+  background-color: #fff3e0;
+  color: #f57c00;
+}
+
+.interes-badge.alto {
+  background-color: #e8f5e8;
+  color: #388e3c;
+}
+
+.notas-cell {
+  max-width: none; /* Remove the max-width limitation */
+  white-space: normal; /* Allow text to wrap */
+  overflow: visible; /* Show all content */
+  text-overflow: clip; /* Don't use ellipsis */
+  word-break: break-word; /* Break words if needed */
+}
+
 /* Correos electrónicos */
 .correos-tabs {
   display: flex;
@@ -798,6 +950,32 @@
   color: white;
 }
 
+/* Estilos para el contenedor de duración */
+.duracion-container {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: end;
+}
+
+.duracion-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  flex: 1;
+}
+
+.duracion-field label {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  text-align: center;
+  margin: 0;
+}
+
+.duracion-input {
+  text-align: center;
+  padding: var(--spacing-sm);
+}
+
 /* --- Responsive Design --- */
 
 /* Media query para pantallas extra grandes (monitores de escritorio y TVs) */
@@ -839,6 +1017,12 @@
   html {
     font-size: 16px;
   }
+
+  /* Ajustar tabla del historial */
+  .tabla-header,
+  .tabla-row {
+    grid-template-columns: 100px 120px 80px 100px 80px 60px 1fr;
+  }
 }
 
 /* Media query para pantallas medianas (tablets en orientación horizontal) */
@@ -851,6 +1035,17 @@
   /* Se reduce un poco el tamaño del título del trato */
   .trato-titulo {
     font-size: var(--font-size-xl);
+  }
+
+  /* Simplificar tabla del historial */
+  .tabla-header,
+  .tabla-row {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .header-cell:nth-child(n + 4),
+  .cell:nth-child(n + 4) {
+    display: none;
   }
 }
 
@@ -900,6 +1095,54 @@
   /* Se ajusta el tamaño de la fuente base para móviles */
   html {
     font-size: 15px;
+  }
+
+  /* Tabla del historial en formato de tarjetas */
+  .historial-tabla {
+    display: block;
+  }
+
+  .tabla-header {
+    display: none;
+  }
+
+  .tabla-row {
+    display: block;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-md);
+  }
+
+  .cell {
+    display: block;
+    border: none;
+    padding: var(--spacing-xs) 0;
+    text-align: left;
+    justify-content: flex-start;
+  }
+
+  .cell::before {
+    content: attr(data-label);
+    font-weight: 600;
+    margin-right: var(--spacing-sm);
+  }
+
+  /* Responsive para el contenedor de duración */
+  .duracion-container {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .duracion-field {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .duracion-field label {
+    min-width: 60px;
+    text-align: left;
   }
 }
 
@@ -1389,33 +1632,43 @@
   box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.25);
 }
 
-/* Etiquetas para los botones de interés */
-.detalles-trato-modal-overlay .interest-buttons::before {
-  content: "";
-  position: absolute;
-  bottom: -25px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: space-between;
-  font-size: var(--font-size-xs);
-  color: var(--text-light);
-}
-
-/* Contenedor para las etiquetas de interés */
+/* Contenedor principal del interés */
 .detalles-trato-modal-overlay .interest-container {
-  position: relative;
   margin-bottom: var(--spacing-lg);
 }
 
-.detalles-trato-modal-overlay .interest-labels {
+/* Contenedor para las opciones individuales (Bajo, Medio, Alto) */
+.detalles-trato-modal-overlay .interest-options {
   display: flex;
-  justify-content: space-between;
-  margin-top: var(--spacing-sm);
-  font-size: var(--font-size-xs);
-  color: var(--text-light);
+  justify-content: space-around;
+  gap: var(--spacing-md);
   padding: 0 var(--spacing-sm);
 }
+
+/* Estilos para cada grupo de botón y label */
+.detalles-trato-modal-overlay .interest-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Estilos para los botones (los círculos) */
+.detalles-trato-modal-overlay .btn-interest {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: var(--font-size-lg);
+  color: white;
+  background-color: #ccc;
+  border: none;
+  cursor: pointer;
+  margin-bottom: var(--spacing-xs);
+}
+
 
 /* Mejorar el espaciado general del modal */
 .detalles-trato-modal-overlay .modal-form-group {
@@ -1469,6 +1722,23 @@
   .detalles-trato-modal-overlay .btn-interest {
     width: 35px;
     height: 35px;
+  }
+
+  /* Responsive para el contenedor de duración en modales */
+  .detalles-trato-modal-overlay .duracion-container {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .detalles-trato-modal-overlay .duracion-field {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .detalles-trato-modal-overlay .duracion-field label {
+    min-width: 60px;
+    text-align: left;
   }
 }
 

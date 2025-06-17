@@ -20,7 +20,36 @@
 .mapa-container {
     flex: 1;
     height: 100%;
+    position: relative;
     z-index: 500;
+}
+
+/* Filtro de sector */
+.mapa-filter {
+    position: absolute;
+    top: 10px;
+    right: 10px; /* Cambiado de left a right para moverlo a la derecha */
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 5px 10px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.mapa-filter-select {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 0.9em;
+    cursor: pointer;
+}
+
+.mapa-filter-select:focus {
+    outline: none;
+    border-color: #0057c9;
+    box-shadow: 0 0 5px rgba(0, 87, 201, 0.5);
 }
 
 /* Estilo del mapa Leaflet, asegura que ocupe todo el contenedor */
@@ -33,7 +62,7 @@
 /* Estilo para mensajes de error, posicionados en la esquina superior izquierda */
 .mapa-error {
     position: absolute;
-    top: 10px;
+    top: 45px; 
     left: 10px;
     color: #f44336;
     z-index: 1000;
@@ -123,7 +152,6 @@
 
 /* Ajustes para pantallas más pequeñas (móviles y tablets pequeñas) */
 @media (max-width: 767px) {
-
     /* Cambia la disposición a vertical para mapa y barra lateral */
     .mapa-content {
         flex-direction: column;
@@ -159,6 +187,7 @@
     /* Ajusta el tamaño del texto de error */
     .mapa-error {
         font-size: 0.85em;
+        top: 50px; 
     }
 
     /* Ajusta el tamaño del ícono de coche */
@@ -171,5 +200,17 @@
     .mapa-btn {
         padding: 8px 12px;
         font-size: 0.9em;
+    }
+
+    /* Ajusta el filtro para móviles */
+    .mapa-filter {
+        top: 5px;
+        right: 5px; 
+        padding: 3px 8px;
+    }
+
+    .mapa-filter-select {
+        font-size: 0.85em;
+        padding: 3px;
     }
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import "./Mapa.css";
 import Header from "../Header/Header";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
@@ -66,15 +66,39 @@ const MarkerWithClick = ({ company, coordinatesCache, selectedMarker, setSelecte
 
 const Mapa = () => {
     const location = useLocation();
-    const navigate = useNavigate();
     const { companies, selectedCompany } = location.state || {};
 
-    // Estados para manejar caché de coordenadas, marcador seleccionado, errores y carga
+    // Estados para manejar caché de coordenadas, marcador seleccionado, errores, carga y filtro de sector
     const [coordinatesCache, setCoordinatesCache] = useState({});
     const [selectedMarker, setSelectedMarker] = useState(null);
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isCrmDropdownOpen, setIsCrmDropdownOpen] = useState(false);
+    const [selectedSector, setSelectedSector] = useState("TODOS"); // Estado para el filtro de sector
+
+    // Mapa de sectores
+    const sectorMap = {
+        AGRICULTURA: "(11) Agricultura, cría y explotación de animales, aprovechamiento forestal, pesca y caza",
+        MINERIA: "(21) Minería",
+        ENERGIA: "(22) Generación, transmisión y distribución de energía eléctrica, suministro de agua y de gas",
+        CONSTRUCCION: "(23) Construcción",
+        MANUFACTURA: "(31-33) Industrias manufactureras",
+        COMERCIO_MAYOR: "(43) Comercio al por mayor",
+        COMERCIO_MENOR: "(46) Comercio al por menor",
+        TRANSPORTE: "(48-49) Transportes, correos y almacenamiento",
+        MEDIOS: "(51) Información en medios masivos",
+        FINANCIERO: "(52) Servicios financieros y de seguros",
+        INMOBILIARIO: "(53) Servicios inmobiliarios y de alquiler de bienes muebles e intangibles",
+        PROFESIONAL: "(54) Servicios profesionales, científicos y técnicos",
+        CORPORATIVO: "(55) Corporativos",
+        APOYO_NEGOCIOS: "(56) Servicios de apoyo a los negocios y manejo de desechos",
+        EDUCACION: "(61) Servicios educativos",
+        SALUD: "(62) Servicios de salud y de asistencia social",
+        ESPARCIMIENTO: "(71) Servicios de esparcimiento culturales y deportivos",
+        ALOJAMIENTO: "(72) Servicios de alojamiento temporal y de preparación de alimentos",
+        OTROS_SERVICIOS: "(81) Otros servicios excepto actividades gubernamentales",
+        GUBERNAMENTAL: "(93) Actividades legislativas, gubernamentales, de impartición de justicia",
+    };
 
     // Función para obtener coordenadas de una dirección usando Nominatim
     const geocodeAddress = async (address) => {
@@ -136,7 +160,7 @@ const Mapa = () => {
 
         fetchCoordinates();
     }, [companies]);
-
+    
     // Actualiza el marcador seleccionado cuando cambia la empresa seleccionada
     useEffect(() => {
         if (selectedCompany && !coordinatesCache[selectedCompany.id] && !isLoading) {
@@ -161,43 +185,20 @@ const Mapa = () => {
 
     // Centro por defecto del mapa (Ciudad de México)
     const defaultCenter = [19.4326, -99.1332];
-    const center = selectedCompany && coordinatesCache[selectedCompany?.id] ? coordinatesCache[selectedCompany.id] : defaultCenter;
+    const center = selectedMarker && coordinatesCache[selectedMarker?.id] ? coordinatesCache[selectedMarker.id] : defaultCenter;
 
-    // Filtra empresas con coordenadas válidas
+    // Filtra empresas con coordenadas válidas y por sector seleccionado
     const companiesWithCoords = companies?.filter(
-        (company) => coordinatesCache[company.id] && company.domicilioFisico
+        (company) => coordinatesCache[company.id] && company.domicilioFisico && (selectedSector === "TODOS" || company.sector === selectedSector)
     ) || [];
 
-    // Mapas para traducir estados y sectores a texto legible
+    // Mapas para traducir estados a texto legible
     const statusMap = {
         POR_CONTACTAR: "Por Contactar",
         EN_PROCESO: "En Proceso",
         CONTACTAR_MAS_ADELANTE: "Contactar Más Adelante",
         PERDIDO: "Perdido",
         CLIENTE: "Cliente",
-    };
-
-    const sectorMap = {
-        AGRICULTURA: "(11) Agricultura, cría y explotación de animales, aprovechamiento forestal, pesca y caza",
-        MINERIA: "(21) Minería",
-        ENERGIA: "(22) Generación, transmisión y distribución de energía eléctrica, suministro de agua y de gas",
-        CONSTRUCCION: "(23) Construcción",
-        MANUFACTURA: "(31-33) Industrias manufactureras",
-        COMERCIO_MAYOR: "(43) Comercio al por mayor",
-        COMERCIO_MENOR: "(46) Comercio al por menor",
-        TRANSPORTE: "(48-49) Transportes, correos y almacenamiento",
-        MEDIOS: "(51) Información en medios masivos",
-        FINANCIERO: "(52) Servicios financieros y de seguros",
-        INMOBILIARIO: "(53) Servicios inmobiliarios y de alquiler de bienes muebles e intangibles",
-        PROFESIONAL: "(54) Servicios profesionales, científicos y técnicos",
-        CORPORATIVO: "(55) Corporativos",
-        APOYO_NEGOCIOS: "(56) Servicios de apoyo a los negocios y manejo de desechos",
-        EDUCACION: "(61) Servicios educativos",
-        SALUD: "(62) Servicios de health y de asistencia social",
-        ESPARCIMIENTO: "(71) Servicios de esparcimiento culturales y deportivos",
-        ALOJAMIENTO: "(72) Servicios de alojamiento temporal y de preparación de alimentos",
-        OTROS_SERVICIOS: "(81) Otros servicios excepto actividades gubernamentales",
-        GUBERNAMENTAL: "(93) Actividades legislativas, gubernamentales, de impartición de justicia",
     };
 
     const getStatusText = (status) => statusMap[status] || status;
@@ -247,7 +248,23 @@ const Mapa = () => {
             <div className="mapa-content">
                 {error && <div className="mapa-error">{error}</div>}
                 <div className="mapa-container">
-                    <MapContainer center={center} zoom={13} className="leaflet-map" style={{ height: "100%", width: "100%" }}>
+                    <div className="mapa-filter">
+                        <label htmlFor="sectorFilter">Filtrar por Sector: </label>
+                        <select
+                            id="sectorFilter"
+                            value={selectedSector}
+                            onChange={(e) => setSelectedSector(e.target.value)}
+                            className="mapa-filter-select"
+                        >
+                            <option value="TODOS">Todos</option>
+                            {Object.keys(sectorMap).map((sector) => (
+                                <option key={sector} value={sector}>
+                                    {sectorMap[sector]}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <MapContainer center={center} zoom={13} className="leaflet-map" style={{ height: "calc(100% - 40px)", width: "100%" }}>
                         <TileLayer
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                             attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -301,4 +318,4 @@ const Mapa = () => {
     );
 };
 
-export default Mapa
+export default Mapa;

@@ -68,7 +68,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
 }
 
 // Modal de Empresa (Agregar/Editar)
-const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated, users }) => {
+const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated, users, hasTratos }) => {
   const [formData, setFormData] = useState({
     nombre: "",
     estatus: "POR_CONTACTAR",
@@ -83,14 +83,6 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
   })
 
   const [errors, setErrors] = useState({})
-
-  const statusMap = {
-    POR_CONTACTAR: "Por Contactar",
-    EN_PROCESO: "En Proceso",
-    CONTACTAR_MAS_ADELANTE: "Contactar Más Adelante",
-    PERDIDO: "Perdido",
-    CLIENTE: "Cliente",
-  }
 
   const sectorMap = {
     AGRICULTURA: "(11) Agricultura, cría y explotación de animales, aprovechamiento forestal, pesca y caza",
@@ -138,9 +130,6 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
     { clave: "624", descripcion: "Coordinados" },
     { clave: "628", descripcion: "Hidrocarburos" },
   ]
-
-  const getStatusText = (status) => statusMap[status] || status
-  const getSectorText = (sector) => sectorMap[sector] || sector || "N/A"
 
   const sectores = Object.entries(sectorMap).map(([value, label]) => ({ value, label }))
 
@@ -246,15 +235,32 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateForm()) {
-      return
+      return;
     }
 
+    // Solo mostrar alerta de confirmación si estamos en modo "edit"
+    if (mode === "edit") {
+      const result = await Swal.fire({
+        title: '¿Estás seguro?',
+        text: "Los cambios se guardarán.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, guardar',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (!result.isConfirmed) {
+        return; // Si el usuario cancela, no continuar
+      }
+    }
+
+    // Continuar con el guardado
     const formattedDomicilioFisico = formData.domicilioFisico.endsWith(", México")
       ? formData.domicilioFisico
-      : `${formData.domicilioFisico}, México`
+      : `${formData.domicilioFisico}, México`;
 
     const empresaData = {
       nombre: formData.nombre,
@@ -267,43 +273,42 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
       razonSocial: formData.razonSocial || null,
       regimenFiscal: formData.regimenFiscal || null,
       ...(mode === "edit" && { propietarioId: formData.propietarioId || null }),
-    }
-  console.log("Datos enviados al backend:", empresaData)
+    };
 
     try {
-      let response
+      let response;
       if (mode === "add") {
         response = await fetchWithToken(`${API_BASE_URL}/empresas`, {
           method: "POST",
           body: JSON.stringify(empresaData),
-        })
+        });
       } else {
         response = await fetchWithToken(`${API_BASE_URL}/empresas/${empresa.id}`, {
           method: "PUT",
           body: JSON.stringify(empresaData),
-        })
+        });
       }
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Error al guardar la empresa")
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Error al guardar la empresa");
       }
 
-      const savedEmpresa = await response.json()
-      console.log("Respuesta del backend:", savedEmpresa)
-      onSave(savedEmpresa)
+      const savedEmpresa = await response.json();
+      onSave(savedEmpresa);
 
       if (mode === "add") {
-        onCompanyCreated(savedEmpresa)
+        onCompanyCreated(savedEmpresa);
       }
     } catch (error) {
       Swal.fire({
         icon: "error",
         title: "Error",
         text: error.message,
-      })
+      });
     }
-  }
+  };
+
 
   const isCliente = formData.estatus === "CLIENTE"
 
@@ -349,6 +354,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
             {errors.nombre && <span className="error-message">{errors.nombre}</span>}
           </div>
 
+          <div className="modal-form-row">
           <div className="modal-form-group">
             <label htmlFor="estatus">
               Estatus <span className="required">*</span>
@@ -358,6 +364,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
               value={formData.estatus}
               onChange={(e) => handleInputChange("estatus", e.target.value)}
               className="modal-form-control"
+              disabled={mode === "edit" && hasTratos} 
             >
               {estatusOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -365,7 +372,11 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
                 </option>
               ))}
             </select>
+            {mode === "edit" && hasTratos && (
+              <small className="help-text">El estatus no puede editarse porque la empresa tiene tratos asociados.</small>
+            )}
           </div>
+        </div>
         </div>
 
         <div className="modal-form-row">
@@ -666,6 +677,22 @@ const ContactoModal = ({
       return;
     }
 
+    // Solo mostrar alerta de confirmación si estamos en modo "edit"
+    if (mode === "edit") {
+      const result = await Swal.fire({
+        title: '¿Estás seguro?',
+        text: "Los cambios se guardarán.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, guardar',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (!result.isConfirmed) {
+        return;
+      }
+    }
+
     let nombreFinal = formData.nombre.trim();
     if (!nombreFinal) {
       nombreFinal = `Contacto de ${formData.rol}`;
@@ -712,6 +739,7 @@ const ContactoModal = ({
     }
   };
 
+
   return (
     <Modal
       isOpen={isOpen}
@@ -720,8 +748,8 @@ const ContactoModal = ({
         isInitialContact
           ? "Agregar Contacto Inicial (Obligatorio)"
           : mode === "add"
-          ? "Nuevo Contacto"
-          : "Editar Contacto"
+            ? "Nuevo Contacto"
+            : "Editar Contacto"
       }
       size="md"
       canClose={!isInitialContact}
@@ -1353,12 +1381,28 @@ const Empresas = () => {
     openModal("empresa", "add")
   }
 
-  const handleEditCompany = () => {
-    if (selectedCompany) {
-      openModal("empresa", "edit", selectedCompany)
+  const handleEditCompany = async () => {
+  if (selectedCompany) {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/empresas/${selectedCompany.id}/has-tratos`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Response error:", errorText);
+        throw new Error("Error checking tratos");
+      }
+      const hasTratos = await response.json();
+      console.log("Has Tratos response:", hasTratos);
+      openModal("empresa", "edit", selectedCompany, { hasTratos });
+    } catch (error) {
+      console.error("Error checking tratos:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.message,
+      });
     }
   }
-
+};
   const handleCompanyDetails = () => {
     if (selectedCompany) {
       openModal("detallesEmpresa", "view", selectedCompany)
@@ -1620,7 +1664,7 @@ const Empresas = () => {
               <>
                 <div className="company-form">
                   <div className="form-header">
-                     <h3>Datos de la Empresa</h3>
+                    <h3>Datos de la Empresa</h3>
                     <div className="form-actions">
                       <button className="btn btn-add" onClick={handleEditCompany}>
                         Editar empresa
@@ -1793,6 +1837,7 @@ const Empresas = () => {
           mode={modals.empresa.mode}
           onCompanyCreated={handleCompanyCreated}
           users={users}
+          hasTratos={modals.empresa.hasTratos}
         />
 
         <ContactoModal
