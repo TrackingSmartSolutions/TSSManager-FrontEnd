@@ -197,7 +197,7 @@ const Header = () => {
               </li>
             )}
             <li>
-              <Link to="/equipos">Equipos</Link>
+              <Link to="/equipos_estatusplataforma">Equipos</Link>
             </li>
           </ul>
         </nav>
@@ -301,7 +301,7 @@ const Header = () => {
             </div>
           )}
           <div className="sidebar-section">
-            <Link to="/equipos" onClick={toggleSidebar} className="sidebar-link">
+            <Link to="/equipos_estatusplataforma" onClick={toggleSidebar} className="sidebar-link">
               Equipos
             </Link>
           </div>

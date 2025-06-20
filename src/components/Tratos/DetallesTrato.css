@@ -326,32 +326,49 @@
   gap: var(--spacing-lg);
 }
 
-.detalle-item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-}
-
 .detalle-item label {
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--text-color);
 }
 
+.detalle-item a {
+  color: #2196f3;
+  text-decoration: underline;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+  display: inline-block;
+  line-height: 1.4;
+  transition: color 0.3s ease;
+}
+
+.detalle-item a:hover {
+  color: #1976d2;
+}
+
+.detalle-item a:visited {
+  color: #7b1fa2;
+}
+
+.detalle-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+  overflow: hidden;
+}
+
 .detalle-item span,
 .detalle-item a {
   font-size: var(--font-size-sm);
   color: var(--text-light);
+  word-break: break-all;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
-.detalle-item a {
-  color: var(--secondary-color);
-  text-decoration: none;
-}
-
-.detalle-item a:hover {
-  text-decoration: underline;
-}
 
 /* Fases clickeables */
 .fase-item {

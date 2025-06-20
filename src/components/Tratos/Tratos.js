@@ -359,12 +359,12 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     if (!validateForm()) return;
 
     const horaInicio = formData.horaInicio ? `${formData.horaInicio}:00` : '';
-
+      
     const actividadDTO = {
       tratoId,
       tipo: "LLAMADA",
       asignadoAId: formData.asignadoAId,
-      contacto: formData.nombreContacto,
+      contactoId: formData.nombreContacto,
       fechaLimite: formData.fecha,
       horaInicio: horaInicio,
       finalidad: formData.finalidad,
@@ -631,7 +631,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
       tratoId,
       tipo: "REUNION",
       asignadoAId: formData.asignadoAId,
-      contacto: formData.nombreContacto,
+      contactoId: formData.nombreContacto,
       fechaLimite: formData.fecha,
       horaInicio: horaInicio,
       duracion: duracionStr,
@@ -944,7 +944,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
       tratoId,
       tipo: "TAREA",
       asignadoAId: formData.asignadoAId,
-      contacto: formData.nombreContacto,
+      contactoId: formData.nombreContacto,
       fechaLimite: formData.fechaLimite,
       subtipoTarea: formData.tipo.toUpperCase(),
       finalidad: formData.finalidad,
@@ -1524,8 +1524,9 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
       );
     }
 
-    // Caso 2: Sin actividades
-    if (!trato.hasActivities || !trato.actividades || trato.actividades.length === 0) {
+    // Caso 2: Sin actividades abiertas
+    const openActivities = trato.actividades?.filter((activity) => activity.estatus === "ABIERTA") || [];
+    if (openActivities.length === 0) {
       return (
         <img
           src={addActivity || "/placeholder.svg"}
@@ -1539,8 +1540,8 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
       );
     }
 
-    // Caso 3: Actividad más cercana
-    const nearestActivity = trato.actividades.reduce((closest, current) => {
+    // Caso 3: Actividad más cercana (solo entre actividades abiertas)
+    const nearestActivity = openActivities.reduce((closest, current) => {
       const closestDate = closest.fechaLimite ? new Date(closest.fechaLimite) : null;
       const currentDate = current.fechaLimite ? new Date(current.fechaLimite) : null;
       if (!closestDate) return current;
@@ -1564,7 +1565,7 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
 
     const activityDate = new Date(nearestActivity.fechaLimite);
     const timeDiff = (activityDate - currentDate) / (1000 * 60 * 60 * 24);
-    const isOverdue = timeDiff < 0 && !nearestActivity.fecha_completado;
+    const isOverdue = timeDiff < 0 && !nearestActivity.fechaCompletado;
     const isNearDeadline = timeDiff <= 2 && timeDiff >= 0;
 
     const iconMap = {
