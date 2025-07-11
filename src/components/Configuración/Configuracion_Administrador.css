@@ -1,0 +1,559 @@
+/* Variables específicas para Configuracion_Administrador */
+:root {
+  --config-admin-color-dark-blue-1: #00133b;
+  --config-admin-color-dark-blue-2: #001959;
+  --config-admin-color-dark-blue-3: #0f1575;
+  --config-admin-color-blue-1: #00347f;
+  --config-admin-color-blue-2: #0057c9;
+  --config-admin-color-blue-3: #037ce0;
+  --config-admin-color-light-blue: #38b6ff;
+  --config-admin-color-orange: #f27100;
+  --config-admin-color-light-purple: #af86ff;
+  --config-admin-color-dark-purple: #3000b3;
+  --config-admin-color-blue-4: #2a5cf8;
+  --config-admin-color-purple: #9c16f7;
+  --config-admin-primary-color: var(--config-admin-color-dark-blue-1);
+  --config-admin-secondary-color: var(--config-admin-color-blue-3);
+  --config-admin-accent-color: var(--config-admin-color-orange);
+  --config-admin-background-color: #f0f4ff;
+  --config-admin-panel-background: #ffffff;
+  --config-admin-text-color: #333333;
+  --config-admin-text-color-2: #ffffff;
+  --config-admin-text-light: #666666;
+  --config-admin-border-color: #e0e0e0;
+  --config-admin-spacing-xs: 0.25rem;
+  --config-admin-spacing-sm: 0.5rem;
+  --config-admin-spacing-md: 0.75rem;
+  --config-admin-spacing-lg: 1rem;
+  --config-admin-spacing-xl: 1.5rem;
+  --config-admin-border-radius-sm: 4px;
+  --config-admin-border-radius-md: 8px;
+  --config-admin-border-radius-lg: 12px;
+  --config-admin-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --config-admin-font-family: "Arial", sans-serif;
+  --config-admin-font-size-xs: 0.65rem;
+  --config-admin-font-size-sm: 0.8rem;
+  --config-admin-font-size-md: 0.9rem;
+  --config-admin-font-size-lg: 1.1rem;
+  --config-admin-font-size-xl: 1.3rem;
+  --config-admin-font-size-xxl: 1.8rem;
+}
+
+/* Configuration Header and Navigation */
+.config-admin-config-header {
+  background-color: var(--config-admin-panel-background);
+  padding: var(--config-admin-spacing-lg) var(--config-admin-spacing-xl);
+  border-bottom: 1px solid var(--config-admin-border-color);
+}
+
+.config-admin-config-title {
+  font-size: var(--config-admin-font-size-xxl);
+  font-weight: 600;
+  color: var(--config-admin-primary-color);
+  margin: 0 0 var(--config-admin-spacing-lg) 0;
+}
+
+.config-admin-config-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--config-admin-border-color);
+}
+
+.config-admin-nav-item {
+  padding: var(--config-admin-spacing-md) var(--config-admin-spacing-lg);
+  font-size: var(--config-admin-font-size-sm);
+  font-weight: 500;
+  color: var(--config-admin-text-light);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.config-admin-nav-item:hover {
+  color: var(--config-admin-secondary-color);
+  background-color: rgba(3, 124, 224, 0.05);
+}
+
+.config-admin-nav-item-active {
+  color: var(--config-admin-secondary-color);
+  border-bottom-color: var(--config-admin-secondary-color);
+  background-color: rgba(3, 124, 224, 0.05);
+}
+
+/* Layout Principal */
+.config-admin-main-content {
+  padding: var(--config-admin-spacing-lg) var(--config-admin-spacing-xl);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  background-color: var(--config-admin-background-color);
+  min-height: calc(100vh - 140px);
+}
+
+.config-admin-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--config-admin-spacing-xl);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Secciones */
+.config-admin-section {
+  background-color: var(--config-admin-panel-background);
+  border-radius: var(--config-admin-border-radius-md);
+  box-shadow: var(--config-admin-box-shadow);
+  padding: var(--config-admin-spacing-xl);
+}
+
+.config-admin-section-title {
+  font-size: var(--config-admin-font-size-xl);
+  font-weight: 600;
+  color: var(--config-admin-primary-color);
+  margin: 0 0 var(--config-admin-spacing-lg) 0;
+}
+
+/* Formularios */
+.config-admin-form-row {
+  display: flex;
+  gap: var(--config-admin-spacing-lg);
+  margin-bottom: var(--config-admin-spacing-md);
+}
+
+.config-admin-form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--config-admin-spacing-md);
+}
+
+.config-admin-form-group label {
+  display: block;
+  font-size: var(--config-admin-font-size-sm);
+  font-weight: 500;
+  color: var(--config-admin-text-color);
+  margin-bottom: var(--config-admin-spacing-xs);
+}
+
+.config-admin-form-control {
+  width: 100%;
+  padding: var(--config-admin-spacing-sm) var(--config-admin-spacing-md);
+  border: 1px solid var(--config-admin-border-color);
+  border-radius: var(--config-admin-border-radius-sm);
+  font-size: var(--config-admin-font-size-sm);
+  background-color: white;
+  color: var(--config-admin-text-color);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.config-admin-form-control:focus {
+  outline: none;
+  border-color: var(--config-admin-secondary-color);
+  box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
+.config-admin-date-input {
+  flex: 1;
+}
+
+/* Botones */
+.config-admin-btn {
+  padding: var(--config-admin-spacing-sm) var(--config-admin-spacing-lg);
+  border: none;
+  border-radius: var(--config-admin-border-radius-sm);
+  font-size: var(--config-admin-font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  gap: var(--config-admin-spacing-xs);
+}
+
+.config-admin-btn-primary {
+  background-color: var(--config-admin-accent-color);
+  color: white;
+}
+
+.config-admin-btn-primary:hover {
+  background-color: #d86600;
+  transform: translateY(-1px);
+}
+
+.config-admin-btn-template {
+  background-color: var(--config-admin-secondary-color);
+  color: white;
+  margin-bottom: var(--config-admin-spacing-md);
+}
+
+.config-admin-btn-template:hover {
+  background-color: #0056b8;
+  transform: translateY(-1px);
+}
+
+.config-admin-btn-icon {
+  width: 16px;
+  height: 16px;
+  filter: brightness(0) invert(1);
+}
+
+.config-admin-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--config-admin-spacing-lg);
+}
+
+/* Sección de plantilla */
+.config-admin-template-section {
+  margin-bottom: var(--config-admin-spacing-lg);
+}
+
+.config-admin-template-section label {
+  display: block;
+  font-size: var(--config-admin-font-size-sm);
+  font-weight: 500;
+  color: var(--config-admin-text-color);
+  margin-bottom: var(--config-admin-spacing-xs);
+}
+
+/* Área de carga de archivos */
+.config-admin-file-upload-area {
+  margin-bottom: var(--config-admin-spacing-lg);
+}
+
+.config-admin-file-drop-zone {
+  border: 2px dashed var(--config-admin-border-color);
+  border-radius: var(--config-admin-border-radius-md);
+  padding: var(--config-admin-spacing-xl);
+  text-align: center;
+  background-color: #fafafa;
+  transition: border-color 0.3s, background-color 0.3s;
+  position: relative;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.config-admin-file-drop-zone:hover {
+  border-color: var(--config-admin-secondary-color);
+  background-color: rgba(3, 124, 224, 0.05);
+}
+
+.config-admin-upload-icon {
+  margin-bottom: var(--config-admin-spacing-sm);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.config-admin-upload-icon img {
+  width: 32px;
+  height: 32px;
+  filter: brightness(0) saturate(100%) invert(0%);
+}
+
+.config-admin-file-drop-zone p {
+  margin: var(--config-admin-spacing-xs) 0;
+  color: var(--config-admin-text-color);
+}
+
+.config-admin-file-formats {
+  font-size: var(--config-admin-font-size-xs);
+  color: var(--config-admin-text-light);
+}
+
+.config-admin-file-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.config-admin-selected-file {
+  margin-top: var(--config-admin-spacing-sm);
+  padding: var(--config-admin-spacing-xs) var(--config-admin-spacing-sm);
+  background-color: white;
+  border: 1px solid var(--config-admin-border-color);
+  border-radius: var(--config-admin-border-radius-sm);
+  font-size: var(--config-admin-font-size-sm);
+  color: var(--config-admin-text-color);
+}
+
+/* Caja de información */
+.config-admin-info-box {
+  display: flex;
+  gap: var(--config-admin-spacing-sm);
+  padding: var(--config-admin-spacing-md);
+  background-color: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: var(--config-admin-border-radius-sm);
+  margin-bottom: var(--config-admin-spacing-lg);
+}
+
+.config-admin-info-icon {
+  flex-shrink: 0;
+}
+
+.config-admin-info-icon img {
+  width: 20px;
+  height: 20px;
+  filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(200deg) brightness(104%)
+    contrast(97%);
+}
+
+.config-admin-info-content {
+  flex: 1;
+}
+
+.config-admin-info-content strong {
+  display: block;
+  font-size: var(--config-admin-font-size-sm);
+  font-weight: 600;
+  color: var(--config-admin-text-color);
+  margin-bottom: var(--config-admin-spacing-xs);
+}
+
+.config-admin-info-content p {
+  font-size: var(--config-admin-font-size-xs);
+  color: var(--config-admin-text-light);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Rango de fechas */
+.config-admin-date-range-section {
+  margin-bottom: var(--config-admin-spacing-lg);
+}
+
+.config-admin-date-range-section label {
+  display: block;
+  font-size: var(--config-admin-font-size-sm);
+  font-weight: 500;
+  color: var(--config-admin-text-color);
+  margin-bottom: var(--config-admin-spacing-xs);
+}
+
+.config-admin-date-row {
+  display: flex;
+  gap: var(--config-admin-spacing-md);
+  margin-bottom: var(--config-admin-spacing-xs);
+}
+
+.config-admin-help-text {
+  color: var(--config-admin-text-light);
+  font-size: var(--config-admin-font-size-xs);
+}
+
+/* Historial de exportaciones */
+.config-admin-export-history {
+  width: 100%;
+}
+
+.config-admin-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--config-admin-spacing-sm);
+}
+
+.config-admin-history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--config-admin-spacing-md);
+  border: 1px solid var(--config-admin-border-color);
+  border-radius: var(--config-admin-border-radius-sm);
+  background-color: white;
+  transition: box-shadow 0.3s;
+}
+
+.config-admin-history-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.config-admin-history-info {
+  flex: 1;
+}
+
+.config-admin-history-info h4 {
+  font-size: var(--config-admin-font-size-md);
+  font-weight: 600;
+  color: var(--config-admin-text-color);
+  margin: 0 0 var(--config-admin-spacing-xs) 0;
+}
+
+.config-admin-history-details {
+  display: flex;
+  gap: var(--config-admin-spacing-md);
+  flex-wrap: wrap;
+}
+
+.config-admin-history-type,
+.config-admin-history-size,
+.config-admin-history-date {
+  font-size: var(--config-admin-font-size-xs);
+  color: var(--config-admin-text-light);
+}
+
+.config-admin-history-type {
+  font-weight: 500;
+  color: var(--config-admin-secondary-color);
+}
+
+.config-admin-history-actions {
+  display: flex;
+  gap: var(--config-admin-spacing-xs);
+  margin-left: var(--config-admin-spacing-md);
+}
+
+.config-admin-btn-action {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--config-admin-spacing-xs);
+  border-radius: var(--config-admin-border-radius-sm);
+  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.config-admin-btn-action img {
+  width: 16px;
+  height: 16px;
+}
+
+.config-admin-btn-action.config-admin-download:hover {
+  background-color: rgba(3, 124, 224, 0.1);
+}
+
+.config-admin-btn-action.config-admin-delete:hover {
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+.config-admin-btn-action.config-admin-download img {
+  filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(200deg) brightness(104%)
+    contrast(97%);
+}
+
+.config-admin-btn-action.config-admin-delete {
+  color: #f44336;
+  font-weight: bold;
+  font-size: var(--config-admin-font-size-sm);
+}
+
+.config-admin-no-history {
+  text-align: center;
+  padding: var(--config-admin-spacing-xl);
+  color: var(--config-admin-text-light);
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .config-admin-config-nav {
+    flex-wrap: wrap;
+  }
+
+  .config-admin-nav-item {
+    flex: 1;
+    text-align: center;
+    min-width: 150px;
+  }
+
+  .config-admin-main-content {
+    padding: var(--config-admin-spacing-md);
+  }
+
+  .config-admin-form-row {
+    flex-direction: column;
+    gap: var(--config-admin-spacing-sm);
+  }
+
+  .config-admin-date-row {
+    flex-direction: column;
+    gap: var(--config-admin-spacing-sm);
+  }
+
+  .config-admin-history-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--config-admin-spacing-sm);
+  }
+
+  .config-admin-history-actions {
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 768px) {
+  .config-admin-config-header {
+    padding: var(--config-admin-spacing-md) var(--config-admin-spacing-lg);
+  }
+
+  .config-admin-config-nav {
+    flex-direction: column;
+  }
+
+  .config-admin-nav-item {
+    border-bottom: 1px solid var(--config-admin-border-color);
+    border-right: none;
+  }
+
+  .config-admin-nav-item-active {
+    border-bottom-color: var(--config-admin-secondary-color);
+  }
+
+  .config-admin-main-content {
+    padding: var(--config-admin-spacing-sm);
+  }
+
+  .config-admin-section {
+    padding: var(--config-admin-spacing-md);
+  }
+
+  .config-admin-info-box {
+    flex-direction: column;
+    gap: var(--config-admin-spacing-xs);
+  }
+
+  .config-admin-history-details {
+    flex-direction: column;
+    gap: var(--config-admin-spacing-xs);
+  }
+}
+
+@media (max-width: 576px) {
+  .config-admin-section {
+    padding: var(--config-admin-spacing-sm);
+  }
+
+  .config-admin-file-drop-zone {
+    padding: var(--config-admin-spacing-lg);
+    min-height: 100px;
+  }
+
+  .config-admin-upload-icon img {
+    width: 24px;
+    height: 24px;
+  }
+
+  .config-admin-btn {
+    font-size: var(--config-admin-font-size-xs);
+    padding: var(--config-admin-spacing-xs) var(--config-admin-spacing-sm);
+  }
+
+  .config-admin-form-actions {
+    justify-content: stretch;
+  }
+
+  .config-admin-btn-primary {
+    width: 100%;
+  }
+}

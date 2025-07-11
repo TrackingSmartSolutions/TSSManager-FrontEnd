@@ -5,6 +5,7 @@ import Header from "../Header/Header"
 import Swal from "sweetalert2"
 import editIcon from "../../assets/icons/editar.png"
 import deleteIcon from "../../assets/icons/eliminar.png"
+import { API_BASE_URL } from "../Config/Config"
 
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token")
@@ -21,15 +22,9 @@ const fetchWithToken = async (url, options = {}) => {
 // Componente Modal Base
 const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden"
-    } else {
-      document.body.style.overflow = "unset"
-    }
-
-    return () => {
-      document.body.style.overflow = "unset"
-    }
+    if (isOpen) document.body.style.overflow = "hidden"
+    else document.body.style.overflow = "unset"
+    return () => { document.body.style.overflow = "unset" }
   }, [isOpen])
 
   if (!isOpen) return null
@@ -42,15 +37,11 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
   }
 
   return (
-    <div className="proveedores-modal-overlay" onClick={canClose ? onClose : () => {}}>
+    <div className="proveedores-modal-overlay" onClick={canClose ? onClose : () => { }}>
       <div className={`proveedores-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="proveedores-modal-header">
           <h2 className="proveedores-modal-title">{title}</h2>
-          {canClose && (
-            <button className="proveedores-modal-close" onClick={onClose}>
-              ✕
-            </button>
-          )}
+          {canClose && <button className="proveedores-modal-close" onClick={onClose}>✕</button>}
         </div>
         <div className="proveedores-modal-body">{children}</div>
       </div>
@@ -58,10 +49,10 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
   )
 }
 
-// Modal para Agregar/Editar Proveedor
-const ProveedorFormModal = ({ isOpen, onClose, proveedor = null, onSave }) => {
+// Modal para Agregar/Editar ProveedorEquipo
+const ProveedorEquipoFormModal = ({ isOpen, onClose, proveedor = null, onSave }) => {
   const [formData, setFormData] = useState({
-    nombreProveedor: "",
+    nombre: "",
     contactoNombre: "",
     telefono: "",
     correo: "",
@@ -72,18 +63,16 @@ const ProveedorFormModal = ({ isOpen, onClose, proveedor = null, onSave }) => {
   useEffect(() => {
     if (isOpen) {
       if (proveedor) {
-        // Modo edición
         setFormData({
-          nombreProveedor: proveedor.nombreProveedor || "",
+          nombre: proveedor.nombre || "",
           contactoNombre: proveedor.contactoNombre || "",
           telefono: proveedor.telefono || "",
           correo: proveedor.correo || "",
           sitioWeb: proveedor.sitioWeb || "",
         })
       } else {
-        // Modo agregar
         setFormData({
-          nombreProveedor: "",
+          nombre: "",
           contactoNombre: "",
           telefono: "",
           correo: "",
@@ -96,63 +85,55 @@ const ProveedorFormModal = ({ isOpen, onClose, proveedor = null, onSave }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
-    // Limpiar error del campo cuando el usuario empiece a escribir
-    if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }))
-    }
+    setFormData((prev) => ({ ...prev, [name]: value }))
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }))
   }
 
-  const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return emailRegex.test(email)
-  }
-
-  const validatePhone = (phone) => {
-    const phoneRegex = /^[+]?[0-9\s\-$$$$]{10,}$/
-    return phoneRegex.test(phone)
-  }
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  const validatePhone = (phone) => /^[+]?[0-9\s\-]{10,}$/.test(phone)
 
   const validateForm = () => {
     const newErrors = {}
-
-    if (!formData.nombreProveedor.trim()) {
-      newErrors.nombreProveedor = "El nombre del proveedor es obligatorio"
-    }
-
-    if (!formData.contactoNombre.trim()) {
-      newErrors.contactoNombre = "El nombre de contacto es obligatorio"
-    }
-
+    if (!formData.nombre.trim()) newErrors.nombre = "El nombre del proveedor es obligatorio"
+    if (!formData.contactoNombre.trim()) newErrors.contactoNombre = "El nombre de contacto es obligatorio"
     if (!formData.telefono.trim()) {
       newErrors.telefono = "El teléfono es obligatorio"
     } else if (!validatePhone(formData.telefono)) {
       newErrors.telefono = "Formato de teléfono inválido"
     }
-
     if (!formData.correo.trim()) {
       newErrors.correo = "El correo es obligatorio"
     } else if (!validateEmail(formData.correo)) {
       newErrors.correo = "Formato de correo inválido"
     }
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (validateForm()) {
-      onSave({
-        ...formData,
-        id: proveedor?.id || Date.now(),
-      })
+      try {
+        const url = proveedor ? `${API_BASE_URL}/proveedores/${proveedor.id}` : `${API_BASE_URL}/proveedores`
+        const method = proveedor ? "PUT" : "POST"
+        const response = await fetchWithToken(url, {
+          method,
+          body: JSON.stringify(formData),
+        })
+        const savedProveedor = await response.json()
+        onSave(savedProveedor)
+        Swal.fire({
+          icon: "success",
+          title: "Éxito",
+          text: proveedor ? "Proveedor actualizado correctamente" : "Proveedor agregado correctamente",
+        })
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.message,
+        })
+      }
       onClose()
     }
   }
@@ -161,25 +142,21 @@ const ProveedorFormModal = ({ isOpen, onClose, proveedor = null, onSave }) => {
     <Modal isOpen={isOpen} onClose={onClose} title={proveedor ? "Editar proveedor" : "Nuevo proveedor"} size="md">
       <form onSubmit={handleSubmit} className="proveedores-form">
         <div className="proveedores-form-group">
-          <label htmlFor="nombreProveedor" className="proveedores-form-label">
-            *Nombre Proveedor:
-          </label>
+          <label htmlFor="nombre" className="proveedores-form-label">Nombre Proveedor <span className="required"> *</span></label>
           <input
             type="text"
-            id="nombreProveedor"
-            name="nombreProveedor"
-            value={formData.nombreProveedor}
+            id="nombre"
+            name="nombre"
+            value={formData.nombre}
             onChange={handleInputChange}
-            className={`proveedores-form-control ${errors.nombreProveedor ? "proveedores-form-control-error" : ""}`}
+            className={`proveedores-form-control ${errors.nombre ? "proveedores-form-control-error" : ""}`}
             placeholder="Ingrese el nombre del proveedor"
           />
-          {errors.nombreProveedor && <span className="proveedores-form-error">{errors.nombreProveedor}</span>}
+          {errors.nombre && <span className="proveedores-form-error">{errors.nombre}</span>}
         </div>
 
         <div className="proveedores-form-group">
-          <label htmlFor="contactoNombre" className="proveedores-form-label">
-            *Contacto Nombre:
-          </label>
+          <label htmlFor="contactoNombre" className="proveedores-form-label">Contacto Nombre <span className="required"> *</span></label>
           <input
             type="text"
             id="contactoNombre"
@@ -193,9 +170,7 @@ const ProveedorFormModal = ({ isOpen, onClose, proveedor = null, onSave }) => {
         </div>
 
         <div className="proveedores-form-group">
-          <label htmlFor="telefono" className="proveedores-form-label">
-            *Teléfono:
-          </label>
+          <label htmlFor="telefono" className="proveedores-form-label">Teléfono <span className="required"> *</span></label>
           <input
             type="tel"
             id="telefono"
@@ -203,15 +178,13 @@ const ProveedorFormModal = ({ isOpen, onClose, proveedor = null, onSave }) => {
             value={formData.telefono}
             onChange={handleInputChange}
             className={`proveedores-form-control ${errors.telefono ? "proveedores-form-control-error" : ""}`}
-            placeholder="Ej: +1 555-123-4567"
+            placeholder="555-123-4567"
           />
           {errors.telefono && <span className="proveedores-form-error">{errors.telefono}</span>}
         </div>
 
         <div className="proveedores-form-group">
-          <label htmlFor="correo" className="proveedores-form-label">
-            *Correo:
-          </label>
+          <label htmlFor="correo" className="proveedores-form-label">Correo <span className="required"> *</span></label>
           <input
             type="email"
             id="correo"
@@ -225,9 +198,7 @@ const ProveedorFormModal = ({ isOpen, onClose, proveedor = null, onSave }) => {
         </div>
 
         <div className="proveedores-form-group">
-          <label htmlFor="sitioWeb" className="proveedores-form-label">
-            Sitio web:
-          </label>
+          <label htmlFor="sitioWeb" className="proveedores-form-label">Sitio web</label>
           <input
             type="url"
             id="sitioWeb"
@@ -240,9 +211,7 @@ const ProveedorFormModal = ({ isOpen, onClose, proveedor = null, onSave }) => {
         </div>
 
         <div className="proveedores-form-actions">
-          <button type="button" onClick={onClose} className="proveedores-btn proveedores-btn-cancel">
-            Cancelar
-          </button>
+          <button type="button" onClick={onClose} className="proveedores-btn proveedores-btn-cancel">Cancelar</button>
           <button type="submit" className="proveedores-btn proveedores-btn-primary">
             {proveedor ? "Guardar cambios" : "Agregar"}
           </button>
@@ -253,93 +222,54 @@ const ProveedorFormModal = ({ isOpen, onClose, proveedor = null, onSave }) => {
 }
 
 // Modal de Confirmación de Eliminación
-const ConfirmarEliminacionModal = ({ isOpen, onClose, proveedor, onConfirm }) => {
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm">
-      <div className="proveedores-confirmar-eliminacion">
-        <div className="proveedores-confirmation-content">
-          <p className="proveedores-confirmation-message">
-            ¿Seguro que quieres eliminar el proveedor de forma permanente?
-          </p>
-          <div className="proveedores-confirmation-details">
-            <strong>{proveedor?.nombreProveedor}</strong>
-          </div>
-          <div className="proveedores-modal-form-actions">
-            <button type="button" onClick={onClose} className="proveedores-btn proveedores-btn-cancel">
-              Cancelar
-            </button>
-            <button type="button" onClick={onConfirm} className="proveedores-btn proveedores-btn-danger">
-              Confirmar
-            </button>
-          </div>
+const ConfirmarEliminacionModal = ({ isOpen, onClose, proveedor, onConfirm }) => (
+  <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm">
+    <div className="proveedores-confirmar-eliminacion">
+      <div className="proveedores-confirmation-content">
+        <p className="proveedores-confirmation-message">¿Seguro que quieres eliminar el proveedor de forma permanente?</p>
+        <div className="proveedores-confirmation-details"><strong>{proveedor?.nombre}</strong></div>
+        <div className="proveedores-modal-form-actions">
+          <button type="button" onClick={onClose} className="proveedores-btn proveedores-btn-cancel">Cancelar</button>
+          <button type="button" onClick={onConfirm} className="proveedores-btn proveedores-btn-danger">Confirmar</button>
         </div>
       </div>
-    </Modal>
-  )
-}
+    </div>
+  </Modal>
+)
 
 // Componente Principal
 const EquiposProveedores = () => {
   const navigate = useNavigate()
-
   const [proveedores, setProveedores] = useState([])
   const [modals, setModals] = useState({
     form: { isOpen: false, proveedor: null },
     confirmDelete: { isOpen: false, proveedor: null },
   })
 
-  // Datos de ejemplo para demostración
   useEffect(() => {
-    const mockProveedores = [
-      {
-        id: 1,
-        nombreProveedor: "Global Box",
-        contactoNombre: "John Smith",
-        telefono: "+1 555-123-4567",
-        correo: "john.smith@globalbox.com",
-        sitioWeb: "https://rastreo.globalboxgps.com/",
-      },
-      {
-        id: 2,
-        nombreProveedor: "Linkworld",
-        contactoNombre: "Carlos Ramirez",
-        telefono: "+52 55 1234 5678",
-        correo: "carlos@linkworld.com",
-        sitioWeb: "https://gpsmonitorlatam.com",
-      },
-      {
-        id: 3,
-        nombreProveedor: "TechTrack Solutions",
-        contactoNombre: "Maria González",
-        telefono: "+1 800-555-0199",
-        correo: "maria.gonzalez@techtrack.com",
-        sitioWeb: "https://techtrack.solutions",
-      },
-      {
-        id: 4,
-        nombreProveedor: "GPS Master",
-        contactoNombre: "Roberto Silva",
-        telefono: "+55 11 9876-5432",
-        correo: "roberto@gpsmaster.com.br",
-        sitioWeb: "https://gpsmaster.com.br",
-      },
-    ]
-
-    setProveedores(mockProveedores)
+    fetchData()
   }, [])
 
+  const fetchData = async () => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/proveedores`)
+      const data = await response.json()
+      setProveedores(data)
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudieron cargar los proveedores",
+      })
+    }
+  }
+
   const openModal = (modalType, data = {}) => {
-    setModals((prev) => ({
-      ...prev,
-      [modalType]: { isOpen: true, ...data },
-    }))
+    setModals((prev) => ({ ...prev, [modalType]: { isOpen: true, ...data } }))
   }
 
   const closeModal = (modalType) => {
-    setModals((prev) => ({
-      ...prev,
-      [modalType]: { isOpen: false },
-    }))
+    setModals((prev) => ({ ...prev, [modalType]: { isOpen: false } }))
   }
 
   const handleMenuNavigation = (menuItem) => {
@@ -365,36 +295,33 @@ const EquiposProveedores = () => {
   }
 
   const handleSaveProveedor = (proveedorData) => {
-    if (proveedorData.id && proveedores.find((p) => p.id === proveedorData.id)) {
-      // Editar proveedor existente
-      setProveedores((prev) =>
-        prev.map((proveedor) => (proveedor.id === proveedorData.id ? { ...proveedor, ...proveedorData } : proveedor)),
-      )
-      Swal.fire({
-        icon: "success",
-        title: "Éxito",
-        text: "Proveedor actualizado correctamente",
-      })
-    } else {
-      // Agregar nuevo proveedor
-      setProveedores((prev) => [...prev, proveedorData])
-      Swal.fire({
-        icon: "success",
-        title: "Éxito",
-        text: "Proveedor agregado correctamente",
-      })
-    }
+    setProveedores((prev) => {
+      if (proveedorData.id) {
+        return prev.map((p) => (p.id === proveedorData.id ? proveedorData : p))
+      }
+      return [...prev, proveedorData]
+    })
+    fetchData() // Refrescar para asegurar consistencia con la API
   }
 
-  const handleDeleteProveedor = () => {
+  const handleDeleteProveedor = async () => {
     const proveedorId = modals.confirmDelete.proveedor?.id
-    setProveedores((prev) => prev.filter((proveedor) => proveedor.id !== proveedorId))
+    try {
+      await fetchWithToken(`${API_BASE_URL}/proveedores/${proveedorId}`, { method: "DELETE" })
+      setProveedores((prev) => prev.filter((p) => p.id !== proveedorId))
+      Swal.fire({
+        icon: "success",
+        title: "Éxito",
+        text: "Proveedor eliminado correctamente",
+      })
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.message,
+      })
+    }
     closeModal("confirmDelete")
-    Swal.fire({
-      icon: "success",
-      title: "Éxito",
-      text: "Proveedor eliminado correctamente",
-    })
   }
 
   return (
@@ -413,10 +340,7 @@ const EquiposProveedores = () => {
               <div className="proveedores-menu-item" onClick={() => handleMenuNavigation("modelos")}>
                 Modelos
               </div>
-              <div
-                className="proveedores-menu-item proveedores-menu-item-active"
-                onClick={() => handleMenuNavigation("proveedores")}
-              >
+              <div className="proveedores-menu-item proveedores-menu-item-active" onClick={() => handleMenuNavigation("proveedores")}>
                 Proveedores
               </div>
               <div className="proveedores-menu-item" onClick={() => handleMenuNavigation("inventario")}>
@@ -435,10 +359,7 @@ const EquiposProveedores = () => {
                 <p className="proveedores-subtitle">Gestión de proveedores de equipos</p>
               </div>
               <div className="proveedores-header-actions">
-                <button
-                  className="proveedores-btn proveedores-btn-primary"
-                  onClick={() => openModal("form", { proveedor: null })}
-                >
+                <button className="proveedores-btn proveedores-btn-primary" onClick={() => openModal("form", { proveedor: null })}>
                   Agregar proveedor
                 </button>
               </div>
@@ -446,7 +367,6 @@ const EquiposProveedores = () => {
 
             <div className="proveedores-table-card">
               <h4 className="proveedores-table-title">Proveedores</h4>
-
               <div className="proveedores-table-container">
                 <table className="proveedores-table">
                   <thead>
@@ -463,24 +383,13 @@ const EquiposProveedores = () => {
                     {proveedores.length > 0 ? (
                       proveedores.map((proveedor) => (
                         <tr key={proveedor.id}>
-                          <td>
-                            <div className="proveedores-proveedor-name">{proveedor.nombreProveedor}</div>
-                          </td>
+                          <td><div className="proveedores-proveedor-name">{proveedor.nombre}</div></td>
                           <td>{proveedor.contactoNombre}</td>
                           <td>{proveedor.telefono}</td>
-                          <td>
-                            <a href={`mailto:${proveedor.correo}`} className="proveedores-email-link">
-                              {proveedor.correo}
-                            </a>
-                          </td>
+                          <td><a href={`mailto:${proveedor.correo}`} className="proveedores-email-link">{proveedor.correo}</a></td>
                           <td>
                             {proveedor.sitioWeb ? (
-                              <a
-                                href={proveedor.sitioWeb}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="proveedores-website-link"
-                              >
+                              <a href={proveedor.sitioWeb} target="_blank" rel="noopener noreferrer" className="proveedores-website-link">
                                 {proveedor.sitioWeb}
                               </a>
                             ) : (
@@ -494,22 +403,14 @@ const EquiposProveedores = () => {
                                 onClick={() => openModal("form", { proveedor })}
                                 title="Editar"
                               >
-                                <img
-                                  src={editIcon || "/placeholder.svg"}
-                                  alt="Editar"
-                                  className="proveedores-action-icon"
-                                />
+                                <img src={editIcon || "/placeholder.svg"} alt="Editar" className="proveedores-action-icon" />
                               </button>
                               <button
                                 className="proveedores-action-btn proveedores-delete-btn"
                                 onClick={() => openModal("confirmDelete", { proveedor })}
                                 title="Eliminar"
                               >
-                                <img
-                                  src={deleteIcon || "/placeholder.svg"}
-                                  alt="Eliminar"
-                                  className="proveedores-action-icon"
-                                />
+                                <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" className="proveedores-action-icon" />
                               </button>
                             </div>
                           </td>
@@ -539,8 +440,7 @@ const EquiposProveedores = () => {
           </section>
         </div>
 
-        {/* Modales */}
-        <ProveedorFormModal
+        <ProveedorEquipoFormModal
           isOpen={modals.form.isOpen}
           onClose={() => closeModal("form")}
           proveedor={modals.form.proveedor}

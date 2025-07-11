@@ -1,247 +1,191 @@
-import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import "./Equipos_Inventario.css"
-import Header from "../Header/Header"
-import Swal from "sweetalert2"
-import editIcon from "../../assets/icons/editar.png"
-import deleteIcon from "../../assets/icons/eliminar.png"
-import detailsIcon from "../../assets/icons/lupa.png"
-import activateIcon from "../../assets/icons/activar.png"
-import renewIcon from "../../assets/icons/renovar.png"
-import { Bar } from "react-chartjs-2"
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js"
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import "./Equipos_Inventario.css";
+import Header from "../Header/Header";
+import Swal from "sweetalert2";
+import editIcon from "../../assets/icons/editar.png";
+import deleteIcon from "../../assets/icons/eliminar.png";
+import detailsIcon from "../../assets/icons/lupa.png";
+import activateIcon from "../../assets/icons/activar.png";
+import renewIcon from "../../assets/icons/renovar.png";
+import { Bar } from "react-chartjs-2";
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
+import { API_BASE_URL } from "../Config/Config";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const fetchWithToken = async (url, options = {}) => {
-  const token = localStorage.getItem("token")
+  const token = localStorage.getItem("token");
   const headers = {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
-  }
-  const response = await fetch(url, { ...options, headers })
-  if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`)
-  return response
-}
+  };
+  const response = await fetch(url, { ...options, headers });
+  if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`);
+  return response;
+};
 
 // Componente Modal Base
 const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden"
-    } else {
-      document.body.style.overflow = "unset"
-    }
+    if (isOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "unset";
+    return () => { document.body.style.overflow = "unset"; };
+  }, [isOpen]);
 
-    return () => {
-      document.body.style.overflow = "unset"
-    }
-  }, [isOpen])
-
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   const sizeClasses = {
     sm: "inventario-modal-sm",
     md: "inventario-modal-md",
     lg: "inventario-modal-lg",
     xl: "inventario-modal-xl",
-  }
+  };
 
   return (
-    <div className="inventario-modal-overlay" onClick={canClose ? onClose : () => {}}>
+    <div className="inventario-modal-overlay" onClick={canClose ? onClose : () => { }}>
       <div className={`inventario-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="inventario-modal-header">
           <h2 className="inventario-modal-title">{title}</h2>
-          {canClose && (
-            <button className="inventario-modal-close" onClick={onClose}>
-              ✕
-            </button>
-          )}
+          {canClose && <button className="inventario-modal-close" onClick={onClose}>✕</button>}
         </div>
         <div className="inventario-modal-body">{children}</div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 // Modal para Agregar/Editar Equipo
-const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave }) => {
+const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equipos, proveedores, clientes }) => {
   const [formData, setFormData] = useState({
     imei: "",
     nombre: "",
-    modelo: "",
-    cliente: "AG",
-    proveedor: "",
-    tipo: "Almacen",
-    estatus: "Inactivo",
-    tipoActivacion: "Anual",
-    plataforma: "Track Solid",
-  })
-  const [errors, setErrors] = useState({})
-
-  const modeloOptions = [
-    { value: "", label: "Seleccione un modelo" },
-    { value: "LW4G-6A", label: "LW4G-6A" },
-    { value: "VL802", label: "VL802" },
-    { value: "JC400P", label: "JC400P" },
-    { value: "GT06N", label: "GT06N" },
-    { value: "ST901", label: "ST901" },
-    { value: "DC100", label: "DC100" },
-  ]
-
-  const clienteOptions = [
-    { value: "AG", label: "AG" },
-    { value: "BN", label: "BN" },
-    { value: "SANTANDER SEALES", label: "SANTANDER SEALES" },
-    { value: "FERM Constructora", label: "FERM Constructora" },
-    { value: "DYC Logistic", label: "DYC Logistic" },
-    { value: "Ranch Capital", label: "Ranch Capital" },
-    { value: "Agua Bastos", label: "Agua Bastos" },
-  ]
-
-  const proveedorOptions = [
-    { value: "", label: "Seleccione un proveedor" },
-    { value: "Global Box", label: "Global Box" },
-    { value: "Linkworld", label: "Linkworld" },
-    { value: "TechTrack Solutions", label: "TechTrack Solutions" },
-    { value: "GPS Master", label: "GPS Master" },
-  ]
-
-  const tipoOptions = [
-    { value: "Almacen", label: "Almacén" },
-    { value: "Demo", label: "Demo" },
-    { value: "Vendido", label: "Vendido" },
-  ]
-
-  const estatusOptions = [
-    { value: "Inactivo", label: "Inactivo" },
-    { value: "Activo", label: "Activo" },
-  ]
-
-  const tipoActivacionOptions = [
-    { value: "Anual", label: "Anual" },
-    { value: "Vitalicia", label: "Vitalicia" },
-  ]
-
-  const plataformaOptions = [
-    { value: "Track Solid", label: "Track Solid" },
-    { value: "WhatsGPS", label: "WhatsGPS" },
-    { value: "TrackerKing", label: "TrackerKing" },
-  ]
+    modeloId: "",
+    clienteId: null, // Cambiar a null por defecto
+    clienteDefault: null, // Nueva propiedad para AG/BN
+    proveedorId: "",
+    tipo: "ALMACEN",
+    estatus: "INACTIVO",
+    tipoActivacion: "ANUAL",
+    plataforma: "TRACK_SOLID",
+  });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (isOpen) {
       if (equipo) {
-        // Modo edición
         setFormData({
           imei: equipo.imei || "",
           nombre: equipo.nombre || "",
-          modelo: equipo.modelo || "",
-          cliente: equipo.cliente || "AG",
-          proveedor: equipo.proveedor || "",
-          tipo: equipo.tipo || "Almacen",
-          estatus: equipo.estatus || "Inactivo",
-          tipoActivacion: equipo.tipoActivacion || "Anual",
-          plataforma: equipo.plataforma || "Track Solid",
-        })
+          modeloId: equipo.modeloId || "",
+          clienteId: equipo.clienteId || null,
+          clienteDefault: equipo.clienteDefault || null,
+          proveedorId: equipo.proveedorId || "",
+          tipo: equipo.tipo || "ALMACEN",
+          estatus: equipo.estatus || "INACTIVO",
+          tipoActivacion: equipo.tipoActivacion || "ANUAL",
+          plataforma: equipo.plataforma || "TRACK_SOLID",
+        });
+        if (equipo.clienteId === null && equipo.clienteDefault) {
+          setFormData((prev) => ({
+            ...prev,
+            clienteId: equipo.clienteDefault,
+          }));
+        }
       } else {
-        // Modo agregar
         setFormData({
           imei: "",
           nombre: "",
-          modelo: "",
-          cliente: "AG",
-          proveedor: "",
-          tipo: "Almacen",
-          estatus: "Inactivo",
-          tipoActivacion: "Anual",
-          plataforma: "Track Solid",
-        })
+          modeloId: "",
+          clienteId: null,
+          clienteDefault: null,
+          proveedorId: "",
+          tipo: "ALMACEN",
+          estatus: "INACTIVO",
+          tipoActivacion: "ANUAL",
+          plataforma: "TRACK_SOLID",
+        });
       }
-      setErrors({})
+      setErrors({});
     }
-  }, [isOpen, equipo])
+  }, [isOpen, equipo]);
 
-  // Generar nombre automáticamente cuando se selecciona modelo e IMEI
   useEffect(() => {
-    if (formData.modelo && formData.imei && !equipo) {
+    if (formData.modeloId && formData.imei && !equipo) {
       if (formData.imei.length >= 5) {
-        const ultimosCincoDigitos = formData.imei.slice(-5)
-        const nombreGenerado = `${formData.modelo} ${ultimosCincoDigitos}`
-        setFormData((prev) => ({ ...prev, nombre: nombreGenerado }))
+        const ultimosCincoDigitos = formData.imei.slice(-5);
+        const modeloNombre = modelos.find(m => m.id === parseInt(formData.modeloId))?.nombre || "";
+        const nombreGenerado = `${modeloNombre}-${ultimosCincoDigitos}`;
+        setFormData((prev) => ({ ...prev, nombre: nombreGenerado }));
       }
     }
-  }, [formData.modelo, formData.imei, equipo])
+  }, [formData.modeloId, formData.imei, equipo, modelos]);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-    }))
-    // Limpiar error del campo cuando el usuario empiece a escribir
-    if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }))
-    }
-  }
+    }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
 
   const validateForm = () => {
-    const newErrors = {}
-
-    if (!formData.imei.trim()) {
-      newErrors.imei = "El IMEI es obligatorio"
-    } else if (!/^\d{15}$/.test(formData.imei.trim())) {
-      newErrors.imei = "El IMEI debe tener exactamente 15 dígitos"
+    const newErrors = {};
+    if (!formData.imei.trim()) newErrors.imei = "El IMEI es obligatorio";
+    else if (!/^\d{15}$/.test(formData.imei.trim())) newErrors.imei = "El IMEI debe tener exactamente 15 dígitos";
+    else {
+      const isDuplicate = equipos.some((e) =>
+        e.imei === formData.imei && (!equipo || e.id !== equipo.id)
+      );
+      if (isDuplicate) newErrors.imei = "El IMEI ya está en uso por otro equipo";
     }
+    if (!formData.nombre.trim()) newErrors.nombre = "El nombre es obligatorio";
+    if (!formData.modeloId) newErrors.modeloId = "El modelo es obligatorio";
+    if (!formData.proveedorId) newErrors.proveedorId = "El proveedor es obligatorio";
+    if (!formData.tipo) newErrors.tipo = "El tipo es obligatorio";
+    if (!formData.estatus) newErrors.estatus = "El estatus es obligatorio";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-    if (!formData.nombre.trim()) {
-      newErrors.nombre = "El nombre es obligatorio"
-    }
-
-    if (!formData.modelo) {
-      newErrors.modelo = "El modelo es obligatorio"
-    }
-
-    if (!formData.proveedor) {
-      newErrors.proveedor = "El proveedor es obligatorio"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (validateForm()) {
-      onSave({
-        ...formData,
-        id: equipo?.id || Date.now(),
-        fechaActivacion: formData.estatus === "Activo" ? new Date().toISOString().split("T")[0] : null,
-        fechaExpiracion:
-          formData.estatus === "Activo"
-            ? formData.tipoActivacion === "Anual"
-              ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
-              : new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
-            : null,
-        sim: equipo?.sim || null,
-      })
-      onClose()
+      try {
+        const url = equipo ? `${API_BASE_URL}/equipos/${equipo.id}` : `${API_BASE_URL}/equipos`;
+        const method = equipo ? "PUT" : "POST";
+        const submitData = { ...formData };
+        if (submitData.clienteId === "AG" || submitData.clienteId === "BN") {
+          submitData.clienteDefault = submitData.clienteId;
+          submitData.clienteId = null;
+        }
+        const response = await fetchWithToken(url, {
+          method,
+          body: JSON.stringify(submitData),
+        });
+        const savedEquipo = await response.json();
+        onSave(savedEquipo);
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.message,
+        });
+      }
+      onClose();
     }
-  }
+  };
 
-  const isTipoActivacionDisabled = formData.estatus === "Inactivo"
+
+  const isTipoActivacionDisabled = formData.estatus === "INACTIVO";
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={equipo ? "Editar equipo" : "Nuevo equipo"} size="md">
       <form onSubmit={handleSubmit} className="inventario-form">
         <div className="inventario-form-group">
-          <label htmlFor="imei" className="inventario-form-label">
-            *IMEI:
-          </label>
+          <label htmlFor="imei" className="inventario-form-label">IMEI <span className="required"> *</span></label>
           <input
             type="text"
             id="imei"
@@ -256,29 +200,24 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave }) => {
         </div>
 
         <div className="inventario-form-group">
-          <label htmlFor="modelo" className="inventario-form-label">
-            *Modelo:
-          </label>
+          <label htmlFor="modeloId" className="inventario-form-label">Modelo <span className="required"> *</span></label>
           <select
-            id="modelo"
-            name="modelo"
-            value={formData.modelo}
+            id="modeloId"
+            name="modeloId"
+            value={formData.modeloId}
             onChange={handleInputChange}
-            className={`inventario-form-control ${errors.modelo ? "inventario-form-control-error" : ""}`}
+            className={`inventario-form-control ${errors.modeloId ? "inventario-form-control-error" : ""}`}
           >
-            {modeloOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
+            <option value="">Seleccione un modelo</option>
+            {modelos.map((m) => (
+              <option key={m.id} value={m.id}>{m.nombre}</option>
             ))}
           </select>
-          {errors.modelo && <span className="inventario-form-error">{errors.modelo}</span>}
+          {errors.modeloId && <span className="inventario-form-error">{errors.modeloId}</span>}
         </div>
 
         <div className="inventario-form-group">
-          <label htmlFor="nombre" className="inventario-form-label">
-            *Nombre:
-          </label>
+          <label htmlFor="nombre" className="inventario-form-label">Nombre <span className="required"> *</span></label>
           <input
             type="text"
             id="nombre"
@@ -288,93 +227,80 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave }) => {
             className={`inventario-form-control ${errors.nombre ? "inventario-form-control-error" : ""}`}
             placeholder="Nombre del equipo"
           />
-          <small className="inventario-help-text">
-            Se genera automáticamente como "[Modelo] + últimos 5 dígitos del IMEI" al crear, pero es editable
-          </small>
+          <small className="inventario-help-text">Se genera automáticamente como "[Modelo] + últimos 5 dígitos del IMEI" al crear, pero es editable</small>
           {errors.nombre && <span className="inventario-form-error">{errors.nombre}</span>}
         </div>
 
         <div className="inventario-form-group">
-          <label htmlFor="cliente" className="inventario-form-label">
-            Cliente:
-          </label>
+          <label htmlFor="clienteId" className="inventario-form-label">Cliente</label>
           <select
-            id="cliente"
-            name="cliente"
-            value={formData.cliente}
+            id="clienteId"
+            name="clienteId"
+            value={formData.clienteId || ""}
             onChange={handleInputChange}
             className="inventario-form-control"
           >
-            {clienteOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
+            <option value="">Seleccione un cliente</option>
+            <option value="AG">AG</option>
+            <option value="BN">BN</option>
+            {clientes.map((cliente) => (
+              <option key={cliente.id} value={cliente.id}>
+                {cliente.nombre}
               </option>
             ))}
           </select>
         </div>
 
         <div className="inventario-form-group">
-          <label htmlFor="proveedor" className="inventario-form-label">
-            *Proveedor:
-          </label>
+          <label htmlFor="proveedorId" className="inventario-form-label">Proveedor <span className="required"> *</span></label>
           <select
-            id="proveedor"
-            name="proveedor"
-            value={formData.proveedor}
+            id="proveedorId"
+            name="proveedorId"
+            value={formData.proveedorId}
             onChange={handleInputChange}
-            className={`inventario-form-control ${errors.proveedor ? "inventario-form-control-error" : ""}`}
+            className={`inventario-form-control ${errors.proveedorId ? "inventario-form-control-error" : ""}`}
           >
-            {proveedorOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
+            <option value="">Seleccione un proveedor</option>
+            {proveedores.map((p) => (
+              <option key={p.id} value={p.id}>{p.nombre}</option>
             ))}
           </select>
-          {errors.proveedor && <span className="inventario-form-error">{errors.proveedor}</span>}
+          {errors.proveedorId && <span className="inventario-form-error">{errors.proveedorId}</span>}
         </div>
 
         <div className="inventario-form-group">
-          <label htmlFor="tipo" className="inventario-form-label">
-            *Tipo:
-          </label>
+          <label htmlFor="tipo" className="inventario-form-label">Tipo <span className="required"> *</span></label>
           <select
             id="tipo"
             name="tipo"
             value={formData.tipo}
             onChange={handleInputChange}
-            className="inventario-form-control"
+            className={`inventario-form-control ${errors.tipo ? "inventario-form-control-error" : ""}`}
           >
-            {tipoOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
+            <option value="ALMACEN">Almacen</option>
+            <option value="DEMO">Demo</option>
+            <option value="VENDIDO">Vendido</option>
           </select>
+          {errors.tipo && <span className="inventario-form-error">{errors.tipo}</span>}
         </div>
 
         <div className="inventario-form-group">
-          <label htmlFor="estatus" className="inventario-form-label">
-            *Estatus:
-          </label>
+          <label htmlFor="estatus" className="inventario-form-label">Estatus <span className="required"> *</span></label>
           <select
             id="estatus"
             name="estatus"
             value={formData.estatus}
             onChange={handleInputChange}
-            className="inventario-form-control"
+            className={`inventario-form-control ${errors.estatus ? "inventario-form-control-error" : ""}`}
           >
-            {estatusOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
+            <option value="INACTIVO">Inactivo</option>
+            <option value="ACTIVO">Activo</option>
           </select>
+          {errors.estatus && <span className="inventario-form-error">{errors.estatus}</span>}
         </div>
 
         <div className="inventario-form-group">
-          <label htmlFor="tipoActivacion" className="inventario-form-label">
-            *Tipo Activación:
-          </label>
+          <label htmlFor="tipoActivacion" className="inventario-form-label">Tipo Activación <span className="required"> *</span></label>
           <select
             id="tipoActivacion"
             name="tipoActivacion"
@@ -383,21 +309,14 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave }) => {
             className="inventario-form-control"
             disabled={isTipoActivacionDisabled}
           >
-            {tipoActivacionOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
+            <option value="ANUAL">Anual</option>
+            <option value="VITALICIA">Vitalicia</option>
           </select>
-          {isTipoActivacionDisabled && (
-            <small className="inventario-help-text">Deshabilitado cuando el estatus es "Inactivo"</small>
-          )}
+          {isTipoActivacionDisabled && <small className="inventario-help-text">Deshabilitado cuando el estatus es "INACTIVO"</small>}
         </div>
 
         <div className="inventario-form-group">
-          <label htmlFor="plataforma" className="inventario-form-label">
-            *Plataforma:
-          </label>
+          <label htmlFor="plataforma" className="inventario-form-label">Plataforma <span className="required"> *</span></label>
           <select
             id="plataforma"
             name="plataforma"
@@ -405,150 +324,101 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave }) => {
             onChange={handleInputChange}
             className="inventario-form-control"
           >
-            {plataformaOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
+            <option value="TRACK_SOLID">Track Solid</option>
+            <option value="WHATSGPS">Whats GPS</option>
+            <option value="TRACKERKING">Trackerking</option>
           </select>
         </div>
 
         <div className="inventario-form-actions">
-          <button type="button" onClick={onClose} className="inventario-btn inventario-btn-cancel">
-            Cancelar
-          </button>
-          <button type="submit" className="inventario-btn inventario-btn-primary">
-            {equipo ? "Guardar cambios" : "Agregar"}
-          </button>
+          <button type="button" onClick={onClose} className="inventario-btn inventario-btn-cancel">Cancelar</button>
+          <button type="submit" className="inventario-btn inventario-btn-primary">{equipo ? "Guardar cambios" : "Agregar"}</button>
         </div>
       </form>
     </Modal>
-  )
-}
+  );
+};
 
 // Modal de Detalles de Equipo
-const DetallesEquipoModal = ({ isOpen, onClose, equipo }) => {
-  if (!equipo) return null
+const DetallesEquipoModal = ({ isOpen, onClose, equipo, modelos, proveedores, clientes, sims }) => {
+  if (!equipo) return null;
 
   const formatDate = (dateString) => {
-    if (!dateString) return "N/A"
-    const date = new Date(dateString)
-    return date.toLocaleDateString("es-MX")
-  }
+    if (!dateString) return "N/A";
+    const date = new Date(`${dateString}T00:00:00-06:00`);
+    return date.toLocaleDateString("es-MX", { timeZone: "America/Mexico_City" });
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Detalles equipo" size="md">
       <div className="inventario-detalles-content">
         <div className="inventario-detalles-grid">
-          <div className="inventario-detalle-item">
-            <label>IMEI:</label>
-            <span>{equipo.imei || "N/A"}</span>
-          </div>
-          <div className="inventario-detalle-item">
-            <label>Nombre:</label>
-            <span>{equipo.nombre || "N/A"}</span>
-          </div>
-          <div className="inventario-detalle-item">
-            <label>Modelo:</label>
-            <span>{equipo.modelo || "N/A"}</span>
-          </div>
-          <div className="inventario-detalle-item">
-            <label>Cliente:</label>
-            <span>{equipo.cliente || "N/A"}</span>
-          </div>
-          <div className="inventario-detalle-item">
-            <label>Proveedor:</label>
-            <span>{equipo.proveedor || "N/A"}</span>
-          </div>
-          <div className="inventario-detalle-item">
-            <label>Tipo:</label>
-            <span>{equipo.tipo || "N/A"}</span>
-          </div>
-          <div className="inventario-detalle-item">
-            <label>Estatus:</label>
-            <span>{equipo.estatus || "N/A"}</span>
-          </div>
-          <div className="inventario-detalle-item">
-            <label>Tipo Activación:</label>
-            <span>{equipo.tipoActivacion || "N/A"}</span>
-          </div>
-          <div className="inventario-detalle-item">
-            <label>Fecha activación:</label>
-            <span>{formatDate(equipo.fechaActivacion)}</span>
-          </div>
-          <div className="inventario-detalle-item">
-            <label>Fecha expiración:</label>
-            <span>{formatDate(equipo.fechaExpiracion)}</span>
-          </div>
-          <div className="inventario-detalle-item">
-            <label>Plataforma:</label>
-            <span>{equipo.plataforma || "N/A"}</span>
-          </div>
-          <div className="inventario-detalle-item">
-            <label>SIM Referenciada:</label>
-            <span>{equipo.sim || "N/A"}</span>
-          </div>
+          <div className="inventario-detalle-item"><label>IMEI:</label><span>{equipo.imei || "N/A"}</span></div>
+          <div className="inventario-detalle-item"><label>Nombre:</label><span>{equipo.nombre || "N/A"}</span></div>
+          <div className="inventario-detalle-item"><label>Modelo:</label><span>{equipo.modeloId ? modelos.find(m => m.id === equipo.modeloId)?.nombre : "N/A"}</span></div>
+          <div className="inventario-detalle-item"><label>Cliente:</label><span>
+            {equipo.clienteId ? (
+              clientes.find(c => c.id === equipo.clienteId)?.nombre || equipo.clienteId
+            ) : equipo.clienteDefault ? (
+              equipo.clienteDefault
+            ) : (
+              "N/A"
+            )}
+          </span></div>
+          <div className="inventario-detalle-item"><label>Proveedor:</label><span>{equipo.proveedorId ? proveedores.find(p => p.id === equipo.proveedorId)?.nombre : "N/A"}</span></div>
+          <div className="inventario-detalle-item"><label>Tipo:</label><span>{equipo.tipo || "N/A"}</span></div>
+          <div className="inventario-detalle-item"><label>Estatus:</label><span>{equipo.estatus || "N/A"}</span></div>
+          <div className="inventario-detalle-item"><label>Tipo Activación:</label><span>{equipo.tipoActivacion || "N/A"}</span></div>
+          <div className="inventario-detalle-item"><label>Fecha activación:</label><span>{formatDate(equipo.fechaActivacion)}</span></div>
+          <div className="inventario-detalle-item"><label>Fecha expiración:</label><span>{formatDate(equipo.fechaExpiracion)}</span></div>
+          <div className="inventario-detalle-item"><label>Plataforma:</label><span>{equipo.plataforma || "N/A"}</span></div>
+          <div className="inventario-detalle-item"><label>SIM Referenciada:</label><span>{equipo.simReferenciada ? sims.find(s => s.id === equipo.simReferenciada.id)?.numero : "N/A"}</span></div>
         </div>
         <div className="inventario-form-actions">
-          <button type="button" onClick={onClose} className="inventario-btn inventario-btn-primary">
-            Cerrar
-          </button>
+          <button type="button" onClick={onClose} className="inventario-btn inventario-btn-primary">Cerrar</button>
         </div>
       </div>
     </Modal>
-  )
-}
+  );
+};
 
 // Modal de Confirmación de Eliminación
 const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, equipo, hasSimVinculada = false }) => {
   const handleConfirm = () => {
-    onConfirm()
-    onClose()
-  }
+    onConfirm();
+    onClose();
+  };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={hasSimVinculada ? "Error al eliminar registro" : "Confirmar eliminación"}
-      size="sm"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title={hasSimVinculada ? "Error al eliminar registro" : "Confirmar eliminación"} size="sm">
       <div className="inventario-confirmar-eliminacion">
         {hasSimVinculada ? (
           <div className="inventario-warning-content">
-            <p className="inventario-warning-message">
-              No se puede eliminar el equipo porque tiene una SIM vinculada. Desvincule la SIM primero.
-            </p>
+            <p className="inventario-warning-message">No se puede eliminar el equipo porque tiene una SIM vinculada. Desvincule la SIM primero.</p>
             <div className="inventario-form-actions">
-              <button type="button" onClick={onClose} className="inventario-btn inventario-btn-primary">
-                Continuar
-              </button>
+              <button type="button" onClick={onClose} className="inventario-btn inventario-btn-primary">Continuar</button>
             </div>
           </div>
         ) : (
           <div className="inventario-confirmation-content">
             <p className="inventario-confirmation-message">¿Seguro que quieres eliminar este equipo?</p>
             <div className="inventario-form-actions">
-              <button type="button" onClick={onClose} className="inventario-btn inventario-btn-cancel">
-                Cancelar
-              </button>
-              <button type="button" onClick={handleConfirm} className="inventario-btn inventario-btn-confirm">
-                Confirmar
-              </button>
+              <button type="button" onClick={onClose} className="inventario-btn inventario-btn-cancel">Cancelar</button>
+              <button type="button" onClick={handleConfirm} className="inventario-btn inventario-btn-confirm">Confirmar</button>
             </div>
           </div>
         )}
       </div>
     </Modal>
-  )
-}
+  );
+};
 
 // Modal de Confirmación de Activación
 const ConfirmarActivacionModal = ({ isOpen, onClose, onConfirm, equipo }) => {
   const handleConfirm = () => {
-    onConfirm()
-    onClose()
-  }
+    onConfirm();
+    onClose();
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Confirmar activación" size="sm">
@@ -556,358 +426,288 @@ const ConfirmarActivacionModal = ({ isOpen, onClose, onConfirm, equipo }) => {
         <div className="inventario-confirmation-content">
           <p className="inventario-confirmation-message">¿Seguro que quieres activar el equipo?</p>
           <div className="inventario-form-actions">
-            <button type="button" onClick={onClose} className="inventario-btn inventario-btn-cancel">
-              Cancelar
-            </button>
-            <button type="button" onClick={handleConfirm} className="inventario-btn inventario-btn-primary">
-              Confirmar
-            </button>
+            <button type="button" onClick={onClose} className="inventario-btn inventario-btn-cancel">Cancelar</button>
+            <button type="button" onClick={handleConfirm} className="inventario-btn inventario-btn-primary">Confirmar</button>
           </div>
         </div>
       </div>
     </Modal>
-  )
-}
+  );
+};
 
 // Componente Principal
 const EquiposInventario = () => {
-  const navigate = useNavigate()
-
-  const [equipos, setEquipos] = useState([])
-  const [filterTipo, setFilterTipo] = useState("")
+  const navigate = useNavigate();
+  const [equipos, setEquipos] = useState([]);
+  const [modelos, setModelos] = useState([]);
+  const [proveedores, setProveedores] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [sims, setSims] = useState([]);
+  const [filterTipo, setFilterTipo] = useState("");
+  const [filterCliente, setFilterCliente] = useState("");
   const [modals, setModals] = useState({
     form: { isOpen: false, equipo: null },
     detalles: { isOpen: false, equipo: null },
     confirmDelete: { isOpen: false, equipo: null, hasSimVinculada: false },
     confirmActivate: { isOpen: false, equipo: null },
-  })
+  });
+
+  const [chartData, setChartData] = useState({
+    labels: [],
+    datasets: [],
+  });
 
   const tipoFilterOptions = [
-    { value: "", label: "Todos" },
-    { value: "Almacen", label: "Almacén" },
-    { value: "Demo", label: "Demo" },
-    { value: "Vendido", label: "Vendido" },
-  ]
+    { value: "", label: "Todos los tipos" },
+    { value: "ALMACEN", label: "Almacen" },
+    { value: "DEMO", label: "Demo" },
+    { value: "VENDIDO", label: "Vendido" },
+  ];
 
-  // Datos de ejemplo para demostración
+  const clienteFilterOptions = [
+    { value: "", label: "Todos los clientes" },
+    { value: "AG", label: "AG" },
+    { value: "BN", label: "BN" },
+    ...clientes.map(cliente => ({ value: cliente.id, label: cliente.nombre }))
+  ];
+
   useEffect(() => {
-    const mockEquipos = [
-      {
-        id: 1,
-        imei: "864859506063015",
-        nombre: "303-63015",
-        modelo: "LW4G-6A",
-        cliente: "BN",
-        proveedor: "Global Box",
-        tipo: "Demo",
-        estatus: "Activo",
-        tipoActivacion: "Anual",
-        plataforma: "Track Solid",
-        fechaActivacion: "2024-01-15",
-        fechaExpiracion: "2025-01-15",
-        sim: "4779973681",
-      },
-      {
-        id: 2,
-        imei: "863017028775423",
-        nombre: "S2TL-775423",
-        modelo: "ST901",
-        cliente: "BN",
-        proveedor: "Linkworld",
-        tipo: "Demo",
-        estatus: "Inactivo",
-        tipoActivacion: "Anual",
-        plataforma: "WhatsGPS",
-        fechaActivacion: null,
-        fechaExpiracion: null,
-        sim: "4771279168",
-      },
-      {
-        id: 3,
-        imei: "864859506063016",
-        nombre: "VL802-63016",
-        modelo: "VL802",
-        cliente: "AG",
-        proveedor: "TechTrack Solutions",
-        tipo: "Almacen",
-        estatus: "Activo",
-        tipoActivacion: "Vitalicia",
-        plataforma: "TrackerKing",
-        fechaActivacion: "2024-03-10",
-        fechaExpiracion: "2034-03-10",
-        sim: null,
-      },
-    ]
+    fetchData();
+  }, []);
 
-    setEquipos(mockEquipos)
-  }, [])
+  const fetchData = async () => {
+    try {
+      const [equiposResponse, modelosResponse, proveedoresResponse, empresasResponse, simsResponse] = await Promise.all([
+        fetchWithToken(`${API_BASE_URL}/equipos`),
+        fetchWithToken(`${API_BASE_URL}/modelos`),
+        fetchWithToken(`${API_BASE_URL}/proveedores`),
+        fetchWithToken(`${API_BASE_URL}/empresas`),
+        fetchWithToken(`${API_BASE_URL}/sims`),
+      ]);
+      const equiposData = await equiposResponse.json();
+      const modelosData = await modelosResponse.json();
+      setEquipos(equiposData);
+      setModelos(modelosData); // Asegúrate de que modelos se actualice
+      setProveedores(await proveedoresResponse.json());
+      const empresas = await empresasResponse.json();
+      const filteredClientes = empresas.filter(emp => ["CLIENTE", "EN_PROCESO"].includes(emp.estatus));
+      setClientes(filteredClientes);
+      setSims(await simsResponse.json());
+      // No llames a generateChartData aquí, lo manejaremos en useEffect
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudieron cargar los datos",
+      });
+    }
+  };
 
-  // Filtrar equipos
+  // Generar la gráfica cuando cambien equipos o modelos
+  useEffect(() => {
+    if (equipos.length > 0 && modelos.length > 0) {
+      generateChartData();
+    }
+  }, [equipos, modelos]);
+
+  const generateChartData = () => {
+    // Obtener etiquetas únicas de uso (basadas en el enum UsoModeloEquipoEnum)
+    const usos = [...new Set(equipos.map(e => {
+      const modelo = modelos.find(m => m.id === e.modeloId);
+      return modelo ? modelo.uso : "Desconocido";
+    }))].filter(uso => uso !== "Desconocido");
+
+    const tipos = ["ALMACEN", "DEMO", "VENDIDO"];
+
+    // Inicializar datos para cada tipo
+    const datasets = tipos.map(tipo => ({
+      label: tipo,
+      data: usos.map(() => 0),
+      backgroundColor: tipo === "ALMACEN" ? "#2563eb" : tipo === "DEMO" ? "#f59e0b" : "#10b981",
+    }));
+
+    // Contar equipos por uso y tipo
+    equipos.forEach(equipo => {
+      const modelo = modelos.find(m => m.id === equipo.modeloId);
+      const uso = modelo ? modelo.uso : "Desconocido";
+      const tipo = equipo.tipo;
+      const usoIndex = usos.indexOf(uso);
+      const tipoIndex = tipos.indexOf(tipo);
+      if (usoIndex !== -1 && tipoIndex !== -1) {
+        datasets[tipoIndex].data[usoIndex]++;
+      }
+    });
+
+    // Filtrar datasets vacíos y actualizar chartData
+    const filteredDatasets = datasets.filter(dataset => dataset.data.some(value => value > 0));
+    const newChartData = {
+      labels: usos,
+      datasets: filteredDatasets,
+    };
+    setChartData(newChartData);
+  };
+
   const filteredEquipos = equipos.filter((equipo) => {
-    const matchesTipo = !filterTipo || equipo.tipo === filterTipo
-    return matchesTipo
-  })
+    const matchesTipo = !filterTipo || equipo.tipo === filterTipo;
+    const matchesCliente = !filterCliente ||
+      (equipo.clienteId && equipo.clienteId.toString() === filterCliente) || 
+      (equipo.clienteDefault && equipo.clienteDefault === filterCliente); 
+    return matchesTipo && matchesCliente;
+  });
 
-  // Verificar si un equipo necesita renovación (30 días antes de expirar)
   const needsRenewal = (equipo) => {
-    if (!equipo.fechaExpiracion || equipo.estatus !== "Activo") return false
-    const today = new Date()
-    const expirationDate = new Date(equipo.fechaExpiracion)
-    const daysUntilExpiration = Math.ceil((expirationDate - today) / (1000 * 60 * 60 * 24))
-    return daysUntilExpiration <= 30 && daysUntilExpiration >= 0
-  }
+    if (!equipo.fechaExpiracion || equipo.estatus !== "ACTIVO") return false;
+    const today = new Date();
+    const expirationDate = new Date(equipo.fechaExpiracion);
+    const daysUntilExpiration = Math.ceil((expirationDate - today) / (1000 * 60 * 60 * 24));
+    return daysUntilExpiration <= 30 && daysUntilExpiration >= 0;
+  };
 
-  // Verificar si un equipo está expirado
   const isExpired = (equipo) => {
-    if (!equipo.fechaExpiracion) return false
-    const today = new Date()
-    const expirationDate = new Date(equipo.fechaExpiracion)
-    return expirationDate < today
-  }
+    if (!equipo.fechaExpiracion) return false;
+    const today = new Date();
+    const expirationDate = new Date(equipo.fechaExpiracion);
+    return expirationDate < today;
+  };
 
   const openModal = (modalType, data = {}) => {
-    setModals((prev) => ({
-      ...prev,
-      [modalType]: { isOpen: true, ...data },
-    }))
-  }
+    setModals((prev) => ({ ...prev, [modalType]: { isOpen: true, ...data } }));
+  };
 
   const closeModal = (modalType) => {
-    setModals((prev) => ({
-      ...prev,
-      [modalType]: { isOpen: false },
-    }))
-  }
+    setModals((prev) => ({ ...prev, [modalType]: { isOpen: false } }));
+  };
 
   const handleMenuNavigation = (menuItem) => {
     switch (menuItem) {
-      case "estatus-plataforma":
-        navigate("/equipos_estatusplataforma")
-        break
-      case "modelos":
-        navigate("/equipos_modelos")
-        break
-      case "proveedores":
-        navigate("/equipos_proveedores")
-        break
-      case "inventario":
-        navigate("/equipos_inventario")
-        break
-      case "sim":
-        navigate("/equipos_sim")
-        break
-      default:
-        break
+      case "estatus-plataforma": navigate("/equipos_estatusplataforma"); break;
+      case "modelos": navigate("/equipos_modelos"); break;
+      case "proveedores": navigate("/equipos_proveedores"); break;
+      case "inventario": navigate("/equipos_inventario"); break;
+      case "sim": navigate("/equipos_sim"); break;
+      default: break;
     }
-  }
+  };
+
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleSaveEquipo = (equipoData) => {
-    if (equipoData.id && equipos.find((e) => e.id === equipoData.id)) {
-      // Editar equipo existente
-      setEquipos((prev) => prev.map((equipo) => (equipo.id === equipoData.id ? equipoData : equipo)))
-      Swal.fire({
-        icon: "success",
-        title: "Éxito",
-        text: "Equipo actualizado correctamente",
+    if (isSaving) return;
+    setIsSaving(true);
+
+    fetchData()
+      .then(() => {
+        setEquipos((prev) =>
+          equipoData.id
+            ? prev.map((e) => (e.id === equipoData.id ? equipoData : e))
+            : [...prev, equipoData]
+        );
+        Swal.fire({
+          icon: "success",
+          title: "Éxito",
+          text: equipoData.id ? "Equipo actualizado correctamente" : "Equipo agregado correctamente",
+        });
       })
-    } else {
-      // Agregar nuevo equipo
-      setEquipos((prev) => [...prev, equipoData])
-      Swal.fire({
-        icon: "success",
-        title: "Éxito",
-        text: "Equipo agregado correctamente",
+      .catch((error) => {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.message,
+        });
       })
-    }
-  }
+      .finally(() => {
+        setIsSaving(false);
+      });
+  };
 
   const handleDeleteEquipo = () => {
-    const equipoId = modals.confirmDelete.equipo?.id
-    setEquipos((prev) => prev.filter((equipo) => equipo.id !== equipoId))
-    closeModal("confirmDelete")
-    Swal.fire({
-      icon: "success",
-      title: "Éxito",
-      text: "Equipo eliminado correctamente",
-    })
-  }
+    const equipoId = modals.confirmDelete.equipo?.id;
+    fetchWithToken(`${API_BASE_URL}/equipos/${equipoId}`, { method: "DELETE" })
+      .then(() => {
+        setEquipos((prev) => prev.filter((e) => e.id !== equipoId));
+        generateChartData(equipos.filter((e) => e.id !== equipoId));
+        Swal.fire({ icon: "success", title: "Éxito", text: "Equipo eliminado correctamente" });
+      })
+      .catch((error) => Swal.fire({ icon: "error", title: "Error", text: error.message }));
+    closeModal("confirmDelete");
+  };
 
   const handleActivateEquipo = (equipoId) => {
-    const equipo = equipos.find((e) => e.id === equipoId)
-    if (equipo) {
-      openModal("confirmActivate", { equipo })
-    }
-  }
+    const equipo = equipos.find((e) => e.id === equipoId);
+    if (equipo) openModal("confirmActivate", { equipo });
+  };
 
   const handleConfirmActivateEquipo = () => {
-    const equipoId = modals.confirmActivate.equipo?.id
-    const equipo = equipos.find((e) => e.id === equipoId)
-    if (equipo) {
-      const updatedEquipo = {
-        ...equipo,
-        estatus: "Activo",
-        fechaActivacion: new Date().toISOString().split("T")[0],
-        fechaExpiracion:
-          equipo.tipoActivacion === "Anual"
-            ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
-            : new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      }
-      setEquipos((prev) => prev.map((e) => (e.id === equipoId ? updatedEquipo : e)))
-      Swal.fire({
-        icon: "success",
-        title: "Éxito",
-        text: "Equipo activado correctamente",
-      })
-    }
-  }
+    const equipoId = modals.confirmActivate.equipo?.id;
+    fetchWithToken(`${API_BASE_URL}/equipos/${equipoId}/activar`, { method: "POST" })
+      .then(() => fetchData())
+      .then(() => Swal.fire({ icon: "success", title: "Éxito", text: "Equipo activado correctamente" }))
+      .catch((error) => Swal.fire({ icon: "error", title: "Error", text: error.message }));
+  };
 
   const handleRenewEquipo = (equipoId) => {
-    const equipo = equipos.find((e) => e.id === equipoId)
-    if (equipo) {
-      const updatedEquipo = {
-        ...equipo,
-        estatus: "Activo",
-        fechaActivacion: new Date().toISOString().split("T")[0],
-        fechaExpiracion:
-          equipo.tipoActivacion === "Anual"
-            ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
-            : new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      }
-      setEquipos((prev) => prev.map((e) => (e.id === equipoId ? updatedEquipo : e)))
-      Swal.fire({
-        icon: "success",
-        title: "Éxito",
-        text: "Equipo renovado correctamente",
-      })
-    }
-  }
+    fetchWithToken(`${API_BASE_URL}/equipos/${equipoId}/renovar`, { method: "POST" })
+      .then(() => fetchData())
+      .then(() => Swal.fire({ icon: "success", title: "Éxito", text: "Equipo renovado correctamente" }))
+      .catch((error) => Swal.fire({ icon: "error", title: "Error", text: error.message }));
+  };
 
-  // Configuración del gráfico
-  const chartData = {
-    labels: ["Personal", "Autónomo", "OBD2", "Vehículo básico", "Vehículo avanzado", "Dashcam"],
-    datasets: [
-      {
-        label: "Almacén",
-        data: [25, 30, 15, 40, 35, 20],
-        backgroundColor: "#2563eb",
-      },
-      {
-        label: "Demo",
-        data: [10, 15, 8, 25, 20, 12],
-        backgroundColor: "#f59e0b",
-      },
-      {
-        label: "Vendido",
-        data: [15, 20, 10, 30, 25, 18],
-        backgroundColor: "#10b981",
-      },
-    ],
-  }
 
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        position: "top",
-        labels: {
-          usePointStyle: true,
-          padding: 20,
-          font: {
-            size: 12,
-          },
-        },
-      },
-      title: {
-        display: true,
-        text: "Equipos por Tipo y Uso",
-        font: {
-          size: 16,
-          weight: "bold",
-        },
-        padding: {
-          bottom: 20,
-        },
-      },
+      legend: { position: "top", labels: { usePointStyle: true, padding: 20, font: { size: 12 } } },
+      title: { display: true, text: "Equipos por Tipo y Uso", font: { size: 16, weight: "bold" }, padding: { bottom: 20 } },
     },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          stepSize: 10,
-        },
-      },
-    },
-  }
+    scales: { y: { beginAtZero: true, ticks: { stepSize: 10 } } },
+  };
 
   return (
     <>
       <Header />
       <main className="inventario-main-content">
         <div className="inventario-container">
-          {/* Sidebar Simple */}
           <section className="inventario-sidebar">
             <div className="inventario-sidebar-header">
               <h3 className="inventario-sidebar-title">Equipos</h3>
             </div>
             <div className="inventario-sidebar-menu">
-              <div className="inventario-menu-item" onClick={() => handleMenuNavigation("estatus-plataforma")}>
-                Estatus plataforma
-              </div>
-              <div className="inventario-menu-item" onClick={() => handleMenuNavigation("modelos")}>
-                Modelos
-              </div>
-              <div className="inventario-menu-item" onClick={() => handleMenuNavigation("proveedores")}>
-                Proveedores
-              </div>
-              <div
-                className="inventario-menu-item inventario-menu-item-active"
-                onClick={() => handleMenuNavigation("inventario")}
-              >
-                Inventario de equipos
-              </div>
-              <div className="inventario-menu-item" onClick={() => handleMenuNavigation("sim")}>
-                SIM
-              </div>
+              <div className="inventario-menu-item" onClick={() => handleMenuNavigation("estatus-plataforma")}>Estatus plataforma</div>
+              <div className="inventario-menu-item" onClick={() => handleMenuNavigation("modelos")}>Modelos</div>
+              <div className="inventario-menu-item" onClick={() => handleMenuNavigation("proveedores")}>Proveedores</div>
+              <div className="inventario-menu-item inventario-menu-item-active" onClick={() => handleMenuNavigation("inventario")}>Inventario de equipos</div>
+              <div className="inventario-menu-item" onClick={() => handleMenuNavigation("sim")}>SIM</div>
             </div>
           </section>
 
-          {/* Main Content */}
           <section className="inventario-content-panel">
             <div className="inventario-header">
               <h3 className="inventario-page-title">Inventario de equipos</h3>
               <p className="inventario-subtitle">Gestión de inventario de equipos</p>
             </div>
 
-            {/* Gráfico */}
             <div className="inventario-chart-card">
               <div className="inventario-chart-container">
                 <Bar data={chartData} options={chartOptions} />
               </div>
             </div>
 
-            {/* Tabla de equipos */}
             <div className="inventario-table-card">
               <div className="inventario-table-header">
                 <h4 className="inventario-table-title">Inventario de Equipos</h4>
                 <div className="inventario-table-controls">
-                  <select
-                    value={filterTipo}
-                    onChange={(e) => setFilterTipo(e.target.value)}
-                    className="inventario-filter-select"
-                  >
+                  <select value={filterTipo} onChange={(e) => setFilterTipo(e.target.value)} className="inventario-filter-select">
                     {tipoFilterOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
+                      <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                   </select>
-                  <button
-                    className="inventario-btn inventario-btn-primary"
-                    onClick={() => openModal("form", { equipo: null })}
-                  >
-                    Agregar equipo
-                  </button>
+                  <select value={filterCliente} onChange={(e) => setFilterCliente(e.target.value)} className="inventario-filter-select">
+                    {clienteFilterOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                  <button className="inventario-btn inventario-btn-primary" onClick={() => openModal("form", { equipo: null })}>Agregar equipo</button>
                 </div>
               </div>
 
@@ -930,70 +730,44 @@ const EquiposInventario = () => {
                         <tr key={equipo.id}>
                           <td>{equipo.imei}</td>
                           <td>{equipo.nombre}</td>
-                          <td>{equipo.cliente}</td>
+                          <td>
+                            {equipo.clienteId ? (
+                              clientes.find(c => c.id === equipo.clienteId)?.nombre || equipo.clienteId
+                            ) : equipo.clienteDefault ? (
+                              equipo.clienteDefault
+                            ) : (
+                              "N/A"
+                            )}
+                          </td>
                           <td>{equipo.tipo}</td>
                           <td>
-                            <span
-                              className={`inventario-status-badge inventario-status-${
-                                isExpired(equipo) ? "expirado" : equipo.estatus?.toLowerCase()
-                              }`}
-                            >
+                            <span className={`inventario-status-badge inventario-status-${isExpired(equipo) ? "expirado" : equipo.estatus?.toLowerCase()}`}>
                               {isExpired(equipo) ? "Expirado" : equipo.estatus}
                             </span>
                           </td>
-                          <td>{equipo.sim || "N/A"}</td>
+                          <td>{equipo.simReferenciada ? sims.find(s => s.id === equipo.simReferenciada.id)?.numero : "N/A"}</td>
                           <td>
                             <div className="inventario-action-buttons">
-                              <button
-                                className="inventario-btn-action inventario-edit"
-                                onClick={() => openModal("form", { equipo })}
-                                title="Editar"
-                              >
+                              <button className="inventario-btn-action inventario-edit" onClick={() => openModal("form", { equipo })} title="Editar">
                                 <img src={editIcon || "/placeholder.svg"} alt="Editar" />
                               </button>
-                              <button
-                                className="inventario-btn-action inventario-delete"
-                                onClick={() => {
-                                  const hasSimVinculada = equipo.sim !== null && equipo.sim !== undefined
-                                  openModal("confirmDelete", { equipo, hasSimVinculada })
-                                }}
-                                title="Eliminar"
-                              >
+                              <button className="inventario-btn-action inventario-delete" onClick={() => {
+                                const hasSimVinculada = equipo.simReferenciada !== null;
+                                openModal("confirmDelete", { equipo, hasSimVinculada });
+                              }} title="Eliminar">
                                 <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
                               </button>
-                              <button
-                                className="inventario-btn-action inventario-details"
-                                onClick={() => openModal("detalles", { equipo })}
-                                title="Detalles"
-                              >
+                              <button className="inventario-btn-action inventario-details" onClick={() => openModal("detalles", { equipo })} title="Detalles">
                                 <img src={detailsIcon || "/placeholder.svg"} alt="Detalles" />
                               </button>
-                              {equipo.estatus === "Inactivo" && (
-                                <button
-                                  className="inventario-btn inventario-btn-activate"
-                                  onClick={() => handleActivateEquipo(equipo.id)}
-                                  title="Activar"
-                                >
-                                  <img
-                                    src={activateIcon || "/placeholder.svg"}
-                                    alt="Activar"
-                                    className="inventario-action-icon"
-                                  />
-                                  Activar
+                              {equipo.estatus === "INACTIVO" && (
+                                <button className="inventario-btn inventario-btn-activate" onClick={() => handleActivateEquipo(equipo.id)} title="Activar">
+                                  <img src={activateIcon || "/placeholder.svg"} alt="Activar" className="inventario-action-icon" /> Activar
                                 </button>
                               )}
                               {needsRenewal(equipo) && (
-                                <button
-                                  className="inventario-btn inventario-btn-renew"
-                                  onClick={() => handleRenewEquipo(equipo.id)}
-                                  title="Renovar"
-                                >
-                                  <img
-                                    src={renewIcon || "/placeholder.svg"}
-                                    alt="Renovar"
-                                    className="inventario-action-icon"
-                                  />
-                                  Renovar
+                                <button className="inventario-btn inventario-btn-renew" onClick={() => handleRenewEquipo(equipo.id)} title="Renovar">
+                                  <img src={renewIcon || "/placeholder.svg"} alt="Renovar" className="inventario-action-icon" /> Renovar
                                 </button>
                               )}
                             </div>
@@ -1002,9 +776,7 @@ const EquiposInventario = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="7" className="inventario-no-data">
-                          No se encontraron equipos
-                        </td>
+                        <td colSpan="7" className="inventario-no-data">No se encontraron equipos</td>
                       </tr>
                     )}
                   </tbody>
@@ -1014,18 +786,25 @@ const EquiposInventario = () => {
           </section>
         </div>
 
-        {/* Modales */}
         <EquipoFormModal
           isOpen={modals.form.isOpen}
           onClose={() => closeModal("form")}
           onSave={handleSaveEquipo}
           equipo={modals.form.equipo}
+          modelos={modelos}
+          proveedores={proveedores}
+          clientes={clientes}
+          equipos={equipos}
         />
 
         <DetallesEquipoModal
           isOpen={modals.detalles.isOpen}
           onClose={() => closeModal("detalles")}
           equipo={modals.detalles.equipo}
+          modelos={modelos}
+          proveedores={proveedores}
+          clientes={clientes}
+          sims={sims}
         />
 
         <ConfirmarEliminacionModal
@@ -1044,7 +823,7 @@ const EquiposInventario = () => {
         />
       </main>
     </>
-  )
-}
+  );
+};
 
 export default EquiposInventario

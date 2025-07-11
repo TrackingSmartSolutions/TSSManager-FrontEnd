@@ -1,0 +1,698 @@
+/* Variables específicas para Configuracion_Usuarios */
+:root {
+  --config-usuarios-color-dark-blue-1: #00133b;
+  --config-usuarios-color-dark-blue-2: #001959;
+  --config-usuarios-color-dark-blue-3: #0f1575;
+  --config-usuarios-color-blue-1: #00347f;
+  --config-usuarios-color-blue-2: #0057c9;
+  --config-usuarios-color-blue-3: #037ce0;
+  --config-usuarios-color-light-blue: #38b6ff;
+  --config-usuarios-color-orange: #f27100;
+  --config-usuarios-color-light-purple: #af86ff;
+  --config-usuarios-color-dark-purple: #3000b3;
+  --config-usuarios-color-blue-4: #2a5cf8;
+  --config-usuarios-color-purple: #9c16f7;
+  --config-usuarios-primary-color: var(--config-usuarios-color-dark-blue-1);
+  --config-usuarios-secondary-color: var(--config-usuarios-color-blue-3);
+  --config-usuarios-accent-color: var(--config-usuarios-color-orange);
+  --config-usuarios-success-color: #4caf50;
+  --config-usuarios-danger-color: #f44336;
+  --config-usuarios-warning-color: #ff9800;
+  --config-usuarios-background-color: #f0f4ff;
+  --config-usuarios-panel-background: #ffffff;
+  --config-usuarios-text-color: #333333;
+  --config-usuarios-text-color-2: #ffffff;
+  --config-usuarios-text-light: #666666;
+  --config-usuarios-border-color: #e0e0e0;
+  --config-usuarios-spacing-xs: 0.25rem;
+  --config-usuarios-spacing-sm: 0.5rem;
+  --config-usuarios-spacing-md: 0.75rem;
+  --config-usuarios-spacing-lg: 1rem;
+  --config-usuarios-spacing-xl: 1.5rem;
+  --config-usuarios-border-radius-sm: 4px;
+  --config-usuarios-border-radius-md: 8px;
+  --config-usuarios-border-radius-lg: 12px;
+  --config-usuarios-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --config-usuarios-font-family: "Arial", sans-serif;
+  --config-usuarios-font-size-xs: 0.65rem;
+  --config-usuarios-font-size-sm: 0.8rem;
+  --config-usuarios-font-size-md: 0.9rem;
+  --config-usuarios-font-size-lg: 1.1rem;
+  --config-usuarios-font-size-xl: 1.3rem;
+  --config-usuarios-font-size-xxl: 1.8rem;
+}
+
+/* Configuration Header and Navigation */
+.config-usuarios-config-header {
+  background-color: var(--config-usuarios-panel-background);
+  padding: var(--config-usuarios-spacing-lg) var(--config-usuarios-spacing-xl);
+  border-bottom: 1px solid var(--config-usuarios-border-color);
+}
+
+.config-usuarios-config-title {
+  font-size: var(--config-usuarios-font-size-xxl);
+  font-weight: 600;
+  color: var(--config-usuarios-primary-color);
+  margin: 0 0 var(--config-usuarios-spacing-lg) 0;
+}
+
+.config-usuarios-config-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--config-usuarios-border-color);
+}
+
+.config-usuarios-nav-item {
+  padding: var(--config-usuarios-spacing-md) var(--config-usuarios-spacing-lg);
+  font-size: var(--config-usuarios-font-size-sm);
+  font-weight: 500;
+  color: var(--config-usuarios-text-light);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.config-usuarios-nav-item:hover {
+  color: var(--config-usuarios-secondary-color);
+  background-color: rgba(3, 124, 224, 0.05);
+}
+
+.config-usuarios-nav-item-active {
+  color: var(--config-usuarios-secondary-color);
+  border-bottom-color: var(--config-usuarios-secondary-color);
+  background-color: rgba(3, 124, 224, 0.05);
+}
+
+/* Layout Principal */
+.config-usuarios-main-content {
+  padding: var(--config-usuarios-spacing-lg) var(--config-usuarios-spacing-xl);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  background-color: var(--config-usuarios-background-color);
+  min-height: calc(100vh - 140px);
+}
+
+.config-usuarios-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Sección */
+.config-usuarios-section {
+  background-color: var(--config-usuarios-panel-background);
+  border-radius: var(--config-usuarios-border-radius-md);
+  box-shadow: var(--config-usuarios-box-shadow);
+  padding: var(--config-usuarios-spacing-xl);
+}
+
+.config-usuarios-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--config-usuarios-spacing-xl);
+}
+
+.config-usuarios-section-title {
+  font-size: var(--config-usuarios-font-size-xl);
+  font-weight: 600;
+  color: var(--config-usuarios-primary-color);
+  margin: 0;
+}
+
+/* Botones */
+.config-usuarios-btn {
+  padding: var(--config-usuarios-spacing-sm) var(--config-usuarios-spacing-lg);
+  border: none;
+  border-radius: var(--config-usuarios-border-radius-sm);
+  font-size: var(--config-usuarios-font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--config-usuarios-spacing-xs);
+}
+
+.config-usuarios-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.config-usuarios-btn-add {
+  background-color: var(--config-usuarios-accent-color);
+  color: white;
+}
+
+.config-usuarios-btn-add:hover:not(:disabled) {
+  background-color: #d86600;
+  transform: translateY(-1px);
+}
+
+/* Tabla */
+.config-usuarios-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--config-usuarios-border-color);
+  border-radius: var(--config-usuarios-border-radius-sm);
+}
+
+.config-usuarios-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+}
+
+.config-usuarios-table th {
+  background-color: #f8f9fa;
+  padding: var(--config-usuarios-spacing-md);
+  text-align: left;
+  font-size: var(--config-usuarios-font-size-sm);
+  font-weight: 600;
+  color: var(--config-usuarios-text-color);
+  border-bottom: 1px solid var(--config-usuarios-border-color);
+  border-right: 1px solid var(--config-usuarios-border-color);
+}
+
+.config-usuarios-table th:last-child {
+  border-right: none;
+}
+
+.config-usuarios-table td {
+  padding: var(--config-usuarios-spacing-md);
+  font-size: var(--config-usuarios-font-size-sm);
+  color: var(--config-usuarios-text-color);
+  border-bottom: 1px solid var(--config-usuarios-border-color);
+  border-right: 1px solid var(--config-usuarios-border-color);
+}
+
+.config-usuarios-table td:last-child {
+  border-right: none;
+}
+
+.config-usuarios-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.config-usuarios-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Status Cell */
+.config-usuarios-status-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* Remover estilos innecesarios del status icon */
+.config-usuarios-status-icon {
+  display: none;
+}
+
+.config-usuarios-status-icon-img {
+  display: none;
+}
+
+/* Action Buttons */
+.config-usuarios-action-buttons {
+  display: flex;
+  gap: var(--config-usuarios-spacing-xs);
+  justify-content: center;
+}
+
+.config-usuarios-btn-action {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--config-usuarios-spacing-xs);
+  border-radius: var(--config-usuarios-border-radius-sm);
+  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--config-usuarios-font-size-md);
+}
+
+.config-usuarios-btn-action img {
+  width: 16px;
+  height: 16px;
+}
+
+.config-usuarios-btn-action.config-usuarios-edit:hover {
+  background-color: rgba(3, 124, 224, 0.1);
+}
+
+.config-usuarios-btn-action.config-usuarios-toggle-status:hover {
+  background-color: rgba(255, 152, 0, 0.1);
+}
+
+.config-usuarios-btn-action.config-usuarios-reset-password:hover {
+  background-color: rgba(108, 117, 125, 0.1);
+}
+
+.config-usuarios-btn-action.config-usuarios-edit img {
+  filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(200deg) brightness(104%)
+    contrast(97%);
+}
+
+.config-usuarios-btn-action.config-usuarios-reset-password img {
+  filter: brightness(0) saturate(100%) invert(44%) sepia(7%) saturate(1102%) hue-rotate(169deg) brightness(96%)
+    contrast(88%);
+}
+
+/* Estilos para los colores de los iconos de toggle: */
+
+/* Toggle Status Icon Colors */
+.config-usuarios-btn-action.config-usuarios-toggle-status .config-usuarios-toggle-icon.activate {
+  filter: brightness(0) saturate(100%) invert(27%) sepia(98%) saturate(7462%) hue-rotate(120deg) brightness(103%)
+    contrast(97%);
+}
+
+.config-usuarios-btn-action.config-usuarios-toggle-status .config-usuarios-toggle-icon.deactivate {
+  filter: brightness(0) saturate(100%) invert(27%) sepia(98%) saturate(7462%) hue-rotate(3deg) brightness(103%)
+    contrast(97%);
+}
+
+/* Estilos de Modales */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--config-usuarios-spacing-lg);
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: var(--config-usuarios-border-radius-lg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  max-height: 90vh;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content.modal-sm {
+  max-width: 400px;
+}
+
+.modal-content.modal-md {
+  max-width: 500px;
+}
+
+.modal-content.modal-lg {
+  max-width: 700px;
+}
+
+.modal-content.modal-xl {
+  max-width: 900px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--config-usuarios-spacing-lg) 0 var(--config-usuarios-spacing-lg) 0;
+  border-bottom: 1px solid var(--config-usuarios-border-color);
+  background-color: white;
+  border-radius: var(--config-usuarios-border-radius-lg) var(--config-usuarios-border-radius-lg) 0 0;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin: 0;
+}
+
+.modal-title {
+  font-size: var(--config-usuarios-font-size-lg);
+  font-weight: 600;
+  color: var(--config-usuarios-text-color);
+  margin: 0;
+  padding-left: var(--config-usuarios-spacing-lg);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--config-usuarios-text-light);
+  cursor: pointer;
+  padding: var(--config-usuarios-spacing-xs);
+  border-radius: var(--config-usuarios-border-radius-sm);
+  transition: color 0.3s, background-color 0.3s;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--config-usuarios-spacing-lg);
+}
+
+.modal-close:hover {
+  color: var(--config-usuarios-text-color);
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.modal-body {
+  padding: var(--config-usuarios-spacing-lg);
+  background-color: white;
+  border-radius: 0 0 var(--config-usuarios-border-radius-lg) var(--config-usuarios-border-radius-lg);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--config-usuarios-spacing-lg);
+}
+
+.modal-form-row {
+  display: flex;
+  gap: var(--config-usuarios-spacing-lg);
+}
+
+.modal-form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-form-group.full-width {
+  flex: 1 1 100%;
+}
+
+.modal-form-group label {
+  font-size: var(--config-usuarios-font-size-sm);
+  font-weight: 500;
+  color: var(--config-usuarios-text-color);
+  margin-bottom: var(--config-usuarios-spacing-xs);
+  display: block;
+}
+
+.modal-form-control {
+  width: 100%;
+  padding: var(--config-usuarios-spacing-sm) var(--config-usuarios-spacing-md);
+  border: 1px solid var(--config-usuarios-border-color);
+  border-radius: var(--config-usuarios-border-radius-sm);
+  font-size: var(--config-usuarios-font-size-sm);
+  background-color: white;
+  color: var(--config-usuarios-text-color);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.modal-form-control:focus {
+  outline: none;
+  border-color: var(--config-usuarios-secondary-color);
+  box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
+.modal-form-control.error {
+  border-color: #f44336;
+}
+
+.required {
+  color: #f44336;
+  font-weight: bold;
+}
+
+.error-message {
+  color: #f44336;
+  font-size: var(--config-usuarios-font-size-xs);
+  margin-top: var(--config-usuarios-spacing-xs);
+}
+
+.help-text {
+  color: var(--config-usuarios-text-light);
+  font-size: var(--config-usuarios-font-size-xs);
+  margin-top: var(--config-usuarios-spacing-xs);
+}
+
+/* Password Input Group */
+.password-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-group input {
+  padding-right: 40px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--config-usuarios-font-size-sm);
+  color: var(--config-usuarios-text-light);
+  padding: var(--config-usuarios-spacing-xs);
+}
+
+.password-toggle:hover {
+  color: var(--config-usuarios-text-color);
+}
+
+/* Password Toggle Icon */
+.password-toggle-icon {
+  width: 16px;
+  height: 16px;
+  transition: opacity 0.2s ease;
+}
+
+.password-toggle:hover .password-toggle-icon {
+  opacity: 0.7;
+}
+
+.modal-form-actions {
+  display: flex;
+  gap: var(--config-usuarios-spacing-md);
+  justify-content: flex-end;
+  padding-top: var(--config-usuarios-spacing-lg);
+  border-top: 1px solid var(--config-usuarios-border-color);
+  margin-top: var(--config-usuarios-spacing-lg);
+}
+
+.btn {
+  padding: var(--config-usuarios-spacing-sm) var(--config-usuarios-spacing-lg);
+  border: none;
+  border-radius: var(--config-usuarios-border-radius-sm);
+  font-size: var(--config-usuarios-font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  min-width: 100px;
+}
+
+.btn-primary {
+  background-color: var(--config-usuarios-accent-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #d86600;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+  transform: translateY(-1px);
+}
+
+.btn-cancel {
+  background-color: #6c757d;
+  color: white;
+  padding: var(--config-usuarios-spacing-sm) var(--config-usuarios-spacing-lg);
+  border: none;
+  border-radius: var(--config-usuarios-border-radius-sm);
+  font-size: var(--config-usuarios-font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  min-width: 100px;
+}
+
+.btn-cancel:hover {
+  background-color: #5a6268;
+  transform: translateY(-1px);
+}
+
+.btn-confirm {
+  background-color: #c73232;
+  color: white;
+  padding: var(--config-usuarios-spacing-sm) var(--config-usuarios-spacing-lg);
+  border: none;
+  border-radius: var(--config-usuarios-border-radius-sm);
+  font-size: var(--config-usuarios-font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  min-width: 100px;
+}
+
+.btn-confirm:hover {
+  background-color: #f96767;
+  transform: translateY(-1px);
+}
+
+/* Modal de confirmación de eliminación */
+.confirmar-eliminacion {
+  text-align: center;
+}
+
+.confirmation-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--config-usuarios-spacing-lg);
+}
+
+.confirmation-message {
+  font-size: var(--config-usuarios-font-size-md);
+  color: var(--config-usuarios-text-color);
+  margin: 0;
+}
+
+/* Status Icons */
+.config-usuarios-status-icon-img {
+  width: 16px;
+  height: 16px;
+}
+
+.config-usuarios-toggle-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+.config-usuarios-btn-action.config-usuarios-toggle-status:hover .config-usuarios-toggle-icon {
+  transform: scale(1.1);
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .config-usuarios-config-nav {
+    flex-wrap: wrap;
+  }
+
+  .config-usuarios-nav-item {
+    flex: 1;
+    text-align: center;
+    min-width: 150px;
+  }
+
+  .config-usuarios-main-content {
+    padding: var(--config-usuarios-spacing-md);
+  }
+
+  .config-usuarios-section-header {
+    flex-direction: column;
+    gap: var(--config-usuarios-spacing-md);
+    align-items: stretch;
+  }
+
+  .modal-form-row {
+    flex-direction: column;
+    gap: var(--config-usuarios-spacing-sm);
+  }
+}
+
+@media (max-width: 768px) {
+  .config-usuarios-config-header {
+    padding: var(--config-usuarios-spacing-md) var(--config-usuarios-spacing-lg);
+  }
+
+  .config-usuarios-config-nav {
+    flex-direction: column;
+  }
+
+  .config-usuarios-nav-item {
+    border-bottom: 1px solid var(--config-usuarios-border-color);
+    border-right: none;
+  }
+
+  .config-usuarios-nav-item-active {
+    border-bottom-color: var(--config-usuarios-secondary-color);
+  }
+
+  .config-usuarios-main-content {
+    padding: var(--config-usuarios-spacing-sm);
+  }
+
+  .config-usuarios-section {
+    padding: var(--config-usuarios-spacing-md);
+  }
+
+  .config-usuarios-table-container {
+    font-size: var(--config-usuarios-font-size-xs);
+  }
+
+  .config-usuarios-table th,
+  .config-usuarios-table td {
+    padding: var(--config-usuarios-spacing-sm);
+  }
+
+  .config-usuarios-action-buttons {
+    flex-direction: column;
+    gap: var(--config-usuarios-spacing-xs);
+  }
+
+  .modal-form-actions {
+    flex-direction: column;
+    gap: var(--config-usuarios-spacing-sm);
+  }
+}
+
+@media (max-width: 576px) {
+  .config-usuarios-section {
+    padding: var(--config-usuarios-spacing-sm);
+  }
+
+  .config-usuarios-table {
+    font-size: var(--config-usuarios-font-size-xs);
+  }
+
+  .config-usuarios-table th,
+  .config-usuarios-table td {
+    padding: var(--config-usuarios-spacing-xs);
+  }
+
+  .config-usuarios-btn {
+    width: 100%;
+  }
+
+  .modal-overlay {
+    padding: var(--config-usuarios-spacing-xs);
+  }
+
+  .modal-content {
+    max-width: 98vw;
+    margin: var(--config-usuarios-spacing-xs);
+  }
+
+  .modal-title {
+    font-size: var(--config-usuarios-font-size-sm);
+    padding-left: var(--config-usuarios-spacing-sm);
+  }
+
+  .modal-body {
+    padding: var(--config-usuarios-spacing-sm);
+  }
+}

@@ -40,6 +40,12 @@ const Login = () => {
       localStorage.setItem('userName', name);
       localStorage.setItem('userRol', rol);
 
+      const userResponse = await axios.get(`${API_BASE_URL}/auth/users/by-username/${username}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const userId = userResponse.data.id;
+      localStorage.setItem('userId', userId);
+
       await Swal.fire({
         icon: 'success',
         title: '¡Inicio de sesión exitoso!',

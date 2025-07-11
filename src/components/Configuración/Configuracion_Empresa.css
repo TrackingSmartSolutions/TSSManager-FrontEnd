@@ -1,0 +1,474 @@
+/* Variables específicas para Configuracion_Empresa */
+:root {
+  --config-empresa-color-dark-blue-1: #00133b;
+  --config-empresa-color-dark-blue-2: #001959;
+  --config-empresa-color-dark-blue-3: #0f1575;
+  --config-empresa-color-blue-1: #00347f;
+  --config-empresa-color-blue-2: #0057c9;
+  --config-empresa-color-blue-3: #037ce0;
+  --config-empresa-color-light-blue: #38b6ff;
+  --config-empresa-color-orange: #f27100;
+  --config-empresa-color-light-purple: #af86ff;
+  --config-empresa-color-dark-purple: #3000b3;
+  --config-empresa-color-blue-4: #2a5cf8;
+  --config-empresa-color-purple: #9c16f7;
+  --config-empresa-primary-color: var(--config-empresa-color-dark-blue-1);
+  --config-empresa-secondary-color: var(--config-empresa-color-blue-3);
+  --config-empresa-accent-color: var(--config-empresa-color-orange);
+  --config-empresa-background-color: #f0f4ff;
+  --config-empresa-panel-background: #ffffff;
+  --config-empresa-text-color: #333333;
+  --config-empresa-text-color-2: #ffffff;
+  --config-empresa-text-light: #666666;
+  --config-empresa-border-color: #e0e0e0;
+  --config-empresa-spacing-xs: 0.25rem;
+  --config-empresa-spacing-sm: 0.5rem;
+  --config-empresa-spacing-md: 0.75rem;
+  --config-empresa-spacing-lg: 1rem;
+  --config-empresa-spacing-xl: 1.5rem;
+  --config-empresa-border-radius-sm: 4px;
+  --config-empresa-border-radius-md: 8px;
+  --config-empresa-border-radius-lg: 12px;
+  --config-empresa-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --config-empresa-font-family: "Arial", sans-serif;
+  --config-empresa-font-size-xs: 0.65rem;
+  --config-empresa-font-size-sm: 0.8rem;
+  --config-empresa-font-size-md: 0.9rem;
+  --config-empresa-font-size-lg: 1.1rem;
+  --config-empresa-font-size-xl: 1.3rem;
+  --config-empresa-font-size-xxl: 1.8rem;
+}
+
+/* Configuration Header and Navigation */
+.config-empresa-config-header {
+  background-color: var(--config-empresa-panel-background);
+  padding: var(--config-empresa-spacing-lg) var(--config-empresa-spacing-xl);
+  border-bottom: 1px solid var(--config-empresa-border-color);
+}
+
+.config-empresa-config-title {
+  font-size: var(--config-empresa-font-size-xxl);
+  font-weight: 600;
+  color: var(--config-empresa-primary-color);
+  margin: 0 0 var(--config-empresa-spacing-lg) 0;
+}
+
+.config-empresa-config-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--config-empresa-border-color);
+}
+
+.config-empresa-nav-item {
+  padding: var(--config-empresa-spacing-md) var(--config-empresa-spacing-lg);
+  font-size: var(--config-empresa-font-size-sm);
+  font-weight: 500;
+  color: var(--config-empresa-text-light);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.config-empresa-nav-item:hover {
+  color: var(--config-empresa-secondary-color);
+  background-color: rgba(3, 124, 224, 0.05);
+}
+
+.config-empresa-nav-item-active {
+  color: var(--config-empresa-secondary-color);
+  border-bottom-color: var(--config-empresa-secondary-color);
+  background-color: rgba(3, 124, 224, 0.05);
+}
+
+/* Layout Principal */
+.config-empresa-main-content {
+  padding: var(--config-empresa-spacing-lg) var(--config-empresa-spacing-xl);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  background-color: var(--config-empresa-background-color);
+  min-height: calc(100vh - 140px);
+}
+
+.config-empresa-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Sección */
+.config-empresa-section {
+  background-color: var(--config-empresa-panel-background);
+  border-radius: var(--config-empresa-border-radius-md);
+  box-shadow: var(--config-empresa-box-shadow);
+  padding: var(--config-empresa-spacing-xl);
+}
+
+.config-empresa-section-title {
+  font-size: var(--config-empresa-font-size-xl);
+  font-weight: 600;
+  color: var(--config-empresa-primary-color);
+  margin: 0 0 var(--config-empresa-spacing-xl) 0;
+}
+
+/* Formulario */
+.config-empresa-form {
+  width: 100%;
+}
+
+.config-empresa-form-row {
+  display: flex;
+  gap: var(--config-empresa-spacing-xl);
+  margin-bottom: var(--config-empresa-spacing-lg);
+}
+
+.config-empresa-form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.config-empresa-form-group.config-empresa-full-width {
+  flex: 1 1 100%;
+}
+
+.config-empresa-form-group label {
+  display: block;
+  font-size: var(--config-empresa-font-size-sm);
+  font-weight: 500;
+  color: var(--config-empresa-text-color);
+  margin-bottom: var(--config-empresa-spacing-xs);
+}
+
+.config-empresa-form-control {
+  width: 100%;
+  padding: var(--config-empresa-spacing-sm) var(--config-empresa-spacing-md);
+  border: 1px solid var(--config-empresa-border-color);
+  border-radius: var(--config-empresa-border-radius-sm);
+  font-size: var(--config-empresa-font-size-sm);
+  background-color: white;
+  color: var(--config-empresa-text-color);
+  transition: border-color 0.3s, box-shadow 0.3s;
+  box-sizing: border-box;
+}
+
+.config-empresa-form-control:focus {
+  outline: none;
+  border-color: var(--config-empresa-secondary-color);
+  box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
+.config-empresa-required {
+  color: #f44336;
+  font-weight: bold;
+}
+
+/* Logo Upload Section */
+.config-empresa-logo-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.config-empresa-logo-section label {
+  display: block;
+  font-size: var(--config-empresa-font-size-sm);
+  font-weight: 500;
+  color: var(--config-empresa-text-color);
+  margin-bottom: var(--config-empresa-spacing-xs);
+}
+
+.config-empresa-logo-upload-area {
+  flex: 1;
+}
+
+.config-empresa-logo-drop-zone {
+  border: 2px dashed var(--config-empresa-border-color);
+  border-radius: var(--config-empresa-border-radius-md);
+  padding: var(--config-empresa-spacing-lg);
+  text-align: center;
+  background-color: #fafafa;
+  transition: border-color 0.3s, background-color 0.3s;
+  position: relative;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.config-empresa-logo-drop-zone:hover {
+  border-color: var(--config-empresa-secondary-color);
+  background-color: rgba(3, 124, 224, 0.05);
+}
+
+.config-empresa-upload-icon {
+  margin-bottom: var(--config-empresa-spacing-sm);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.config-empresa-upload-icon img {
+  width: 24px;
+  height: 24px;
+  filter: brightness(0) saturate(100%) invert(0%);
+}
+
+.config-empresa-logo-drop-zone p {
+  margin: var(--config-empresa-spacing-xs) 0;
+  color: var(--config-empresa-text-color);
+  font-size: var(--config-empresa-font-size-sm);
+}
+
+.config-empresa-file-formats {
+  font-size: var(--config-empresa-font-size-xs);
+  color: var(--config-empresa-text-light);
+}
+
+.config-empresa-file-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Logo Preview Section */
+.config-empresa-logo-preview-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.config-empresa-logo-preview-section label {
+  display: block;
+  font-size: var(--config-empresa-font-size-sm);
+  font-weight: 500;
+  color: var(--config-empresa-text-color);
+  margin-bottom: var(--config-empresa-spacing-xs);
+}
+
+.config-empresa-logo-preview {
+  border: 1px solid var(--config-empresa-border-color);
+  border-radius: var(--config-empresa-border-radius-md);
+  padding: var(--config-empresa-spacing-lg);
+  background-color: white;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.config-empresa-preview-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.config-empresa-logo-image {
+  max-width: 100%;
+  max-height: 80px;
+  object-fit: contain;
+  border-radius: var(--config-empresa-border-radius-sm);
+}
+
+.config-empresa-remove-logo {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: var(--config-empresa-font-size-xs);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s;
+}
+
+.config-empresa-remove-logo:hover {
+  background-color: #d32f2f;
+}
+
+.config-empresa-no-preview {
+  color: var(--config-empresa-text-light);
+  font-style: italic;
+  text-align: center;
+}
+
+.config-empresa-no-preview p {
+  margin: 0;
+  font-size: var(--config-empresa-font-size-sm);
+}
+
+/* Botones */
+.config-empresa-btn {
+  padding: var(--config-empresa-spacing-sm) var(--config-empresa-spacing-lg);
+  border: none;
+  border-radius: var(--config-empresa-border-radius-sm);
+  font-size: var(--config-empresa-font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  gap: var(--config-empresa-spacing-xs);
+}
+
+.config-empresa-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.config-empresa-btn-primary {
+  background-color: var(--config-empresa-accent-color);
+  color: white;
+}
+
+.config-empresa-btn-primary:hover:not(:disabled) {
+  background-color: #d86600;
+  transform: translateY(-1px);
+}
+
+.config-empresa-btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.config-empresa-btn-secondary:hover {
+  background-color: #5a6268;
+  transform: translateY(-1px);
+}
+
+.config-empresa-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--config-empresa-spacing-md);
+  margin-top: var(--config-empresa-spacing-xl);
+  padding-top: var(--config-empresa-spacing-lg);
+  border-top: 1px solid var(--config-empresa-border-color);
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .config-empresa-config-nav {
+    flex-wrap: wrap;
+  }
+
+  .config-empresa-nav-item {
+    flex: 1;
+    text-align: center;
+    min-width: 150px;
+  }
+
+  .config-empresa-main-content {
+    padding: var(--config-empresa-spacing-md);
+  }
+
+  .config-empresa-form-row {
+    flex-direction: column;
+    gap: var(--config-empresa-spacing-md);
+  }
+
+  .config-empresa-form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 768px) {
+  .config-empresa-config-header {
+    padding: var(--config-empresa-spacing-md) var(--config-empresa-spacing-lg);
+  }
+
+  .config-empresa-config-nav {
+    flex-direction: column;
+  }
+
+  .config-empresa-nav-item {
+    border-bottom: 1px solid var(--config-empresa-border-color);
+    border-right: none;
+  }
+
+  .config-empresa-nav-item-active {
+    border-bottom-color: var(--config-empresa-secondary-color);
+  }
+
+  .config-empresa-main-content {
+    padding: var(--config-empresa-spacing-sm);
+  }
+
+  .config-empresa-section {
+    padding: var(--config-empresa-spacing-md);
+  }
+
+  .config-empresa-form-row {
+    gap: var(--config-empresa-spacing-sm);
+  }
+
+  .config-empresa-logo-drop-zone {
+    padding: var(--config-empresa-spacing-md);
+    min-height: 100px;
+  }
+
+  .config-empresa-logo-preview {
+    padding: var(--config-empresa-spacing-md);
+    min-height: 100px;
+  }
+
+  .config-empresa-upload-icon img {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .config-empresa-section {
+    padding: var(--config-empresa-spacing-sm);
+  }
+
+  .config-empresa-form-row {
+    margin-bottom: var(--config-empresa-spacing-sm);
+  }
+
+  .config-empresa-form-control {
+    font-size: var(--config-empresa-font-size-sm);
+    padding: var(--config-empresa-spacing-xs) var(--config-empresa-spacing-sm);
+  }
+
+  .config-empresa-btn {
+    font-size: var(--config-empresa-font-size-sm);
+    padding: var(--config-empresa-spacing-xs) var(--config-empresa-spacing-sm);
+  }
+
+  .config-empresa-logo-drop-zone {
+    padding: var(--config-empresa-spacing-sm);
+    min-height: 80px;
+  }
+
+  .config-empresa-logo-preview {
+    padding: var(--config-empresa-spacing-sm);
+    min-height: 80px;
+  }
+
+  .config-empresa-logo-image {
+    max-height: 60px;
+  }
+
+  .config-empresa-upload-icon img {
+    width: 16px;
+    height: 16px;
+  }
+}

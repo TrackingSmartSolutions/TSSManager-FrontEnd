@@ -117,7 +117,7 @@
   box-shadow: var(--box-shadow);
   margin-bottom: var(--spacing-xl);
   overflow-x: auto;
-  min-height: 60px; 
+  min-height: 60px;
 }
 
 .fecha-inicio,
@@ -162,14 +162,14 @@
   font-size: var(--font-size-xs);
   white-space: nowrap;
   margin-right: var(--spacing-sm);
-  border: 1px solid transparent; 
+  border: 1px solid transparent;
   position: relative;
   transition: all 0.3s ease;
 }
 
 .fase-item.actual {
   background-color: var(--accent-color);
-  color: var(--text-color-2); 
+  color: var(--text-color-2);
   font-weight: 600;
   border-color: var(--accent-color);
 }
@@ -856,11 +856,11 @@
 }
 
 .notas-cell {
-  max-width: none; /* Remove the max-width limitation */
-  white-space: normal; /* Allow text to wrap */
-  overflow: visible; /* Show all content */
-  text-overflow: clip; /* Don't use ellipsis */
-  word-break: break-word; /* Break words if needed */
+  max-width: none;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  word-break: break-word;
 }
 
 /* Correos electrónicos */
@@ -892,10 +892,543 @@
 
 .correos-contenido {
   min-height: 200px;
+  display: block;
+}
+
+.email-item {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.email-item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--secondary-color) 0%, var(--accent-color) 100%);
+}
+
+.email-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  border-color: var(--secondary-color);
+}
+
+.email-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.email-destinatario {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: var(--font-size-md);
+}
+
+.email-destinatario::before {
+  content: "📧";
+  font-size: var(--font-size-lg);
+}
+
+.email-fecha {
+  background-color: rgba(3, 124, 224, 0.1);
+  color: var(--secondary-color);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.email-asunto {
+  background-color: #f8f9fa;
+  border-left: 3px solid var(--accent-color);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin: var(--spacing-md) 0;
+  border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+}
+
+.email-asunto-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--spacing-xs);
+  display: block;
+}
+
+.email-asunto-texto {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+}
+
+.email-cuerpo {
+  background-color: white;
+  border: 1px solid #e8eaed;
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-md);
+  margin: var(--spacing-md) 0;
+  position: relative;
+}
+
+.email-cuerpo-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--spacing-sm);
+  display: block;
+}
+
+.email-cuerpo-texto {
+  color: var(--text-color);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+  max-height: 120px;
+  overflow-y: auto;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.email-cuerpo-texto::-webkit-scrollbar {
+  width: 4px;
+}
+
+.email-cuerpo-texto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 2px;
+}
+
+.email-cuerpo-texto::-webkit-scrollbar-thumb {
+  background: var(--secondary-color);
+  border-radius: 2px;
+}
+
+.email-adjuntos {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border: 1px solid #ffcc02;
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-top: var(--spacing-md);
+  position: relative;
+}
+
+.email-adjuntos::before {
+  position: absolute;
+  top: var(--spacing-sm);
+  left: var(--spacing-sm);
+  font-size: var(--font-size-md);
+}
+
+.email-adjuntos-label {
+  font-size: var(--font-size-xs);
+  color: #e65100;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--spacing-xs);
+  margin-left: 24px;
+  display: block;
+  font-weight: 600;
+}
+
+.email-adjuntos-lista {
+  margin-left: 24px;
+  color: #bf360c;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.email-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid #e8eaed;
+}
+
+.email-status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  background-color: #e8f5e8;
+  color: #2e7d32;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.email-status::before {
+  content: "✓";
+  font-weight: bold;
+}
+
+
+.correos-electronicos .no-actividades {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--text-light);
+  font-size: var(--font-size-md);
+  position: relative;
+  margin: var(--spacing-lg) 0;
+}
+
+.correos-electronicos .no-actividades::before {
+  content: "📭";
+  display: block;
+  font-size: 48px;
+  margin-bottom: var(--spacing-md);
+  opacity: 0.5;
+}
+
+
+/* Estilos para el modal de correos */
+.gmail-compose-form {
+  display: flex;
+  flex-direction: column;
+  height: 500px;
+  background: white;
+}
+
+
+.gmail-compose-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.gmail-btn-minimize,
+.gmail-btn-expand,
+.gmail-btn-close {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  color: #5f6368;
+}
+
+.gmail-btn-minimize:hover,
+.gmail-btn-expand:hover,
+.gmail-btn-close:hover {
+  background: #e8eaed;
+}
+
+.gmail-compose-body {
+  flex: 1;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.gmail-field-group {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 8px 16px;
+}
+
+.gmail-field-label {
+  min-width: 60px;
+  color: #5f6368;
+  font-size: 14px;
+  margin-right: 12px;
+}
+
+.gmail-field-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  padding: 4px 0;
+}
+
+.gmail-message-area {
+  flex: 1;
+  padding: 16px;
+}
+
+.gmail-message-input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.gmail-attachments {
+  padding: 8px 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.gmail-attach-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.gmail-attach-btn:hover {
+  background-color: #f1f3f4;
+}
+
+.attach-icon {
+  width: 20px;
+  height: 20px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.gmail-attach-btn:hover .attach-icon {
+  opacity: 1;
+}
+
+.gmail-attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: #f8f9fa;
+  border: 1px solid #e8eaed;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.attachment-icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.gmail-attachment-item span {
+  flex: 1;
+  font-size: 14px;
+  color: #3c4043;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gmail-remove-attachment {
+  background: none;
+  border: none;
+  color: #5f6368;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 16px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
 }
+
+.gmail-remove-attachment:hover {
+  background-color: #f1f3f4;
+  color: #d93025;
+}
+
+.gmail-attachments {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e8eaed;
+}
+
+.gmail-compose-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.gmail-footer-left {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.gmail-btn-send {
+  background: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 24px;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.gmail-btn-send:hover {
+  background: #1557b0;
+}
+
+.gmail-btn-template {
+  background: none;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #1a73e8;
+}
+
+.gmail-btn-template:hover {
+  background: #f8f9fa;
+}
+
+.gmail-footer-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.gmail-more-options {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  color: #5f6368;
+}
+
+.gmail-more-options:hover {
+  background: #f8f9fa;
+}
+
+/* Estilos para el modal de plantillas */
+.plantillas-list {
+  padding: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.plantilla-item {
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.plantilla-item:hover {
+  border-color: #1a73e8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.plantilla-info h4 {
+  margin: 0 0 8px 0;
+  color: #1a73e8;
+  font-size: 16px;
+}
+
+.plantilla-asunto {
+  font-weight: 500;
+  margin: 4px 0;
+  color: #333;
+}
+
+.plantilla-preview {
+  color: #666;
+  font-size: 14px;
+  margin: 8px 0;
+}
+
+.plantilla-adjuntos {
+  color: #1a73e8;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.error-message {
+  color: red;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.plantilla-info {
+  margin-bottom: 15px;
+}
+
+.plantilla-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #e3f2fd;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #1976d2;
+}
+
+.limpiar-plantilla-btn {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  margin-left: 10px;
+}
+
+.template-attachment {
+  background: #f0f8ff;
+  border: 1px solid #e3f2fd;
+}
+
+.gmail-attachments h4 {
+  margin: 10px 0 5px 0;
+  font-size: 14px;
+  color: #666;
+}
+
 
 /* Estados de carga y error */
 .loading-container,
@@ -993,236 +1526,9 @@
   padding: var(--spacing-sm);
 }
 
-/* --- Responsive Design --- */
-
-/* Media query para pantallas extra grandes (monitores de escritorio y TVs) */
-@media (min-width: 1600px) {
-  /* El contenedor principal se centra con un ancho mayor */
-  .detalles-trato-container {
-    max-width: 1400px;
-  }
-
-  /* Los encabezados y textos principales pueden ser un poco más grandes */
-  .trato-titulo {
-    font-size: var(--font-size-xxl);
-  }
-
-  .seccion h2 {
-    font-size: var(--font-size-xl);
-  }
-
-  /* El tamaño de fuente base se ajusta para mejor legibilidad */
-  html {
-    font-size: 17px;
-  }
-}
-
-/* Media query para pantallas grandes (desktops y laptops) */
-@media (max-width: 1200px) {
-  /* Las actividades se organizan en una sola columna para ahorrar espacio horizontal */
-  .actividades-grid {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-md);
-  }
-
-  /* Los detalles del trato también se organizan en una sola columna */
-  .detalles-grid {
-    grid-template-columns: 1fr;
-  }
-
-  /* Se ajusta el tamaño de la fuente base para pantallas más comunes */
-  html {
-    font-size: 16px;
-  }
-
-  /* Ajustar tabla del historial */
-  .tabla-header,
-  .tabla-row {
-    grid-template-columns: 100px 120px 80px 100px 80px 60px 1fr;
-  }
-}
-
-/* Media query para pantallas medianas (tablets en orientación horizontal) */
-@media (max-width: 992px) {
-  /* El contenedor principal tiene un padding ligeramente reducido */
-  .detalles-trato-container {
-    padding: var(--spacing-lg) var(--spacing-md);
-  }
-
-  /* Se reduce un poco el tamaño del título del trato */
-  .trato-titulo {
-    font-size: var(--font-size-xl);
-  }
-
-  /* Simplificar tabla del historial */
-  .tabla-header,
-  .tabla-row {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-
-  .header-cell:nth-child(n + 4),
-  .cell:nth-child(n + 4) {
-    display: none;
-  }
-}
-
-/* Media query para pantallas pequeñas (tablets en orientación vertical y móviles grandes) */
-@media (max-width: 768px) {
-  /* El padding del contenedor principal se reduce aún más */
-  .detalles-trato-container {
-    padding: var(--spacing-md);
-  }
-
-  /* El encabezado del trato se apila verticalmente */
-  .detalles-header {
-    flex-direction: column;
-    gap: var(--spacing-md);
-    align-items: stretch;
-  }
-
-  /* El breadcrumb de fases también se apila verticalmente */
-  .fases-breadcrumb {
-    flex-direction: column;
-    gap: var(--spacing-md);
-  }
-
-  /* El contenedor de fases se centra sin márgenes laterales */
-  .fases-container {
-    margin: 0;
-    justify-content: center;
-    /* Permite el scroll horizontal si hay muchas fases */
-    overflow-x: auto;
-    width: 100%;
-    padding-bottom: var(--spacing-sm); /* Espacio para la barra de desplazamiento */
-  }
-
-  /* La información de contacto se apila verticalmente y se centra */
-  .contacto-info {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-
-  /* Las pestañas de correos electrónicos pueden envolverse si no hay espacio */
-  .correos-tabs {
-    flex-wrap: wrap;
-    justify-content: center; /* Centra las pestañas si se envuelven */
-  }
-
-  /* Se ajusta el tamaño de la fuente base para móviles */
-  html {
-    font-size: 15px;
-  }
-
-  /* Tabla del historial en formato de tarjetas */
-  .historial-tabla {
-    display: block;
-  }
-
-  .tabla-header {
-    display: none;
-  }
-
-  .tabla-row {
-    display: block;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
-    margin-bottom: var(--spacing-md);
-    padding: var(--spacing-md);
-  }
-
-  .cell {
-    display: block;
-    border: none;
-    padding: var(--spacing-xs) 0;
-    text-align: left;
-    justify-content: flex-start;
-  }
-
-  .cell::before {
-    content: attr(data-label);
-    font-weight: 600;
-    margin-right: var(--spacing-sm);
-  }
-
-  /* Responsive para el contenedor de duración */
-  .duracion-container {
-    flex-direction: column;
-    gap: var(--spacing-md);
-  }
-
-  .duracion-field {
-    flex-direction: row;
-    align-items: center;
-    gap: var(--spacing-sm);
-  }
-
-  .duracion-field label {
-    min-width: 60px;
-    text-align: left;
-  }
-}
-
-/* Media query para pantallas muy pequeñas (móviles pequeños) */
-@media (max-width: 576px) {
-  /* Los ítems de fase reducen su padding y tamaño de fuente */
-  .fase-item {
-    font-size: var(--font-size-xs);
-    padding: var(--spacing-xs) var(--spacing-sm);
-  }
-
-  /* Los ítems de nota se apilan verticalmente */
-  .nota-item {
-    flex-direction: column;
-    gap: var(--spacing-sm);
-  }
-
-  /* El padding de los ítems de actividad se reduce */
-  .actividad-item {
-    padding: var(--spacing-sm);
-  }
-
-  /* Se reduce aún más el tamaño de la fuente base para una mejor visualización en pantallas muy pequeñas */
-  html {
-    font-size: 14px;
-  }
-
-  /* Oculta la fecha de inicio y final para ahorrar espacio en pantallas muy pequeñas */
-  .fecha-inicio,
-  .fecha-final {
-    display: none;
-  }
-
-  /* Se ajusta el margen y el tamaño de la fuente del título del trato */
-  .trato-titulo {
-    font-size: var(--font-size-lg);
-    text-align: center;
-    width: 100%;
-  }
-
-  /* El botón de editar trato ocupa todo el ancho */
-  .btn-editar-trato {
-    width: 100%;
-    text-align: center;
-  }
-}
-
-/* Media query para pantallas mínimas */
-@media (max-width: 400px) {
-  /* Se reduce el padding general para dejar más espacio al contenido */
-  .detalles-trato-container {
-    padding: var(--spacing-sm);
-  }
-
-  /* Ajuste final para los tamaños de fuente más pequeños */
-  html {
-    font-size: 13px;
-  }
-}
 
 /* ===== ESTILOS DE MODALES ESPECÍFICOS PARA DETALLES TRATO ===== */
 
-/* Modal Overlay específico para detalles trato */
 .detalles-trato-modal-overlay {
   position: fixed;
   top: 0;
@@ -1237,7 +1543,6 @@
   padding: var(--spacing-lg);
 }
 
-/* Modal Content específico para detalles trato */
 .detalles-trato-modal-overlay .modal-content {
   background-color: white;
   border-radius: var(--border-radius-lg);
@@ -1267,7 +1572,6 @@
   max-width: 900px;
 }
 
-/* Modal Header específico para detalles trato */
 .detalles-trato-modal-overlay .modal-header {
   display: flex;
   justify-content: space-between;
@@ -1312,7 +1616,6 @@
   background-color: rgba(0, 0, 0, 0.1);
 }
 
-/* Modal Body específico para detalles trato */
 .detalles-trato-modal-overlay .modal-body {
   padding: 0;
   background-color: white;
@@ -1322,7 +1625,6 @@
   width: 100%;
 }
 
-/* Modal Form específico para detalles trato */
 .detalles-trato-modal-overlay .modal-form {
   display: flex;
   flex-direction: column;
@@ -1390,7 +1692,6 @@
   min-height: 80px;
 }
 
-/* Wrapper para selects en modales de detalles trato */
 .detalles-trato-modal-overlay .modal-select-wrapper {
   position: relative;
   width: 100%;
@@ -1411,30 +1712,26 @@
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  padding-right: 35px; /* Espacio para el icono */
+  padding-right: 35px;
 }
 
-/* Required field indicator específico para detalles trato */
 .detalles-trato-modal-overlay .required {
   color: #f44336;
   font-weight: bold;
 }
 
-/* Error messages específico para detalles trato */
 .detalles-trato-modal-overlay .error-message {
   color: #f44336;
   font-size: var(--font-size-xs);
   margin-top: var(--spacing-xs);
 }
 
-/* Help text específico para detalles trato */
 .detalles-trato-modal-overlay .help-text {
   color: var(--text-light);
   font-size: var(--font-size-xs);
   margin-top: var(--spacing-xs);
 }
 
-/* Input with prefix específico para detalles trato */
 .detalles-trato-modal-overlay .input-with-prefix {
   position: relative;
   display: flex;
@@ -1453,7 +1750,6 @@
   padding-left: calc(var(--spacing-md) + 20px);
 }
 
-/* Modal Form Actions específico para detalles trato */
 .detalles-trato-modal-overlay .modal-form-actions {
   display: flex;
   gap: var(--spacing-md);
@@ -1464,7 +1760,6 @@
   width: 100%;
 }
 
-/* Button styles for modals específico para detalles trato */
 .detalles-trato-modal-overlay .btn {
   padding: var(--spacing-sm) var(--spacing-lg);
   border: none;
@@ -1708,15 +2003,250 @@
   0% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.05);
   }
+
   100% {
     transform: scale(1);
   }
 }
 
-/* Responsive para modales de detalles trato */
+
+/* Media query para pantallas extra grandes (monitores de escritorio y TVs) */
+@media (min-width: 1600px) {
+
+  /* El contenedor principal se centra con un ancho mayor */
+  .detalles-trato-container {
+    max-width: 1400px;
+  }
+
+  /* Los encabezados y textos principales pueden ser un poco más grandes */
+  .trato-titulo {
+    font-size: var(--font-size-xxl);
+  }
+
+  .seccion h2 {
+    font-size: var(--font-size-xl);
+  }
+
+  /* El tamaño de fuente base se ajusta para mejor legibilidad */
+  html {
+    font-size: 17px;
+  }
+}
+
+/* Media query para pantallas grandes (desktops y laptops) */
+@media (max-width: 1200px) {
+
+  /* Las actividades se organizan en una sola columna para ahorrar espacio horizontal */
+  .actividades-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  /* Los detalles del trato también se organizan en una sola columna */
+  .detalles-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Se ajusta el tamaño de la fuente base para pantallas más comunes */
+  html {
+    font-size: 16px;
+  }
+
+  /* Ajustar tabla del historial */
+  .tabla-header,
+  .tabla-row {
+    grid-template-columns: 100px 120px 80px 100px 80px 60px 1fr;
+  }
+}
+
+/* Media query para pantallas medianas (tablets en orientación horizontal) */
+@media (max-width: 992px) {
+
+  /* El contenedor principal tiene un padding ligeramente reducido */
+  .detalles-trato-container {
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+
+  /* Se reduce un poco el tamaño del título del trato */
+  .trato-titulo {
+    font-size: var(--font-size-xl);
+  }
+
+  /* Simplificar tabla del historial */
+  .tabla-header,
+  .tabla-row {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .header-cell:nth-child(n + 4),
+  .cell:nth-child(n + 4) {
+    display: none;
+  }
+}
+
+/* Media query para pantallas pequeñas (tablets en orientación vertical y móviles grandes) */
+@media (max-width: 768px) {
+
+  /* El padding del contenedor principal se reduce aún más */
+  .detalles-trato-container {
+    padding: var(--spacing-md);
+  }
+
+  /* El encabezado del trato se apila verticalmente */
+  .detalles-header {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    align-items: stretch;
+  }
+
+  /* El breadcrumb de fases también se apila verticalmente */
+  .fases-breadcrumb {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  /* El contenedor de fases se centra sin márgenes laterales */
+  .fases-container {
+    margin: 0;
+    justify-content: center;
+    /* Permite el scroll horizontal si hay muchas fases */
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: var(--spacing-sm);
+    /* Espacio para la barra de desplazamiento */
+  }
+
+  /* La información de contacto se apila verticalmente y se centra */
+  .contacto-info {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  /* Las pestañas de correos electrónicos pueden envolverse si no hay espacio */
+  .correos-tabs {
+    flex-wrap: wrap;
+    justify-content: center;
+    /* Centra las pestañas si se envuelven */
+  }
+
+  /* Se ajusta el tamaño de la fuente base para móviles */
+  html {
+    font-size: 15px;
+  }
+
+  /* Tabla del historial en formato de tarjetas */
+  .historial-tabla {
+    display: block;
+  }
+
+  .tabla-header {
+    display: none;
+  }
+
+  .tabla-row {
+    display: block;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-md);
+  }
+
+  .cell {
+    display: block;
+    border: none;
+    padding: var(--spacing-xs) 0;
+    text-align: left;
+    justify-content: flex-start;
+  }
+
+  .cell::before {
+    content: attr(data-label);
+    font-weight: 600;
+    margin-right: var(--spacing-sm);
+  }
+
+  /* Responsive para el contenedor de duración */
+  .duracion-container {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .duracion-field {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .duracion-field label {
+    min-width: 60px;
+    text-align: left;
+  }
+}
+
+/* Media query para pantallas muy pequeñas (móviles pequeños) */
+@media (max-width: 576px) {
+
+  /* Los ítems de fase reducen su padding y tamaño de fuente */
+  .fase-item {
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  /* Los ítems de nota se apilan verticalmente */
+  .nota-item {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  /* El padding de los ítems de actividad se reduce */
+  .actividad-item {
+    padding: var(--spacing-sm);
+  }
+
+  /* Se reduce aún más el tamaño de la fuente base para una mejor visualización en pantallas muy pequeñas */
+  html {
+    font-size: 14px;
+  }
+
+  /* Oculta la fecha de inicio y final para ahorrar espacio en pantallas muy pequeñas */
+  .fecha-inicio,
+  .fecha-final {
+    display: none;
+  }
+
+  /* Se ajusta el margen y el tamaño de la fuente del título del trato */
+  .trato-titulo {
+    font-size: var(--font-size-lg);
+    text-align: center;
+    width: 100%;
+  }
+
+  /* El botón de editar trato ocupa todo el ancho */
+  .btn-editar-trato {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Media query para pantallas mínimas */
+@media (max-width: 400px) {
+
+  /* Se reduce el padding general para dejar más espacio al contenido */
+  .detalles-trato-container {
+    padding: var(--spacing-sm);
+  }
+
+  /* Ajuste final para los tamaños de fuente más pequeños */
+  html {
+    font-size: 13px;
+  }
+}
+
 @media (max-width: 768px) {
   .detalles-trato-modal-overlay .modal-form-row {
     flex-direction: column;
@@ -1741,7 +2271,6 @@
     height: 35px;
   }
 
-  /* Responsive para el contenedor de duración en modales */
   .detalles-trato-modal-overlay .duracion-container {
     flex-direction: column;
     gap: var(--spacing-md);
@@ -1777,3 +2306,424 @@
     gap: var(--spacing-sm);
   }
 }
+
+@media (max-width: 768px) {
+  .email-item {
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .email-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .email-destinatario {
+    font-size: var(--font-size-sm);
+  }
+
+  .email-fecha {
+    align-self: flex-end;
+  }
+
+  .email-asunto,
+  .email-cuerpo {
+    padding: var(--spacing-sm);
+  }
+
+  .email-cuerpo-texto {
+    max-height: 100px;
+    font-size: var(--font-size-xs);
+  }
+
+  .email-footer {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: flex-start;
+  }
+
+  .email-actions {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .email-item {
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+  }
+
+  .email-destinatario::before {
+    font-size: var(--font-size-md);
+  }
+
+  .email-asunto-texto,
+  .email-cuerpo-texto {
+    font-size: var(--font-size-xs);
+  }
+
+  .email-adjuntos-label,
+  .email-adjuntos-lista {
+    font-size: var(--font-size-xs);
+  }
+
+  .correos-electronicos .no-actividades {
+    padding: var(--spacing-lg);
+  }
+
+  .correos-electronicos .no-actividades::before {
+    font-size: 36px;
+  }
+}
+
+/* Tablets grandes y laptops pequeñas */
+@media (max-width: 1200px) {
+  .fases-breadcrumb {
+    padding: var(--spacing-md);
+  }
+  
+  .tabla-header,
+  .tabla-row {
+    grid-template-columns: 100px 130px 90px 110px 90px 70px 1fr;
+    min-width: 690px;
+  }
+}
+
+/* Tablets */
+@media (max-width: 992px) {
+  .fases-breadcrumb {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-sm);
+  }
+  
+  .fecha-inicio,
+  .fecha-final {
+    order: 1;
+    min-width: auto;
+    flex: 0 0 auto;
+  }
+  
+  .fases-container {
+    order: 2;
+    width: 100%;
+    margin: var(--spacing-sm) 0 0 0;
+    justify-content: flex-start;
+  }
+  
+  .iconos-estado {
+    flex-direction: row;
+    gap: var(--spacing-xs);
+  }
+  
+  /* Tabla simplificada */
+  .tabla-header,
+  .tabla-row {
+    grid-template-columns: 1fr 1fr 1fr 2fr;
+    min-width: 500px;
+  }
+  
+  .header-cell:nth-child(4),
+  .header-cell:nth-child(5),
+  .header-cell:nth-child(6),
+  .cell:nth-child(4),
+  .cell:nth-child(5),
+  .cell:nth-child(6) {
+    display: none;
+  }
+  
+  .header-cell:nth-child(7),
+  .cell:nth-child(7) {
+    grid-column: 4;
+  }
+}
+
+/* Móviles grandes */
+@media (max-width: 768px) {
+  .fases-breadcrumb {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--spacing-md);
+    gap: var(--spacing-md);
+  }
+  
+  .fecha-inicio,
+  .fecha-final {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm);
+    background-color: var(--background-color);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-sm);
+  }
+  
+  .fases-container {
+    margin: 0;
+    padding: var(--spacing-sm) 0;
+    justify-content: flex-start;
+    gap: var(--spacing-xs);
+  }
+  
+  .fase-item {
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    margin-right: var(--spacing-xs);
+  }
+  
+  .iconos-estado {
+    gap: var(--spacing-sm);
+  }
+  
+  .btn-estado {
+    width: 28px;
+    height: 28px;
+  }
+  
+  /* Tabla como tarjetas en móviles */
+  .historial-tabla {
+    display: block;
+    border: none;
+  }
+  
+  .tabla-header {
+    display: none;
+  }
+  
+  .tabla-body {
+    display: block;
+    min-width: auto;
+  }
+  
+  .tabla-row {
+    display: block;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    min-width: auto;
+  }
+  
+  .cell {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  .cell:last-child {
+    border-bottom: none;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .cell::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+    min-width: 80px;
+  }
+  
+  /* Labels para las celdas */
+  .tabla-row .cell:nth-child(1)::before { content: "Fecha"; }
+  .tabla-row .cell:nth-child(2)::before { content: "Responsable"; }
+  .tabla-row .cell:nth-child(3)::before { content: "Tipo"; }
+  .tabla-row .cell:nth-child(4)::before { content: "Medio"; }
+  .tabla-row .cell:nth-child(5)::before { content: "Resultado"; }
+  .tabla-row .cell:nth-child(6)::before { content: "Interés"; }
+  .tabla-row .cell:nth-child(7)::before { content: "Notas"; }
+  
+  .fecha-hora {
+    text-align: right;
+  }
+  
+  .notas-cell {
+    text-align: left;
+    word-break: break-word;
+    line-height: 1.4;
+  }
+}
+
+
+@media (max-width: 576px) {
+  .fases-breadcrumb {
+    padding: var(--spacing-sm);
+  }
+  
+  .fecha-inicio,
+  .fecha-final {
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-xs);
+  }
+  
+  .fase-item {
+    font-size: 10px;
+    padding: 4px 8px;
+    margin-right: 4px;
+  }
+  
+  .fase-item:not(:last-child)::after {
+    right: -8px;
+    font-size: 10px;
+  }
+  
+  .iconos-estado {
+    gap: var(--spacing-xs);
+  }
+  
+  .btn-estado {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .btn-estado img {
+    width: 12px;
+    height: 12px;
+  }
+  
+  /* Tarjetas más compactas */
+  .tabla-row {
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .cell {
+    padding: var(--spacing-xs) 0;
+    font-size: var(--font-size-xs);
+  }
+  
+  .cell::before {
+    font-size: 10px;
+    min-width: 70px;
+  }
+  
+  .fecha-hora .fecha {
+    font-size: var(--font-size-xs);
+  }
+  
+  .fecha-hora .hora {
+    font-size: 10px;
+  }
+  
+  .tipo-badge,
+  .resultado-badge,
+  .interes-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+}
+
+/* Móviles pequeños */
+@media (max-width: 400px) {
+  .fases-breadcrumb {
+    padding: 8px;
+  }
+  
+  .fecha-inicio span:first-child,
+  .fecha-final span:first-child {
+    font-size: 10px;
+  }
+  
+  .fecha {
+    font-size: 9px;
+  }
+  
+  .fase-item {
+    font-size: 9px;
+    padding: 3px 6px;
+    margin-right: 3px;
+  }
+  
+  .fases-container {
+    padding: 4px 0;
+  }
+  
+  .btn-estado {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .btn-estado img {
+    width: 10px;
+    height: 10px;
+  }
+  
+
+  .fecha-inicio,
+  .fecha-final {
+    display: none;
+  }
+  
+  .fases-container {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fase-item,
+  .btn-estado,
+  .tabla-row {
+    transition: none;
+  }
+}
+
+/* Para pantallas táctiles */
+@media (hover: none) and (pointer: coarse) {
+  .fase-item {
+    padding: var(--spacing-sm) var(--spacing-md);
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .btn-estado {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Scroll suave para contenedores horizontales */
+.fases-container,
+.historial-tabla {
+  scroll-behavior: smooth;
+}
+
+/* Indicador visual para scroll horizontal */
+.fases-container::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.8) 100%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.fases-container:hover::after {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .fases-container::after {
+    display: none;
+  }
+}
+

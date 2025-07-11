@@ -1,4 +1,3 @@
-"use client"
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import "./Empresas.css"
@@ -8,8 +7,8 @@ import deleteIcon from "../../assets/icons/eliminar.png"
 import detailsIcon from "../../assets/icons/lupa.png"
 import { API_BASE_URL } from "../Config/Config"
 import Swal from "sweetalert2"
+import stringSimilarity from "string-similarity";
 
-// Función auxiliar para realizar solicitudes con el token
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token")
 
@@ -67,8 +66,10 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
   )
 }
 
+
+
 // Modal de Empresa (Agregar/Editar)
-const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated, users, hasTratos }) => {
+const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated, users, hasTratos, existingCompanies }) => {
   const [formData, setFormData] = useState({
     nombre: "",
     estatus: "POR_CONTACTAR",
@@ -80,7 +81,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
     razonSocial: "",
     regimenFiscal: "",
     propietarioId: null,
-  })
+  });
 
   const [errors, setErrors] = useState({})
 
@@ -154,7 +155,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
         razonSocial: empresa.razonSocial || "",
         regimenFiscal: empresa.regimenFiscal || "",
         propietarioId: empresa.propietario?.id || null,
-      })
+      });
     } else {
       setFormData({
         nombre: "",
@@ -167,72 +168,91 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
         razonSocial: "",
         regimenFiscal: "",
         propietarioId: null,
-      })
+      });
     }
-    setErrors({})
-  }, [empresa, mode, isOpen])
+    setErrors({});
+  }, [empresa, mode, isOpen]);
 
   const handleInputChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }))
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
-  }
+  };
 
   const validateForm = () => {
-    const newErrors = {}
+    const newErrors = {};
 
-    // Validación Nombre: Solo obligatorio, permite cualquier carácter
     if (!formData.nombre.trim()) {
-      newErrors.nombre = "Este campo es obligatorio"
+      newErrors.nombre = "Este campo es obligatorio";
+    } else if (mode === "add") {
+      const similarityThreshold = 0.60;
+      const existingNames = existingCompanies
+        ? existingCompanies.map((c) => c.nombre?.toLowerCase() || "")
+        : [];
+      const newName = formData.nombre.toLowerCase();
+
+
+      if (existingNames.length > 0) {
+        const similarities = existingNames.map((name) =>
+          stringSimilarity.compareTwoStrings(newName, name)
+        );
+        const maxSimilarity = Math.max(...similarities, 0);
+
+
+        if (maxSimilarity >= similarityThreshold) {
+          newErrors.nombre = "Esta empresa parece ser un duplicado. Verifica el nombre.";
+        }
+      }
     }
+
     // Validación Sitio Web: URL válida si se proporciona
     if (formData.sitioWeb) {
-      const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/
+      const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
       if (!urlRegex.test(formData.sitioWeb)) {
-        newErrors.sitioWeb = "Este campo debe ser una URL válida (ej. https://ejemplo.com)"
+        newErrors.sitioWeb = "Este campo debe ser una URL válida (ej. https://ejemplo.com)";
       }
     }
 
     // Validación Domicilio Físico: No vacío y caracteres válidos
     if (!formData.domicilioFisico.trim()) {
-      newErrors.domicilioFisico = "Este campo es obligatorio"
+      newErrors.domicilioFisico = "Este campo es obligatorio";
     } else if (!/^[A-Za-z0-9\s,.\-ÁÉÍÓÚáéíóúÑñ]+$/.test(formData.domicilioFisico.trim())) {
-      newErrors.domicilioFisico = "Este campo contiene caracteres no permitidos"
+      newErrors.domicilioFisico = "Este campo contiene caracteres no permitidos";
     }
 
     // Validaciones para estatus CLIENTE
     if (formData.estatus === "CLIENTE") {
       // Domicilio Fiscal
       if (!formData.domicilioFiscal?.trim()) {
-        newErrors.domicilioFiscal = "Este campo es obligatorio para estatus Cliente"
+        newErrors.domicilioFiscal = "Este campo es obligatorio para estatus Cliente";
       } else if (!/^[A-Za-z0-9\s,.\-ÁÉÍÓÚáéíóúÑñ]+$/.test(formData.domicilioFiscal.trim())) {
-        newErrors.domicilioFiscal = "Este campo contiene caracteres no permitidos"
+        newErrors.domicilioFisico = "Este campo contiene caracteres no permitidos";
       }
 
       // RFC: Solo letras mayúsculas, números y &
       if (!formData.rfc?.trim()) {
-        newErrors.rfc = "Este campo es obligatorio para estatus Cliente"
+        newErrors.rfc = "Este campo es obligatorio para estatus Cliente";
       } else if (!/^[A-Z0-9&]+$/.test(formData.rfc.trim())) {
-        newErrors.rfc = "Este campo solo debe contener letras mayúsculas, números y &"
+        newErrors.rfc = "Este campo solo debe contener letras mayúsculas, números y &";
       }
 
       // Razón Social: Solo letras (mayúsculas, minúsculas, Ñ/ñ, acentos)
       if (!formData.razonSocial?.trim()) {
-        newErrors.razonSocial = "Este campo es obligatorio para estatus Cliente"
+        newErrors.razonSocial = "Este campo es obligatorio para estatus Cliente";
       } else if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(formData.razonSocial.trim())) {
-        newErrors.razonSocial = "Este campo solo debe contener letras"
+        newErrors.razonSocial = "Este campo solo debe contener letras";
       }
 
       // Régimen Fiscal: Debe estar seleccionado
       if (!formData.regimenFiscal) {
-        newErrors.regimenFiscal = "Este campo es obligatorio para estatus Cliente"
+        newErrors.regimenFiscal = "Este campo es obligatorio para estatus Cliente";
       }
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -241,7 +261,6 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
       return;
     }
 
-    // Solo mostrar alerta de confirmación si estamos en modo "edit"
     if (mode === "edit") {
       const result = await Swal.fire({
         title: '¿Estás seguro?',
@@ -253,11 +272,9 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
       });
 
       if (!result.isConfirmed) {
-        return; // Si el usuario cancela, no continuar
+        return; 
       }
     }
-
-    // Continuar con el guardado
     const formattedDomicilioFisico = formData.domicilioFisico.endsWith(", México")
       ? formData.domicilioFisico
       : `${formData.domicilioFisico}, México`;
@@ -355,28 +372,28 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
           </div>
 
           <div className="modal-form-row">
-          <div className="modal-form-group">
-            <label htmlFor="estatus">
-              Estatus <span className="required">*</span>
-            </label>
-            <select
-              id="estatus"
-              value={formData.estatus}
-              onChange={(e) => handleInputChange("estatus", e.target.value)}
-              className="modal-form-control"
-              disabled={mode === "edit" && hasTratos} 
-            >
-              {estatusOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            {mode === "edit" && hasTratos && (
-              <small className="help-text">El estatus no puede editarse porque la empresa tiene tratos asociados.</small>
-            )}
+            <div className="modal-form-group">
+              <label htmlFor="estatus">
+                Estatus <span className="required">*</span>
+              </label>
+              <select
+                id="estatus"
+                value={formData.estatus}
+                onChange={(e) => handleInputChange("estatus", e.target.value)}
+                className="modal-form-control"
+                disabled={mode === "edit" && hasTratos}
+              >
+                {estatusOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {mode === "edit" && hasTratos && (
+                <small className="help-text">El estatus no puede editarse porque la empresa tiene tratos asociados.</small>
+              )}
+            </div>
           </div>
-        </div>
         </div>
 
         <div className="modal-form-row">
@@ -425,7 +442,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
               placeholder="Ej: Elefante 175, Villa Magna, 37208 León de los Aldama, Guanajuato, México"
             />
             <small className="help-text">
-              Por favor, usa el formato: Calle y Número, Código Postal, Ciudad, Estado, País. Evita detalles como "Local
+              Por favor, usa el formato: Calle y Número, Colonia, Código Postal, Ciudad, Estado, País. Evita detalles como "Local
               X" o "Depto. Y" para una mejor precisión en el mapa.
             </small>
             {errors.domicilioFisico && <span className="error-message">{errors.domicilioFisico}</span>}
@@ -1211,6 +1228,32 @@ const Empresas = () => {
     confirmarEliminacion: { isOpen: false, data: null, isLastContact: false },
   })
 
+  const [tratos, setTratos] = useState([]);
+
+  useEffect(() => {
+    const fetchTratos = async () => {
+      if (!selectedCompany?.id) return;
+
+      try {
+        const response = await fetchWithToken(
+          `${API_BASE_URL}/tratos/filtrar?empresaId=${selectedCompany.id}`
+        );
+        if (!response.ok) throw new Error("Error al cargar los tratos");
+        const data = await response.json();
+        setTratos(data);
+      } catch (error) {
+        console.error("Error al cargar tratos:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.message,
+        });
+      }
+    };
+
+    fetchTratos();
+  }, [selectedCompany?.id]);
+
   const statusMap = {
     POR_CONTACTAR: "Por Contactar",
     EN_PROCESO: "En Proceso",
@@ -1288,13 +1331,13 @@ const Empresas = () => {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const params = new URLSearchParams()
-        if (searchTerm) params.append("nombre", searchTerm)
-        if (filterStatus) params.append("estatus", filterStatus)
+        const params = new URLSearchParams();
+        if (searchTerm) params.append("nombre", searchTerm);
+        if (filterStatus) params.append("estatus", filterStatus);
 
-        const response = await fetchWithToken(`${API_BASE_URL}/empresas?${params.toString()}`)
-        if (!response.ok) throw new Error("Error al cargar las empresas")
-        const data = await response.json()
+        const response = await fetchWithToken(`${API_BASE_URL}/empresas?${params.toString()}`);
+        if (!response.ok) throw new Error("Error al cargar las empresas");
+        const data = await response.json();
 
         const companiesWithColors = data.map((company) => ({
           ...company,
@@ -1302,24 +1345,25 @@ const Empresas = () => {
           domicilioFisico: company.domicilioFisico.endsWith(", México")
             ? company.domicilioFisico
             : `${company.domicilioFisico}, México`,
-        }))
-        setCompanies(companiesWithColors)
+        }));
+        setCompanies(companiesWithColors);
 
         if (companiesWithColors.length > 0 && !selectedCompany) {
-          setSelectedCompany(companiesWithColors[0])
+          setSelectedCompany(companiesWithColors[0]);
         }
       } catch (error) {
-        console.error("Error al cargar empresas:", error)
+        console.error("Error al cargar empresas:", error);
         Swal.fire({
           icon: "error",
           title: "Error",
           text: error.message,
-        })
+        });
       }
-    }
+    };
 
-    fetchCompanies()
-  }, [searchTerm, filterStatus, selectedCompany])
+    fetchCompanies();
+  }, [searchTerm, filterStatus, selectedCompany]);
+
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -1366,9 +1410,9 @@ const Empresas = () => {
   const openModal = (modalType, mode = "add", data = null, extra = {}) => {
     setModals((prev) => ({
       ...prev,
-      [modalType]: { isOpen: true, mode, data, ...extra },
-    }))
-  }
+      [modalType]: { isOpen: true, mode, data, ...extra, existingCompanies: companies || [] },
+    }));
+  };
 
   const closeModal = (modalType) => {
     setModals((prev) => ({
@@ -1378,31 +1422,34 @@ const Empresas = () => {
   }
 
   const handleAddCompany = () => {
-    openModal("empresa", "add")
-  }
+    if (companies.length === 0) {
+      return;
+    }
+    openModal("empresa", "add", null, { existingCompanies: [...companies] });
+  };
 
   const handleEditCompany = async () => {
-  if (selectedCompany) {
-    try {
-      const response = await fetchWithToken(`${API_BASE_URL}/empresas/${selectedCompany.id}/has-tratos`);
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Response error:", errorText);
-        throw new Error("Error checking tratos");
+    if (selectedCompany) {
+      try {
+        const response = await fetchWithToken(`${API_BASE_URL}/empresas/${selectedCompany.id}/has-tratos`);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Response error:", errorText);
+          throw new Error("Error checking tratos");
+        }
+        const hasTratos = await response.json();
+        openModal("empresa", "edit", selectedCompany, { hasTratos, existingCompanies: companies });
+      } catch (error) {
+        console.error("Error checking tratos:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.message,
+        });
       }
-      const hasTratos = await response.json();
-      console.log("Has Tratos response:", hasTratos);
-      openModal("empresa", "edit", selectedCompany, { hasTratos });
-    } catch (error) {
-      console.error("Error checking tratos:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.message,
-      });
     }
-  }
-};
+  };
+
   const handleCompanyDetails = () => {
     if (selectedCompany) {
       openModal("detallesEmpresa", "view", selectedCompany)
@@ -1691,22 +1738,20 @@ const Empresas = () => {
                     </div>
                   </div>
 
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Sitio web</label>
-                      <input type="text" value={selectedCompany.sitioWeb || "N/A"} className="form-control" readOnly />
-                    </div>
-                    <div className="form-group">
-                      <label>Sector</label>
-                      <input
-                        type="text"
-                        value={getSectorText(selectedCompany.sector)}
-                        className="form-control"
-                        readOnly
-                      />
-                    </div>
+                  <div className="form-group">
+                    <label>Sitio web</label>
+                    <input
+                      type="text"
+                      value={selectedCompany.sitioWeb || "N/A"}
+                      className="form-control clickable"
+                      readOnly
+                      onClick={() => {
+                        if (selectedCompany.sitioWeb) {
+                          window.open(selectedCompany.sitioWeb, "_blank", "noopener,noreferrer");
+                        }
+                      }}
+                    />
                   </div>
-
                   <div className="form-row">
                     <div className="form-group address-group">
                       <label>Domicilio</label>
@@ -1820,6 +1865,50 @@ const Empresas = () => {
                     </table>
                   </div>
                 </div>
+                <div className="tratos-section">
+                  <div className="tratos-header">
+                    <h3>Tratos de la Empresa</h3>
+                  </div>
+
+                  <div className="tratos-table-container">
+                    <table className="tratos-table">
+                      <thead>
+                        <tr>
+                          <th>No. Trato</th>
+                          <th>Nombre del Trato</th>
+                          <th>Nombre del Contacto</th>
+                          <th>Propietario</th>
+                          <th>Fase</th>
+                          <th>Fecha de Cierre</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tratos.length > 0 ? (
+                          tratos.map((trato, index) => (
+                            <tr key={trato.id}>
+                              <td>{trato.noTrato || index + 1}</td>
+                              <td>{trato.nombre || "N/A"}</td>
+                              <td>{trato.contacto?.nombre || "N/A"}</td>
+                              <td>{trato.propietarioNombre || "N/A"}</td>
+                              <td>{trato.fase || "N/A"}</td>
+                              <td>
+                                {trato.fechaCierre
+                                  ? new Date(trato.fechaCierre).toLocaleDateString("es-MX")
+                                  : "N/A"}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="6" className="no-data">
+                              No se encontraron tratos para esta empresa
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </>
             ) : (
               <div className="no-selection">
@@ -1838,6 +1927,7 @@ const Empresas = () => {
           onCompanyCreated={handleCompanyCreated}
           users={users}
           hasTratos={modals.empresa.hasTratos}
+          existingCompanies={modals.empresa.existingCompanies} 
         />
 
         <ContactoModal

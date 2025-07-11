@@ -1,51 +1,52 @@
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import "./Equipos_EstatusPlataforma.css";
+import Header from "../Header/Header";
+import Swal from "sweetalert2";
+import { Bar } from "react-chartjs-2";
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
+import { API_BASE_URL } from "../Config/Config";
+import html2pdf from "html2pdf.js";
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import "./Equipos_EstatusPlataforma.css"
-import Header from "../Header/Header"
-import Swal from "sweetalert2"
-import { Bar } from "react-chartjs-2"
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js"
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const fetchWithToken = async (url, options = {}) => {
-  const token = localStorage.getItem("token")
+  const token = localStorage.getItem("token");
   const headers = {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
-  }
-  const response = await fetch(url, { ...options, headers })
-  if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`)
-  return response
-}
+  };
+  const response = await fetch(url, { ...options, headers });
+  if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`);
+  return response;
+};
 
 // Componente Modal Base
 const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden"
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "unset"
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.body.style.overflow = "unset"
-    }
-  }, [isOpen])
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   const sizeClasses = {
     sm: "estatusplataforma-modal-sm",
     md: "estatusplataforma-modal-md",
     lg: "estatusplataforma-modal-lg",
     xl: "estatusplataforma-modal-xl",
-  }
+  };
 
   return (
-    <div className="estatusplataforma-modal-overlay" onClick={canClose ? onClose : () => {}}>
+    <div className="estatusplataforma-modal-overlay" onClick={canClose ? onClose : () => { }}>
       <div className={`estatusplataforma-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="estatusplataforma-modal-header">
           <h2 className="estatusplataforma-modal-title">{title}</h2>
@@ -58,86 +59,173 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
         <div className="estatusplataforma-modal-body">{children}</div>
       </div>
     </div>
-  )
-}
+  );
+};
+
+const processEstatusPorCliente = (equipos, estatusData, clientes) => {
+  const clienteIds = [...new Set(equipos.map(e => e.clienteId || e.clienteDefault || null))].filter(id => id !== null);
+  return clienteIds.map(clienteId => {
+    const equiposCliente = equipos.filter(e => e.clienteId === clienteId || e.clienteDefault === clienteId);
+    const fechaUltimoCheck = estatusData[0]?.fechaCheck;
+    const estatus = estatusData.filter(es => equiposCliente.some(e => e.id === es.equipoId) && es.fechaCheck === fechaUltimoCheck);
+
+    const enLinea = estatus.filter(es => es.estatus === "REPORTANDO").length;
+    const fueraLinea = estatus.filter(es => es.estatus === "NO_REPORTANDO").length;
+
+    const clienteNombre = clientes.find(c => c.id === clienteId)?.nombre ||
+      (clienteId === "AG" || clienteId === "BN" ? clienteId : "Sin Cliente");
+
+    return { cliente: clienteNombre, enLinea, fueraLinea };
+  });
+};
+
+const processEquiposPorPlataforma = (equipos) => {
+  const plataformaMap = {
+    TRACK_SOLID: "Track Solid",
+    WHATSGPS: "WhatsGPS",
+    TRACKERKING: "TrackerKing",
+  };
+  const uniquePlatforms = [...new Set(equipos.map(e => e.plataforma))].filter(p => p);
+  return uniquePlatforms.map(p => ({
+    plataforma: plataformaMap[p] || p,
+    cantidad: equipos.filter(e => e.plataforma === p).length,
+  })).filter(p => p.cantidad > 0);
+};
+
+const processEquiposOffline = (equipos, estatusData) => {
+  const fechaUltimo = estatusData[0]?.fechaCheck;
+  const offline = estatusData.filter(es => es.estatus === "NO_REPORTANDO" && es.fechaCheck === fechaUltimo);
+  return offline.map(es => {
+    const equipo = equipos.find(e => e.id === es.equipoId);
+    return {
+      cliente: equipo.clienteId ? equipos.find(e => e.id === equipo.clienteId)?.nombre || equipo.clienteId : equipo.clienteDefault || "N/A",
+      nombre: equipo.nombre,
+      plataforma: equipo.plataforma,
+      motivo: es.motivo,
+    };
+  });
+};
+
+const getTodayStart = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today.getTime();
+};
 
 // Panel Lateral Deslizante para Check Equipos
-const CheckEquiposSidePanel = ({ isOpen, onClose, equipos, onSaveChecklist }) => {
-  const [selectedPlatform, setSelectedPlatform] = useState("Todos")
-  const [equiposStatus, setEquiposStatus] = useState({})
+const CheckEquiposSidePanel = ({
+  isOpen,
+  onClose,
+  equipos,
+  setModals,
+  closeModal,
+  fetchData,
+  lastCheckTime,
+  setLastCheckTime,
+}) => {
+  const [selectedPlatform, setSelectedPlatform] = useState("Todos");
+  const [equiposStatus, setEquiposStatus] = useState({});
 
-  const plataformas = ["Todos", "Track Solid", "WhatsGPS", "TrackerKing"]
+  const platformMap = {
+    TRACKERKING: "TrackerKing",
+    TRACK_SOLID: "Track Solid",
+    WHATSGPS: "WhatsGPS",
+  };
+
+  const fixedPlatforms = ["TRACKERKING", "TRACK_SOLID", "WHATSGPS"];
+  const dynamicPlatforms = [...new Set(equipos.map(e => e.plataforma))].filter(p => p && !fixedPlatforms.includes(p));
+  const plataformas = ["Todos", ...fixedPlatforms, ...dynamicPlatforms];
 
   useEffect(() => {
     if (isOpen && equipos.length > 0) {
-      const initialStatus = {}
+      const initialStatus = {};
       equipos.forEach((equipo) => {
         initialStatus[equipo.id] = {
           status: null,
           motivo: "",
-        }
-      })
-      setEquiposStatus(initialStatus)
+        };
+      });
+      setEquiposStatus(initialStatus);
     }
-  }, [isOpen, equipos])
+  }, [isOpen, equipos]);
 
   const filteredEquipos = equipos.filter(
     (equipo) => selectedPlatform === "Todos" || equipo.plataforma === selectedPlatform,
-  )
+  );
 
   const handleStatusChange = (equipoId, newStatus) => {
-    setEquiposStatus((prev) => ({
+    const equipo = equipos.find(e => e.id === equipoId);
+    setModals(prev => ({
       ...prev,
-      [equipoId]: {
-        ...prev[equipoId],
-        status: newStatus,
-        motivo: newStatus === false ? prev[equipoId]?.motivo || "" : "",
+      confirmarCambio: {
+        isOpen: true,
+        equipoNombre: equipo.nombre,
+        nuevoEstatus: newStatus ? "REPORTANDO" : "NO_REPORTANDO",
+        motivo: newStatus ? "" : equiposStatus[equipoId]?.motivo || "",
+        onConfirm: (selectedMotivo) => {
+          if (newStatus === false && !selectedMotivo.trim()) {
+            Swal.fire({
+              icon: "warning",
+              title: "Advertencia",
+              text: "Debe seleccionar un motivo para equipos no reportando.",
+            });
+            return;
+          }
+          setEquiposStatus(prev => ({
+            ...prev,
+            [equipoId]: { status: newStatus, motivo: selectedMotivo || "" },
+          }));
+          closeModal("confirmarCambio");
+        },
       },
-    }))
-  }
+    }));
+  };
 
-  const handleMotivoChange = (equipoId, motivo) => {
-    setEquiposStatus((prev) => ({
-      ...prev,
-      [equipoId]: {
-        ...prev[equipoId],
-        motivo,
-      },
-    }))
-  }
 
-  const handleSaveChecklist = () => {
+  const handleSaveChecklist = async () => {
     const equiposConStatus = Object.entries(equiposStatus)
       .filter(([_, data]) => data.status !== null)
       .map(([equipoId, data]) => ({
         equipoId: Number.parseInt(equipoId),
-        status: data.status ? "Reportando" : "No Reportando",
-        motivo: data.status ? null : data.motivo,
-      }))
+        status: data.status ? "REPORTANDO" : "NO_REPORTANDO",
+        motivo: data.motivo || null,
+      }));
 
-    if (equiposConStatus.length === 0) {
+    // Validar que todos los equipos tengan estatus
+    if (equiposConStatus.length !== filteredEquipos.length) {
       Swal.fire({
         icon: "warning",
         title: "Advertencia",
-        text: "Debe asignar al menos un estatus antes de guardar.",
-      })
-      return
+        text: "Debes asignar un estatus a todos los equipos antes de guardar.",
+      });
+      return;
     }
 
-    onSaveChecklist(equiposConStatus)
-    onClose()
-  }
+    try {
+      await fetchWithToken(`${API_BASE_URL}/equipos/estatus`, {
+        method: "POST",
+        body: JSON.stringify(equiposConStatus),
+      });
+      Swal.fire({
+        icon: "success",
+        title: "Éxito",
+        text: `Se ha guardado el checklist de ${equiposConStatus.length} equipos.`,
+      });
+      const todayStart = getTodayStart();
+      setLastCheckTime(todayStart);
+      fetchData();
+      closeModal("checkEquipos");
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.message,
+      });
+    }
+  };
 
-  const motivosOptions = [
-    "Batería interna baja",
-    "Desconexión de fuente",
-    "Zona de baja cobertura",
-    "Sin saldo",
-    "Perdido",
-    "Expirado",
-    "Apagado",
-    "En reparación",
-  ]
+
+  const canCheck = !lastCheckTime || (Date.now() - lastCheckTime >= 24 * 60 * 60 * 1000);
 
   return (
     <>
@@ -162,7 +250,7 @@ const CheckEquiposSidePanel = ({ isOpen, onClose, equipos, onSaveChecklist }) =>
             >
               {plataformas.map((plataforma) => (
                 <option key={plataforma} value={plataforma}>
-                  {plataforma}
+                  {platformMap[plataforma] || plataforma || "Sin Plataforma"}
                 </option>
               ))}
             </select>
@@ -178,72 +266,59 @@ const CheckEquiposSidePanel = ({ isOpen, onClose, equipos, onSaveChecklist }) =>
                 </tr>
               </thead>
               <tbody>
-                {filteredEquipos.map((equipo) => (
-                  <tr key={equipo.id}>
-                    <td>
-                      <div className="estatusplataforma-equipo-info">
-                        <div className="estatusplataforma-equipo-nombre">{equipo.codigo}</div>
-                        <div className="estatusplataforma-equipo-detalle">{equipo.nombre}</div>
-                      </div>
-                    </td>
-                    <td className="estatusplataforma-status-cell">
-                      <div className="estatusplataforma-status-radio-container">
-                        <input
-                          type="radio"
-                          name={`status-${equipo.id}`}
-                          checked={equiposStatus[equipo.id]?.status === true}
-                          onChange={() => handleStatusChange(equipo.id, true)}
-                          className="estatusplataforma-status-radio estatusplataforma-status-radio-green"
-                        />
-                        <span className="estatusplataforma-status-checkmark estatusplataforma-green">✓</span>
-                      </div>
-                    </td>
-                    <td className="estatusplataforma-status-cell">
-                      <div className="estatusplataforma-status-radio-container">
-                        <input
-                          type="radio"
-                          name={`status-${equipo.id}`}
-                          checked={equiposStatus[equipo.id]?.status === false}
-                          onChange={() => handleStatusChange(equipo.id, false)}
-                          className="estatusplataforma-status-radio estatusplataforma-status-radio-red"
-                        />
-                        <span className="estatusplataforma-status-checkmark estatusplataforma-red">✗</span>
-                      </div>
+                {canCheck ? (
+                  filteredEquipos.length > 0 ? (
+                    filteredEquipos.map((equipo) => (
+                      <tr key={equipo.id}>
+                        <td>
+                          <div className="estatusplataforma-equipo-info">
+                            <div className="estatusplataforma-equipo-nombre">{equipo.codigo}</div>
+                            <div className="estatusplataforma-equipo-detalle">{equipo.nombre}</div>
+                          </div>
+                        </td>
+                        <td className="estatusplataforma-status-cell">
+                          <div className="estatusplataforma-status-radio-container">
+                            <input
+                              type="radio"
+                              name={`status-${equipo.id}`}
+                              checked={equiposStatus[equipo.id]?.status === true}
+                              onChange={() => handleStatusChange(equipo.id, true)}
+                              className="estatusplataforma-status-radio estatusplataforma-status-radio-green"
+                            />
+                            <span className="estatusplataforma-status-checkmark estatusplataforma-green">✓</span>
+                          </div>
+                        </td>
+                        <td className="estatusplataforma-status-cell">
+                          <div className="estatusplataforma-status-radio-container">
+                            <input
+                              type="radio"
+                              name={`status-${equipo.id}`}
+                              checked={equiposStatus[equipo.id]?.status === false}
+                              onChange={() => handleStatusChange(equipo.id, false)}
+                              className="estatusplataforma-status-radio estatusplataforma-status-radio-red"
+                            />
+                            <span className="estatusplataforma-status-checkmark estatusplataforma-red">✗</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="3" className="estatusplataforma-no-data">
+                        No hay equipos para check
+                      </td>
+                    </tr>
+                  )
+                ) : (
+                  <tr>
+                    <td colSpan="3" className="estatusplataforma-no-data">
+                      El checklist ya se realizó hoy. Espera al siguiente día para volver a cargarlos.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
-
-          {/* Motivos para equipos No Reportando */}
-          {Object.entries(equiposStatus).some(([_, data]) => data.status === false) && (
-            <div className="estatusplataforma-motivos-section">
-              <h4>Motivos para equipos No Reportando:</h4>
-              {Object.entries(equiposStatus)
-                .filter(([_, data]) => data.status === false)
-                .map(([equipoId, data]) => {
-                  const equipo = equipos.find((e) => e.id === Number.parseInt(equipoId))
-                  return (
-                    <div key={equipoId} className="estatusplataforma-motivo-item">
-                      <label>{equipo?.codigo}:</label>
-                      <select
-                        value={data.motivo || ""}
-                        onChange={(e) => handleMotivoChange(Number.parseInt(equipoId), e.target.value)}
-                        className="estatusplataforma-side-panel-form-control"
-                      >
-                        <option value="">Seleccionar motivo</option>
-                        {motivosOptions.map((motivo) => (
-                          <option key={motivo} value={motivo}>
-                            {motivo}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )
-                })}
-            </div>
-          )}
         </div>
 
         <div className="estatusplataforma-side-panel-footer">
@@ -251,14 +326,15 @@ const CheckEquiposSidePanel = ({ isOpen, onClose, equipos, onSaveChecklist }) =>
             type="button"
             onClick={handleSaveChecklist}
             className="estatusplataforma-btn estatusplataforma-btn-primary estatusplataforma-btn-full-width"
+            disabled={!canCheck || filteredEquipos.length === 0}
           >
             Guardar checklist
           </button>
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
 // Modal de Confirmación de Cambio de Estatus
 const ConfirmarCambioEstatusModal = ({
@@ -279,19 +355,11 @@ const ConfirmarCambioEstatusModal = ({
     "Expirado",
     "Apagado",
     "En reparación",
-  ]
+  ];
 
   const handleConfirm = () => {
-    if (nuevoEstatus === "No Reportando" && !motivo) {
-      Swal.fire({
-        icon: "warning",
-        title: "Advertencia",
-        text: "Debe seleccionar un motivo para equipos no reportando.",
-      })
-      return
-    }
-    onConfirm()
-  }
+    onConfirm(motivo);
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Confirmar cambio de estatus" size="sm">
@@ -301,14 +369,15 @@ const ConfirmarCambioEstatusModal = ({
             ¿Seguro que quieres cambiar el estatus de reporte de {equipoNombre} a {nuevoEstatus}?
           </p>
 
-          {nuevoEstatus === "No Reportando" && (
+          {nuevoEstatus === "NO_REPORTANDO" && (
             <div className="estatusplataforma-modal-form-group" style={{ width: "100%", marginTop: "1rem" }}>
-              <label htmlFor="motivo">Motivo:</label>
+              <label htmlFor="motivo">Motivo: <span style={{ color: "red" }}>*</span></label>
               <select
                 id="motivo"
-                value={motivo}
+                value={motivo || ""}
                 onChange={(e) => onMotivoChange(e.target.value)}
                 className="estatusplataforma-modal-form-control"
+                required
               >
                 <option value="">Seleccionar motivo</option>
                 {motivosOptions.map((motivoOption) => (
@@ -335,12 +404,13 @@ const ConfirmarCambioEstatusModal = ({
         </div>
       </div>
     </Modal>
-  )
-}
+  );
+};
 
 // Componente Principal
 const EquiposEstatusPlataforma = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const chartRefs = useRef({});
 
   const [equiposData, setEquiposData] = useState({
     estatusPorCliente: [],
@@ -348,7 +418,7 @@ const EquiposEstatusPlataforma = () => {
     equiposOffline: [],
     equiposParaCheck: [],
     fechaUltimoCheck: null,
-  })
+  });
 
   const [modals, setModals] = useState({
     checkEquipos: { isOpen: false },
@@ -359,79 +429,165 @@ const EquiposEstatusPlataforma = () => {
       motivo: "",
       onConfirm: null,
     },
-  })
+  });
 
-  // Datos de ejemplo para demostración
-  useEffect(() => {
-    const mockData = {
-      estatusPorCliente: [
-        { cliente: "AG", enLinea: 0, fueraLinea: 8 },
-        { cliente: "BN", enLinea: 0, fueraLinea: 6 },
-        { cliente: "SANTANDER SEALES", enLinea: 8, fueraLinea: 4 },
-        { cliente: "FERM Constructora", enLinea: 2, fueraLinea: 0 },
-        { cliente: "DYC Logistic", enLinea: 1, fueraLinea: 2 },
-        { cliente: "Ranch Capital", enLinea: 6, fueraLinea: 2 },
-        { cliente: "Agua Bastos", enLinea: 8, fueraLinea: 2 },
-      ],
-      equiposPorPlataforma: [
-        { plataforma: "Track Solid", cantidad: 45 },
-        { plataforma: "WhatsGPS", cantidad: 38 },
-        { plataforma: "TrackerKing", cantidad: 12 },
-      ],
-      equiposOffline: [
-        { cliente: "AG", nombre: "VL502-L-10343", plataforma: "Tracksolid", motivo: "Expirado" },
-        { cliente: "Agua Bastos", nombre: "Columbia", plataforma: "Tracksolid", motivo: "Desconexión de fuente" },
-        { cliente: "BN", nombre: "303-93075", plataforma: "Tracksolid", motivo: "Batería interna baja" },
-        { cliente: "DYC Logistic", nombre: "225", plataforma: "WhatsGPS", motivo: "En reparación" },
-      ],
-      equiposParaCheck: [
-        { id: 1, codigo: "NISSAN-GABARITO", nombre: "Equipo Demo 1", plataforma: "Track Solid", tipo: "Cliente" },
-        { id: 2, codigo: "VL502-L-10343", nombre: "Equipo Demo 2", plataforma: "WhatsGPS", tipo: "Demo" },
-        { id: 3, codigo: "CASCADA", nombre: "Equipo Demo 3", plataforma: "TrackerKing", tipo: "Cliente" },
-      ],
-      fechaUltimoCheck: "2024/12/25",
+  const [lastCheckTime, setLastCheckTime] = useState(null);
+
+  const fetchData = async () => {
+    try {
+      const [equiposResponse, estatusResponse, clientesResponse] = await Promise.all([
+        fetchWithToken(`${API_BASE_URL}/equipos`),
+        fetchWithToken(`${API_BASE_URL}/equipos/estatus`),
+        fetchWithToken(`${API_BASE_URL}/empresas`),
+      ]);
+      const equipos = await equiposResponse.json();
+      const estatusData = await estatusResponse.json();
+      const empresas = await clientesResponse.json();
+      const clientes = empresas.filter(emp => ["CLIENTE", "EN_PROCESO"].includes(emp.estatus));
+
+      const fechaUltimoCheck = estatusData.length > 0 ? estatusData[0].fechaCheck : new Date().toISOString().split("T")[0];
+      const lastCheckTimestamp = estatusData.length > 0 ? new Date(estatusData[0].fechaCheck).getTime() : null;
+      setLastCheckTime(lastCheckTimestamp);
+      const equiposParaCheck = equipos.filter(e => ["VENDIDO", "DEMO"].includes(e.tipo));
+
+      setEquiposData({
+        estatusPorCliente: processEstatusPorCliente(equipos, estatusData, clientes),
+        equiposPorPlataforma: processEquiposPorPlataforma(equipos),
+        equiposOffline: processEquiposOffline(equipos, estatusData),
+        equiposParaCheck,
+        fechaUltimoCheck,
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudieron cargar los datos",
+      });
     }
+  };
 
-    setEquiposData(mockData)
-  }, [])
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const openModal = (modalType, data = {}) => {
     setModals((prev) => ({
       ...prev,
       [modalType]: { isOpen: true, ...data },
-    }))
-  }
+    }));
+  };
 
   const closeModal = (modalType) => {
     setModals((prev) => ({
       ...prev,
       [modalType]: { isOpen: false },
-    }))
-  }
+    }));
+  };
 
   const handleCheckEquipos = () => {
-    openModal("checkEquipos")
-  }
+    openModal("checkEquipos");
+  };
 
-  const handleSaveChecklist = (equiposConStatus) => {
-    Swal.fire({
-      icon: "success",
-      title: "Éxito",
-      text: `Se ha guardado el checklist de ${equiposConStatus.length} equipos.`,
-    })
+  const handleSaveChecklist = async (equiposConStatus) => {
+    try {
+      await fetchWithToken(`${API_BASE_URL}/equipos/estatus`, {
+        method: "POST",
+        body: JSON.stringify(equiposConStatus),
+      });
+      fetchData();
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.message,
+      });
+    }
+  };
 
-    console.log("Equipos con status:", equiposConStatus)
-  }
+ const handleGeneratePDF = async () => {
+  const element = document.createElement("div");
+  const chartImages = await Promise.all([
+    getChartImage("estatusClienteChart"),
+    getChartImage("plataformaChart"),
+  ]);
 
-  const handleGeneratePDF = () => {
-    Swal.fire({
-      icon: "info",
-      title: "Generando PDF",
-      text: "El reporte PDF se está generando...",
-    })
-  }
+  element.innerHTML = `
+    <h1>Reporte de Estatus Plataforma - ${new Date().toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' })}</h1>
+    <h2>Gráfica de Estatus por Cliente</h2>
+    <img src="${chartImages[0]}" style="width: 100%; height: auto; max-width: 800px;" />
+    <h2>Gráfica de Equipos por Plataforma</h2>
+    <img src="${chartImages[1]}" style="width: 100%; height: auto; max-width: 800px;" />
+    <h2>Tabla de Equipos Offline</h2>
+    <table style="width: 90%; max-width: 1000px; border-collapse: collapse; margin: 0 auto; font-size: 10px;">
+      <thead>
+        <tr style="background-color: #d3d3d3;">
+          <th style="border: 1px solid black; padding: 6px; width: 20%;">Cliente</th>
+          <th style="border: 1px solid black; padding: 6px; width: 25%;">Nombre</th>
+          <th style="border: 1px solid black; padding: 6px; width: 20%;">Plataforma</th>
+          <th style="border: 1px solid black; padding: 6px; width: 15%;">Reportando</th>
+          <th style="border: 1px solid black; padding: 6px; width: 20%;">Motivo</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${equiposData.equiposOffline.map(e => `
+          <tr>
+            <td style="border: 1px solid black; padding: 4px; word-wrap: break-word;">${e.cliente}</td>
+            <td style="border: 1px solid black; padding: 4px; word-wrap: break-word;">${e.nombre}</td>
+            <td style="border: 1px solid black; padding: 4px;">${e.plataforma}</td>
+            <td style="border: 1px solid black; padding: 4px; text-align: center;">✗</td>
+            <td style="border: 1px solid black; padding: 4px; word-wrap: break-word;">${e.motivo}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
 
-  // Configuración de gráficos
+  const opt = {
+    margin: 0.5,
+    filename: `reporte_estatus_${new Date().toISOString().split('T')[0]}.pdf`,
+    image: { type: 'jpeg', quality: 1.0 },
+    html2canvas: { 
+      scale: 3, 
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff'
+    },
+    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+  };
+
+  html2pdf().set(opt).from(element).save();
+};
+
+
+ const getChartImage = (chartId) => {
+  return new Promise((resolve) => {
+    const chartInstance = chartRefs.current[chartId];
+    if (chartInstance) {
+      const canvas = chartInstance.canvas;
+      const ctx = canvas.getContext('2d');
+      const tempCanvas = document.createElement('canvas');
+      const scale = 4; 
+      tempCanvas.width = canvas.width * scale;
+      tempCanvas.height = canvas.height * scale;
+      
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.scale(scale, scale);
+      
+      chartInstance.draw();
+      tempCtx.drawImage(canvas, 0, 0);
+      
+      resolve(tempCanvas.toDataURL('image/png', 1.0));
+    } else {
+      const canvas = document.querySelector(`#${chartId} canvas`);
+      if (canvas) {
+        resolve(canvas.toDataURL('image/png', 1.0));
+      } else {
+        resolve('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==');
+      }
+    }
+  });
+};
+
   const estatusClienteChartData = {
     labels: equiposData.estatusPorCliente.map((item) => item.cliente),
     datasets: [
@@ -450,7 +606,7 @@ const EquiposEstatusPlataforma = () => {
         borderWidth: 1,
       },
     ],
-  }
+  };
 
   const plataformaChartData = {
     labels: equiposData.equiposPorPlataforma.map((item) => item.plataforma),
@@ -463,61 +619,79 @@ const EquiposEstatusPlataforma = () => {
         borderWidth: 1,
       },
     ],
-  }
+  };
 
   const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "top",
-        labels: {
-          usePointStyle: true,
-          padding: 20,
-          font: {
-            size: 12,
-          },
+  responsive: true,
+  maintainAspectRatio: false,
+  devicePixelRatio: 2, 
+  plugins: {
+    legend: {
+      position: "top",
+      labels: {
+        usePointStyle: true,
+        padding: 20,
+        font: {
+          size: 14, 
         },
       },
     },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          stepSize: 2,
+  },
+  scales: {
+    y: {
+      beginAtZero: true,
+      ticks: {
+        stepSize: 2,
+        font: {
+          size: 12, 
         },
       },
     },
-  }
-
+    x: {
+      ticks: {
+        font: {
+          size: 12, 
+        },
+      },
+    },
+  },
+  animation: {
+    onComplete: function() {
+      const chartId = this.canvas.parentElement.id;
+      if (chartId) {
+        chartRefs.current[chartId] = this;
+      }
+    }
+  },
+};
+  
   const handleMenuNavigation = (menuItem) => {
     switch (menuItem) {
       case "estatus-plataforma":
-        navigate("/equipos_estatusplataforma")
-        break
+        navigate("/equipos_estatusplataforma");
+        break;
       case "modelos":
-        navigate("/equipos_modelos")
-        break
+        navigate("/equipos_modelos");
+        break;
       case "proveedores":
-        navigate("/equipos_proveedores")
-        break
+        navigate("/equipos_proveedores");
+        break;
       case "inventario":
-        navigate("/equipos_inventario")
-        break
+        navigate("/equipos_inventario");
+        break;
       case "sim":
-        navigate("/equipos_sim")
-        break
+        navigate("/equipos_sim");
+        break;
       default:
-        break
+        break;
     }
-  }
+  };
 
   return (
     <>
       <Header />
       <main className="estatusplataforma-main-content">
         <div className="estatusplataforma-container">
-          {/* Simple Sidebar Navigation */}
           <section className="estatusplataforma-sidebar">
             <div className="estatusplataforma-sidebar-header">
               <h3 className="estatusplataforma-sidebar-title">Equipos</h3>
@@ -544,7 +718,6 @@ const EquiposEstatusPlataforma = () => {
             </div>
           </section>
 
-          {/* Main Content */}
           <section className="estatusplataforma-content-panel">
             <div className="estatusplataforma-header">
               <h3 className="estatusplataforma-page-title">Estatus plataforma</h3>
@@ -561,29 +734,24 @@ const EquiposEstatusPlataforma = () => {
               <p className="estatusplataforma-data-date">Datos actualizados: {equiposData.fechaUltimoCheck}</p>
             )}
 
-            {/* Charts Section */}
             <div className="estatusplataforma-charts-grid">
-              {/* Estatus por Cliente Chart */}
               <div className="estatusplataforma-chart-card">
                 <h4 className="estatusplataforma-chart-title">Estatus de equipos por cliente</h4>
-                <div className="estatusplataforma-chart-container">
+                <div id="estatusClienteChart" className="estatusplataforma-chart-container">
                   <Bar data={estatusClienteChartData} options={chartOptions} />
                 </div>
               </div>
 
-              {/* Equipos por Plataforma Chart */}
               <div className="estatusplataforma-chart-card">
                 <h4 className="estatusplataforma-chart-title">Equipos por Plataforma</h4>
-                <div className="estatusplataforma-chart-container">
+                <div id="plataformaChart" className="estatusplataforma-chart-container">
                   <Bar data={plataformaChartData} options={chartOptions} />
                 </div>
               </div>
             </div>
 
-            {/* Equipos Offline Table */}
             <div className="estatusplataforma-table-card">
               <h4 className="estatusplataforma-table-title">Equipos Offline</h4>
-
               <div className="estatusplataforma-table-container">
                 <table className="estatusplataforma-table">
                   <thead>
@@ -620,7 +788,6 @@ const EquiposEstatusPlataforma = () => {
               </div>
             </div>
 
-            {/* PDF Generation Button */}
             <div className="estatusplataforma-pdf-button-container">
               <button className="estatusplataforma-btn estatusplataforma-btn-pdf" onClick={handleGeneratePDF}>
                 Crear PDF
@@ -629,12 +796,17 @@ const EquiposEstatusPlataforma = () => {
           </section>
         </div>
 
-        {/* Side Panel for Check Equipos */}
         <CheckEquiposSidePanel
           isOpen={modals.checkEquipos.isOpen}
           onClose={() => closeModal("checkEquipos")}
           equipos={equiposData.equiposParaCheck}
+          equiposData={equiposData}
+          setModals={setModals}
+          closeModal={closeModal}
+          fetchData={fetchData}
           onSaveChecklist={handleSaveChecklist}
+          lastCheckTime={lastCheckTime}
+          setLastCheckTime={setLastCheckTime}
         />
 
         <ConfirmarCambioEstatusModal
@@ -653,7 +825,7 @@ const EquiposEstatusPlataforma = () => {
         />
       </main>
     </>
-  )
-}
+  );
+};
 
 export default EquiposEstatusPlataforma

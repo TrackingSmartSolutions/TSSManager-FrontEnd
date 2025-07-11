@@ -1,0 +1,935 @@
+/* Estilos específicos para Admin Facturación */
+
+:root {
+  --facturacion-primary-color: #00133b;
+  --facturacion-secondary-color: #037ce0;
+  --facturacion-accent-color: #f27100;
+  --facturacion-background-color: #f0f4ff;
+  --facturacion-panel-background: #ffffff;
+  --facturacion-text-color: #333333;
+  --facturacion-text-light: #666666;
+  --facturacion-border-color: #e0e0e0;
+  --facturacion-success-color: #4caf50;
+  --facturacion-danger-color: #f44336;
+  --facturacion-warning-color: #ff9800;
+  --facturacion-spacing-xs: 0.25rem;
+  --facturacion-spacing-sm: 0.5rem;
+  --facturacion-spacing-md: 0.75rem;
+  --facturacion-spacing-lg: 1rem;
+  --facturacion-spacing-xl: 1.5rem;
+  --facturacion-border-radius-sm: 4px;
+  --facturacion-border-radius-md: 8px;
+  --facturacion-border-radius-lg: 12px;
+  --facturacion-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --facturacion-font-size-xs: 0.65rem;
+  --facturacion-font-size-sm: 0.8rem;
+  --facturacion-font-size-md: 0.9rem;
+  --facturacion-font-size-lg: 1.1rem;
+  --facturacion-font-size-xl: 1.3rem;
+}
+
+/* Layout Principal */
+.facturacion-main-content {
+  padding: var(--facturacion-spacing-lg) var(--facturacion-spacing-xl);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-height: calc(100vh - 140px);
+}
+
+.facturacion-container {
+  display: flex;
+  width: 100%;
+  gap: var(--facturacion-spacing-lg);
+  max-width: 100%;
+  align-items: flex-start;
+  min-height: calc(100vh - 160px);
+}
+
+/* Sidebar */
+.facturacion-sidebar {
+  flex: 0 0 280px;
+  min-width: 260px;
+  background-color: var(--facturacion-panel-background);
+  border-radius: var(--facturacion-border-radius-md);
+  box-shadow: var(--facturacion-box-shadow);
+  padding: var(--facturacion-spacing-lg);
+  height: fit-content;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+}
+
+.facturacion-sidebar-header {
+  margin-bottom: var(--facturacion-spacing-lg);
+  padding-bottom: var(--facturacion-spacing-md);
+  border-bottom: 1px solid var(--facturacion-border-color);
+}
+
+.facturacion-sidebar-title {
+  font-size: var(--facturacion-font-size-xl);
+  font-weight: 600;
+  color: var(--facturacion-primary-color);
+  margin: 0;
+}
+
+.facturacion-sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--facturacion-spacing-xs);
+}
+
+.facturacion-menu-item {
+  padding: var(--facturacion-spacing-md);
+  cursor: pointer;
+  border-radius: var(--facturacion-border-radius-sm);
+  transition: all 0.3s ease;
+  font-size: var(--facturacion-font-size-sm);
+  color: var(--facturacion-text-color);
+  border: 1px solid transparent;
+}
+
+.facturacion-menu-item:hover {
+  background-color: rgba(3, 124, 224, 0.05);
+  border-color: var(--facturacion-border-color);
+}
+
+.facturacion-menu-item-active {
+  background-color: #cdd6ee;
+  color: var(--facturacion-primary-color);
+  font-weight: 500;
+  border-color: var(--facturacion-secondary-color);
+}
+
+/* Panel de Contenido Principal */
+.facturacion-content-panel {
+  flex: 1;
+  background-color: var(--facturacion-panel-background);
+  border-radius: var(--facturacion-border-radius-md);
+  box-shadow: var(--facturacion-box-shadow);
+  padding: var(--facturacion-spacing-lg);
+  min-height: calc(100vh - 160px);
+  overflow-x: hidden;
+}
+
+.facturacion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--facturacion-spacing-xl);
+  flex-wrap: wrap;
+  gap: var(--facturacion-spacing-md);
+}
+
+.facturacion-header-info {
+  flex: 1;
+}
+
+.facturacion-page-title {
+  font-size: var(--facturacion-font-size-xl);
+  font-weight: 600;
+  color: var(--facturacion-primary-color);
+  margin: 0 0 var(--facturacion-spacing-xs) 0;
+}
+
+.facturacion-subtitle {
+  color: var(--facturacion-text-light);
+  font-size: var(--facturacion-font-size-sm);
+  margin: 0;
+}
+
+.facturacion-header-actions {
+  display: flex;
+  gap: var(--facturacion-spacing-sm);
+  align-items: flex-start;
+}
+
+/* Sección del Emisor */
+.facturacion-emisor-section {
+  background-color: #f8f9fa;
+  border: 1px solid var(--facturacion-border-color);
+  border-radius: var(--facturacion-border-radius-md);
+  padding: var(--facturacion-spacing-md);
+  min-width: 300px;
+}
+
+.facturacion-emisor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--facturacion-spacing-sm);
+}
+
+.facturacion-emisor-label {
+  font-size: var(--facturacion-font-size-sm);
+  font-weight: 600;
+  color: var(--facturacion-text-color);
+}
+
+.facturacion-emisor-navigation {
+  display: flex;
+  gap: var(--facturacion-spacing-xs);
+}
+
+.facturacion-nav-btn {
+  background-color: var(--facturacion-secondary-color);
+  color: white;
+  border: none;
+  border-radius: var(--facturacion-border-radius-sm);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: var(--facturacion-font-size-sm);
+  transition: all 0.3s ease;
+}
+
+.facturacion-nav-btn:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.facturacion-nav-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.facturacion-emisor-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--facturacion-spacing-sm);
+}
+
+.facturacion-emisor-data {
+  display: flex;
+  flex-direction: column;
+  gap: var(--facturacion-spacing-xs);
+}
+
+.facturacion-emisor-name,
+.facturacion-emisor-rfc {
+  font-size: var(--facturacion-font-size-xs);
+  color: var(--facturacion-text-color);
+}
+
+.facturacion-emisor-name {
+  font-weight: 500;
+}
+
+.facturacion-emisor-actions {
+  display: flex;
+  gap: var(--facturacion-spacing-xs);
+}
+
+.facturacion-btn-icon {
+  background: none;
+  border: 1px solid var(--facturacion-border-color);
+  border-radius: var(--facturacion-border-radius-sm);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.facturacion-btn-icon:hover {
+  background-color: rgba(3, 124, 224, 0.1);
+  border-color: var(--facturacion-secondary-color);
+}
+
+.facturacion-icon {
+  width: 12px;
+  height: 12px;
+  filter: brightness(0) saturate(100%) invert(44%) sepia(7%) saturate(1102%) hue-rotate(169deg) brightness(96%)
+    contrast(88%);
+}
+
+/* Botones */
+.facturacion-btn {
+  padding: var(--facturacion-spacing-sm) var(--facturacion-spacing-lg);
+  border: none;
+  border-radius: var(--facturacion-border-radius-sm);
+  font-size: var(--facturacion-font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--facturacion-spacing-xs);
+}
+
+.facturacion-btn-primary {
+  background-color: var(--facturacion-accent-color);
+  color: white;
+}
+
+.facturacion-btn-primary:hover {
+  background-color: #d86600;
+  transform: translateY(-1px);
+}
+
+.facturacion-btn-secondary {
+  background-color: var(--facturacion-accent-color);
+  color: white;
+  padding: var(--facturacion-spacing-xs) var(--facturacion-spacing-sm);
+  min-width: auto;
+  font-size: var(--facturacion-font-size-xs);
+}
+
+.facturacion-btn-secondary:hover {
+  background-color: #d86600;
+  transform: translateY(-1px);
+}
+
+.facturacion-btn-cancel {
+  background-color: #6c757d;
+  color: white;
+}
+
+.facturacion-btn-cancel:hover {
+  background-color: #5a6268;
+  transform: translateY(-1px);
+}
+
+.facturacion-btn-confirm {
+  background-color: #c73232;
+  color: white;
+}
+
+.facturacion-btn-confirm:hover {
+  background-color: #f96767;
+  transform: translateY(-1px);
+}
+
+/* Tablas */
+.facturacion-table-card {
+  background-color: white;
+  padding: var(--facturacion-spacing-lg);
+  border-radius: var(--facturacion-border-radius-md);
+  box-shadow: var(--facturacion-box-shadow);
+  border: 1px solid var(--facturacion-border-color);
+  margin-bottom: var(--facturacion-spacing-xl);
+}
+
+.facturacion-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--facturacion-spacing-md);
+}
+
+.facturacion-table-title {
+  font-size: var(--facturacion-font-size-md);
+  margin: 0;
+  color: var(--facturacion-text-color);
+  font-weight: 600;
+}
+
+.facturacion-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--facturacion-border-color);
+  border-radius: var(--facturacion-border-radius-sm);
+}
+
+.facturacion-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  min-width: 1200px;
+}
+
+.facturacion-table th,
+.facturacion-table td {
+  padding: var(--facturacion-spacing-sm) var(--facturacion-spacing-md);
+  text-align: left;
+  border-bottom: 1px solid var(--facturacion-border-color);
+  font-size: var(--facturacion-font-size-sm);
+  vertical-align: middle;
+}
+
+.facturacion-table th {
+  background-color: #cdd6ee;
+  font-weight: 600;
+  color: var(--facturacion-primary-color);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.facturacion-table tbody tr:hover {
+  background-color: rgba(3, 124, 224, 0.05);
+}
+
+.facturacion-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.facturacion-concepto-cell {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.facturacion-no-data {
+  text-align: center;
+  color: var(--facturacion-text-light);
+  font-style: italic;
+  padding: var(--facturacion-spacing-xl) !important;
+}
+
+/* Botones de Acción */
+.facturacion-actions {
+  display: flex;
+  gap: var(--facturacion-spacing-xs);
+  align-items: center;
+}
+
+.facturacion-action-btn {
+  background: none;
+  border: 1px solid var(--facturacion-border-color);
+  border-radius: var(--facturacion-border-radius-sm);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.facturacion-edit-btn:hover {
+  background-color: rgba(3, 124, 224, 0.1);
+  border-color: var(--facturacion-secondary-color);
+}
+
+.facturacion-delete-btn:hover {
+  background-color: rgba(244, 67, 54, 0.1);
+  border-color: var(--facturacion-danger-color);
+}
+
+.facturacion-download-btn:hover {
+  background-color: rgba(76, 175, 80, 0.1);
+  border-color: var(--facturacion-success-color);
+}
+
+.facturacion-stamp-btn:hover {
+  background-color: rgba(255, 152, 0, 0.1);
+  border-color: var(--facturacion-warning-color);
+}
+
+.facturacion-action-icon {
+  width: 16px;
+  height: 16px;
+  filter: brightness(0) saturate(100%) invert(44%) sepia(7%) saturate(1102%) hue-rotate(169deg) brightness(96%)
+    contrast(88%);
+}
+
+.facturacion-edit-btn .facturacion-action-icon {
+  filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(200deg) brightness(104%)
+    contrast(97%);
+}
+
+.facturacion-delete-btn .facturacion-action-icon {
+  filter: brightness(0) saturate(100%) invert(27%) sepia(98%) saturate(7462%) hue-rotate(3deg) brightness(103%)
+    contrast(97%);
+}
+
+.facturacion-download-btn .facturacion-action-icon {
+  filter: brightness(0) saturate(100%) invert(44%) sepia(96%) saturate(1237%) hue-rotate(87deg) brightness(98%)
+    contrast(89%);
+}
+
+.facturacion-stamp-btn .facturacion-action-icon {
+  filter: brightness(0) saturate(100%) invert(60%) sepia(98%) saturate(1000%) hue-rotate(15deg) brightness(98%)
+    contrast(101%);
+}
+
+.facturacion-factura-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--facturacion-spacing-sm);
+}
+
+.facturacion-archivo-nombre {
+  font-size: var(--facturacion-font-size-sm);
+  color: var(--facturacion-text-color);
+}
+
+/* Modales */
+.facturacion-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--facturacion-spacing-lg);
+}
+
+.facturacion-modal-content {
+  background-color: white;
+  border-radius: var(--facturacion-border-radius-lg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  max-height: 90vh;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.facturacion-modal-sm {
+  max-width: 400px;
+}
+
+.facturacion-modal-md {
+  max-width: 600px;
+}
+
+.facturacion-modal-lg {
+  max-width: 800px;
+}
+
+.facturacion-modal-xl {
+  max-width: 1000px;
+}
+
+.facturacion-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--facturacion-spacing-lg);
+  border-bottom: 1px solid var(--facturacion-border-color);
+  background-color: white;
+  border-radius: var(--facturacion-border-radius-lg) var(--facturacion-border-radius-lg) 0 0;
+}
+
+.facturacion-modal-title {
+  font-size: var(--facturacion-font-size-lg);
+  font-weight: 600;
+  color: var(--facturacion-text-color);
+  margin: 0;
+}
+
+.facturacion-modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--facturacion-text-light);
+  cursor: pointer;
+  padding: var(--facturacion-spacing-xs);
+  border-radius: var(--facturacion-border-radius-sm);
+  transition: color 0.3s, background-color 0.3s;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.facturacion-modal-close:hover {
+  color: var(--facturacion-text-color);
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.facturacion-modal-body {
+  padding: var(--facturacion-spacing-lg);
+  background-color: white;
+  border-radius: 0 0 var(--facturacion-border-radius-lg) var(--facturacion-border-radius-lg);
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Formularios */
+.facturacion-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--facturacion-spacing-lg);
+}
+
+.facturacion-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--facturacion-spacing-xs);
+}
+
+.facturacion-form-group label {
+  font-size: var(--facturacion-font-size-sm);
+  font-weight: 500;
+  color: var(--facturacion-text-color);
+}
+
+.facturacion-form-control {
+  padding: var(--facturacion-spacing-sm) var(--facturacion-spacing-md);
+  border: 1px solid var(--facturacion-border-color);
+  border-radius: var(--facturacion-border-radius-sm);
+  font-size: var(--facturacion-font-size-sm);
+  background-color: white;
+  color: var(--facturacion-text-color);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.facturacion-form-control:focus {
+  outline: none;
+  border-color: var(--facturacion-secondary-color);
+  box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
+.facturacion-form-control.error {
+  border-color: var(--facturacion-danger-color);
+}
+
+.facturacion-form-control:disabled,
+.facturacion-form-control[readonly] {
+  background-color: #f8f9fa;
+  color: var(--facturacion-text-light);
+  cursor: not-allowed;
+}
+
+.facturacion-error-message {
+  color: var(--facturacion-danger-color);
+  font-size: var(--facturacion-font-size-xs);
+}
+
+.facturacion-form-actions {
+  display: flex;
+  gap: var(--facturacion-spacing-md);
+  justify-content: flex-end;
+  margin-top: var(--facturacion-spacing-lg);
+  flex-wrap: wrap;
+}
+
+/* Carga de Archivos */
+.facturacion-file-upload {
+  position: relative;
+}
+
+.facturacion-file-input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.facturacion-file-upload-area {
+  border: 2px dashed var(--facturacion-border-color);
+  border-radius: var(--facturacion-border-radius-sm);
+  padding: var(--facturacion-spacing-lg);
+  text-align: center;
+  background-color: #f8f9fa;
+  transition: border-color 0.3s;
+}
+
+.facturacion-file-upload-area:hover {
+  border-color: var(--facturacion-secondary-color);
+}
+
+.facturacion-file-upload-icon {
+  font-size: 2rem;
+  margin-bottom: var(--facturacion-spacing-sm);
+}
+
+.facturacion-file-upload-text {
+  font-size: var(--facturacion-font-size-sm);
+  color: var(--facturacion-text-color);
+  margin-bottom: var(--facturacion-spacing-xs);
+}
+
+.facturacion-file-upload-subtext {
+  font-size: var(--facturacion-font-size-xs);
+  color: var(--facturacion-text-light);
+}
+
+/* Información de Cuenta por Cobrar */
+.facturacion-cuenta-info {
+  background-color: #f8f9fa;
+  border: 1px solid var(--facturacion-border-color);
+  border-radius: var(--facturacion-border-radius-sm);
+  padding: var(--facturacion-spacing-sm);
+  margin-top: var(--facturacion-spacing-xs);
+}
+
+.facturacion-cuenta-info p {
+  margin: 0 0 var(--facturacion-spacing-xs) 0;
+  font-size: var(--facturacion-font-size-xs);
+  color: var(--facturacion-text-color);
+}
+
+.facturacion-cuenta-info p:last-child {
+  margin-bottom: 0;
+}
+
+/* Modal de Confirmación */
+.facturacion-confirmar-eliminacion {
+  text-align: center;
+}
+
+.facturacion-confirmation-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--facturacion-spacing-lg);
+}
+
+.facturacion-confirmation-message {
+  font-size: var(--facturacion-font-size-md);
+  color: var(--facturacion-text-color);
+  margin: 0;
+}
+
+.facturacion-modal-form-actions {
+  display: flex;
+  gap: var(--facturacion-spacing-md);
+  justify-content: center;
+  margin-top: var(--facturacion-spacing-lg);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .facturacion-container {
+    gap: var(--facturacion-spacing-md);
+  }
+
+  .facturacion-sidebar {
+    flex: 0 0 260px;
+    min-width: 240px;
+  }
+
+  .facturacion-table {
+    min-width: 1000px;
+  }
+
+  .facturacion-emisor-section {
+    min-width: 250px;
+  }
+}
+
+@media (max-width: 992px) {
+  .facturacion-main-content {
+    padding: var(--facturacion-spacing-md);
+  }
+
+  .facturacion-container {
+    flex-direction: column;
+    gap: var(--facturacion-spacing-lg);
+  }
+
+  .facturacion-sidebar {
+    flex: none;
+    width: 100%;
+    max-height: none;
+    height: auto;
+  }
+
+  .facturacion-sidebar-menu {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: var(--facturacion-spacing-sm);
+    padding: var(--facturacion-spacing-sm) 0;
+  }
+
+  .facturacion-menu-item {
+    white-space: nowrap;
+    flex: 0 0 auto;
+    min-width: fit-content;
+  }
+
+  .facturacion-content-panel {
+    min-height: auto;
+    width: 100%;
+  }
+
+  .facturacion-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .facturacion-emisor-section {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .facturacion-table {
+    min-width: 800px;
+  }
+}
+
+@media (max-width: 768px) {
+  .facturacion-main-content {
+    padding: var(--facturacion-spacing-sm);
+  }
+
+  .facturacion-sidebar {
+    padding: var(--facturacion-spacing-sm);
+  }
+
+  .facturacion-sidebar-header {
+    padding-bottom: var(--facturacion-spacing-sm);
+  }
+
+  .facturacion-sidebar-title {
+    font-size: var(--facturacion-font-size-lg);
+  }
+
+  .facturacion-menu-item {
+    padding: var(--facturacion-spacing-sm);
+    font-size: var(--facturacion-font-size-xs);
+  }
+
+  .facturacion-content-panel {
+    padding: var(--facturacion-spacing-sm);
+  }
+
+  .facturacion-page-title {
+    font-size: var(--facturacion-font-size-lg);
+  }
+
+  .facturacion-table-card {
+    padding: var(--facturacion-spacing-sm);
+  }
+
+  .facturacion-table {
+    min-width: 600px;
+    font-size: var(--facturacion-font-size-xs);
+  }
+
+  .facturacion-table th,
+  .facturacion-table td {
+    padding: var(--facturacion-spacing-xs);
+  }
+
+  .facturacion-emisor-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--facturacion-spacing-sm);
+  }
+}
+
+@media (max-width: 576px) {
+  .facturacion-main-content {
+    padding: var(--facturacion-spacing-xs);
+  }
+
+  .facturacion-sidebar-menu {
+    flex-direction: column;
+    overflow-x: visible;
+  }
+
+  .facturacion-menu-item {
+    width: 100%;
+    text-align: left;
+  }
+
+  .facturacion-table {
+    min-width: 500px;
+    font-size: 0.7rem;
+  }
+
+  .facturacion-table th,
+  .facturacion-table td {
+    padding: 4px 6px;
+  }
+
+  .facturacion-modal-overlay {
+    padding: var(--facturacion-spacing-xs);
+  }
+
+  .facturacion-modal-content {
+    max-width: 98vw;
+    margin: var(--facturacion-spacing-xs);
+  }
+
+  .facturacion-modal-title {
+    font-size: var(--facturacion-font-size-sm);
+  }
+
+  .facturacion-modal-body {
+    padding: var(--facturacion-spacing-sm);
+  }
+
+  .facturacion-form-actions {
+    flex-direction: column;
+    gap: var(--facturacion-spacing-xs);
+  }
+
+  .facturacion-modal-form-actions {
+    flex-direction: column;
+    gap: var(--facturacion-spacing-xs);
+  }
+
+  .facturacion-actions {
+    flex-direction: column;
+    gap: var(--facturacion-spacing-xs);
+  }
+
+  .facturacion-action-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .facturacion-emisor-header {
+    flex-direction: column;
+    gap: var(--facturacion-spacing-sm);
+  }
+
+  .facturacion-factura-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--facturacion-spacing-xs);
+  }
+}
+
+/* Animaciones */
+@keyframes facturacion-fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.facturacion-table tbody tr {
+  animation: facturacion-fadeIn 0.3s ease-out;
+}
+
+/* Ajustes para impresión */
+@media print {
+  .facturacion-sidebar,
+  .facturacion-header-actions,
+  .facturacion-actions {
+    display: none;
+  }
+
+  .facturacion-content-panel {
+    width: 100%;
+    box-shadow: none;
+    border: 1px solid var(--facturacion-border-color);
+  }
+
+  .facturacion-table {
+    min-width: auto;
+    font-size: 0.8rem;
+  }
+
+  .facturacion-table th,
+  .facturacion-table td {
+    padding: var(--facturacion-spacing-xs);
+  }
+}

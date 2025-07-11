@@ -11,6 +11,21 @@ import EquiposModelos from './components/Equipos/Equipos_Modelos';
 import EquiposProveedores from './components/Equipos/Equipos_Proveedores';
 import EquiposInventario from './components/Equipos/Equipos_Inventario';
 import EquiposSim from './components/Equipos/Equipos_Sim';
+import AdminBalance from './components/Admin/Admin_Balance';
+import AdminTransacciones from './components/Admin/Admin_Transacciones';
+import AdminCotizaciones from './components/Admin/Admin_Cotizaciones';
+import AdminFacturacion from './components/Admin/Admin_Facturacion';
+import AdminCuentasCobrar from './components/Admin/Admin_CuentasCobrar';
+import AdminCuentasPagar from './components/Admin/Admin_CuentasPagar';
+import AdminCajaChica from './components/Admin/Admin_CajaChica';
+import ReportePersonal from './components/Reporte/ReportePersonal';
+import ConfiguracionPlantillas from './components/Configuración/Configuracion_Plantillas';
+import ConfiguracionAdministrador from './components/Configuración/Configuracion_Administrador';
+import ConfiguracionEmpresa from './components/Configuración/Configuracion_Empresa';
+import ConfiguracionAlmacenamiento from './components/Configuración/Configuracion_Almacenamiento';
+import ConfiguracionCopias from './components/Configuración/Configuracion_Copias';
+import ConfiguracionUsuarios from './components/Configuración/Configuracion_Usuarios';
+import Calendario from './components/Calendario/Calendario';
 
 function App() {
   return (
@@ -26,7 +41,22 @@ function App() {
         <Route path="/equipos_modelos" element={<EquiposModelos />} />
         <Route path="/equipos_proveedores" element={<EquiposProveedores />} />
         <Route path="/equipos_inventario" element={<EquiposInventario />} />
-           <Route path="/equipos_sim" element={<EquiposSim />} />
+        <Route path="/equipos_sim" element={<EquiposSim />} />
+        <Route path="/admin_balance" element={<AdminBalance />} />
+        <Route path="/admin_transacciones" element={<AdminTransacciones />} />
+        <Route path="/admin_cotizaciones" element={<AdminCotizaciones />} />
+        <Route path="/admin_facturacion" element={<AdminFacturacion />} />
+        <Route path="/admin_cuentas_cobrar" element={<AdminCuentasCobrar />} />
+        <Route path="/admin_cuentas_pagar" element={<AdminCuentasPagar />} />
+        <Route path="/admin_caja_chica" element={<AdminCajaChica />} />
+        <Route path="/reporte_personal" element={<ReportePersonal />} />
+        <Route path="/configuracion_plantillas" element={<ConfiguracionPlantillas />} />
+        <Route path="/configuracion_admin_datos" element={<ConfiguracionAdministrador />} />
+        <Route path="/configuracion_empresa" element={<ConfiguracionEmpresa />} />
+        <Route path="/configuracion_almacenamiento" element={<ConfiguracionAlmacenamiento />} />
+        <Route path="/configuracion_copias_seguridad" element={<ConfiguracionCopias />} />
+        <Route path="/configuracion_usuarios" element={<ConfiguracionUsuarios />} />
+        <Route path="/calendario" element={<Calendario />} />
       </Routes>
     </Router>
   );

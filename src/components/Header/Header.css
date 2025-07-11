@@ -1,10 +1,12 @@
+/* Prefijo ts-header para evitar conflictos con otros estilos */
+
 /* Estilo base de la barra de navegación */
-.navbar {
+.ts-header-navbar {
   display: flex;
   align-items: center;
-  background-color: var(--primary-color);
+  background-color: var(--primary-color, #1e40af);
   color: white;
-  padding: 0 var(--spacing-xl);
+  padding: 0 var(--spacing-xl, 2rem);
   height: 70px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   width: 100%;
@@ -13,40 +15,40 @@
 }
 
 /* Centra el logo verticalmente */
-.navbar-brand {
+.ts-header-navbar-brand {
   display: flex;
   align-items: center;
   margin-right: 40px;
 }
 
 /* Contenedor del logo y texto */
-.logo {
+.ts-header-logo {
   display: flex;
   padding-top: 0px;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-sm, 0.5rem);
   align-items: center;
 }
 
 /* Tamaño de la imagen del logo */
-.logo img {
+.ts-header-logo img {
   height: 120px;
   width: auto;
 }
 
 /* Estilo del texto del logo */
-.logo span {
-  font-size: var(--font-size-lg);
+.ts-header-logo span {
+  font-size: var(--font-size-lg, 1.125rem);
   font-weight: 700;
   white-space: nowrap;
 }
 
 /* Contenedor del menú de navegación */
-.navbar-menu {
+.ts-header-navbar-menu {
   margin-left: 0;
 }
 
 /* Lista de elementos del menú */
-.navbar-menu ul {
+.ts-header-navbar-menu ul {
   display: flex;
   gap: 20px;
   list-style: none;
@@ -55,17 +57,17 @@
 }
 
 /* Elementos individuales del menú */
-.navbar-menu li {
+.ts-header-navbar-menu li {
   position: relative;
 }
 
 /* Estilo de los enlaces del menú */
-.navbar-menu a {
+.ts-header-navbar-menu a {
   color: white;
   font-weight: 500;
   padding: 10px 15px;
   transition: color 0.3s;
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-md, 1rem);
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -73,22 +75,22 @@
 }
 
 /* Efecto hover y estado activo de los enlaces */
-.navbar-menu a:hover,
-.navbar-menu a.active {
-  color: var(--color-light-blue);
+.ts-header-navbar-menu a:hover,
+.ts-header-navbar-menu a.active {
+  color: var(--color-light-blue, #60a5fa);
 }
 
 /* Estilo para elementos con menú desplegable */
-.has-dropdown {
+.ts-header-has-dropdown {
   position: relative;
 }
 
 /* Estilo del menú desplegable */
-.dropdown-menu {
+.ts-header-dropdown-menu {
   position: absolute;
   top: 100%;
   left: 0;
-  background-color: var(--primary-color);
+  background-color: var(--primary-color, #1e40af);
   list-style: none;
   padding: 0;
   margin: 0;
@@ -102,7 +104,7 @@
 }
 
 /* Estilo de los elementos del menú desplegable */
-.dropdown-menu li {
+.ts-header-dropdown-menu li {
   display: block !important;
   width: 100% !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -110,14 +112,14 @@
 }
 
 /* Elimina el borde del último elemento del desplegable */
-.dropdown-menu li:last-child {
+.ts-header-dropdown-menu li:last-child {
   border-bottom: none;
 }
 
 /* Estilo de los enlaces del menú desplegable */
-.dropdown-menu a {
-  padding: var(--spacing-md) var(--spacing-lg);
-  font-size: var(--font-size-md);
+.ts-header-dropdown-menu a {
+  padding: var(--spacing-md, 1rem) var(--spacing-lg, 1.5rem);
+  font-size: var(--font-size-md, 1rem);
   color: white;
   font-weight: 400;
   display: flex !important;
@@ -130,13 +132,13 @@
 }
 
 /* Efecto hover en los enlaces del desplegable */
-.dropdown-menu a:hover {
-  background-color: var(--color-light-blue);
+.ts-header-dropdown-menu a:hover {
+  background-color: var(--color-light-blue, #60a5fa);
   color: white;
 }
 
 /* Estilo de la flecha de los desplegables */
-.dropdown-arrow {
+.ts-header-dropdown-arrow {
   width: 15px !important;
   height: 15px !important;
   margin-left: 5px;
@@ -145,32 +147,32 @@
 }
 
 /* Rotación de la flecha cuando el desplegable está abierto */
-.dropdown-arrow.open {
+.ts-header-dropdown-arrow.open {
   transform: rotate(180deg);
 }
 
 /* Íconos en los elementos del desplegable de perfil */
-.dropdown-menu a img {
+.ts-header-dropdown-menu a img {
   width: 20px;
   height: 20px;
   filter: brightness(0) invert(1);
 }
 
 /* Estilo del desplegable de perfil de usuario */
-.user-profile.has-dropdown {
+.ts-header-user-profile.ts-header-has-dropdown {
   position: relative;
 }
 
 /* Posicionamiento del desplegable de perfil */
-.profile-dropdown {
+.ts-header-profile-dropdown {
   right: 0;
   left: auto;
-  top: calc(100% + 10px);
+  top: 100%;
   min-width: 200px;
 }
 
 /* Ícono de la flecha del desplegable de perfil */
-.user-profile .dropdown-icon {
+.ts-header-user-profile .ts-header-dropdown-icon {
   width: 20px !important;
   height: 20px !important;
   margin-left: 5px;
@@ -179,24 +181,24 @@
 }
 
 /* Rotación de la flecha del perfil cuando está abierto */
-.user-profile .dropdown-icon.open {
+.ts-header-user-profile .ts-header-dropdown-icon.open {
   transform: rotate(180deg);
 }
 
 /* Botón del menú hamburguesa */
-.hamburger-menu {
+.ts-header-hamburger-menu {
   display: none;
   background: none;
   border: none;
   cursor: pointer;
-  padding: var(--spacing-sm);
+  padding: var(--spacing-sm, 0.5rem);
   z-index: 1010;
 }
 
 /* Estilo de las líneas del ícono hamburguesa */
-.hamburger-icon,
-.hamburger-icon::before,
-.hamburger-icon::after {
+.ts-header-hamburger-icon,
+.ts-header-hamburger-icon::before,
+.ts-header-hamburger-icon::after {
   content: "";
   display: block;
   width: 25px;
@@ -206,37 +208,37 @@
 }
 
 /* Posicionamiento de las líneas superior e inferior */
-.hamburger-icon {
+.ts-header-hamburger-icon {
   position: relative;
 }
 
-.hamburger-icon::before {
+.ts-header-hamburger-icon::before {
   position: absolute;
   top: -8px;
 }
 
-.hamburger-icon::after {
+.ts-header-hamburger-icon::after {
   position: absolute;
   top: 8px;
 }
 
 /* Transformación del ícono hamburguesa al estado abierto */
-.hamburger-menu.open .hamburger-icon {
+.ts-header-hamburger-menu.open .ts-header-hamburger-icon {
   background: transparent;
 }
 
-.hamburger-menu.open .hamburger-icon::before {
+.ts-header-hamburger-menu.open .ts-header-hamburger-icon::before {
   transform: rotate(45deg);
   top: 0;
 }
 
-.hamburger-menu.open .hamburger-icon::after {
+.ts-header-hamburger-menu.open .ts-header-hamburger-icon::after {
   transform: rotate(-45deg);
   top: 0;
 }
 
 /* Sección final de la barra de navegación */
-.navbar-end {
+.ts-header-navbar-end {
   display: flex;
   align-items: center;
   gap: 25px;
@@ -244,7 +246,7 @@
 }
 
 /* Estilo de los botones con íconos */
-.icon-button {
+.ts-header-icon-button {
   background: none;
   border: none;
   color: white;
@@ -255,21 +257,27 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: background-color 0.3s ease;
+  border-radius: 8px;
+}
+
+.ts-header-icon-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Tamaño de los íconos en los botones */
-.icon-button img {
+.ts-header-icon-button img {
   width: 22px;
   height: 22px;
   filter: brightness(0) invert(1);
 }
 
 /* Estilo de la insignia de notificaciones */
-.notification .badge {
+.ts-header-notification .ts-header-badge {
   position: absolute;
   top: 5px;
   right: 5px;
-  background-color: var(--accent-color);
+  background-color: var(--accent-color, #ef4444);
   color: white;
   font-size: 10px;
   width: 16px;
@@ -278,18 +286,176 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: bold;
+}
+
+/* Contenedor de notificaciones */
+.header-notification-container {
+  position: relative;
+}
+
+/* Modal de notificaciones */
+.ts-header-notification-modal {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 350px;
+  max-height: 400px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+/* Header del modal de notificaciones */
+.ts-header-notification-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f9fafb;
+}
+
+.ts-header-notification-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.ts-header-notification-count {
+  font-size: 12px;
+  color: #6b7280;
+  background: #e5e7eb;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+/* Lista de notificaciones */
+.ts-header-notification-list {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+/* Item de notificación */
+.ts-header-notification-item {
+  padding: 12px 20px;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.ts-header-notification-item:hover {
+  background-color: #f9fafb;
+}
+
+.ts-header-notification-item:last-child {
+  border-bottom: none;
+}
+
+.ts-header-notification-item.unread {
+  background-color: #eff6ff;
+  border-left: 3px solid #3b82f6;
+}
+
+/* Contenido de la notificación */
+.ts-header-notification-content {
+  flex: 1;
+}
+
+.ts-header-notification-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.ts-header-notification-message {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.ts-header-notification-time {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* Indicador de tipo de notificación */
+.ts-header-notification-type {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.ts-header-type-meeting {
+  background-color: #3b82f6;
+}
+
+.ts-header-type-payment {
+  background-color: #ef4444;
+}
+
+.ts-header-type-deal {
+  background-color: #10b981;
+}
+
+.ts-header-type-recharge {
+  background-color: #f59e0b;
+}
+
+/* Footer del modal de notificaciones */
+.ts-header-notification-footer {
+  padding: 12px 20px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 8px;
+  background: #f9fafb;
+}
+
+.ts-header-notification-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #374151;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ts-header-notification-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
 }
 
 /* Estilo del perfil de usuario */
-.user-profile {
+.ts-header-user-profile {
   display: flex;
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.ts-header-user-profile:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Imagen del perfil de usuario */
-.user-profile img {
+.ts-header-user-profile img {
   width: 45px;
   height: 45px;
   border-radius: 50%;
@@ -297,19 +463,19 @@
 }
 
 /* Nombre de usuario */
-.user-profile .username {
-  font-size: var(--font-size-md);
+.ts-header-user-profile .ts-header-username {
+  font-size: var(--font-size-md, 1rem);
   white-space: nowrap;
 }
 
 /* Menú lateral para móviles */
-.sidebar {
+.ts-header-sidebar {
   position: fixed;
   top: 0;
   left: -300px;
   width: 300px;
   height: 100vh;
-  background-color: var(--primary-color);
+  background-color: var(--primary-color, #1e40af);
   z-index: 1100;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
   transition: left 0.3s ease;
@@ -318,11 +484,11 @@
   overflow-y: auto;
 }
 
-.sidebar.open {
+.ts-header-sidebar.open {
   left: 0;
 }
 
-.sidebar-overlay {
+.ts-header-sidebar-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -335,12 +501,12 @@
   transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
-.sidebar-overlay.active {
+.ts-header-sidebar-overlay.active {
   opacity: 1;
   visibility: visible;
 }
 
-.sidebar-header {
+.ts-header-sidebar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -348,36 +514,36 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.sidebar-user {
+.ts-header-sidebar-user {
   display: flex;
   align-items: center;
   gap: 15px;
 }
 
-.sidebar-avatar {
+.ts-header-sidebar-avatar {
   width: 50px;
   height: 50px;
   border-radius: 50%;
   object-fit: cover;
 }
 
-.sidebar-user-info {
+.ts-header-sidebar-user-info {
   display: flex;
   flex-direction: column;
 }
 
-.sidebar-username {
+.ts-header-sidebar-username {
   font-weight: 600;
   color: white;
   font-size: 16px;
 }
 
-.sidebar-role {
+.ts-header-sidebar-role {
   color: rgba(255, 255, 255, 0.7);
   font-size: 14px;
 }
 
-.sidebar-close {
+.ts-header-sidebar-close {
   background: none;
   border: none;
   color: white;
@@ -391,16 +557,16 @@
   justify-content: center;
 }
 
-.sidebar-menu {
+.ts-header-sidebar-menu {
   flex: 1;
   padding: 20px 0;
 }
 
-.sidebar-section {
+.ts-header-sidebar-section {
   margin-bottom: 15px;
 }
 
-.sidebar-section-header {
+.ts-header-sidebar-section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -411,37 +577,37 @@
   transition: background-color 0.3s;
 }
 
-.sidebar-section-header:hover {
+.ts-header-sidebar-section-header:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.sidebar-dropdown-icon {
+.ts-header-sidebar-dropdown-icon {
   width: 16px;
   height: 16px;
   filter: brightness(0) invert(1);
   transition: transform 0.3s;
 }
 
-.sidebar-dropdown-icon.open {
+.ts-header-sidebar-dropdown-icon.open {
   transform: rotate(180deg);
 }
 
-.sidebar-submenu {
+.ts-header-sidebar-submenu {
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease;
   background-color: rgba(0, 0, 0, 0.2);
 }
 
-.sidebar-submenu.open {
+.ts-header-sidebar-submenu.open {
   max-height: 300px;
 }
 
-.sidebar-submenu li {
+.ts-header-sidebar-submenu li {
   list-style: none;
 }
 
-.sidebar-submenu a {
+.ts-header-sidebar-submenu a {
   display: block;
   padding: 12px 20px 12px 40px;
   color: rgba(255, 255, 255, 0.8);
@@ -450,12 +616,12 @@
   transition: background-color 0.3s;
 }
 
-.sidebar-submenu a:hover {
+.ts-header-sidebar-submenu a:hover {
   background-color: rgba(255, 255, 255, 0.1);
   color: white;
 }
 
-.sidebar-link {
+.ts-header-sidebar-link {
   display: block;
   padding: 15px 20px;
   color: white;
@@ -464,11 +630,11 @@
   transition: background-color 0.3s;
 }
 
-.sidebar-link:hover {
+.ts-header-sidebar-link:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.sidebar-footer {
+.ts-header-sidebar-footer {
   padding: 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
@@ -476,7 +642,7 @@
   gap: 15px;
 }
 
-.sidebar-footer-link {
+.ts-header-sidebar-footer-link {
   color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
   font-size: 14px;
@@ -484,17 +650,17 @@
   padding: 8px 0;
 }
 
-.sidebar-footer-link:hover {
+.ts-header-sidebar-footer-link:hover {
   color: white;
 }
 
-.sidebar-footer-link.logout {
+.ts-header-sidebar-footer-link.logout {
   color: #ff6b6b;
   font-weight: 500;
 }
 
 /* Estilos para el modal de inactividad */
-.inactivity-modal {
+.ts-header-inactivity-modal {
   position: fixed;
   bottom: 15px;
   right: 15px;
@@ -502,7 +668,7 @@
 }
 
 /* Contenido del modal */
-.modal-content {
+.ts-header-modal-content {
   background-color: #f8d7da;
   border: 1px solid #f5c6cb;
   border-radius: 5px;
@@ -514,8 +680,15 @@
   gap: 8px;
 }
 
+/* Íc0,0,0.1);
+  max-width: 280px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Ícono del modal */
-.modal-icon {
+.ts-header-modal-icon {
   width: 20px;
   height: 20px;
   filter: brightness(0) saturate(100%) invert(79%) sepia(79%) saturate(2476%) hue-rotate(357deg) brightness(108%)
@@ -523,154 +696,159 @@
 }
 
 /* Título del modal */
-.modal-content h3 {
+.ts-header-modal-content h3 {
   margin: 0;
   font-size: 1rem;
   color: #000000;
 }
 
 /* Texto del modal */
-.modal-content p {
+.ts-header-modal-content p {
   margin: 3px 0 0;
   font-size: 0.85rem;
   color: #000000;
 }
 
 /* Estilo del contador del modal */
-.modal-content .countdown {
+.ts-header-modal-content .ts-header-countdown {
   color: #dc3545;
   font-weight: bold;
 }
 
 /* Ajustes responsivos */
 @media (min-width: 769px) {
-  .desktop-menu {
+  .ts-header-desktop-menu {
     display: block;
   }
 
-  .sidebar {
+  .ts-header-sidebar {
     display: none;
   }
 }
 
 /* Ajustes responsivos para pantallas medianas */
 @media (max-width: 992px) {
-  .navbar {
+  .ts-header-navbar {
     height: 65px;
-    padding: 0 var(--spacing-lg);
+    padding: 0 var(--spacing-lg, 1.5rem);
   }
 
-  .navbar-brand {
+  .ts-header-navbar-brand {
     margin-right: 15px;
   }
 
-  .logo img {
+  .ts-header-logo img {
     height: 55px;
   }
 
-  .navbar-menu ul {
+  .ts-header-navbar-menu ul {
     gap: 10px;
   }
 
-  .navbar-menu a {
-    padding: var(--spacing-sm);
-    font-size: var(--font-size-sm);
+  .ts-header-navbar-menu a {
+    padding: var(--spacing-sm, 0.5rem);
+    font-size: var(--font-size-sm, 0.875rem);
   }
 
-  .navbar-end {
+  .ts-header-navbar-end {
     gap: 10px;
   }
 
-  .icon-button {
+  .ts-header-icon-button {
     width: 40px;
     height: 40px;
   }
 
-  .icon-button img {
+  .ts-header-icon-button img {
     width: 20px;
     height: 20px;
   }
 
-  .user-profile img {
+  .ts-header-user-profile img {
     width: 40px;
     height: 40px;
   }
 
-  .user-profile .username {
-    font-size: var(--font-size-sm);
+  .ts-header-user-profile .ts-header-username {
+    font-size: var(--font-size-sm, 0.875rem);
   }
 }
 
 /* Ajustes responsivos para pantallas pequeñas */
 @media (max-width: 768px) {
-  .navbar {
-    padding: 0 var(--spacing-md);
+  .ts-header-navbar {
+    padding: 0 var(--spacing-md, 1rem);
     height: 60px;
   }
 
-  .navbar-brand {
+  .ts-header-navbar-brand {
     margin-right: 0;
   }
 
-  .logo img {
+  .ts-header-logo img {
     height: 50px;
   }
 
-  .desktop-menu {
+  .ts-header-desktop-menu {
     display: none;
   }
 
-  .hamburger-menu {
+  .ts-header-hamburger-menu {
     display: block;
     margin-left: auto;
   }
 
-  .navbar-end {
+  .ts-header-navbar-end {
     flex: 1;
     justify-content: flex-end;
     gap: 15px;
   }
 
-  .user-profile .dropdown-icon {
+  .ts-header-user-profile .ts-header-dropdown-icon {
     display: none;
   }
 
-  .user-profile .username {
+  .ts-header-user-profile .ts-header-username {
     display: none;
+  }
+
+  .ts-header-notification-modal {
+    width: 300px;
+    right: -50px;
   }
 }
 
 /* Ajustes para pantallas muy pequeñas */
 @media (max-width: 576px) {
-  .navbar-brand .logo span {
+  .ts-header-navbar-brand .ts-header-logo span {
     display: none;
   }
 
-  .navbar {
+  .ts-header-navbar {
     height: 55px;
-    padding: 0 var(--spacing-sm);
+    padding: 0 var(--spacing-sm, 0.5rem);
   }
 
-  .logo img {
+  .ts-header-logo img {
     height: 45px;
   }
 
-  .icon-button {
+  .ts-header-icon-button {
     width: 35px;
     height: 35px;
   }
 
-  .icon-button img {
+  .ts-header-icon-button img {
     width: 18px;
     height: 18px;
   }
 
-  .user-profile img {
+  .ts-header-user-profile img {
     width: 35px;
     height: 35px;
   }
 
-  .notification .badge {
+  .ts-header-notification .ts-header-badge {
     font-size: 8px;
     width: 14px;
     height: 14px;
@@ -678,7 +856,13 @@
     right: 2px;
   }
 
-  .sidebar {
+  .ts-header-sidebar {
     width: 280px;
   }
+
+  .ts-header-notification-modal {
+    width: 280px;
+    right: -80px;
+  }
 }
+

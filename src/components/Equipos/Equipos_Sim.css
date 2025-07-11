@@ -292,6 +292,25 @@
   padding: var(--sim-spacing-xl) !important;
 }
 
+
+.sim-principal-si {
+  background-color: #d4edda;
+  color: #155724;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.sim-principal-no {
+  background-color: #f8d7da;
+  color: #721c24;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-align: center;
+}
+
 /* Botones de Acción */
 .sim-action-buttons {
   display: flex;

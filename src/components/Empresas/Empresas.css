@@ -1,41 +1,41 @@
 /* Variables globales */
 :root {
-  --color-dark-blue-1: #00133b; 
-  --color-dark-blue-2: #001959; 
-  --color-dark-blue-3: #0f1575; 
-  --color-blue-1: #00347f; 
-  --color-blue-2: #0057c9; 
-  --color-blue-3: #037ce0; 
-  --color-light-blue: #38b6ff; 
-  --color-orange: #f27100; 
-  --color-light-purple: #af86ff; 
-  --color-dark-purple: #3000b3; 
-  --color-blue-4: #2a5cf8; 
-  --color-purple: #9c16f7; 
-  --primary-color: var(--color-dark-blue-1); 
+  --color-dark-blue-1: #00133b;
+  --color-dark-blue-2: #001959;
+  --color-dark-blue-3: #0f1575;
+  --color-blue-1: #00347f;
+  --color-blue-2: #0057c9;
+  --color-blue-3: #037ce0;
+  --color-light-blue: #38b6ff;
+  --color-orange: #f27100;
+  --color-light-purple: #af86ff;
+  --color-dark-purple: #3000b3;
+  --color-blue-4: #2a5cf8;
+  --color-purple: #9c16f7;
+  --primary-color: var(--color-dark-blue-1);
   --secondary-color: var(--color-blue-3);
   --accent-color: var(--color-orange);
-  --background-color: #f0f4ff; 
-  --panel-background: #ffffff; 
-  --text-color: #333333; 
+  --background-color: #f0f4ff;
+  --panel-background: #ffffff;
+  --text-color: #333333;
   --text-color-2: #ffffff;
   --text-light: #666666;
-  --border-color: #e0e0e0; 
-  --spacing-xs: 0.25rem; 
-  --spacing-sm: 0.5rem; 
-  --spacing-md: 0.75rem; 
-  --spacing-lg: 1rem; 
-  --spacing-xl: 1.5rem; 
+  --border-color: #e0e0e0;
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 0.75rem;
+  --spacing-lg: 1rem;
+  --spacing-xl: 1.5rem;
   --border-radius-sm: 4px;
   --border-radius-md: 8px;
   --border-radius-lg: 12px;
-  --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); 
-  --font-family: "Arial", sans-serif; 
-  --font-size-xs: 0.65rem; 
-  --font-size-sm: 0.8rem; 
-  --font-size-md: 0.9rem; 
-  --font-size-lg: 1.1rem; 
-  --font-size-xl: 1.3rem; 
+  --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --font-family: "Arial", sans-serif;
+  --font-size-xs: 0.65rem;
+  --font-size-sm: 0.8rem;
+  --font-size-md: 0.9rem;
+  --font-size-lg: 1.1rem;
+  --font-size-xl: 1.3rem;
   --font-size-xxl: 1.8rem;
 }
 
@@ -397,6 +397,16 @@ body {
   outline: none;
   border-color: var(--secondary-color);
   background-color: white;
+}
+
+.form-control.clickable {
+  cursor: pointer;
+  text-decoration: underline;
+  color: #0057c9;
+}
+
+.form-control.clickable:hover {
+  color: #00347f;
 }
 
 /* Contenedor para el input de dirección */
@@ -1523,5 +1533,121 @@ body {
 
   .contacts-table-container {
     page-break-inside: avoid;
+  }
+}
+
+/* Sección de Tratos */
+.tratos-section {
+  border-top: 1px solid var(--border-color);
+  padding-top: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
+}
+
+.tratos-header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.tratos-header h3 {
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--text-color);
+  margin: 0;
+}
+
+/* Tabla de Tratos */
+.tratos-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+}
+
+.tratos-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+}
+
+.tratos-table th,
+.tratos-table td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  font-size: var(--font-size-sm);
+}
+
+.tratos-table th {
+  background-color: #cdd6ee;
+  font-weight: 600;
+  color: var(--primary-color);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.tratos-table tbody tr:hover {
+  background-color: rgba(3, 124, 224, 0.05);
+}
+
+.tratos-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Responsive para Tratos */
+@media (max-width: 768px) {
+  .tratos-section {
+    width: 100%;
+    padding-top: var(--spacing-md);
+    margin-top: var(--spacing-md);
+  }
+
+  .tratos-header {
+    margin-bottom: var(--spacing-md);
+  }
+
+.tratos-header h3 {
+  font-size: var(--font-size-sm);
+}
+
+  .tratos-table-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--box-shadow);
+  }
+
+  .tratos-table {
+    width: 100%;
+    min-width: 800px;
+    font-size: var(--font-size-xs);
+    border-collapse: collapse;
+  }
+
+  .tratos-table th,
+  .tratos-table td {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+    text-align: left;
+  }
+
+  .tratos-table th {
+    background-color: #cdd6ee;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+}
+
+@media (max-width: 576px) {
+  .tratos-table {
+    min-width: 700px;
+    font-size: 0.7rem;
+  }
+
+  .tratos-table th,
+  .tratos-table td {
+    padding: 4px 6px;
+    font-size: 0.7rem;
   }
 }

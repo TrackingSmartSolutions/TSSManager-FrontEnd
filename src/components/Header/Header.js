@@ -1,21 +1,27 @@
-"use client"
-
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import Swal from "sweetalert2"
 import "./Header.css"
-import logo from "../../assets/images/logo.svg"
+import { API_BASE_URL } from "../Config/Config";
 import calendarIcon from "../../assets/icons/calendario.png"
 import notificationIcon from "../../assets/icons/notificaciones.png"
 import profilePlaceholder from "../../assets/icons/profile-placeholder.png"
 import dropdownIcon from "../../assets/icons/desplegable.png"
 import clockIcon from "../../assets/icons/clock.png"
 
-const Header = () => {
+// Cache global para el logo
+let logoCache = {
+  url: null,
+  timestamp: null,
+  isLoading: false
+};
+
+const Header = ({ logoUrl }) => {
   // Estados para controlar menús desplegables
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isCrmDropdownOpen, setIsCrmDropdownOpen] = useState(false)
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false)
   const navigate = useNavigate()
   const userName = localStorage.getItem("userName") || "Usuario"
   const userRol = localStorage.getItem("userRol") || "EMPLEADO"
@@ -24,6 +30,143 @@ const Header = () => {
   const [lastActivity, setLastActivity] = useState(Date.now())
   const [showInactivityModal, setShowInactivityModal] = useState(false)
   const [timeLeft, setTimeLeft] = useState(120)
+
+  // Estado optimizado para el logo
+  const [currentLogoUrl, setCurrentLogoUrl] = useState(() => {
+    return logoCache.url ||
+      localStorage.getItem("cachedLogoUrl") ||
+      logoUrl ||
+      "/placeholder.svg"
+  });
+
+  const [isLogoLoading, setIsLogoLoading] = useState(false)
+  const logoFetchedRef = useRef(false)
+  const touchHandledRef = useRef(false)
+
+  const preloadImage = (url) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => resolve(url)
+      img.onerror = reject
+      img.src = url
+    })
+  }
+
+  // Función para obtener el logo
+  const fetchLogo = async (force = false) => {
+    if (logoCache.isLoading && !force) return
+    const cacheAge = Date.now() - (logoCache.timestamp || 0)
+    const cacheValid = cacheAge < 5 * 60 * 1000
+
+    if (logoCache.url && cacheValid && !force) {
+      setCurrentLogoUrl(logoCache.url)
+      return
+    }
+
+    logoCache.isLoading = true
+    setIsLogoLoading(true)
+
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) return
+
+      const response = await fetch(`${API_BASE_URL}/configuracion/empresa`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch logo')
+
+      const data = await response.json();
+      const newLogoUrl = data.logoUrl || "/placeholder.svg"
+
+      // Precargar la imagen antes de mostrarla
+      try {
+        await preloadImage(newLogoUrl)
+
+        // Actualizar caché
+        logoCache.url = newLogoUrl
+        logoCache.timestamp = Date.now()
+
+        localStorage.setItem("cachedLogoUrl", newLogoUrl)
+
+        setCurrentLogoUrl(newLogoUrl)
+      } catch (imageError) {
+        console.warn("Error precargando imagen:", imageError)
+        logoCache.url = "/placeholder.svg"
+        setCurrentLogoUrl("/placeholder.svg")
+      }
+
+    } catch (error) {
+      console.error("Error fetching logo:", error)
+      if (!currentLogoUrl || currentLogoUrl === "/placeholder.svg") {
+        setCurrentLogoUrl("/placeholder.svg")
+      }
+    } finally {
+      logoCache.isLoading = false
+      setIsLogoLoading(false)
+    }
+  }
+
+  // Effect para cargar el logo solo una vez por sesión
+  useEffect(() => {
+    if (!logoFetchedRef.current) {
+      logoFetchedRef.current = true
+      fetchLogo()
+    }
+  }, [])
+
+  // Effect para actualizar logo cuando cambia el prop (si es necesario)
+  useEffect(() => {
+    if (logoUrl && logoUrl !== currentLogoUrl) {
+      setCurrentLogoUrl(logoUrl)
+    }
+  }, [logoUrl])
+
+  useEffect(() => {
+    const handleLogoUpdate = () => {
+      fetchLogo(true);
+    };
+    window.addEventListener("logoUpdated", handleLogoUpdate);
+    return () => window.removeEventListener("logoUpdated", handleLogoUpdate);
+  }, []);
+
+  // Notificaciones ficticias
+  const [notifications] = useState([
+    {
+      id: 1,
+      title: "Reunión programada",
+      message: "Reunión con REPIBA en 30 minutos",
+      time: "hace 5 min",
+      type: "meeting",
+      unread: true,
+    },
+    {
+      id: 2,
+      title: "Cuenta por cobrar vencida",
+      message: "REPIBA-01-01 venció ayer",
+      time: "hace 1 hora",
+      type: "payment",
+      unread: true,
+    },
+    {
+      id: 3,
+      title: "Nuevo trato asignado",
+      message: "Se te asignó el trato con Empresa XYZ",
+      time: "hace 2 horas",
+      type: "deal",
+      unread: false,
+    },
+    {
+      id: 4,
+      title: "Recarga de SIM programada",
+      message: "SIM 123456789 - Equipo ABC123",
+      time: "hace 3 horas",
+      type: "recharge",
+      unread: false,
+    },
+  ])
 
   // Maneja temporizador de inactividad
   useEffect(() => {
@@ -42,6 +185,7 @@ const Header = () => {
         localStorage.removeItem("token")
         localStorage.removeItem("userName")
         localStorage.removeItem("userRol")
+        localStorage.removeItem("cachedLogoUrl")
         Swal.fire({
           icon: "warning",
           title: "Sesión Expirada",
@@ -92,6 +236,25 @@ const Header = () => {
     }
   }, [navigate])
 
+  // Cierra modales al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest(".header-notification-container")) {
+        setIsNotificationModalOpen(false)
+      }
+      if (
+        !event.target.closest(".has-dropdown") &&
+        !event.target.closest(".ts-header-sidebar-section-header")
+      ) {
+        setIsCrmDropdownOpen(false)
+        setIsProfileDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener("click", handleClickOutside)
+    return () => document.removeEventListener("click", handleClickOutside)
+  }, [])
+
   // Formatea tiempo restante a MM:SS
   const formatTimeLeft = (seconds) => {
     const minutes = Math.floor(seconds / 60)
@@ -99,27 +262,51 @@ const Header = () => {
     return `${minutes}:${remainingSeconds < 10 ? "0" : ""}${remainingSeconds}`
   }
 
-  // Muestra notificación pendiente
-  const handleNotificationClick = () => {
-    alert("Tienes 1 notificación pendiente")
+  // Navega al calendario
+  const handleCalendarClick = () => {
+    navigate("/calendario")
+  }
+
+  // Alterna modal de notificaciones
+  const handleNotificationClick = (e) => {
+    e.stopPropagation()
+    setIsNotificationModalOpen(!isNotificationModalOpen)
   }
 
   // Alterna menú lateral
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen)
-    // Bloquear scroll del body cuando el sidebar está abierto
     document.body.style.overflow = !isSidebarOpen ? "hidden" : ""
+  }
+
+  const handleCrmToggle = (e) => {
+    e.stopPropagation()
+    if (e.type === "touchstart") {
+      touchHandledRef.current = true
+    }
+    if (e.type === "click" && touchHandledRef.current) {
+      return
+    }
+    setIsCrmDropdownOpen(!isCrmDropdownOpen)
+    console.log(`${e.type} handled, isCrmDropdownOpen:`, !isCrmDropdownOpen)
+    if (e.type === "touchstart") {
+      setTimeout(() => {
+        touchHandledRef.current = false
+      }, 300)
+    }
   }
 
   // Alterna desplegable de CRM
   const toggleCrmDropdown = (e) => {
     e.preventDefault()
+    e.stopPropagation()
     setIsCrmDropdownOpen(!isCrmDropdownOpen)
     setIsProfileDropdownOpen(false)
   }
 
   // Alterna desplegable de perfil
-  const toggleProfileDropdown = () => {
+  const toggleProfileDropdown = (e) => {
+    e.stopPropagation()
     setIsProfileDropdownOpen(!isProfileDropdownOpen)
     setIsCrmDropdownOpen(false)
   }
@@ -136,43 +323,60 @@ const Header = () => {
       localStorage.removeItem("token")
       localStorage.removeItem("userName")
       localStorage.removeItem("userRol")
+      localStorage.removeItem("userId")
+      localStorage.removeItem("cachedLogoUrl")
+      // Limpiar caché global
+      logoCache = { url: null, timestamp: null, isLoading: false }
       navigate("/")
     })
   }
 
+  const unreadCount = notifications.filter((n) => n.unread).length
+
   return (
     <>
-      <header className="navbar">
-        <div className="navbar-brand">
-          <Link to="/principal" className="logo-link">
-            <div className="logo">
-              <img src={logo || "/placeholder.svg"} alt="Logo de Tracking Solutions" />
+      <header className="ts-header-navbar">
+        <div className="ts-header-navbar-brand">
+          <Link to="/principal" className="ts-header-logo-link">
+            <div className="ts-header-logo">
+              <img
+                src={currentLogoUrl}
+                alt="Logo de Tracking Solutions"
+                style={{
+                  transition: 'opacity 0.2s ease-in-out',
+                  opacity: isLogoLoading ? 0.7 : 1
+                }}
+                onError={(e) => {
+                  console.warn("Error cargando logo, usando placeholder")
+                  e.target.src = "/placeholder.svg"
+                }}
+              />
             </div>
           </Link>
         </div>
 
         <button
-          className={`hamburger-menu ${isSidebarOpen ? "open" : ""}`}
+          className={`ts-header-hamburger-menu ${isSidebarOpen ? "open" : ""}`}
           onClick={toggleSidebar}
           aria-label="Menú principal"
         >
-          <span className="hamburger-icon"></span>
+          <span className="ts-header-hamburger-icon"></span>
         </button>
 
         {/* Menú de navegación para escritorio */}
-        <nav className="navbar-menu desktop-menu">
+        <nav className="ts-header-navbar-menu ts-header-desktop-menu">
           <ul>
-            <li className="has-dropdown">
+            <li className="ts-header-has-dropdown">
               <a href="#" onClick={toggleCrmDropdown}>
                 CRM{" "}
                 <img
                   src={dropdownIcon || "/placeholder.svg"}
                   alt="Icono desplegable"
-                  className={`dropdown-arrow ${isCrmDropdownOpen ? "open" : ""}`}
+                  className={`ts-header-dropdown-arrow ${isCrmDropdownOpen ? "open" : ""}`}
                 />
               </a>
               {isCrmDropdownOpen && (
-                <ul className="dropdown-menu">
+                <ul className="ts-header-dropdown-menu">
                   <li>
                     <Link to="/empresas" onClick={() => setIsCrmDropdownOpen(false)}>
                       Empresas
@@ -184,7 +388,7 @@ const Header = () => {
                     </Link>
                   </li>
                   <li>
-                    <Link to="/reporte-personal" onClick={() => setIsCrmDropdownOpen(false)}>
+                    <Link to="/reporte_personal" onClick={() => setIsCrmDropdownOpen(false)}>
                       Reporte personal
                     </Link>
                   </li>
@@ -193,7 +397,7 @@ const Header = () => {
             </li>
             {userRol === "ADMINISTRADOR" && (
               <li>
-                <Link to="/admin">Admin</Link>
+                <Link to="/admin_balance">Admin</Link>
               </li>
             )}
             <li>
@@ -202,24 +406,56 @@ const Header = () => {
           </ul>
         </nav>
 
-        <div className="navbar-end">
-          <button className="icon-button">
+        <div className="ts-header-navbar-end">
+          <button className="ts-header-icon-button" onClick={handleCalendarClick}>
             <img src={calendarIcon || "/placeholder.svg"} alt="Icono de Calendario" />
           </button>
-          <button className="icon-button notification" onClick={handleNotificationClick}>
-            <img src={notificationIcon || "/placeholder.svg"} alt="Icono de Notificaciones" />
-            <span className="badge">1</span>
-          </button>
-          <div className="user-profile has-dropdown" onClick={toggleProfileDropdown}>
+
+          <div className="header-notification-container">
+            <button className="ts-header-icon-button ts-header-notification" onClick={handleNotificationClick}>
+              <img src={notificationIcon || "/placeholder.svg"} alt="Icono de Notificaciones" />
+              {unreadCount > 0 && <span className="ts-header-badge">{unreadCount}</span>}
+            </button>
+
+            {isNotificationModalOpen && (
+              <div className="ts-header-notification-modal">
+                <div className="ts-header-notification-header">
+                  <h3>Notificaciones</h3>
+                  <span className="ts-header-notification-count">{unreadCount} sin leer</span>
+                </div>
+                <div className="ts-header-notification-list">
+                  {notifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={`ts-header-notification-item ${notification.unread ? "unread" : ""}`}
+                    >
+                      <div className="ts-header-notification-content">
+                        <div className="ts-header-notification-title">{notification.title}</div>
+                        <div className="ts-header-notification-message">{notification.message}</div>
+                        <div className="ts-header-notification-time">{notification.time}</div>
+                      </div>
+                      <div className={`ts-header-notification-type ts-header-type-${notification.type}`}></div>
+                    </div>
+                  ))}
+                </div>
+                <div className="ts-header-notification-footer">
+                  <button className="ts-header-notification-btn">Ver todas</button>
+                  <button className="ts-header-notification-btn">Marcar como leídas</button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="ts-header-user-profile ts-header-has-dropdown" onClick={toggleProfileDropdown}>
             <img src={profilePlaceholder || "/placeholder.svg"} alt="Foto de perfil de usuario" />
-            <span className="username">{userName}</span>
+            <span className="ts-header-username">{userName}</span>
             <img
               src={dropdownIcon || "/placeholder.svg"}
               alt="Icono de opciones desplegables"
-              className={`dropdown-icon ${isProfileDropdownOpen ? "open" : ""}`}
+              className={`ts-header-dropdown-icon ${isProfileDropdownOpen ? "open" : ""}`}
             />
             {isProfileDropdownOpen && (
-              <ul className="dropdown-menu profile-dropdown">
+              <ul className="ts-header-dropdown-menu ts-header-profile-dropdown">
                 <li>
                   <Link to="/ayuda" onClick={() => setIsProfileDropdownOpen(false)}>
                     Ayuda
@@ -227,7 +463,7 @@ const Header = () => {
                 </li>
                 {userRol === "ADMINISTRADOR" && (
                   <li>
-                    <Link to="/configuracion" onClick={() => setIsProfileDropdownOpen(false)}>
+                    <Link to="/configuracion_plantillas" onClick={() => setIsProfileDropdownOpen(false)}>
                       Configuración
                     </Link>
                   </li>
@@ -251,31 +487,39 @@ const Header = () => {
       </header>
 
       {/* Menú lateral para móviles */}
-      <div className={`sidebar-overlay ${isSidebarOpen ? "active" : ""}`} onClick={toggleSidebar}></div>
-      <div className={`sidebar ${isSidebarOpen ? "open" : ""}`}>
-        <div className="sidebar-header">
-          <div className="sidebar-user">
-            <img src={profilePlaceholder || "/placeholder.svg"} alt="Foto de perfil" className="sidebar-avatar" />
-            <div className="sidebar-user-info">
-              <span className="sidebar-username">{userName}</span>
-              <span className="sidebar-role">{userRol}</span>
+      <div className={`ts-header-sidebar-overlay ${isSidebarOpen ? "active" : ""}`} onClick={toggleSidebar}></div>
+      <div className={`ts-header-sidebar ${isSidebarOpen ? "open" : ""}`}>
+        <div className="ts-header-sidebar-header">
+          <div className="ts-header-sidebar-user">
+            <img
+              src={profilePlaceholder || "/placeholder.svg"}
+              alt="Foto de perfil"
+              className="ts-header-sidebar-avatar"
+            />
+            <div className="ts-header-sidebar-user-info">
+              <span className="ts-header-sidebar-username">{userName}</span>
+              <span className="ts-header-sidebar-role">{userRol}</span>
             </div>
           </div>
-          <button className="sidebar-close" onClick={toggleSidebar}>
+          <button className="ts-header-sidebar-close" onClick={toggleSidebar}>
             ×
           </button>
         </div>
-        <nav className="sidebar-menu">
-          <div className="sidebar-section">
-            <div className="sidebar-section-header" onClick={() => setIsCrmDropdownOpen(!isCrmDropdownOpen)}>
+        <nav className="ts-header-sidebar-menu">
+          <div className="ts-header-sidebar-section">
+            <div
+              className="ts-header-sidebar-section-header"
+              onClick={handleCrmToggle}
+              onTouchStart={handleCrmToggle}
+            >
               <span>CRM</span>
               <img
                 src={dropdownIcon || "/placeholder.svg"}
                 alt="Expandir"
-                className={`sidebar-dropdown-icon ${isCrmDropdownOpen ? "open" : ""}`}
+                className={`ts-header-sidebar-dropdown-icon ${isCrmDropdownOpen ? "open" : ""}`}
               />
             </div>
-            <ul className={`sidebar-submenu ${isCrmDropdownOpen ? "open" : ""}`}>
+            <ul className={`ts-header-sidebar-submenu ${isCrmDropdownOpen ? "open" : ""}`}>
               <li>
                 <Link to="/empresas" onClick={toggleSidebar}>
                   Empresas
@@ -287,37 +531,37 @@ const Header = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/reporte-personal" onClick={toggleSidebar}>
+                <Link to="/reporte_personal" onClick={toggleSidebar}>
                   Reporte personal
                 </Link>
               </li>
             </ul>
           </div>
           {userRol === "ADMINISTRADOR" && (
-            <div className="sidebar-section">
-              <Link to="/admin" onClick={toggleSidebar} className="sidebar-link">
+            <div className="ts-header-sidebar-section">
+              <Link to="/admin_balance" onClick={toggleSidebar} className="ts-header-sidebar-link">
                 Admin
               </Link>
             </div>
           )}
-          <div className="sidebar-section">
-            <Link to="/equipos_estatusplataforma" onClick={toggleSidebar} className="sidebar-link">
+          <div className="ts-header-sidebar-section">
+            <Link to="/equipos_estatusplataforma" onClick={toggleSidebar} className="ts-header-sidebar-link">
               Equipos
             </Link>
           </div>
         </nav>
-        <div className="sidebar-footer">
-          <Link to="/ayuda" onClick={toggleSidebar} className="sidebar-footer-link">
+        <div className="ts-header-sidebar-footer">
+          <Link to="/ayuda" onClick={toggleSidebar} className="ts-header-sidebar-footer-link">
             Ayuda
           </Link>
           {userRol === "ADMINISTRADOR" && (
-            <Link to="/configuracion" onClick={toggleSidebar} className="sidebar-footer-link">
+            <Link to="/configuracion_plantillas" onClick={toggleSidebar} className="ts-header-sidebar-footer-link">
               Configuración
             </Link>
           )}
           <a
             href="#"
-            className="sidebar-footer-link logout"
+            className="ts-header-sidebar-footer-link logout"
             onClick={(e) => {
               e.preventDefault()
               toggleSidebar()
@@ -330,12 +574,13 @@ const Header = () => {
       </div>
 
       {showInactivityModal && timeLeft > 0 && (
-        <div className="inactivity-modal">
-          <div className="modal-content">
-            <img src={clockIcon || "/placeholder.svg"} alt="Reloj" className="modal-icon" />
+        <div className="ts-header-inactivity-modal">
+          <div className="ts-header-modal-content">
+            <img src={clockIcon || "/placeholder.svg"} alt="Reloj" className="ts-header-modal-icon" />
             <h3>Advertencia de Inactividad</h3>
             <p>
-              Tu sesión se cerrará por inactividad en <span className="countdown">{formatTimeLeft(timeLeft)}</span>
+              Tu sesión se cerrará por inactividad en{" "}
+              <span className="ts-header-countdown">{formatTimeLeft(timeLeft)}</span>
             </p>
           </div>
         </div>

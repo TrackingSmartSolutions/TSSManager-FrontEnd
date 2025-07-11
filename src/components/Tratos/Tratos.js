@@ -346,8 +346,13 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
 
   const validateForm = () => {
     const newErrors = {};
+    const currentDate = new Date().toISOString().split('T')[0];
+    const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
     if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fecha.trim()) newErrors.fecha = "Este campo es obligatorio";
+    else if (formData.fecha < currentDate) newErrors.fecha = "La fecha no puede ser en el pasado";
+    else if (formData.fecha === currentDate && formData.horaInicio && formData.horaInicio < currentTime)
+      newErrors.horaInicio = "La hora no puede ser en el pasado";
     if (!formData.horaInicio.trim()) newErrors.horaInicio = "Este campo es obligatorio";
     if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     setErrors(newErrors);
@@ -359,7 +364,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     if (!validateForm()) return;
 
     const horaInicio = formData.horaInicio ? `${formData.horaInicio}:00` : '';
-      
+
     const actividadDTO = {
       tratoId,
       tipo: "LLAMADA",
@@ -405,7 +410,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             >
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.nombre || user.nombreUsuario} {user.apellidos || ""}
+                  {user.nombreUsuario} 
                 </option>
               ))}
             </select>
@@ -440,10 +445,10 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             value={formData.fecha}
             onChange={(e) => handleInputChange("fecha", e.target.value)}
             className={`modal-form-control ${errors.fecha ? "error" : ""}`}
+            min={new Date().toISOString().split('T')[0]}
           />
           {errors.fecha && <span className="error-message">{errors.fecha}</span>}
         </div>
-
         <div className="modal-form-group">
           <label htmlFor="hora">Hora: <span className="required">*</span></label>
           <input
@@ -451,9 +456,10 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             id="horaInicio"
             value={formData.horaInicio}
             onChange={(e) => handleInputChange("horaInicio", e.target.value)}
-            className={`modal-form-control ${errors.hora ? "error" : ""}`} // Considera cambiar 'errors.hora' a 'errors.horaInicio' para consistencia
+            className={`modal-form-control ${errors.horaInicio ? "error" : ""}`}
+            min={formData.fecha === new Date().toISOString().split('T')[0] ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : undefined}
           />
-          {errors.hora && <span className="error-message">{errors.hora}</span>}
+          {errors.horaInicio && <span className="error-message">{errors.horaInicio}</span>}
         </div>
 
         <div className="modal-form-group">
@@ -498,9 +504,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     nombreContacto: "",
     fecha: "",
     horaInicio: "",
-    duracionHoras: "",
-    duracionMinutos: "",
-    duracionSegundos: "",
+    duracion: "00:30",
     modalidad: "VIRTUAL",
     finalidad: "",
     lugarReunion: "",
@@ -601,11 +605,15 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
 
   const validateForm = () => {
     const newErrors = {};
+    const currentDate = new Date().toISOString().split('T')[0];
+    const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
     if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fecha.trim()) newErrors.fecha = "Este campo es obligatorio";
+    else if (formData.fecha < currentDate) newErrors.fecha = "La fecha no puede ser en el pasado";
+    else if (formData.fecha === currentDate && formData.horaInicio && formData.horaInicio < currentTime)
+      newErrors.horaInicio = "La hora no puede ser en el pasado";
     if (!formData.horaInicio.trim()) newErrors.horaInicio = "Este campo es obligatorio";
-    if (!formData.duracionHoras && !formData.duracionMinutos && !formData.duracionSegundos)
-      newErrors.duracion = "Debe especificar al menos una unidad de tiempo";
+    if (!formData.duracion) newErrors.duracion = "Este campo es obligatorio";
     if (!formData.modalidad.trim()) newErrors.modalidad = "Este campo es obligatorio";
     if (formData.modalidad === "PRESENCIAL" && !formData.lugarReunion.trim())
       newErrors.lugarReunion = "Lugar es obligatorio para reuniones presenciales";
@@ -620,11 +628,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     e.preventDefault();
     if (!validateForm()) return;
 
-    const hours = parseInt(formData.duracionHoras) || 0;
-    const minutes = parseInt(formData.duracionMinutos) || 0;
-    const seconds = parseInt(formData.duracionSegundos) || 0;
-
-    const duracionStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    const duracionStr = formData.duracion;
     const horaInicio = formData.horaInicio ? `${formData.horaInicio}:00` : '';
 
     const actividadDTO = {
@@ -675,7 +679,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             >
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.nombre || user.nombreUsuario} {user.apellidos || ""}
+                  {user.nombreUsuario} 
                 </option>
               ))}
             </select>
@@ -710,10 +714,10 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             value={formData.fecha}
             onChange={(e) => handleInputChange("fecha", e.target.value)}
             className={`modal-form-control ${errors.fecha ? "error" : ""}`}
+            min={new Date().toISOString().split('T')[0]}
           />
           {errors.fecha && <span className="error-message">{errors.fecha}</span>}
         </div>
-
         <div className="modal-form-row">
           <div className="modal-form-group">
             <label htmlFor="horaInicio">Hora inicio: <span className="required">*</span></label>
@@ -723,49 +727,27 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
               value={formData.horaInicio}
               onChange={(e) => handleInputChange("horaInicio", e.target.value)}
               className={`modal-form-control ${errors.horaInicio ? "error" : ""}`}
+              min={formData.fecha === new Date().toISOString().split('T')[0] ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : undefined}
             />
             {errors.horaInicio && <span className="error-message">{errors.horaInicio}</span>}
           </div>
-
           <div className="modal-form-group">
             <label>Duración: <span className="required">*</span></label>
-            <div className="duracion-container">
-              <div className="duracion-field">
-                <input
-                  type="number"
-                  value={formData.duracionHoras}
-                  onChange={(e) => handleInputChange("duracionHoras", e.target.value)}
-                  className="modal-form-control duracion-input"
-                  min="0"
-                  max="23"
-                  placeholder="0"
-                />
-                <label>Horas</label>
-              </div>
-              <div className="duracion-field">
-                <input
-                  type="number"
-                  value={formData.duracionMinutos}
-                  onChange={(e) => handleInputChange("duracionMinutos", e.target.value)}
-                  className="modal-form-control duracion-input"
-                  min="0"
-                  max="59"
-                  placeholder="0"
-                />
-                <label>Minutos</label>
-              </div>
-              <div className="duracion-field">
-                <input
-                  type="number"
-                  value={formData.duracionSegundos}
-                  onChange={(e) => handleInputChange("duracionSegundos", e.target.value)}
-                  className="modal-form-control duracion-input"
-                  min="0"
-                  max="59"
-                  placeholder="0"
-                />
-                <label>Segundos</label>
-              </div>
+            <div className="modal-select-wrapper">
+              <select
+                id="duracion"
+                value={formData.duracion}
+                onChange={(e) => handleInputChange("duracion", e.target.value)}
+                className={`modal-form-control ${errors.duracion ? "error" : ""}`}
+              >
+                <option value="00:30">30 minutos</option>
+                <option value="01:00">1 hora</option>
+                <option value="01:30">1 hora 30 minutos</option>
+                <option value="02:00">2 horas</option>
+                <option value="02:30">2 horas 30 minutos</option>
+                <option value="03:00">3 horas</option>
+              </select>
+              <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
             </div>
             {errors.duracion && <span className="error-message">{errors.duracion}</span>}
           </div>
@@ -928,8 +910,10 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
 
   const validateForm = () => {
     const newErrors = {};
+    const currentDate = new Date().toISOString().split('T')[0];
     if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fechaLimite.trim()) newErrors.fechaLimite = "Este campo es obligatorio";
+    else if (formData.fechaLimite < currentDate) newErrors.fechaLimite = "La fecha no puede ser en el pasado";
     if (!formData.tipo.trim()) newErrors.tipo = "Este campo es obligatorio";
     if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     setErrors(newErrors);
@@ -984,7 +968,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
             >
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.nombre || user.nombreUsuario} {user.apellidos || ""}
+                  {user.nombreUsuario}
                 </option>
               ))}
             </select>
@@ -1019,6 +1003,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
             value={formData.fechaLimite}
             onChange={(e) => handleInputChange("fechaLimite", e.target.value)}
             className={`modal-form-control ${errors.fechaLimite ? "error" : ""}`}
+            min={new Date().toISOString().split('T')[0]}
           />
           {errors.fechaLimite && <span className="error-message">{errors.fechaLimite}</span>}
         </div>
@@ -1078,415 +1063,8 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
   );
 };
 
-const EmpresaModal = ({ isOpen, onClose, onSave, empresa, users, fetchData, tratoId }) => {
-  const [formData, setFormData] = useState({
-    nombre: "",
-    estatus: "POR_CONTACTAR",
-    sitioWeb: "",
-    sector: "",
-    domicilioFisico: "",
-    domicilioFiscal: "",
-    rfc: "",
-    razonSocial: "",
-    regimenFiscal: "",
-    propietarioId: null,
-  });
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
 
-  const sectorMap = {
-    AGRICULTURA: "(11) Agricultura, cría y explotación de animales, aprovechamiento forestal, pesca y caza",
-    MINERIA: "(21) Minería",
-    ENERGIA: "(22) Generación, transmisión y distribución de energía eléctrica, suministro de agua y de gas",
-    CONSTRUCCION: "(23) Construcción",
-    MANUFACTURA: "(31-33) Industrias manufactureras",
-    COMERCIO_MAYOR: "(43) Comercio al por mayor",
-    COMERCIO_MENOR: "(46) Comercio al por menor",
-    TRANSPORTE: "(48-49) Transportes, correos y almacenamiento",
-    MEDIOS: "(51) Información en medios masivos",
-    FINANCIERO: "(52) Servicios financieros y de seguros",
-    INMOBILIARIO: "(53) Servicios inmobiliarios y de alquiler de bienes muebles e intangibles",
-    PROFESIONAL: "(54) Servicios profesionales, científicos y técnicos",
-    CORPORATIVO: "(55) Corporativos",
-    APOYO_NEGOCIOS: "(56) Servicios de apoyo a los negocios y manejo de desechos",
-    EDUCACION: "(61) Servicios educativos",
-    SALUD: "(62) Servicios de salud y de asistencia social",
-    ESPARCIMIENTO: "(71) Servicios de esparcimiento culturales y deportivos",
-    ALOJAMIENTO: "(72) Servicios de alojamiento temporal y de preparación de alimentos",
-    OTROS_SERVICIOS: "(81) Otros servicios excepto actividades gubernamentales",
-    GUBERNAMENTAL: "(93) Actividades legislativas, gubernamentales, de impartición de justicia",
-  };
-
-  const regimenFiscalOptions = [
-    { clave: "605", descripcion: "Sueldos y Salarios e Ingresos Asimilados a Salarios" },
-    { clave: "606", descripcion: "Arrendamiento" },
-    { clave: "608", descripcion: "Demás ingresos" },
-    { clave: "611", descripcion: "Ingresos por Dividendos (socios y accionistas)" },
-    { clave: "612", descripcion: "Personas Físicas con Actividades Empresariales y Profesionales" },
-    { clave: "614", descripcion: "Ingresos por intereses" },
-    { clave: "615", descripcion: "Régimen de los ingresos por obtención de premios" },
-    { clave: "616", descripcion: "Sin obligaciones fiscales" },
-    { clave: "621", descripcion: "Incorporación Fiscal" },
-    { clave: "622", descripcion: "Actividades Agrícolas, Ganaderas, Silvícolas y Pesqueras" },
-    { clave: "626", descripcion: "Régimen Simplificado de Confianza (RESICO)" },
-    { clave: "629", descripcion: "De los Regímenes Fiscales Preferentes y de las Empresas Multinacionales" },
-    { clave: "630", descripcion: "Enajenación de acciones en bolsa de valores" },
-    { clave: "601", descripcion: "General de Ley Personas Morales" },
-    { clave: "603", descripcion: "Personas Morales con Fines no Lucrativos" },
-    { clave: "607", descripcion: "Régimen de Enajenación o Adquisición de Bienes" },
-    { clave: "609", descripcion: "Consolidación" },
-    { clave: "620", descripcion: "Sociedades Cooperativas de Producción que optan por Diferir sus Ingresos" },
-    { clave: "623", descripcion: "Opcional para Grupos de Sociedades" },
-    { clave: "624", descripcion: "Coordinados" },
-    { clave: "628", descripcion: "Hidrocarburos" },
-  ];
-
-  const sectores = Object.entries(sectorMap).map(([value, label]) => ({ value, label }));
-  const estatusOptions = [
-    { value: "POR_CONTACTAR", label: "Por Contactar" },
-    { value: "EN_PROCESO", label: "En Proceso" },
-    { value: "CONTACTAR_MAS_ADELANTE", label: "Contactar Más Adelante" },
-    { value: "PERDIDO", label: "Perdido" },
-    { value: "CLIENTE", label: "Cliente" },
-  ];
-
-  useEffect(() => {
-    const fetchEmpresaData = async () => {
-      if (isOpen && empresa?.id) {
-        setLoading(true);
-        try {
-          const response = await fetchWithToken(`${API_BASE_URL}/empresas/${empresa.id}`);
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const updatedEmpresa = await response.json();
-          setFormData({
-            nombre: updatedEmpresa.nombre || "",
-            estatus: updatedEmpresa.estatus || "POR_CONTACTAR",
-            sitioWeb: updatedEmpresa.sitioWeb || "",
-            sector: updatedEmpresa.sector || "",
-            domicilioFisico: updatedEmpresa.domicilioFisico || "",
-            domicilioFiscal: updatedEmpresa.domicilioFiscal || "",
-            rfc: updatedEmpresa.rfc || "",
-            razonSocial: updatedEmpresa.razonSocial || "",
-            regimenFiscal: updatedEmpresa.regimenFiscal || "",
-            propietarioId: updatedEmpresa.propietario?.id || null,
-          });
-        } catch (error) {
-          console.error("Error fetching enterprise data:", error); 
-          Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: `No se pudo cargar la empresa: ${error.message}`,
-          });
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        setFormData({
-          nombre: "",
-          estatus: "POR_CONTACTAR",
-          sitioWeb: "",
-          sector: "",
-          domicilioFisico: "",
-          domicilioFiscal: "",
-          rfc: "",
-          razonSocial: "",
-          regimenFiscal: "",
-          propietarioId: null,
-        });
-        setErrors({});
-      }
-    };
-    fetchEmpresaData();
-  }, [isOpen, empresa?.id]);
-
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
-  };
-
-  const validateForm = () => {
-  const newErrors = {};
-  if (!formData.nombre.trim()) newErrors.nombre = "Este campo es obligatorio";
-  if (formData.sitioWeb) {
-    const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
-    if (!urlRegex.test(formData.sitioWeb)) {
-      newErrors.sitioWeb = "Este campo debe ser una URL válida (ej. https://ejemplo.com)";
-    }
-  }
-  if (!formData.domicilioFisico.trim()) {
-    newErrors.domicilioFisico = "Este campo es obligatorio";
-  } else if (!/^[A-Za-z0-9\s,.\-ÁÉÍÓÚáéíóúÑñ]+$/.test(formData.domicilioFisico.trim())) {
-    newErrors.domicilioFisico = "Este campo contiene caracteres no permitidos";
-  }
-  setErrors(newErrors);
-  return Object.keys(newErrors).length === 0;
-};
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-
-    const formattedDomicilioFisico = formData.domicilioFisico.endsWith(", México")
-      ? formData.domicilioFisico
-      : `${formData.domicilioFisico}, México`;
-
-    const empresaData = {
-      nombre: formData.nombre,
-      estatus: formData.estatus,
-      sitioWeb: formData.sitioWeb || null,
-      sector: formData.sector || null,
-      domicilioFisico: formattedDomicilioFisico,
-      domicilioFiscal: formData.domicilioFiscal || null,
-      rfc: formData.rfc || null,
-      razonSocial: formData.razonSocial || null,
-      regimenFiscal: formData.regimenFiscal || null,
-      propietarioId: formData.propietarioId || null,
-    };
-
-    try {
-      const response = await fetchWithToken(`${API_BASE_URL}/empresas/${empresa.id}`, {
-        method: "PUT",
-        body: JSON.stringify(empresaData),
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Error al guardar la empresa");
-      }
-      const savedEmpresa = await response.json();
-
-      if (tratoId) {
-        const faseResponse = await fetchWithToken(
-          `${API_BASE_URL}/tratos/${tratoId}/mover-fase?nuevaFase=CERRADO_GANADO`,
-          { method: "PUT" }
-        );
-        if (!faseResponse.ok) {
-          throw new Error("No se pudo actualizar la fase del trato");
-        }
-      }
-
-      onSave(savedEmpresa);
-      onClose();
-      fetchData();
-    } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.message,
-      });
-    }
-  };
-
-  const isCliente = formData.estatus === "CLIENTE";
-  const isEstatusDisabled = formData.estatus === "CLIENTE";
-
-  if (loading) {
-    return (
-      <Modal isOpen={isOpen} onClose={onClose} title="Editar Empresa" size="lg" canClose={false}>
-        <div className="modal-body">Cargando datos de la empresa...</div>
-      </Modal>
-    );
-  }
-
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Editar Empresa" size="lg" canClose={false}>
-      <form onSubmit={handleSubmit} className="modal-form">
-        <div className="modal-form-row">
-          <div className="modal-form-group">
-            <label htmlFor="propietario">
-              Propietario <span className="required">*</span>
-            </label>
-            <select
-              id="propietario"
-              value={formData.propietarioId || ""}
-              onChange={(e) => handleInputChange("propietarioId", e.target.value ? Number(e.target.value) : null)}
-              className="modal-form-control"
-            >
-              <option value="">Seleccione un propietario</option>
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.nombreUsuario}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="modal-form-row">
-          <div className="modal-form-group">
-            <label htmlFor="nombre">
-              Nombre <span className="required">*</span>
-            </label>
-            <input
-              type="text"
-              id="nombre"
-              value={formData.nombre}
-              onChange={(e) => handleInputChange("nombre", e.target.value)}
-              className={`modal-form-control ${errors.nombre ? "error" : ""}`}
-              placeholder="Nombre comercial de la empresa"
-            />
-            {errors.nombre && <span className="error-message">{errors.nombre}</span>}
-          </div>
-
-          <div className="modal-form-group">
-            <label htmlFor="estatus">
-              Estatus <span className="required">*</span>
-            </label>
-            <select
-              id="estatus"
-              value={formData.estatus}
-              onChange={(e) => handleInputChange("estatus", e.target.value)}
-              className="modal-form-control"
-              disabled={isEstatusDisabled}
-            >
-              {estatusOptions.map((option) => (
-                <option key={option.value} value={option.value} disabled={isEstatusDisabled}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="modal-form-row">
-          <div className="modal-form-group">
-            <label htmlFor="sitioWeb">Sitio Web</label>
-            <input
-              type="url"
-              id="sitioWeb"
-              value={formData.sitioWeb}
-              onChange={(e) => handleInputChange("sitioWeb", e.target.value)}
-              className={`modal-form-control ${errors.sitioWeb ? "error" : ""}`}
-              placeholder="https://ejemplo.com"
-            />
-            {errors.sitioWeb && <span className="error-message">{errors.sitioWeb}</span>}
-          </div>
-
-          <div className="modal-form-group">
-            <label htmlFor="sector">Sector</label>
-            <select
-              id="sector"
-              value={formData.sector}
-              onChange={(e) => handleInputChange("sector", e.target.value)}
-              className="modal-form-control"
-            >
-              <option value="">Seleccione un sector</option>
-              {sectores.map((sector) => (
-                <option key={sector.value} value={sector.value}>
-                  {sector.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="modal-form-row">
-          <div className="modal-form-group full-width">
-            <label htmlFor="domicilioFisico">
-              Domicilio Físico <span className="required">*</span>
-            </label>
-            <input
-              type="text"
-              id="domicilioFisico"
-              value={formData.domicilioFisico}
-              onChange={(e) => handleInputChange("domicilioFisico", e.target.value)}
-              className={`modal-form-control ${errors.domicilioFisico ? "error" : ""}`}
-              placeholder="Ej: Elefante 175, Villa Magna, 37208 León de los Aldama, Guanajuato, México"
-            />
-            <small className="help-text">
-              Por favor, usa el formato: Calle y Número, Código Postal, Ciudad, Estado, País. Evita detalles como "Local
-              X" o "Depto. Y" para una mejor precisión en el mapa.
-            </small>
-            {errors.domicilioFisico && <span className="error-message">{errors.domicilioFisico}</span>}
-          </div>
-        </div>
-
-        {isCliente && (
-          <>
-            <div className="modal-form-row">
-              <div className="modal-form-group">
-                <label htmlFor="domicilioFiscal">
-                  Domicilio Fiscal <span className="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="domicilioFiscal"
-                  value={formData.domicilioFiscal}
-                  onChange={(e) => handleInputChange("domicilioFiscal", e.target.value)}
-                  className={`modal-form-control ${errors.domicilioFiscal ? "error" : ""}`}
-                  placeholder="Domicilio fiscal"
-                />
-                {errors.domicilioFiscal && <span className="error-message">{errors.domicilioFiscal}</span>}
-              </div>
-
-              <div className="modal-form-group">
-                <label htmlFor="rfc">
-                  RFC <span className="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="rfc"
-                  value={formData.rfc}
-                  onChange={(e) => handleInputChange("rfc", e.target.value.toUpperCase())}
-                  className={`modal-form-control ${errors.rfc ? "error" : ""}`}
-                  placeholder="RFC de la empresa"
-                />
-                {errors.rfc && <span className="error-message">{errors.rfc}</span>}
-              </div>
-            </div>
-
-            <div className="modal-form-row">
-              <div className="modal-form-group">
-                <label htmlFor="razonSocial">
-                  Razón Social <span className="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="razonSocial"
-                  value={formData.razonSocial}
-                  onChange={(e) => handleInputChange("razonSocial", e.target.value)}
-                  className={`modal-form-control ${errors.razonSocial ? "error" : ""}`}
-                  placeholder="Razón social"
-                />
-                {errors.razonSocial && <span className="error-message">{errors.razonSocial}</span>}
-              </div>
-
-              <div className="modal-form-group">
-                <label htmlFor="regimenFiscal">
-                  Régimen Fiscal <span className="required">*</span>
-                </label>
-                <select
-                  id="regimenFiscal"
-                  value={formData.regimenFiscal}
-                  onChange={(e) => handleInputChange("regimenFiscal", e.target.value)}
-                  className={`modal-form-control ${errors.regimenFiscal ? "error" : ""}`}
-                >
-                  <option value="">Seleccione un régimen fiscal</option>
-                  {regimenFiscalOptions.map((option) => (
-                    <option key={option.clave} value={option.clave}>
-                      {option.clave} - {option.descripcion}
-                    </option>
-                  ))}
-                </select>
-                {errors.regimenFiscal && <span className="error-message">{errors.regimenFiscal}</span>}
-              </div>
-            </div>
-          </>
-        )}
-
-        <div className="modal-form-actions">
-          <button type="button" className="btn btn-secondary" disabled>Cancelar</button>
-          <button type="submit" className="btn btn-primary">Guardar</button>
-        </div>
-      </form>
-    </Modal>
-  );
-};
-
-const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdded }) => {
+const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdded, navigate }) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDragStart = (e) => {
@@ -1507,90 +1085,94 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
     }
   };
 
-  const getActivityIcon = () => {
-    const currentDate = new Date();
-    // Caso 1: Trato desatendido
-    if (trato.isNeglected) {
-      return (
-        <img
-          src={neglectedTreatment || "/placeholder.svg"}
-          alt="Trato Desatendido"
-          className="activity-icon neglected"
-          onClick={(e) => {
-            e.stopPropagation();
-            onActivityAdded && onActivityAdded(trato.id);
-          }}
-        />
-      );
-    }
+ const getActivityIcon = () => {
+  const currentDate = new Date();
+  const tomorrow = new Date(currentDate);
+  tomorrow.setDate(currentDate.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
 
-    // Caso 2: Sin actividades abiertas
-    const openActivities = trato.actividades?.filter((activity) => activity.estatus === "ABIERTA") || [];
-    if (openActivities.length === 0) {
-      return (
-        <img
-          src={addActivity || "/placeholder.svg"}
-          alt="Agregar Actividad"
-          className="activity-icon add-activity-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            onActivityAdded && onActivityAdded(trato.id);
-          }}
-        />
-      );
-    }
-
-    // Caso 3: Actividad más cercana (solo entre actividades abiertas)
-    const nearestActivity = openActivities.reduce((closest, current) => {
-      const closestDate = closest.fechaLimite ? new Date(closest.fechaLimite) : null;
-      const currentDate = current.fechaLimite ? new Date(current.fechaLimite) : null;
-      if (!closestDate) return current;
-      if (!currentDate) return closest;
-      return currentDate < closestDate ? current : closest;
-    }, { fechaLimite: null });
-
-    if (!nearestActivity || !nearestActivity.tipo) {
-      return (
-        <img
-          src={addActivity || "/placeholder.svg"}
-          alt="Agregar Actividad"
-          className="activity-icon add-activity-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            onActivityAdded && onActivityAdded(trato.id);
-          }}
-        />
-      );
-    }
-
-    const activityDate = new Date(nearestActivity.fechaLimite);
-    const timeDiff = (activityDate - currentDate) / (1000 * 60 * 60 * 24);
-    const isOverdue = timeDiff < 0 && !nearestActivity.fechaCompletado;
-    const isNearDeadline = timeDiff <= 2 && timeDiff >= 0;
-
-    const iconMap = {
-      LLAMADA: activityCall,
-      REUNION: activityMeeting,
-      TAREA: activityTask,
-    };
-    const iconSrc = iconMap[nearestActivity.tipo] || addActivity;
-    let iconClass = "activity-icon";
-
-    if (isOverdue) iconClass += " activity-vencida";
-    else if (isNearDeadline) iconClass += " activity-proxima";
-
+  // Caso 1: Trato desatendido
+  if (trato.isNeglected) {
     return (
       <img
-        src={iconSrc || "/placeholder.svg"}
-        alt={`${nearestActivity.tipo} Programada`}
-        className={iconClass}
+        src={activityCall || "/placeholder.svg"}
+        alt="Trato Desatendido"
+        className="activity-icon neglected"
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate(`/detallestrato/${trato.id}#actividades-abiertas`);
+        }}
+      />
+    );
+  }
+
+  // Caso 2: Sin actividades abiertas
+  const openActivities = trato.actividades?.filter((activity) => activity.estatus === "ABIERTA") || [];
+  if (openActivities.length === 0) {
+    return (
+      <img
+        src={addActivity || "/placeholder.svg"}
+        alt="Agregar Actividad"
+        className="activity-icon add-activity-btn"
         onClick={(e) => {
           e.stopPropagation();
           onActivityAdded && onActivityAdded(trato.id);
         }}
       />
     );
+  }
+
+  // Caso 3: Actividad más cercana (solo entre actividades abiertas)
+  const nearestActivity = openActivities.reduce((closest, current) => {
+    const closestDate = closest.fechaLimite ? new Date(closest.fechaLimite) : null;
+    const currentDate = current.fechaLimite ? new Date(current.fechaLimite) : null;
+    if (!closestDate) return current;
+    if (!currentDate) return closest;
+    return currentDate < closestDate ? current : closest;
+  }, { fechaLimite: null });
+
+  if (!nearestActivity || !nearestActivity.tipo || !nearestActivity.fechaLimite) {
+    return (
+      <img
+        src={addActivity || "/placeholder.svg"}
+        alt="Agregar Actividad"
+        className="activity-icon add-activity-btn"
+        onClick={(e) => {
+          e.stopPropagation();
+          onActivityAdded && onActivityAdded(trato.id);
+        }}
+      />
+    );
+  }
+
+  const activityDate = new Date(nearestActivity.fechaLimite);
+  activityDate.setHours(0, 0, 0, 0);
+  const timeDiff = (activityDate - currentDate) / (1000 * 60 * 60 * 24);
+  let iconClass = "activity-icon";
+
+  if (activityDate > tomorrow) iconClass += " activity-future"; // Mañana en adelante
+  else if (activityDate.toDateString() === currentDate.toDateString()) iconClass += " activity-today"; // Hoy
+  else if (activityDate < currentDate) iconClass += " activity-overdue"; // Vencida
+
+  const iconMap = {
+    LLAMADA: activityCall,
+    REUNION: activityMeeting,
+    TAREA: activityTask,
   };
+  const iconSrc = iconMap[nearestActivity.tipo] || addActivity;
+
+  return (
+    <img
+      src={iconSrc || "/placeholder.svg"}
+      alt={`${nearestActivity.tipo} Programada`}
+      className={iconClass}
+      onClick={(e) => {
+        e.stopPropagation();
+        navigate(`/detallestrato/${trato.id}#actividades-abiertas`);
+      }}
+    />
+  );
+};
 
   return (
     <div
@@ -1646,83 +1228,85 @@ const Tratos = () => {
 
 
   const fetchData = async () => {
-  try {
-    const params = new URLSearchParams();
-    if (selectedUser  !== "Todos los usuarios") {
-      params.append("propietarioId", selectedUser );
-    }
-    if (startDate) {
-      params.append("startDate", startDate.toISOString());
-    }
-    if (endDate) {
-      params.append("endDate", endDate.toISOString());
-    }
+    try {
+      const params = new URLSearchParams();
+      const userId = localStorage.getItem("userId");
 
-    const [tratosResponse, usersResponse] = await Promise.all([
-      fetchWithToken(`${API_BASE_URL}/tratos/filtrar?${params.toString()}`),
-      fetchWithToken(`${API_BASE_URL}/auth/users`),
-    ]);
-
-    // Verificar si las respuestas son correctas
-    if (!tratosResponse.ok) {
-      throw new Error(`Error al cargar tratos: ${tratosResponse.statusText}`);
-    }
-    if (!usersResponse.ok) {
-      throw new Error(`Error al cargar usuarios: ${usersResponse.statusText}`);
-    }
-
-    const tratos = await tratosResponse.json();
-    const usersData = await usersResponse.json();
-
-    setUsers(usersData);
-
-    const columnasData = [
-      { id: 1, nombre: "Clasificación", color: "#E180F4", className: "clasificacion", tratos: [], count: 0 },
-      { id: 2, nombre: "Primer contacto", color: "#C680F4", className: "primer-contacto", tratos: [], count: 0 },
-      { id: 3, nombre: "Envío de información", color: "#AB80F4", className: "envio-de-informacion", tratos: [], count: 0 },
-      { id: 4, nombre: "Reunión", color: "#9280F4", className: "reunion", tratos: [], count: 0 },
-      { id: 5, nombre: "Cotización Propuesta", color: "#8098F4", className: "cotizacion-propuesta-practica", tratos: [], count: 0 },
-      { id: 6, nombre: "Negociación/Revisión", color: "#80C0F4", className: "negociacion-revision", tratos: [], count: 0 },
-      { id: 7, nombre: "Cerrado ganado", color: "#69ED95", className: "cerrado-ganado", tratos: [], count: 0 },
-      { id: 8, nombre: "Respuesta por correo", color: "#EFD47B", className: "respuesta-por-correo", tratos: [], count: 0 },
-      { id: 9, nombre: "Interés futuro", color: "#FFBC79", className: "interes-futuro", tratos: [], count: 0 },
-      { id: 10, nombre: "Cerrado perdido", color: "#FA8585", className: "cerrado-perdido", tratos: [], count: 0 },
-    ];
-
-    const currentDate = new Date();
-    tratos.forEach((trato) => {
-      const lastActivityDate = trato.fechaUltimaActividad ? new Date(trato.fechaUltimaActividad) : new Date(trato.fechaCreacion);
-      const minutesInactive = differenceInMinutes(currentDate, lastActivityDate);
-      const isNeglected = !trato.hasActivities && minutesInactive > 10080;
-      const hasActivities = trato.actividades && trato.actividades.length > 0;
-      const columnaClass = trato.fase.toLowerCase().replace(/[_ ]/g, "-");
-      const columna = columnasData.find((c) => c.className === columnaClass);
-      if (columna) {
-        columna.tratos.push({
-          id: trato.id,
-          nombre: trato.nombre,
-          propietario: trato.propietarioNombre || "Usuario",
-          fechaCierre: new Date(trato.fechaCierre).toLocaleDateString(),
-          empresa: trato.empresaNombre || "Empresa Asociada",
-          numero: trato.noTrato || "Sin número",
-          ingresoEsperado: trato.ingresosEsperados,
-          isNeglected,
-          hasActivities,
-          actividades: trato.actividades || [],
-          lastActivityType: trato.lastActivityType || null,
-          creatorId: trato.propietarioId,
-          fechaUltimaActividad: lastActivityDate,
-        });
-        columna.count++;
+      if (userRol === "EMPLEADO" && userId) {
+        params.append("propietarioId", userId); 
+      } else if (selectedUser !== "Todos los usuarios") {
+        params.append("propietarioId", selectedUser); 
       }
-    });
-    setColumnas(columnasData);
-  } catch (error) {
-    console.error("Error al cargar datos:", error);
-    Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos" });
-  }
-};
+      if (startDate) {
+        params.append("startDate", startDate.toISOString());
+      }
+      if (endDate) {
+        params.append("endDate", endDate.toISOString());
+      }
 
+      const [tratosResponse, usersResponse] = await Promise.all([
+        fetchWithToken(`${API_BASE_URL}/tratos/filtrar?${params.toString()}`),
+        fetchWithToken(`${API_BASE_URL}/auth/users`),
+      ]);
+
+      if (!tratosResponse.ok) {
+        throw new Error(`Error al cargar tratos: ${tratosResponse.statusText}`);
+      }
+      if (!usersResponse.ok) {
+        throw new Error(`Error al cargar usuarios: ${usersResponse.statusText}`);
+      }
+
+      const tratos = await tratosResponse.json();
+      const usersData = await usersResponse.json();
+
+      setUsers(usersData);
+
+      const columnasData = [
+        { id: 1, nombre: "Clasificación", color: "#E180F4", className: "clasificacion", tratos: [], count: 0 },
+        { id: 2, nombre: "Primer contacto", color: "#C680F4", className: "primer-contacto", tratos: [], count: 0 },
+        { id: 3, nombre: "Envío de información", color: "#AB80F4", className: "envio-de-informacion", tratos: [], count: 0 },
+        { id: 4, nombre: "Reunión", color: "#9280F4", className: "reunion", tratos: [], count: 0 },
+        { id: 5, nombre: "Cotización Propuesta", color: "#8098F4", className: "cotizacion-propuesta-practica", tratos: [], count: 0 },
+        { id: 6, nombre: "Negociación/Revisión", color: "#80C0F4", className: "negociacion-revision", tratos: [], count: 0 },
+        { id: 7, nombre: "Cerrado ganado", color: "#69ED95", className: "cerrado-ganado", tratos: [], count: 0 },
+        { id: 8, nombre: "Respuesta por correo", color: "#EFD47B", className: "respuesta-por-correo", tratos: [], count: 0 },
+        { id: 9, nombre: "Interés futuro", color: "#FFBC79", className: "interes-futuro", tratos: [], count: 0 },
+        { id: 10, nombre: "Cerrado perdido", color: "#FA8585", className: "cerrado-perdido", tratos: [], count: 0 },
+      ];
+
+      const currentDate = new Date();
+      tratos.forEach((trato) => {
+        const lastActivityDate = trato.fechaUltimaActividad ? new Date(trato.fechaUltimaActividad) : new Date(trato.fechaCreacion);
+        const minutesInactive = differenceInMinutes(currentDate, lastActivityDate);
+        const isNeglected = !trato.hasActivities && minutesInactive > 10080;
+        const hasActivities = trato.actividades && trato.actividades.length > 0;
+        const columnaClass = trato.fase.toLowerCase().replace(/[_ ]/g, "-");
+        const columna = columnasData.find((c) => c.className === columnaClass);
+        if (columna) {
+          columna.tratos.push({
+            id: trato.id,
+            nombre: trato.nombre,
+            propietario: trato.propietarioNombre || "Usuario",
+            fechaCierre: new Date(trato.fechaCierre).toLocaleDateString(),
+            empresa: trato.empresaNombre || "Empresa Asociada",
+            numero: trato.noTrato || "Sin número",
+            ingresoEsperado: trato.ingresosEsperados,
+            isNeglected,
+            hasActivities,
+            actividades: trato.actividades || [],
+            lastActivityType: trato.lastActivityType || null,
+            creatorId: trato.propietarioId,
+            fechaUltimaActividad: lastActivityDate,
+          });
+          columna.count++;
+        }
+      });
+      setColumnas(columnasData);
+    } catch (error) {
+      console.error("Error al cargar datos:", error);
+      Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos" });
+    }
+  };
 
   useEffect(() => {
     fetchData();
@@ -1840,83 +1424,50 @@ const Tratos = () => {
     e.dataTransfer.dropEffect = "move";
   };
 
- const handleDrop = async (e, targetColumnId) => {
-  e.preventDefault();
-  const tratoId = Number.parseInt(e.dataTransfer.getData("tratoId"));
-  if (isNaN(tratoId)) {
-    console.error("ID del trato no válido al soltar:", e.dataTransfer.getData("tratoId"));
-    return;
-  }
-
-  const targetColumn = columnas.find((c) => c.id === targetColumnId);
-  const sourceColumn = columnas.find((c) => c.tratos.some((t) => t.id === tratoId));
-  if (!targetColumn || !sourceColumn || targetColumn.id === sourceColumn.id) return;
-
-  const faseMap = {
-    "clasificacion": "CLASIFICACION",
-    "primer-contacto": "PRIMER_CONTACTO",
-    "envio-de-informacion": "ENVIO_DE_INFORMACION",
-    "reunion": "REUNION",
-    "cotizacion-propuesta-practica": "COTIZACION_PROPUESTA_PRACTICA",
-    "negociacion-revision": "NEGOCIACION_REVISION",
-    "cerrado-ganado": "CERRADO_GANADO",
-    "respuesta-por-correo": "RESPUESTA_POR_CORREO",
-    "interes-futuro": "INTERES_FUTURO",
-    "cerrado-perdido": "CERRADO_PERDIDO",
-  };
-
-  const nuevaFase = faseMap[targetColumn.className];
-  if (!nuevaFase) {
-    console.error("Fase no válida:", targetColumn.className);
-    Swal.fire({ icon: "error", title: "Error", text: "Fase no válida" });
-    return;
-  }
-
-  if (nuevaFase === "CERRADO_GANADO") {
-    try {
-      const response = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}`);
-      const trato = await response.json();
-      const empresaResponse = await fetchWithToken(`${API_BASE_URL}/empresas/${trato.empresaId}`);
-      let empresa = await empresaResponse.json();
-      
-      
-      const updatedEmpresaData = {
-        ...empresa,
-        estatus: "CLIENTE",
-      };
-      console.log("Datos enviados:", updatedEmpresaData);
-      const updateResponse = await fetchWithToken(`${API_BASE_URL}/empresas/${trato.empresaId}`, {
-        method: "PUT",
-        body: JSON.stringify(updatedEmpresaData),
-      });
-      if (!updateResponse.ok) {
-        throw new Error("Error acutalizando el estatus de la empresa");
-      }
-      empresa = await updateResponse.json(); 
-
-      setModals((prev) => ({
-        ...prev,
-        empresa: { isOpen: true, empresa: empresa, tratoId: tratoId },
-      }));
+  const handleDrop = async (e, targetColumnId) => {
+    e.preventDefault();
+    const tratoId = Number.parseInt(e.dataTransfer.getData("tratoId"));
+    if (isNaN(tratoId)) {
+      console.error("ID del trato no válido al soltar:", e.dataTransfer.getData("tratoId"));
       return;
-    } catch (error) {
-      console.error("Error fetching or updating empresa data in handleDrop:", error);
-      Swal.fire({ icon: "error", title: "Error", text: "No se pudo cargar o actualizar la empresa" });
     }
-  }
 
-  try {
-    const response = await fetchWithToken(
-      `${API_BASE_URL}/tratos/${tratoId}/mover-fase?nuevaFase=${nuevaFase}`,
-      { method: "PUT" }
-    );
-    const updatedTrato = await response.json();
-    await fetchData();
-  } catch (error) {
-    console.error("Error moving trato:", error);
-    Swal.fire({ icon: "error", title: "Error", text: "No se pudo mover el trato" });
-  }
-};
+    const targetColumn = columnas.find((c) => c.id === targetColumnId);
+    const sourceColumn = columnas.find((c) => c.tratos.some((t) => t.id === tratoId));
+    if (!targetColumn || !sourceColumn || targetColumn.id === sourceColumn.id) return;
+
+    const faseMap = {
+      "clasificacion": "CLASIFICACION",
+      "primer-contacto": "PRIMER_CONTACTO",
+      "envio-de-informacion": "ENVIO_DE_INFORMACION",
+      "reunion": "REUNION",
+      "cotizacion-propuesta-practica": "COTIZACION_PROPUESTA_PRACTICA",
+      "negociacion-revision": "NEGOCIACION_REVISION",
+      "cerrado-ganado": "CERRADO_GANADO",
+      "respuesta-por-correo": "RESPUESTA_POR_CORREO",
+      "interes-futuro": "INTERES_FUTURO",
+      "cerrado-perdido": "CERRADO_PERDIDO",
+    };
+
+    const nuevaFase = faseMap[targetColumn.className];
+    if (!nuevaFase) {
+      console.error("Fase no válida:", targetColumn.className);
+      Swal.fire({ icon: "error", title: "Error", text: "Fase no válida" });
+      return;
+    }
+
+    try {
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/tratos/${tratoId}/mover-fase?nuevaFase=${nuevaFase}`,
+        { method: "PUT" }
+      );
+      const updatedTrato = await response.json();
+      await fetchData();
+    } catch (error) {
+      console.error("Error moving trato:", error);
+      Swal.fire({ icon: "error", title: "Error", text: "No se pudo mover el trato" });
+    }
+  };
 
   const onChangeDateRange = (dates) => {
     const [start, end] = dates;
@@ -1925,8 +1476,8 @@ const Tratos = () => {
   };
 
   const handleTratoClick = (trato) => {
-  navigate(`/detallestrato/${trato.id}`, { state: { trato } }); 
-};
+    navigate(`/detallestrato/${trato.id}`, { state: { trato } });
+  };
 
   const allExpanded = expandedColumns.length === columnas.length;
   const handleToggleAllColumns = () => {
@@ -1951,13 +1502,13 @@ const Tratos = () => {
                       <option value="Todos los usuarios">Todos los usuarios</option>
                       {users.map((user) => (
                         <option key={user.id} value={user.id}>
-                          {user.nombre || user.nombreUsuario || "Sin nombre"} {user.apellidos || ""}
+                          {user.nombre || user.nombreUsuario || "Sin nombre"}
                         </option>
                       ))}
                     </select>
                     <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="icon-deploy" />
                   </div>
-                  <span className="filter-legend">Tratos pertenecientes a cada usuario</span>
+                  <span className="filter-legend">Filtro por usuario</span>
                 </div>
               )}
               <div className="filter-group">
@@ -1982,7 +1533,7 @@ const Tratos = () => {
                     }
                   />
                 </div>
-                <span className="filter-legend">Filtro de tratos por un rango de tiempo</span>
+                <span className="filter-legend">Filtro por un rango de tiempo</span>
               </div>
             </div>
 
@@ -2024,6 +1575,7 @@ const Tratos = () => {
                         onDragEnd={handleDragEnd}
                         onTratoClick={handleTratoClick}
                         onActivityAdded={handleActivityAdded}
+                        navigate={navigate}
                       />
                     ))
                   ) : (
@@ -2086,21 +1638,9 @@ const Tratos = () => {
           users={users}
           creatorId={modals.programarTarea.creatorId}
         />
-        <EmpresaModal
-          isOpen={modals.empresa.isOpen}
-          onClose={() => setModals((prev) => ({ ...prev, empresa: { ...prev.empresa, isOpen: false } }))}
-          onSave={(savedEmpresa) => {
-            setModals((prev) => ({ ...prev, empresa: { ...prev.empresa, isOpen: false } }));
-            fetchData();
-          }}
-          empresa={modals.empresa.empresa}
-          users={users}
-          fetchData={fetchData}
-          tratoId={modals.empresa.tratoId} 
-        />
       </main>
     </>
   );
 };
 
-export default Tratos;
+export default Tratos

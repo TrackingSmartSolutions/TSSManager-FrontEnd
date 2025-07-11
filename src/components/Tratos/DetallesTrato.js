@@ -14,16 +14,22 @@ import deleteIcon from "../../assets/icons/eliminar.png"
 import editIcon from "../../assets/icons/editar.png"
 import checkIcon from "../../assets/icons/ganado.png"
 import closeIcon from "../../assets/icons/perdido.png"
+import attachIcon from "../../assets/icons/adjunto-archivo.png";
 import deploy from "../../assets/icons/desplegar.png"
 import { API_BASE_URL } from "../Config/Config";
 
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token");
+
   const headers = {
-    "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
+
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+
   const response = await fetch(url, { ...options, headers });
   if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`);
   return response;
@@ -188,8 +194,13 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
 
   const validateForm = () => {
     const newErrors = {};
+    const currentDate = new Date().toISOString().split('T')[0];
+    const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
     if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fecha.trim()) newErrors.fecha = "Este campo es obligatorio";
+    else if (formData.fecha < currentDate) newErrors.fecha = "La fecha no puede ser en el pasado";
+    else if (formData.fecha === currentDate && formData.horaInicio && formData.horaInicio < currentTime)
+      newErrors.horaInicio = "La hora no puede ser en el pasado";
     if (!formData.horaInicio.trim()) newErrors.horaInicio = "Este campo es obligatorio";
     if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     setErrors(newErrors);
@@ -279,6 +290,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             value={formData.fecha}
             onChange={(e) => handleInputChange("fecha", e.target.value)}
             className={`modal-form-control ${errors.fecha ? "error" : ""}`}
+            min={new Date().toISOString().split('T')[0]}
           />
           {errors.fecha && <span className="error-message">{errors.fecha}</span>}
         </div>
@@ -290,6 +302,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             value={formData.horaInicio}
             onChange={(e) => handleInputChange("horaInicio", e.target.value)}
             className={`modal-form-control ${errors.horaInicio ? "error" : ""}`}
+            min={formData.fecha === new Date().toISOString().split('T')[0] ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : undefined}
           />
           {errors.horaInicio && <span className="error-message">{errors.horaInicio}</span>}
         </div>
@@ -334,9 +347,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     nombreContacto: "",
     fecha: "",
     horaInicio: "",
-    duracionHoras: "",
-    duracionMinutos: "",
-    duracionSegundos: "",
+    duracion: "00:30",
     modalidad: "VIRTUAL",
     finalidad: "",
     lugarReunion: "",
@@ -437,11 +448,15 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
   };
   const validateForm = () => {
     const newErrors = {};
+    const currentDate = new Date().toISOString().split('T')[0];
+    const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
     if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fecha.trim()) newErrors.fecha = "Este campo es obligatorio";
+    else if (formData.fecha < currentDate) newErrors.fecha = "La fecha no puede ser en el pasado";
+    else if (formData.fecha === currentDate && formData.horaInicio && formData.horaInicio < currentTime)
+      newErrors.horaInicio = "La hora no puede ser en el pasado";
     if (!formData.horaInicio.trim()) newErrors.horaInicio = "Este campo es obligatorio";
-    if (!formData.duracionHoras && !formData.duracionMinutos && !formData.duracionSegundos)
-      newErrors.duracion = "Debe especificar al menos una unidad de tiempo";
+    if (!formData.duracion) newErrors.duracion = "Este campo es obligatorio";
     if (!formData.modalidad.trim()) newErrors.modalidad = "Este campo es obligatorio";
     if (formData.modalidad === "PRESENCIAL" && !formData.lugarReunion.trim())
       newErrors.lugarReunion = "Lugar es obligatorio para reuniones presenciales";
@@ -456,10 +471,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     e.preventDefault();
     if (!validateForm()) return;
 
-    const hours = parseInt(formData.duracionHoras) || 0;
-    const minutes = parseInt(formData.duracionMinutos) || 0;
-    const seconds = parseInt(formData.duracionSegundos) || 0;
-    const duracionStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    const duracionStr = formData.duracion;
     const horaInicio = formData.horaInicio ? `${formData.horaInicio}:00` : '';
 
     const actividadDTO = {
@@ -545,6 +557,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             value={formData.fecha}
             onChange={(e) => handleInputChange("fecha", e.target.value)}
             className={`modal-form-control ${errors.fecha ? "error" : ""}`}
+            min={new Date().toISOString().split('T')[0]}
           />
           {errors.fecha && <span className="error-message">{errors.fecha}</span>}
         </div>
@@ -557,48 +570,27 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
               value={formData.horaInicio}
               onChange={(e) => handleInputChange("horaInicio", e.target.value)}
               className={`modal-form-control ${errors.horaInicio ? "error" : ""}`}
+              min={formData.fecha === new Date().toISOString().split('T')[0] ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : undefined}
             />
             {errors.horaInicio && <span className="error-message">{errors.horaInicio}</span>}
           </div>
           <div className="modal-form-group">
             <label>Duración: <span className="required">*</span></label>
-            <div className="duracion-container">
-              <div className="duracion-field">
-                <input
-                  type="number"
-                  value={formData.duracionHoras}
-                  onChange={(e) => handleInputChange("duracionHoras", e.target.value)}
-                  className="modal-form-control duracion-input"
-                  min="0"
-                  max="23"
-                  placeholder="0"
-                />
-                <label>Horas</label>
-              </div>
-              <div className="duracion-field">
-                <input
-                  type="number"
-                  value={formData.duracionMinutos}
-                  onChange={(e) => handleInputChange("duracionMinutos", e.target.value)}
-                  className="modal-form-control duracion-input"
-                  min="0"
-                  max="59"
-                  placeholder="0"
-                />
-                <label>Minutos</label>
-              </div>
-              <div className="duracion-field">
-                <input
-                  type="number"
-                  value={formData.duracionSegundos}
-                  onChange={(e) => handleInputChange("duracionSegundos", e.target.value)}
-                  className="modal-form-control duracion-input"
-                  min="0"
-                  max="59"
-                  placeholder="0"
-                />
-                <label>Segundos</label>
-              </div>
+            <div className="modal-select-wrapper">
+              <select
+                id="duracion"
+                value={formData.duracion}
+                onChange={(e) => handleInputChange("duracion", e.target.value)}
+                className={`modal-form-control ${errors.duracion ? "error" : ""}`}
+              >
+                <option value="00:30">30 minutos</option>
+                <option value="01:00">1 hora</option>
+                <option value="01:30">1 hora 30 minutos</option>
+                <option value="02:00">2 horas</option>
+                <option value="02:30">2 horas 30 minutos</option>
+                <option value="03:00">3 horas</option>
+              </select>
+              <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
             </div>
             {errors.duracion && <span className="error-message">{errors.duracion}</span>}
           </div>
@@ -766,8 +758,10 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
 
   const validateForm = () => {
     const newErrors = {};
+    const currentDate = new Date().toISOString().split('T')[0];
     if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fechaLimite.trim()) newErrors.fechaLimite = "Este campo es obligatorio";
+    else if (formData.fechaLimite < currentDate) newErrors.fechaLimite = "La fecha no puede ser en el pasado";
     if (!formData.tipo.trim()) newErrors.tipo = "Este campo es obligatorio";
     if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     setErrors(newErrors);
@@ -856,6 +850,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
             value={formData.fechaLimite}
             onChange={(e) => handleInputChange("fechaLimite", e.target.value)}
             className={`modal-form-control ${errors.fechaLimite ? "error" : ""}`}
+            min={new Date().toISOString().split('T')[0]}
           />
           {errors.fechaLimite && <span className="error-message">{errors.fechaLimite}</span>}
         </div>
@@ -995,7 +990,12 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
 
   const validateForm = () => {
     const newErrors = {};
+    const currentDate = new Date().toISOString().split('T')[0];
+    const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
     if (!formData.nuevaFecha.trim()) newErrors.nuevaFecha = "Este campo es obligatorio";
+    else if (formData.nuevaFecha < currentDate) newErrors.nuevaFecha = "La fecha no puede ser en el pasado";
+    else if (formData.nuevaFecha === currentDate && formData.nuevaHora && formData.nuevaHora < currentTime)
+      newErrors.nuevaHora = "La hora no puede ser en el pasado";
     if (!formData.nuevaHora.trim()) newErrors.nuevaHora = "Este campo es obligatorio";
     if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     if (!formData.asignadoAId) newErrors.asignadoAId = "Este campo es obligatorio";
@@ -1091,6 +1091,7 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
             value={formData.nuevaFecha}
             onChange={(e) => handleInputChange("nuevaFecha", e.target.value)}
             className={`modal-form-control ${errors.nuevaFecha ? "error" : ""}`}
+            min={new Date().toISOString().split('T')[0]}
           />
           {errors.nuevaFecha && <span className="error-message">{errors.nuevaFecha}</span>}
         </div>
@@ -1102,6 +1103,7 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
             value={formData.nuevaHora}
             onChange={(e) => handleInputChange("nuevaHora", e.target.value)}
             className={`modal-form-control ${errors.nuevaHora ? "error" : ""}`}
+            min={formData.nuevaFecha === new Date().toISOString().split('T')[0] ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : undefined}
           />
           {errors.nuevaHora && <span className="error-message">{errors.nuevaHora}</span>}
         </div>
@@ -1145,9 +1147,7 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
     nombreContactoId: "",
     nuevaFecha: "",
     nuevaHoraInicio: "",
-    duracionHoras: "",
-    duracionMinutos: "",
-    duracionSegundos: "",
+    duracion: "00:30",
     modalidad: "",
     medio: "",
     finalidad: "",
@@ -1232,10 +1232,14 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
 
   const validateForm = () => {
     const newErrors = {};
+    const currentDate = new Date().toISOString().split('T')[0];
+    const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
     if (!formData.nuevaFecha.trim()) newErrors.nuevaFecha = "Este campo es obligatorio";
+    else if (formData.nuevaFecha < currentDate) newErrors.nuevaFecha = "La fecha no puede ser en el pasado";
+    else if (formData.nuevaFecha === currentDate && formData.nuevaHoraInicio && formData.nuevaHoraInicio < currentTime)
+      newErrors.nuevaHoraInicio = "La hora no puede ser en el pasado";
     if (!formData.nuevaHoraInicio.trim()) newErrors.nuevaHoraInicio = "Este campo es obligatorio";
-    if (!formData.duracionHoras && !formData.duracionMinutos && !formData.duracionSegundos)
-      newErrors.duracion = "Debe especificar al menos una unidad de tiempo";
+    if (!formData.duracion) newErrors.duracion = "Este campo es obligatorio";
     if (!formData.modalidad.trim()) newErrors.modalidad = "Este campo es obligatorio";
     if (formData.modalidad === "PRESENCIAL" && !formData.lugarReunion.trim())
       newErrors.lugarReunion = "Lugar es obligatorio para reuniones presenciales";
@@ -1250,10 +1254,7 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    const hours = parseInt(formData.duracionHoras) || 0;
-    const minutes = parseInt(formData.duracionMinutos) || 0;
-    const seconds = parseInt(formData.duracionSegundos) || 0;
-    const duracionStr = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    const duracionStr = formData.duracion;
 
     const actividadDTO = {
       id: actividad.id,
@@ -1340,6 +1341,7 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
             value={formData.nuevaFecha}
             onChange={(e) => handleInputChange("nuevaFecha", e.target.value)}
             className={`modal-form-control ${errors.nuevaFecha ? "error" : ""}`}
+            min={new Date().toISOString().split('T')[0]}
           />
           {errors.nuevaFecha && <span className="error-message">{errors.nuevaFecha}</span>}
         </div>
@@ -1352,48 +1354,27 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
               value={formData.nuevaHoraInicio}
               onChange={(e) => handleInputChange("nuevaHoraInicio", e.target.value)}
               className={`modal-form-control ${errors.nuevaHoraInicio ? "error" : ""}`}
+              min={formData.nuevaFecha === new Date().toISOString().split('T')[0] ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : undefined}
             />
             {errors.nuevaHoraInicio && <span className="error-message">{errors.nuevaHoraInicio}</span>}
           </div>
           <div className="modal-form-group">
             <label>Duración: <span className="required">*</span></label>
-            <div className="duracion-container">
-              <div className="duracion-field">
-                <input
-                  type="number"
-                  value={formData.duracionHoras}
-                  onChange={(e) => handleInputChange("duracionHoras", e.target.value)}
-                  className="modal-form-control duracion-input"
-                  min="0"
-                  max="23"
-                  placeholder="0"
-                />
-                <label>Horas</label>
-              </div>
-              <div className="duracion-field">
-                <input
-                  type="number"
-                  value={formData.duracionMinutos}
-                  onChange={(e) => handleInputChange("duracionMinutos", e.target.value)}
-                  className="modal-form-control duracion-input"
-                  min="0"
-                  max="59"
-                  placeholder="0"
-                />
-                <label>Minutos</label>
-              </div>
-              <div className="duracion-field">
-                <input
-                  type="number"
-                  value={formData.duracionSegundos}
-                  onChange={(e) => handleInputChange("duracionSegundos", e.target.value)}
-                  className="modal-form-control duracion-input"
-                  min="0"
-                  max="59"
-                  placeholder="0"
-                />
-                <label>Segundos</label>
-              </div>
+            <div className="modal-select-wrapper">
+              <select
+                id="duracion"
+                value={formData.duracion}
+                onChange={(e) => handleInputChange("duracion", e.target.value)}
+                className={`modal-form-control ${errors.duracion ? "error" : ""}`}
+              >
+                <option value="00:30">30 minutos</option>
+                <option value="01:00">1 hora</option>
+                <option value="01:30">1 hora 30 minutos</option>
+                <option value="02:00">2 horas</option>
+                <option value="02:30">2 horas 30 minutos</option>
+                <option value="03:00">3 horas</option>
+              </select>
+              <img src={deploy} alt="Desplegar" className="deploy-icon" />
             </div>
             {errors.duracion && <span className="error-message">{errors.duracion}</span>}
           </div>
@@ -1567,7 +1548,9 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
 
   const validateForm = () => {
     const newErrors = {};
+    const currentDate = new Date().toISOString().split('T')[0];
     if (!formData.nuevaFechaLimite.trim()) newErrors.nuevaFechaLimite = "Este campo es obligatorio";
+    else if (formData.nuevaFechaLimite < currentDate) newErrors.nuevaFechaLimite = "La fecha no puede ser en el pasado";
     if (!formData.tipo.trim()) newErrors.tipo = "Este campo es obligatorio";
     if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     setErrors(newErrors);
@@ -1661,9 +1644,11 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
             value={formData.nuevaFechaLimite}
             onChange={(e) => handleInputChange("nuevaFechaLimite", e.target.value)}
             className={`modal-form-control ${errors.nuevaFechaLimite ? "error" : ""}`}
+            min={new Date().toISOString().split('T')[0]}
           />
           {errors.nuevaFechaLimite && <span className="error-message">{errors.nuevaFechaLimite}</span>}
         </div>
+
         <div className="modal-form-group">
           <label>Tipo: <span className="required">*</span></label>
           <div className="tipo-buttons">
@@ -2295,6 +2280,402 @@ const EditarTratoModal = ({ isOpen, onClose, onSave, trato, users, companies }) 
   );
 };
 
+// Modal para crear correo
+const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeModal }) => {
+  const [formData, setFormData] = useState({
+    para: "",
+    asunto: "",
+    mensaje: "",
+    adjuntos: [], // Archivos locales subidos
+    adjuntosPlantilla: [], // URLs de archivos de plantilla
+  });
+  const [errors, setErrors] = useState({});
+  const [plantillas, setPlantillas] = useState([]);
+  const [loadingPlantillas, setLoadingPlantillas] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [plantillaSeleccionada, setPlantillaSeleccionada] = useState(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      const loadContactoData = async () => {
+        try {
+          const response = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}`);
+          const trato = await response.json();
+          setFormData(prev => ({
+            ...prev,
+            para: trato.contacto?.email || "",
+          }));
+        } catch (error) {
+          console.error("Error loading contact data:", error);
+        }
+      };
+      loadContactoData();
+
+      const loadPlantillas = async () => {
+        setLoadingPlantillas(true);
+        try {
+          const response = await fetchWithToken(`${API_BASE_URL}/plantillas`);
+          const plantillasData = await response.json();
+          setPlantillas(plantillasData);
+        } catch (error) {
+          console.error("Error loading plantillas:", error);
+        } finally {
+          setLoadingPlantillas(false);
+        }
+      };
+      loadPlantillas();
+    }
+  }, [isOpen, tratoId]);
+
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
+  };
+
+  const handleFileUpload = (event) => {
+    const files = Array.from(event.target.files);
+    setFormData((prev) => ({
+      ...prev,
+      adjuntos: [...prev.adjuntos, ...files],
+    }));
+  };
+
+  const handleRemoveAttachment = (index, isTemplate = false) => {
+    if (isTemplate) {
+      setFormData((prev) => ({
+        ...prev,
+        adjuntosPlantilla: prev.adjuntosPlantilla.filter((_, i) => i !== index),
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        adjuntos: prev.adjuntos.filter((_, i) => i !== index),
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.para.trim()) newErrors.para = "Debes especificar un destinatario o dejar el valor predeterminado";
+    if (!formData.asunto.trim()) newErrors.asunto = "Este campo es obligatorio";
+    if (!formData.mensaje.trim()) newErrors.mensaje = "Este campo es obligatorio";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const resetFormData = () => {
+    setFormData({
+      para: "",
+      asunto: "",
+      mensaje: "",
+      adjuntos: [],
+      adjuntosPlantilla: [],
+    });
+    setPlantillaSeleccionada(null);
+    setErrors({});
+    setError(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const formDataToSend = new FormData();
+      const destinatario = formData.para.trim() || "Sin destinatario";
+
+      if (plantillaSeleccionada) {
+        formDataToSend.append("destinatario", destinatario);
+        formDataToSend.append("plantillaId", plantillaSeleccionada.id);
+        formDataToSend.append("tratoId", tratoId);
+
+        if (formData.mensaje !== plantillaSeleccionada.mensaje) {
+          formDataToSend.append("cuerpoPersonalizado", formData.mensaje);
+        }
+
+        if (formData.adjuntos.length > 0) {
+          for (const file of formData.adjuntos) {
+            formDataToSend.append("archivosAdjuntosAdicionales", file);
+          }
+        }
+
+        const response = await fetchWithToken(`${API_BASE_URL}/correos/plantilla`, {
+          method: "POST",
+          body: formDataToSend,
+        });
+
+        const emailRecord = await response.json();
+        if (emailRecord.exito) {
+          Swal.fire({
+            title: "¡Correo enviado!",
+            text: "El correo se ha enviado exitosamente usando la plantilla",
+            icon: "success",
+          });
+
+          resetFormData();
+          onSave();
+          onClose();
+        } else {
+          throw new Error("Fallo al enviar el correo");
+        }
+      } else {
+        formDataToSend.append("destinatario", destinatario);
+        formDataToSend.append("asunto", formData.asunto);
+        formDataToSend.append("cuerpo", formData.mensaje);
+        formDataToSend.append("tratoId", tratoId);
+
+        if (formData.adjuntos.length > 0) {
+          for (const file of formData.adjuntos) {
+            formDataToSend.append("archivosAdjuntos", file);
+          }
+        }
+
+        const response = await fetchWithToken(`${API_BASE_URL}/correos`, {
+          method: "POST",
+          body: formDataToSend,
+        });
+
+        const emailRecord = await response.json();
+        if (emailRecord.exito) {
+          Swal.fire({
+            title: "¡Correo enviado!",
+            text: "El correo se ha enviado exitosamente",
+            icon: "success",
+          });
+
+          resetFormData();
+          onSave();
+          onClose();
+        } else {
+          throw new Error("Fallo al enviar el correo");
+        }
+      }
+    } catch (error) {
+      console.error("Error al enviar correo:", error);
+      setError(error.message || "No se pudo enviar el correo");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.message || "No se pudo enviar el correo"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUsarPlantilla = () => {
+    if (loadingPlantillas || plantillas.length === 0) {
+      console.log("Plantillas no cargadas aún o vacías", { loadingPlantillas, plantillas });
+      return;
+    }
+    openModal("seleccionarPlantilla", {
+      onSelectTemplate: (template) => {
+        setPlantillaSeleccionada(template);
+        setFormData(prev => ({
+          ...prev,
+          asunto: template.asunto,
+          mensaje: template.mensaje,
+          adjuntosPlantilla: template.adjuntos || [],
+        }));
+        closeModal("seleccionarPlantilla");
+      },
+      plantillas: plantillas,
+    });
+  };
+
+  const handleLimpiarPlantilla = () => {
+    setPlantillaSeleccionada(null);
+    setFormData(prev => ({
+      ...prev,
+      asunto: "",
+      mensaje: "",
+      adjuntosPlantilla: [],
+    }));
+  };
+
+  // Función para obtener el nombre del archivo desde una URL
+  const getFileNameFromUrl = (url) => {
+    try {
+      const parts = url.split('/');
+      let fileName = parts[parts.length - 1];
+      if (fileName.includes('?')) {
+        fileName = fileName.split('?')[0];
+      }
+      return fileName || 'archivo_adjunto';
+    } catch (error) {
+      return 'archivo_adjunto';
+    }
+  };
+
+  return (
+    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Mensaje nuevo" size="lg" canClose={true}>
+      <form onSubmit={handleSubmit} className="gmail-compose-form">
+        <div className="gmail-compose-body">
+          {/* Mostrar información de plantilla seleccionada */}
+          {plantillaSeleccionada && (
+            <div className="plantilla-info">
+              <div className="plantilla-badge">
+                <span>📝 Usando plantilla: {plantillaSeleccionada.nombre}</span>
+                <button
+                  type="button"
+                  onClick={handleLimpiarPlantilla}
+                  className="limpiar-plantilla-btn"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="gmail-field-group">
+            <label className="gmail-field-label">Para</label>
+            <input
+              type="email"
+              value={formData.para}
+              onChange={(e) => handleInputChange("para", e.target.value)}
+              className={`gmail-field-input ${errors.para ? "error" : ""}`}
+              placeholder="Destinatarios"
+            />
+            {errors.para && <span className="error-message">{errors.para}</span>}
+          </div>
+
+          <div className="gmail-field-group">
+            <label className="gmail-field-label">Asunto</label>
+            <input
+              type="text"
+              value={formData.asunto}
+              onChange={(e) => handleInputChange("asunto", e.target.value)}
+              className={`gmail-field-input ${errors.asunto ? "error" : ""}`}
+              placeholder="Asunto"
+            />
+            {errors.asunto && <span className="error-message">{errors.asunto}</span>}
+          </div>
+
+          <div className="gmail-message-area">
+            <textarea
+              value={formData.mensaje}
+              onChange={(e) => handleInputChange("mensaje", e.target.value)}
+              className={`gmail-message-input ${errors.mensaje ? "error" : ""}`}
+              placeholder="Redactar mensaje"
+              rows="12"
+            />
+            {errors.mensaje && <span className="error-message">{errors.mensaje}</span>}
+          </div>
+
+          {/* Mostrar archivos adjuntos de la plantilla */}
+          {formData.adjuntosPlantilla.length > 0 && (
+            <div className="gmail-attachments">
+              <h4>Archivos de la plantilla:</h4>
+              {formData.adjuntosPlantilla.map((adjunto, index) => (
+                <div key={`template-${index}`} className="gmail-attachment-item template-attachment">
+                  <img src={attachIcon || "/placeholder.svg"} alt="Adjunto" className="attachment-icon" />
+                  <span>{getFileNameFromUrl(adjunto.adjuntoUrl)}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAttachment(index, true)}
+                    className="gmail-remove-attachment"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Mostrar archivos adjuntos adicionales */}
+          {formData.adjuntos.length > 0 && (
+            <div className="gmail-attachments">
+              <h4>Archivos adicionales:</h4>
+              {formData.adjuntos.map((archivo, index) => (
+                <div key={`local-${index}`} className="gmail-attachment-item">
+                  <img src={attachIcon || "/placeholder.svg"} alt="Adjunto" className="attachment-icon" />
+                  <span>{archivo.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAttachment(index, false)}
+                    className="gmail-remove-attachment"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="gmail-compose-footer">
+          <div className="gmail-footer-left">
+            <button type="submit" className="gmail-btn-send" disabled={loading}>
+              {loading ? 'Enviando...' : 'Enviar'}
+            </button>
+            <button
+              type="button"
+              onClick={handleUsarPlantilla}
+              className="gmail-btn-template"
+              disabled={loadingPlantillas}
+            >
+              Usar plantilla
+            </button>
+          </div>
+          <div className="gmail-footer-right">
+            <label className="gmail-attach-btn">
+              <img src={attachIcon || "/placeholder.svg"} alt="Adjuntar archivo" className="attach-icon" />
+              <input
+                type="file"
+                multiple
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
+              />
+            </label>
+          </div>
+        </div>
+      </form>
+      {loading && <div className="loading-overlay">Enviando...</div>}
+      {error && <div className="error-message">{error}</div>}
+    </DetallesTratoModal>
+  );
+};
+
+// Modal para seleccionar plantillas
+const SeleccionarPlantillaModal = ({ isOpen, onClose, onSelectTemplate, plantillas = [] }) => {
+
+  const handleSelectTemplate = (template) => {
+    onSelectTemplate(template);
+    onClose();
+  };
+
+  return (
+    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Seleccionar plantilla" size="md">
+      <div className="plantillas-list">
+        {plantillas.map((plantilla) => (
+          <div
+            key={plantilla.id}
+            className="plantilla-item"
+            onClick={() => handleSelectTemplate(plantilla)}
+          >
+            <div className="plantilla-info">
+              <h4>{plantilla.nombre}</h4>
+              <p className="plantilla-asunto">{plantilla.asunto}</p>
+              <p className="plantilla-preview">
+                {(plantilla.mensaje || "").substring(0, 100)}...
+              </p>
+              {plantilla.adjuntos && plantilla.adjuntos.length > 0 && (
+                <div className="plantilla-adjuntos">
+                  📎 {plantilla.adjuntos.length} adjunto(s)
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </DetallesTratoModal>
+  );
+};
+
+
 const DetallesTrato = () => {
   const params = useParams()
   const navigate = useNavigate()
@@ -2317,7 +2698,7 @@ const DetallesTrato = () => {
     notas: [],
   });
   const [loading, setLoading] = useState(true)
-  const [activeEmailTab, setActiveEmailTab] = useState("correos")
+  const [emailRecords, setEmailRecords] = useState([]);
   const [nuevaNota, setNuevaNota] = useState("")
   const [editingNoteId, setEditingNoteId] = useState(null)
   const [editingNoteText, setEditingNoteText] = useState("")
@@ -2337,6 +2718,8 @@ const DetallesTrato = () => {
     completarActividad: { isOpen: false, actividad: null },
     editarTrato: { isOpen: false },
     crearNuevaActividad: { isOpen: false },
+    crearCorreo: { isOpen: false },
+    seleccionarPlantilla: { isOpen: false },
   })
 
   // Funciones para manejar modales
@@ -2355,11 +2738,9 @@ const DetallesTrato = () => {
       ].includes(modalType)
     ) {
       try {
-        // Fetch the trato to get empresaId
         const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}`);
         const trato = await tratoResponse.json();
 
-        // Fetch contacts if empresaId exists
         if (trato.empresaId) {
           const contactosResponse = await fetchWithToken(
             `${API_BASE_URL}/empresas/${trato.empresaId}/contactos`
@@ -2380,7 +2761,6 @@ const DetallesTrato = () => {
       }
     }
 
-    // Update the modals state
     setModals((prev) => ({
       ...prev,
       [modalType]: updatedModal,
@@ -2408,18 +2788,15 @@ const DetallesTrato = () => {
     const modalType = tipo.toLowerCase();
     const modalState = modals[`programar${modalType.charAt(0).toUpperCase() + modalType.slice(1)}`];
 
-    // Asegurarse de que los contactos estén disponibles
     if (data.contactoId && modalState && modalState.isOpen) {
       let contactos = modalState.contactos || [];
       if (contactos.length === 0 && modalState.tratoId) {
-        // Si no hay contactos, intentar cargarlos dinámicamente
         try {
           const response = await fetchWithToken(`${API_BASE_URL}/tratos/${modalState.tratoId}`);
           const trato = await response.json();
           if (trato.empresaId) {
             const contactosResponse = await fetchWithToken(`${API_BASE_URL}/empresas/${trato.empresaId}/contactos`);
             contactos = await contactosResponse.json();
-            // Actualizar el estado del modal con los contactos
             setModals((prev) => ({
               ...prev,
               [modalType]: { ...prev[modalType], contactos },
@@ -2432,7 +2809,6 @@ const DetallesTrato = () => {
       const contacto = contactos.find((c) => c.id === data.contactoId);
       nombreContacto = contacto ? contacto.nombre : "Sin contacto";
     } else if (data.contactoId && trato.contacto?.nombre) {
-      // Fallback al contacto del trato si está disponible
       nombreContacto = trato.contacto.nombre;
     }
 
@@ -2543,7 +2919,7 @@ const DetallesTrato = () => {
           id: updatedActividad.id,
           fecha: updatedActividad.fechaCompletado ? new Date(updatedActividad.fechaCompletado).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
           hora: updatedActividad.horaCompletado || new Date().toLocaleTimeString(),
-          responsable: users.find((u) => u.id === updatedActividad.asignadoAId)?.nombre || 'Sin asignado',
+          responsable: users.find((u) => u.id === updatedActividad.asignadoAId)?.nombreReal || 'Sin asignado',
           tipo: updatedActividad.tipo,
           medio: !updatedActividad.medio && updatedActividad.tipo.toUpperCase() === 'REUNION'
             ? 'PRESENCIAL'
@@ -2552,7 +2928,6 @@ const DetallesTrato = () => {
           interes: updatedActividad.interes || 'Sin interés',
           notas: updatedActividad.notas || '',
         };
-
         return {
           ...prev,
           actividadesAbiertas: {
@@ -2589,111 +2964,109 @@ const DetallesTrato = () => {
   };
 
 
-const handleSaveEditarTrato = async (data) => {
-  try {
-    const response = await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-    
+  const handleSaveEditarTrato = async (data) => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
 
-    // Recargar el trato completo para reflejar los cambios
-    const loadTrato = async () => {
-      const updatedData = await fetchTrato(params.id);
-      const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
-      const usersData = await usersResponse.json();
-      const users = usersData.map((user) => ({ id: user.id, nombre: user.nombreUsuario }));
+      const loadTrato = async () => {
+        const updatedData = await fetchTrato(params.id);
+        const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+        const usersData = await usersResponse.json();
+        const users = usersData.map((user) => ({ id: user.id, nombre: user.nombreUsuario, nombreReal: user.nombre }));
 
-      const propietarioUser = users.find((user) => user.id === updatedData.propietarioId);
-      const propietarioNombre = propietarioUser ? propietarioUser.nombre : updatedData.propietarioNombre || "";
+        const propietarioUser = users.find((user) => user.id === updatedData.propietarioId);
+        const propietarioNombre = propietarioUser ? propietarioUser.nombre : updatedData.propietarioNombre || "";
 
-      const mapActividad = (actividad) => {
-        let nombreContacto = "Sin contacto";
-        if (actividad.contactoId) {
-          const contacto = companies
-            .flatMap((c) => c.contactos || [])
-            .find((c) => c.id === actividad.contactoId);
-          nombreContacto = contacto ? contacto.nombre : "Sin contacto";
-        } else if (updatedData.contacto?.nombre) {
-          nombreContacto = updatedData.contacto.nombre;
-        }
-        return {
-          ...actividad,
-          nombreContacto: nombreContacto,
-          asignadoA: users.find((user) => user.id === actividad.asignadoAId)?.nombre || "Sin asignado",
-          fecha: actividad.fechaLimite || "Sin fecha",
-          hora: actividad.horaInicio || "Sin hora",
-          modalidad: actividad.modalidad,
-          lugarReunion: actividad.lugarReunion || null,
-          enlaceReunion: actividad.enlaceReunion || null,
-          tipo: actividad.tipo === "TAREA" ? "TAREA" : actividad.tipo || "Sin tipo",
-          subtipoTarea: actividad.subtipoTarea || null,
-          finalidad: actividad.finalidad || "Sin finalidad",
+        const mapActividad = (actividad) => {
+          let nombreContacto = "Sin contacto";
+          if (actividad.contactoId) {
+            const contacto = companies
+              .flatMap((c) => c.contactos || [])
+              .find((c) => c.id === actividad.contactoId);
+            nombreContacto = contacto ? contacto.nombre : "Sin contacto";
+          } else if (updatedData.contacto?.nombre) {
+            nombreContacto = updatedData.contacto.nombre;
+          }
+          return {
+            ...actividad,
+            nombreContacto: nombreContacto,
+            asignadoA: users.find((user) => user.id === actividad.asignadoAId)?.nombre || "Sin asignado",
+            fecha: actividad.fechaLimite || "Sin fecha",
+            hora: actividad.horaInicio || "Sin hora",
+            modalidad: actividad.modalidad,
+            lugarReunion: actividad.lugarReunion || null,
+            enlaceReunion: actividad.enlaceReunion || null,
+            tipo: actividad.tipo === "TAREA" ? "TAREA" : actividad.tipo || "Sin tipo",
+            subtipoTarea: actividad.subtipoTarea || null,
+            finalidad: actividad.finalidad || "Sin finalidad",
+          };
         };
+
+        const mapActividadesAbiertas = (actividades) => ({
+          tareas: (actividades.tareas || []).filter(a => a.estatus !== "CERRADA").map(mapActividad),
+          llamadas: (actividades.llamadas || []).filter(a => a.estatus !== "CERRADA").map(mapActividad),
+          reuniones: (actividades.reuniones || []).filter(a => a.estatus !== "CERRADA").map(mapActividad),
+        });
+
+        setTrato({
+          ...updatedData,
+          propietario: propietarioNombre,
+          contacto: updatedData.contacto || { nombre: "", telefono: "", whatsapp: "", email: "" },
+          ingresosEsperados: updatedData.ingresosEsperados ? `$${updatedData.ingresosEsperados.toFixed(2)}` : "",
+          fechaCreacion: updatedData.fechaCreacion ? new Date(updatedData.fechaCreacion).toLocaleDateString() : "",
+          fechaCierre: updatedData.fechaCierre ? new Date(updatedData.fechaCierre).toLocaleDateString() : "",
+          notas: updatedData.notas.map((n) => ({
+            id: n.id,
+            texto: n.nota.replace(/\\"/g, '"').replace(/^"|"$/g, ''),
+            autor: n.autorNombre,
+            fecha: n.fechaCreacion ? new Date(n.fechaCreacion).toLocaleDateString() : "",
+            editadoPor: n.editadoPorName || null,
+            fechaEdicion: n.fechaEdicion ? new Date(n.fechaEdicion).toLocaleDateString() : null,
+          })),
+          nombreEmpresa: updatedData.empresaNombre,
+          numeroTrato: updatedData.noTrato,
+          actividadesAbiertas: mapActividadesAbiertas(updatedData.actividadesAbiertas),
+          historialInteracciones: (updatedData.historialInteracciones || []).map((interaccion) => ({
+            id: interaccion.id,
+            fecha: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toISOString().split('T')[0] : "Sin fecha",
+            hora: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : "Sin hora",
+            responsable: users.find((u) => u.id === interaccion.usuarioCompletadoId)?.nombre || "Sin asignado",
+            tipo: interaccion.tipo,
+            medio: interaccion.medio || (interaccion.modalidad === "PRESENCIAL" ? "PRESENCIAL" : interaccion.medio),
+            resultado: interaccion.respuesta ? (interaccion.respuesta === "SI" ? "POSITIVO" : "NEGATIVO") : "Sin resultado",
+            interes: interaccion.interes || "Sin interés",
+            notas: interaccion.notas || "",
+          })),
+        });
       };
+      await loadTrato();
 
-      const mapActividadesAbiertas = (actividades) => ({
-        tareas: (actividades.tareas || []).filter(a => a.estatus !== "CERRADA").map(mapActividad),
-        llamadas: (actividades.llamadas || []).filter(a => a.estatus !== "CERRADA").map(mapActividad),
-        reuniones: (actividades.reuniones || []).filter(a => a.estatus !== "CERRADA").map(mapActividad),
+      Swal.fire({
+        title: "¡Trato actualizado!",
+        text: "Los cambios se han guardado exitosamente",
+        icon: "success",
       });
-
-      setTrato({
-        ...updatedData,
-        propietario: propietarioNombre,
-        contacto: updatedData.contacto || { nombre: "", telefono: "", whatsapp: "", email: "" },
-        ingresosEsperados: updatedData.ingresosEsperados ? `$${updatedData.ingresosEsperados.toFixed(2)}` : "",
-        fechaCreacion: updatedData.fechaCreacion ? new Date(updatedData.fechaCreacion).toLocaleDateString() : "",
-        fechaCierre: updatedData.fechaCierre ? new Date(updatedData.fechaCierre).toLocaleDateString() : "",
-        notas: updatedData.notas.map((n) => ({
-          id: n.id,
-          texto: n.nota.replace(/\\"/g, '"').replace(/^"|"$/g, ''),
-          autor: n.autorNombre,
-          fecha: n.fechaCreacion ? new Date(n.fechaCreacion).toLocaleDateString() : "",
-          editadoPor: n.editadoPorName || null,
-          fechaEdicion: n.fechaEdicion ? new Date(n.fechaEdicion).toLocaleDateString() : null,
-        })),
-        nombreEmpresa: updatedData.empresaNombre,
-        numeroTrato: updatedData.noTrato,
-        actividadesAbiertas: mapActividadesAbiertas(updatedData.actividadesAbiertas),
-        historialInteracciones: (updatedData.historialInteracciones || []).map((interaccion) => ({
-          id: interaccion.id,
-          fecha: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toISOString().split('T')[0] : "Sin fecha",
-          hora: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : "Sin hora",
-          responsable: users.find((u) => u.id === interaccion.usuarioCompletadoId)?.nombre || "Sin asignado",
-          tipo: interaccion.tipo,
-          medio: interaccion.medio || (interaccion.modalidad === "PRESENCIAL" ? "PRESENCIAL" : interaccion.medio),
-          resultado: interaccion.respuesta ? (interaccion.respuesta === "SI" ? "POSITIVO" : "NEGATIVO") : "Sin resultado",
-          interes: interaccion.interes || "Sin interés",
-          notas: interaccion.notas || "",
-        })),
+    } catch (error) {
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudo actualizar el trato',
+        icon: 'error',
       });
-    };
-    await loadTrato();
+      console.error("Error al guardar el trato:", error);
+    }
+  };
 
-    Swal.fire({
-      title: "¡Trato actualizado!",
-      text: "Los cambios se han guardado exitosamente",
-      icon: "success",
-    });
-  } catch (error) {
-    Swal.fire({
-      title: 'Error',
-      text: 'No se pudo actualizar el trato',
-      icon: 'error',
-    });
-    console.error("Error al guardar el trato:", error);
-  }
-};
-
-useEffect(() => {
+  useEffect(() => {
     const loadTrato = async () => {
       setLoading(true);
       try {
         const data = await fetchTrato(params.id);
         const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
         const usersData = await usersResponse.json();
-        const users = usersData.map((user) => ({ id: user.id, nombre: user.nombreUsuario }));
+        const users = usersData.map((user) => ({ id: user.id, nombre: user.nombreUsuario, nombreReal: user.nombre }));
         setUsers(users);
 
         const companiesResponse = await fetchWithToken(`${API_BASE_URL}/empresas`);
@@ -2716,92 +3089,100 @@ useEffect(() => {
         const propietarioNombre = propietarioUser ? propietarioUser.nombre : data.propietarioNombre || "";
 
         const mapActividad = (actividad) => {
-        let nombreContacto = "Sin contacto";
-        if (actividad.contactoId) {
-          const contacto = companiesWithContacts
-            .flatMap((c) => c.contactos || [])
-            .find((c) => c.id === actividad.contactoId);
-          nombreContacto = contacto ? contacto.nombre : "Sin contacto";
-        } else if (data.contacto?.nombre) {
-          nombreContacto = data.contacto.nombre;
-        }
-        return {
-          ...actividad,
-          nombreContacto: nombreContacto,
-          asignadoA: users.find((user) => user.id === actividad.asignadoAId)?.nombre || "Sin asignado",
-          fecha: actividad.fechaLimite || "Sin fecha",
-          hora: actividad.horaInicio || "Sin hora",
-          modalidad: actividad.modalidad,
-          lugarReunion: actividad.lugarReunion || null,
-          enlaceReunion: actividad.enlaceReunion || null,
-          tipo: actividad.tipo === "TAREA" ? "TAREA" : actividad.tipo || "Sin tipo",
-          subtipoTarea: actividad.subtipoTarea || null,
-          finalidad: actividad.finalidad || "Sin finalidad",
+          let nombreContacto = "Sin contacto";
+          if (actividad.contactoId) {
+            const contacto = companiesWithContacts
+              .flatMap((c) => c.contactos || [])
+              .find((c) => c.id === actividad.contactoId);
+            nombreContacto = contacto ? contacto.nombre : "Sin contacto";
+          } else if (data.contacto?.nombre) {
+            nombreContacto = data.contacto.nombre;
+          }
+          return {
+            ...actividad,
+            nombreContacto: nombreContacto,
+            asignadoA: users.find((user) => user.id === actividad.asignadoAId)?.nombre || "Sin asignado",
+            fecha: actividad.fechaLimite || "Sin fecha",
+            hora: actividad.horaInicio || "Sin hora",
+            modalidad: actividad.modalidad,
+            lugarReunion: actividad.lugarReunion || null,
+            enlaceReunion: actividad.enlaceReunion || null,
+            tipo: actividad.tipo === "TAREA" ? "TAREA" : actividad.tipo || "Sin tipo",
+            subtipoTarea: actividad.subtipoTarea || null,
+            finalidad: actividad.finalidad || "Sin finalidad",
+          };
         };
-      };
+        const emailResponse = await fetchWithToken(`${API_BASE_URL}/correos/trato/${params.id}`);
+        const emailData = await emailResponse.json();
+        if (Array.isArray(emailData)) {
+          setEmailRecords(emailData);
+        } else {
+          console.error("Error: La respuesta de correos no es un array", emailData);
+          setEmailRecords([]);
+        }
 
-      setTrato((prev) => ({
-        ...prev,
-        id: data.id || "",
-        nombre: data.nombre || "",
-        contacto: data.contacto || { nombre: "", telefono: "", whatsapp: "", email: "" },
-        propietario: propietarioNombre,
-        numeroTrato: data.noTrato || "",
-        nombreEmpresa: data.empresaNombre || "",
-        descripcion: data.descripcion || "",
-        domicilio: data.domicilio || "",
-        ingresosEsperados: data.ingresosEsperados ? `$${data.ingresosEsperados.toFixed(2)}` : "",
-        numeroUnidades: data.numeroUnidades || "",
-        sitioWeb: data.sitioWeb || "",
-        sector: data.sector || "",
-        fechaCreacion: data.fechaCreacion ? new Date(data.fechaCreacion).toLocaleDateString() : "",
-        fechaCierre: data.fechaCierre ? new Date(data.fechaCierre).toLocaleDateString() : "",
-        fase: data.fase || "",
-        fases: data.fases || [],
-        actividadesAbiertas: {
-          tareas: (data.actividadesAbiertas.tareas || []).filter(a => a.estatus !== "CERRADA").map(mapActividad),
-          llamadas: (data.actividadesAbiertas.llamadas || []).filter(a => a.estatus !== "CERRADA").map(mapActividad),
-          reuniones: (data.actividadesAbiertas.reuniones || []).filter(a => a.estatus !== "CERRADA").map(mapActividad),
-        },
-        historialInteracciones: (data.historialInteracciones || []).map(interaccion => ({
-          id: interaccion.id,
-          fecha: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toISOString().split('T')[0] : "Sin fecha",
-          hora: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : "Sin hora",
-          responsable: users.find(u => u.id === interaccion.usuarioCompletadoId)?.nombre || "Sin asignado",
-          tipo: interaccion.tipo,
-          medio: interaccion.medio || (interaccion.modalidad === "PRESENCIAL" ? "PRESENCIAL" : interaccion.medio),
-          resultado: interaccion.respuesta ? (interaccion.respuesta === "SI" ? "POSITIVO" : "NEGATIVO") : "Sin resultado",
-          interes: interaccion.interes || "Sin interés",
-          notas: interaccion.notas || "",
-        })) || [],
-        notas: data.notas.map((n) => ({
-          id: n.id,
-          texto: n.nota.replace(/\\"/g, '"').replace(/^"|"$/g, ''),
-          autor: n.autorNombre,
-          fecha: n.fechaCreacion ? new Date(n.fechaCreacion).toLocaleDateString() : "",
-          editadoPor: n.editadoPorName || null,
-          fechaEdicion: n.fechaEdicion ? new Date(n.fechaEdicion).toLocaleDateString() : null,
-        })) || [],
-      }));
-    } catch (error) {
-      console.error("Error fetching trato:", error);
-      Swal.fire({
-        title: "Error",
-        text: "No se pudo cargar el trato",
-        icon: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-  loadTrato();
-}, [params.id]);
+        setTrato((prev) => ({
+          ...prev,
+          id: data.id || "",
+          nombre: data.nombre || "",
+          contacto: data.contacto || { nombre: "", telefono: "", whatsapp: "", email: "" },
+          propietario: propietarioNombre,
+          numeroTrato: data.noTrato || "",
+          nombreEmpresa: data.empresaNombre || "",
+          descripcion: data.descripcion || "",
+          domicilio: data.domicilio || "",
+          ingresosEsperados: data.ingresosEsperados ? `$${data.ingresosEsperados.toFixed(2)}` : "",
+          numeroUnidades: data.numeroUnidades || "",
+          sitioWeb: data.sitioWeb || "",
+          sector: data.sector || "",
+          fechaCreacion: data.fechaCreacion ? new Date(data.fechaCreacion).toLocaleDateString() : "",
+          fechaCierre: data.fechaCierre ? new Date(data.fechaCierre).toLocaleDateString() : "",
+          fase: data.fase || "",
+          fases: data.fases || [],
+          actividadesAbiertas: {
+            tareas: (data.actividadesAbiertas.tareas || []).filter(a => a.estatus !== "CERRADA").map(mapActividad),
+            llamadas: (data.actividadesAbiertas.llamadas || []).filter(a => a.estatus !== "CERRADA").map(mapActividad),
+            reuniones: (data.actividadesAbiertas.reuniones || []).filter(a => a.estatus !== "CERRADA").map(mapActividad),
+          },
+          historialInteracciones: (data.historialInteracciones || []).map(interaccion => ({
+            id: interaccion.id,
+            fecha: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toISOString().split('T')[0] : "Sin fecha",
+            hora: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : "Sin hora",
+            responsable: users.find(u => u.id === interaccion.usuarioCompletadoId)?.nombreReal || "Sin asignado",
+            tipo: interaccion.tipo,
+            medio: interaccion.medio || (interaccion.modalidad === "PRESENCIAL" ? "PRESENCIAL" : interaccion.medio),
+            resultado: interaccion.respuesta ? (interaccion.respuesta === "SI" ? "POSITIVO" : "NEGATIVO") : "Sin resultado",
+            interes: interaccion.interes || "Sin interés",
+            notas: interaccion.notas || "",
+          })) || [],
+          notas: data.notas.map((n) => ({
+            id: n.id,
+            texto: n.nota.replace(/\\"/g, '"').replace(/^"|"$/g, ''),
+            autor: n.autorNombre,
+            fecha: n.fechaCreacion ? new Date(n.fechaCreacion).toLocaleDateString() : "",
+            editadoPor: n.editadoPorName || null,
+            fechaEdicion: n.fechaEdicion ? new Date(n.fechaEdicion).toLocaleDateString() : null,
+          })) || [],
+        }));
+      } catch (error) {
+        console.error("Error fetching trato:", error);
+        Swal.fire({
+          title: "Error",
+          text: "No se pudo cargar el trato",
+          icon: "error",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadTrato();
+  }, [params.id]);
 
   const handleVolver = () => {
     navigate("/tratos")
   }
 
-  // Cambiar la función handleEditarTrato para que no abra modal
+
   const handleEditarTrato = () => {
     openModal("editarTrato");
   };
@@ -2886,11 +3267,7 @@ useEffect(() => {
   }
 
   const handleAgregarCorreo = () => {
-    Swal.fire({
-      title: "Agregar Correo",
-      text: "Funcionalidad en desarrollo",
-      icon: "info",
-    })
+    openModal("crearCorreo")
   }
 
   const handleCambiarFase = async (nuevaFase) => {
@@ -3160,10 +3537,12 @@ useEffect(() => {
             <div className="seccion persona-contacto">
               <div className="seccion-header">
                 <h2>Persona de contacto</h2>
-                <label className="checkbox-container">
-                  <input type="checkbox" />
-                  <span>Recibir emails de seguimiento</span>
-                </label>
+                {['ENVIO_DE_INFORMACION', 'REUNION', 'COTIZACION_PROPUESTA', 'NEGOCIACION_REVISION', 'RESPUESTA_POR_CORREO'].includes(trato.fase) && (
+                  <label className="checkbox-container">
+                    <input type="checkbox" />
+                    <span>Mandar emails de seguimiento</span>
+                  </label>
+                )}
               </div>
               <div className="contacto-info">
                 <div className="contacto-avatar">
@@ -3458,30 +3837,51 @@ useEffect(() => {
               </div>
               <div className="tabla-body">
                 {trato.historialInteracciones && trato.historialInteracciones.length > 0 ? (
-                  trato.historialInteracciones.map((interaccion) => (
-                    <div key={interaccion.id} className="tabla-row">
-                      <div className="cell">
-                        <div className="fecha-hora">
-                          <span className="fecha">{interaccion.fecha}</span>
-                          <span className="hora">{interaccion.hora}</span>
+                  trato.historialInteracciones.map((interaccion) => {
+                    // Mapeo para los íconos de Resultado
+                    const resultadoIcono = {
+                      POSITIVO: '✅',
+                      NEGATIVO: '❌',
+                      'Sin resultado': '—',
+                    }[interaccion.resultado] || '—';
+
+                    // Mapeo para los íconos de Interés
+                    const interesIcono = {
+                      ALTO: '🟢',
+                      MEDIO: '🟡',
+                      BAJO: '🔴',
+                      'Sin interés': '—',
+                    }[interaccion.interes] || '—';
+
+                    return (
+                      <div key={interaccion.id} className="tabla-row">
+                        <div className="cell">
+                          <div className="fecha-hora">
+                            <span className="fecha">{interaccion.fecha}</span>
+                            <span className="hora">{interaccion.hora}</span>
+                          </div>
                         </div>
+                        <div className="cell">{interaccion.responsable}</div>
+                        <div className="cell">
+                          <span className={`tipo-badge ${interaccion.tipo.toLowerCase()}`}>
+                            {interaccion.tipo}
+                          </span>
+                        </div>
+                        <div className="cell">{interaccion.medio}</div>
+                        <div className="cell">
+                          <span className={`resultado-badge ${interaccion.resultado ? interaccion.resultado.toLowerCase() : 'sin-resultado'}`}>
+                            {resultadoIcono}
+                          </span>
+                        </div>
+                        <div className="cell">
+                          <span className={`interes-badge ${interaccion.interes}`}>
+                            {interesIcono}
+                          </span>
+                        </div>
+                        <div className="cell notas-cell">{interaccion.notas}</div>
                       </div>
-                      <div className="cell">{interaccion.responsable}</div>
-                      <div className="cell">
-                        <span className={`tipo-badge ${interaccion.tipo.toLowerCase()}`}>{interaccion.tipo}</span>
-                      </div>
-                      <div className="cell">{interaccion.medio}</div>
-                      <div className="cell">
-                        <span className={`resultado-badge ${interaccion.resultado ? interaccion.resultado.toLowerCase() : 'sin-resultado'}`}>
-                          {interaccion.resultado || 'Sin resultado'}
-                        </span>
-                      </div>
-                      <div className="cell">
-                        <span className={`interes-badge ${interaccion.interes}`}>{interaccion.interes}</span>
-                      </div>
-                      <div className="cell notas-cell">{interaccion.notas}</div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="tabla-row">
                     <div className="cell-empty" colSpan="7">
@@ -3492,39 +3892,56 @@ useEffect(() => {
               </div>
             </div>
           </div>
-
           {/* Correos electrónicos */}
-          <div className="seccion correos-electronicos">
-            <div className="seccion-header">
-              <h2>Correos electrónicos</h2>
-              <button onClick={() => handleAgregarCorreo()} className="btn-agregar">
-                <img src={addIcon || "/placeholder.svg"} alt="Agregar" />
-              </button>
+<div className="seccion correos-electronicos">
+  <div className="seccion-header">
+    <h2>Correos electrónicos</h2>
+    <button onClick={() => handleAgregarCorreo()} className="btn-agregar">
+      <img src={addIcon || "/placeholder.svg"} alt="Agregar" />
+    </button>
+  </div>
+  <div className="correos-contenido">
+    {emailRecords.length > 0 ? (
+      emailRecords.map((email) => (
+        <div key={email.id} className="email-item">
+          <div className="email-header">
+            <div className="email-destinatario">
+              {email.destinatario}
             </div>
-            <div className="correos-tabs">
-              <button
-                className={`tab ${activeEmailTab === "correos" ? "active" : ""}`}
-                onClick={() => setActiveEmailTab("correos")}
-              >
-                Correos
-              </button>
-              <button
-                className={`tab ${activeEmailTab === "borradores" ? "active" : ""}`}
-                onClick={() => setActiveEmailTab("borradores")}
-              >
-                Borradores
-              </button>
-              <button
-                className={`tab ${activeEmailTab === "programado" ? "active" : ""}`}
-                onClick={() => setActiveEmailTab("programado")}
-              >
-                Programado
-              </button>
-            </div>
-            <div className="correos-contenido">
-              <p className="no-actividades">No se encontraron registros</p>
+            <div className="email-fecha">
+              {new Date(email.fechaEnvio).toLocaleString()}
             </div>
           </div>
+          
+          <div className="email-asunto">
+            <span className="email-asunto-label">Asunto</span>
+            <div className="email-asunto-texto">{email.asunto}</div>
+          </div>
+          
+          <div className="email-cuerpo">
+            <span className="email-cuerpo-label">Mensaje</span>
+            <div className="email-cuerpo-texto">{email.cuerpo}</div>
+          </div>
+          
+          {email.archivosAdjuntos && (
+            <div className="email-adjuntos">
+              <span className="email-adjuntos-label">Archivos adjuntos</span>
+              <div className="email-adjuntos-lista">
+                {email.archivosAdjuntos.split(",").join(", ")}
+              </div>
+            </div>
+          )}
+          
+          <div className="email-footer">
+            <div className="email-status">Enviado</div>
+          </div>
+        </div>
+      ))
+    ) : (
+      <p className="no-actividades">No se encontraron registros</p>
+    )}
+  </div>
+</div>
         </div>
       </main>
 
@@ -3606,6 +4023,29 @@ useEffect(() => {
         tratoId={params.id}
         contactos={modals.completarActividad.contactos || []}
         openModal={openModal}
+      />
+
+      <CrearCorreoModal
+        isOpen={modals.crearCorreo.isOpen}
+        onClose={() => closeModal("crearCorreo")}
+        onSave={() => {
+          const loadEmails = async () => {
+            const emailResponse = await fetchWithToken(`${API_BASE_URL}/correos/trato/${params.id}`);
+            const emailData = await emailResponse.json();
+            setEmailRecords(emailData);
+          };
+          loadEmails();
+        }}
+        tratoId={params.id}
+        openModal={openModal}
+        closeModal={closeModal}
+      />
+
+      <SeleccionarPlantillaModal
+        isOpen={modals.seleccionarPlantilla.isOpen}
+        onClose={() => closeModal("seleccionarPlantilla")}
+        onSelectTemplate={modals.seleccionarPlantilla.onSelectTemplate}
+        plantillas={modals.seleccionarPlantilla.plantillas || []}
       />
     </>
   )

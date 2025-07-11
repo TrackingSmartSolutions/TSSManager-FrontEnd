@@ -1,0 +1,614 @@
+
+
+/* Contenedor principal del calendario */
+.ts-calendar-container {
+  padding: 20px;
+  background-color: #f8fafc;
+  min-height: calc(100vh - 70px); 
+  margin-top: 0; 
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Header del calendario */
+.ts-calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  background: white;
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.ts-calendar-header-left {
+  flex: 1;
+}
+
+.ts-calendar-header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.ts-calendar-header-right {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Filtro de usuarios */
+.ts-calendar-user-filter {
+  display: flex;
+  align-items: center;
+}
+
+.ts-calendar-select {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  min-width: 180px;
+}
+
+.ts-calendar-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Botones de vista */
+.ts-calendar-view-buttons {
+  display: flex;
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.ts-calendar-view-btn {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ts-calendar-view-btn.active {
+  background: white;
+  color: #1f2937;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.ts-calendar-view-btn:hover:not(.active) {
+  color: #374151;
+}
+
+/* Botón crear actividad */
+.ts-calendar-create-btn {
+  background: #f97316;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.ts-calendar-create-btn:hover {
+  background: #ea580c;
+}
+
+/* Navegación de fechas */
+.ts-calendar-navigation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+  background: white;
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.ts-calendar-nav-btn {
+  background: #f3f4f6;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
+
+.ts-calendar-nav-btn:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.ts-calendar-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  text-align: center;
+  min-width: 300px;
+}
+
+/* Contenido del calendario */
+.ts-calendar-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Vista Mensual */
+.ts-calendar-month-view {
+  padding: 0;
+}
+
+.ts-calendar-month-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ts-calendar-month-day-header {
+  padding: 16px 8px;
+  text-align: center;
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+  border-right: 1px solid #e5e7eb;
+}
+
+.ts-calendar-month-day-header:last-child {
+  border-right: none;
+}
+
+.ts-calendar-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(6, 120px);
+}
+
+.ts-calendar-month-day {
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 8px;
+  position: relative;
+  background: white;
+  transition: background-color 0.2s ease;
+}
+
+.ts-calendar-month-day:hover {
+  background: #f9fafb;
+}
+
+.ts-calendar-month-day:last-child {
+  border-right: none;
+}
+
+.ts-calendar-month-day.other-month {
+  background: #f9fafb;
+  color: #9ca3af;
+}
+
+.ts-calendar-month-day.today {
+  background: #eff6ff;
+}
+
+.ts-calendar-day-number {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.ts-calendar-month-day.other-month .ts-calendar-day-number {
+  color: #9ca3af;
+}
+
+.ts-calendar-day-events {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ts-calendar-month-event {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ts-calendar-month-event:hover {
+  opacity: 0.8;
+}
+
+.ts-calendar-event-time {
+  font-weight: 600;
+  margin-bottom: 1px;
+}
+
+.ts-calendar-event-title {
+  font-size: 10px;
+  opacity: 0.9;
+}
+
+.ts-calendar-more-events {
+  font-size: 10px;
+  color: #6b7280;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+/* Vista Semanal */
+.ts-calendar-week-view {
+  display: flex;
+  flex-direction: column;
+}
+
+.ts-calendar-week-header {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.ts-calendar-time-column {
+  border-right: 1px solid #e5e7eb;
+}
+
+.ts-calendar-week-day-header {
+  padding: 16px 8px;
+  text-align: center;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.ts-calendar-week-day-header:last-child {
+  border-right: none;
+}
+
+.ts-calendar-week-day-header.today {
+  background: #eff6ff;
+}
+
+.ts-calendar-week-day-name {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.ts-calendar-week-day-number {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ts-calendar-week-day-header.today .ts-calendar-week-day-number {
+  background: #3b82f6;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ts-calendar-week-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.ts-calendar-week-row {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  min-height: 60px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.ts-calendar-time-slot {
+  padding: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: #f9fafb;
+}
+
+.ts-calendar-week-cell {
+  border-right: 1px solid #f3f4f6;
+  padding: 4px;
+  position: relative;
+}
+
+.ts-calendar-week-cell:last-child {
+  border-right: none;
+}
+
+.ts-calendar-week-event {
+  background: #3b82f6;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-bottom: 2px;
+  transition: opacity 0.2s ease;
+}
+
+.ts-calendar-week-event:hover {
+  opacity: 0.8;
+}
+
+/* Vista Diaria */
+.ts-calendar-day-view {
+  display: flex;
+  flex-direction: column;
+}
+
+.ts-calendar-day-header {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.ts-calendar-day-column-header {
+  padding: 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.ts-calendar-day-name {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.ts-calendar-day-date {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ts-calendar-day-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.ts-calendar-day-row {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  min-height: 60px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.ts-calendar-day-cell {
+  padding: 4px 8px;
+  position: relative;
+}
+
+.ts-calendar-day-event {
+  background: #3b82f6;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-bottom: 4px;
+  transition: opacity 0.2s ease;
+}
+
+.ts-calendar-day-event:hover {
+  opacity: 0.8;
+}
+
+/* Modal de evento */
+.ts-calendar-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.ts-calendar-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.ts-calendar-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f9fafb;
+  border-radius: 12px 12px 0 0;
+}
+
+.ts-calendar-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ts-calendar-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.ts-calendar-modal-close:hover {
+  background: #e5e7eb;
+}
+
+.ts-calendar-modal-content {
+  padding: 24px;
+}
+
+.ts-calendar-modal-field {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ts-calendar-modal-field strong {
+  color: #374151;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.ts-calendar-modal-field:not(:has(strong)) {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ts-calendar-modal-field a {
+  color: #3b82f6;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.ts-calendar-modal-field a:hover {
+  text-decoration: underline;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .ts-calendar-container {
+    padding: 10px;
+  }
+
+  .ts-calendar-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .ts-calendar-header-left,
+  .ts-calendar-header-center,
+  .ts-calendar-header-right {
+    flex: none;
+  }
+
+  .ts-calendar-title {
+    font-size: 20px;
+    min-width: auto;
+  }
+
+  .ts-calendar-month-grid {
+    grid-template-rows: repeat(6, 100px);
+  }
+
+  .ts-calendar-week-header,
+  .ts-calendar-week-row {
+    grid-template-columns: 60px repeat(7, 1fr);
+  }
+
+  .ts-calendar-day-header,
+  .ts-calendar-day-row {
+    grid-template-columns: 60px 1fr;
+  }
+
+  .ts-calendar-modal {
+    width: 95%;
+    margin: 20px;
+  }
+
+  .ts-calendar-view-buttons {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .ts-calendar-month-day-header {
+    padding: 8px 4px;
+    font-size: 12px;
+  }
+
+  .ts-calendar-month-grid {
+    grid-template-rows: repeat(6, 80px);
+  }
+
+  .ts-calendar-month-event {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+
+  .ts-calendar-week-header,
+  .ts-calendar-week-row {
+    grid-template-columns: 50px repeat(7, 1fr);
+  }
+
+  .ts-calendar-time-slot {
+    font-size: 10px;
+    padding: 4px;
+  }
+
+  .ts-calendar-week-day-name {
+    font-size: 10px;
+  }
+
+  .ts-calendar-week-day-number {
+    font-size: 14px;
+  }
+}
