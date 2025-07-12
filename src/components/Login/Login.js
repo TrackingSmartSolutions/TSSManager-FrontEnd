@@ -8,9 +8,9 @@ import Swal from 'sweetalert2';
 import { API_BASE_URL } from '../Config/Config';
 
 const Login = () => {
-  const [showPassword, setShowPassword] = useState(false); // Controla visibilidad de la contraseña
-  const [isLoaded, setIsLoaded] = useState(false); // Controla animación inicial
-  const [isLoading, setIsLoading] = useState(false); // Controla spinner de carga
+  const [showPassword, setShowPassword] = useState(false); 
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   // Activa animación inicial tras un breve retraso

@@ -84,6 +84,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
   });
 
   const [errors, setErrors] = useState({})
+  const [isLoading, setIsLoading] = useState(false)
 
   const sectorMap = {
     AGRICULTURA: "(11) Agricultura, cría y explotación de animales, aprovechamiento forestal, pesca y caza",
@@ -272,7 +273,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
       });
 
       if (!result.isConfirmed) {
-        return; 
+        return;
       }
     }
     const formattedDomicilioFisico = formData.domicilioFisico.endsWith(", México")
@@ -292,6 +293,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
       ...(mode === "edit" && { propietarioId: formData.propietarioId || null }),
     };
 
+    setIsLoading(true)
     try {
       let response;
       if (mode === "add") {
@@ -317,12 +319,14 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
       if (mode === "add") {
         onCompanyCreated(savedEmpresa);
       }
+      setIsLoading(false)
     } catch (error) {
       Swal.fire({
         icon: "error",
         title: "Error",
         text: error.message,
       });
+      setIsLoading(false)
     }
   };
 
@@ -526,8 +530,15 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
           <button type="button" onClick={onClose} className="btn btn-secondary">
             Cancelar
           </button>
-          <button type="submit" className="btn btn-primary">
-            {mode === "add" ? "Crear Empresa" : "Guardar"}
+          <button type="submit" className="btn btn-primary" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                {mode === "add" ? "Creando..." : "Guardando..."}
+              </>
+            ) : (
+              mode === "add" ? "Crear Empresa" : "Guardar"
+            )}
           </button>
         </div>
       </form>
@@ -1422,9 +1433,6 @@ const Empresas = () => {
   }
 
   const handleAddCompany = () => {
-    if (companies.length === 0) {
-      return;
-    }
     openModal("empresa", "add", null, { existingCompanies: [...companies] });
   };
 
@@ -1927,7 +1935,7 @@ const Empresas = () => {
           onCompanyCreated={handleCompanyCreated}
           users={users}
           hasTratos={modals.empresa.hasTratos}
-          existingCompanies={modals.empresa.existingCompanies} 
+          existingCompanies={modals.empresa.existingCompanies}
         />
 
         <ContactoModal

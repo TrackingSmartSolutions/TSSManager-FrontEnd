@@ -68,6 +68,7 @@ const ModeloFormModal = ({ isOpen, onClose, modelo = null, onSave }) => {
     uso: "",
   });
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef(null);
 
   const usoOptions = [
@@ -179,6 +180,8 @@ const ModeloFormModal = ({ isOpen, onClose, modelo = null, onSave }) => {
       formDataToSend.append("imagen", formData.imagen);
     }
 
+    setIsLoading(true);
+
     try {
       const url = modelo ? `${API_BASE_URL}/modelos/${modelo.id}` : `${API_BASE_URL}/modelos`;
       const method = modelo ? "PUT" : "POST";
@@ -193,12 +196,14 @@ const ModeloFormModal = ({ isOpen, onClose, modelo = null, onSave }) => {
         title: "Éxito",
         text: modelo ? "Modelo actualizado correctamente" : "Modelo agregado correctamente",
       });
+      setIsLoading(false);
     } catch (error) {
       Swal.fire({
         icon: "error",
         title: "Error",
         text: error.message,
       });
+      setIsLoading(false);
     }
     onClose();
   };
@@ -284,8 +289,15 @@ const ModeloFormModal = ({ isOpen, onClose, modelo = null, onSave }) => {
           <button type="button" onClick={onClose} className="modelos-btn modelos-btn-cancel">
             Cancelar
           </button>
-          <button type="submit" className="modelos-btn modelos-btn-primary">
-            {modelo ? "Guardar cambios" : "Agregar"}
+          <button type="submit" className="modelos-btn modelos-btn-primary" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                {modelo ? "Guardando..." : "Agregando..."}
+              </>
+            ) : (
+              modelo ? "Guardar cambios" : "Agregar"
+            )}
           </button>
         </div>
       </form>

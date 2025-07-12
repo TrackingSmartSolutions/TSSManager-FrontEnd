@@ -99,7 +99,6 @@ const Header = ({ logoUrl }) => {
       
       // Verificar si hay logoUrl válida
       if (!data.logoUrl || data.logoUrl.trim() === '') {
-        console.info("No hay logo configurado en la base de datos")
         logoCache.url = "/placeholder.svg"
         logoCache.hasError = false
         setCurrentLogoUrl("/placeholder.svg")
@@ -123,7 +122,6 @@ const Header = ({ logoUrl }) => {
         setCurrentLogoUrl(newLogoUrl)
         setLogoError(false)
         
-        console.info("Logo cargado exitosamente:", newLogoUrl)
       } catch (imageError) {
         console.warn("Error precargando imagen del logo:", imageError)
         logoCache.url = "/placeholder.svg"
