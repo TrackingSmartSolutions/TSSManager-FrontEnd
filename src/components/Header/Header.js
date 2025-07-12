@@ -13,7 +13,8 @@ import clockIcon from "../../assets/icons/clock.png"
 let logoCache = {
   url: null,
   timestamp: null,
-  isLoading: false
+  isLoading: false,
+  hasError: false 
 };
 
 const Header = ({ logoUrl }) => {
@@ -40,8 +41,10 @@ const Header = ({ logoUrl }) => {
   });
 
   const [isLogoLoading, setIsLogoLoading] = useState(false)
+  const [logoError, setLogoError] = useState(false) 
   const logoFetchedRef = useRef(false)
   const touchHandledRef = useRef(false)
+  const logoErrorHandled = useRef(false) 
 
   const preloadImage = (url) => {
     return new Promise((resolve, reject) => {
@@ -55,20 +58,32 @@ const Header = ({ logoUrl }) => {
   // Función para obtener el logo
   const fetchLogo = async (force = false) => {
     if (logoCache.isLoading && !force) return
+    
+    // Si ya hubo error y no es forzado, no reintentar
+    if (logoCache.hasError && !force) {
+      setCurrentLogoUrl("/placeholder.svg")
+      setLogoError(false)
+      return
+    }
+
     const cacheAge = Date.now() - (logoCache.timestamp || 0)
     const cacheValid = cacheAge < 5 * 60 * 1000
 
-    if (logoCache.url && cacheValid && !force) {
+    if (logoCache.url && cacheValid && !force && !logoCache.hasError) {
       setCurrentLogoUrl(logoCache.url)
+      setLogoError(false)
       return
     }
 
     logoCache.isLoading = true
     setIsLogoLoading(true)
+    setLogoError(false)
 
     try {
       const token = localStorage.getItem("token")
-      if (!token) return
+      if (!token) {
+        throw new Error('No token available')
+      }
 
       const response = await fetch(`${API_BASE_URL}/configuracion/empresa`, {
         headers: {
@@ -76,33 +91,53 @@ const Header = ({ logoUrl }) => {
         },
       });
 
-      if (!response.ok) throw new Error('Failed to fetch logo')
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
 
       const data = await response.json();
-      const newLogoUrl = data.logoUrl || "/placeholder.svg"
+      
+      // Verificar si hay logoUrl válida
+      if (!data.logoUrl || data.logoUrl.trim() === '') {
+        console.info("No hay logo configurado en la base de datos")
+        logoCache.url = "/placeholder.svg"
+        logoCache.hasError = false
+        setCurrentLogoUrl("/placeholder.svg")
+        setLogoError(false)
+        return
+      }
+
+      const newLogoUrl = data.logoUrl
 
       // Precargar la imagen antes de mostrarla
       try {
         await preloadImage(newLogoUrl)
 
-        // Actualizar caché
+        // Actualizar caché exitosamente
         logoCache.url = newLogoUrl
         logoCache.timestamp = Date.now()
+        logoCache.hasError = false
 
         localStorage.setItem("cachedLogoUrl", newLogoUrl)
 
         setCurrentLogoUrl(newLogoUrl)
+        setLogoError(false)
+        
+        console.info("Logo cargado exitosamente:", newLogoUrl)
       } catch (imageError) {
-        console.warn("Error precargando imagen:", imageError)
+        console.warn("Error precargando imagen del logo:", imageError)
         logoCache.url = "/placeholder.svg"
+        logoCache.hasError = true
         setCurrentLogoUrl("/placeholder.svg")
+        setLogoError(false)
       }
 
     } catch (error) {
-      console.error("Error fetching logo:", error)
-      if (!currentLogoUrl || currentLogoUrl === "/placeholder.svg") {
-        setCurrentLogoUrl("/placeholder.svg")
-      }
+      console.error("Error fetching logo configuration:", error)
+      logoCache.hasError = true
+      logoCache.url = "/placeholder.svg"
+      setCurrentLogoUrl("/placeholder.svg")
+      setLogoError(false)
     } finally {
       logoCache.isLoading = false
       setIsLogoLoading(false)
@@ -121,16 +156,42 @@ const Header = ({ logoUrl }) => {
   useEffect(() => {
     if (logoUrl && logoUrl !== currentLogoUrl) {
       setCurrentLogoUrl(logoUrl)
+      setLogoError(false)
     }
   }, [logoUrl])
 
   useEffect(() => {
     const handleLogoUpdate = () => {
+      // Reset error states when logo is updated
+      logoCache.hasError = false
+      logoErrorHandled.current = false
       fetchLogo(true);
     };
     window.addEventListener("logoUpdated", handleLogoUpdate);
     return () => window.removeEventListener("logoUpdated", handleLogoUpdate);
   }, []);
+
+  // Función mejorada para manejar errores del logo
+  const handleLogoError = (e) => {
+    // Evitar múltiples ejecuciones del mismo error
+    if (logoErrorHandled.current) return
+    
+    logoErrorHandled.current = true
+    
+    // Solo cambiar a placeholder si no está ya usando el placeholder
+    if (e.target.src !== "/placeholder.svg" && !e.target.src.includes("placeholder.svg")) {
+      console.warn("Error cargando logo personalizado, usando placeholder")
+      setLogoError(true)
+      setCurrentLogoUrl("/placeholder.svg")
+      logoCache.hasError = true
+      
+      // Reset después de un breve delay
+      setTimeout(() => {
+        logoErrorHandled.current = false
+        setLogoError(false)
+      }, 1000)
+    }
+  }
 
   // Notificaciones ficticias
   const [notifications] = useState([
@@ -326,7 +387,7 @@ const Header = ({ logoUrl }) => {
       localStorage.removeItem("userId")
       localStorage.removeItem("cachedLogoUrl")
       // Limpiar caché global
-      logoCache = { url: null, timestamp: null, isLoading: false }
+      logoCache = { url: null, timestamp: null, isLoading: false, hasError: false }
       navigate("/")
     })
   }
@@ -346,9 +407,11 @@ const Header = ({ logoUrl }) => {
                   transition: 'opacity 0.2s ease-in-out',
                   opacity: isLogoLoading ? 0.7 : 1
                 }}
-                onError={(e) => {
-                  console.warn("Error cargando logo, usando placeholder")
-                  e.target.src = "/placeholder.svg"
+                onError={handleLogoError}
+                onLoad={() => {
+                  // Reset error handling cuando la imagen se carga exitosamente
+                  logoErrorHandled.current = false
+                  setLogoError(false)
                 }}
               />
             </div>
