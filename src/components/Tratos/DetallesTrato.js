@@ -3113,13 +3113,23 @@ const DetallesTrato = () => {
           };
         };
         const emailResponse = await fetchWithToken(`${API_BASE_URL}/correos/trato/${params.id}`);
-        const emailData = await emailResponse.json();
+      let emailData = [];
+      if (emailResponse.status === 204) {
+        setEmailRecords([]);
+      } else if (emailResponse.ok) {
+        emailData = await emailResponse.json();
         if (Array.isArray(emailData)) {
           setEmailRecords(emailData);
         } else {
           console.error("Error: La respuesta de correos no es un array", emailData);
           setEmailRecords([]);
         }
+      } else {
+        console.error(
+          `Error fetching emails: ${emailResponse.status} - ${emailResponse.statusText}`
+        );
+        setEmailRecords([]);
+      }
 
         setTrato((prev) => ({
           ...prev,

@@ -1,8 +1,0 @@
-# netlify.toml
-
-# Regla para el fallback de SPA
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-

@@ -1,5 +1,3 @@
-
-
 /* Contenedor principal del calendario */
 .ts-calendar-container {
   padding: 20px;
@@ -12,35 +10,38 @@
 /* Header del calendario */
 .ts-calendar-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 16px;
+  align-items: stretch;
   margin-bottom: 20px;
   background: white;
   padding: 16px 24px;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.ts-calendar-header-left {
-  flex: 1;
+  position: relative;
+  min-height: auto;
 }
 
 .ts-calendar-header-center {
-  flex: 1;
+  position: static;
+  transform: none;
   display: flex;
   justify-content: center;
+  width: 100%;
 }
 
+.ts-calendar-header-left,
 .ts-calendar-header-right {
-  flex: 1;
-  display: flex;
-  justify-content: flex-end;
+  flex: none;
 }
 
 /* Filtro de usuarios */
 .ts-calendar-user-filter {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  z-index: 1;
 }
 
 .ts-calendar-select {
@@ -51,7 +52,8 @@
   font-size: 14px;
   color: #374151;
   cursor: pointer;
-  min-width: 180px;
+  width: 100%;
+  max-width: 250px;
 }
 
 .ts-calendar-select:focus {
@@ -66,6 +68,8 @@
   background: #f3f4f6;
   border-radius: 8px;
   padding: 4px;
+  width: 100%;
+  justify-content: center;
 }
 
 .ts-calendar-view-btn {
@@ -78,6 +82,8 @@
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex: 1;
+  text-align: center;
 }
 
 .ts-calendar-view-btn.active {
@@ -88,23 +94,6 @@
 
 .ts-calendar-view-btn:hover:not(.active) {
   color: #374151;
-}
-
-/* Botón crear actividad */
-.ts-calendar-create-btn {
-  background: #f97316;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.ts-calendar-create-btn:hover {
-  background: #ea580c;
 }
 
 /* Navegación de fechas */
@@ -157,285 +146,159 @@
   overflow: hidden;
 }
 
-/* Vista Mensual */
-.ts-calendar-month-view {
-  padding: 0;
+/* Estilos de FullCalendar */
+.fc-daygrid-event .fc-event-time {
+  display: none;
 }
 
-.ts-calendar-month-header {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.ts-calendar-month-day-header {
-  padding: 16px 8px;
-  text-align: center;
-  font-weight: 600;
-  color: #374151;
-  font-size: 14px;
-  border-right: 1px solid #e5e7eb;
-}
-
-.ts-calendar-month-day-header:last-child {
-  border-right: none;
-}
-
-.ts-calendar-month-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(6, 120px);
-}
-
-.ts-calendar-month-day {
-  border-right: 1px solid #e5e7eb;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 8px;
+.fc-daygrid-event {
+  margin: 1px 0 !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  padding: 2px 6px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  min-height: 16px !important;
+  border: 1px solid !important;
+  border-color: rgba(0, 0, 0, 0.2) !important;
   position: relative;
-  background: white;
-  transition: background-color 0.2s ease;
 }
 
-.ts-calendar-month-day:hover {
-  background: #f9fafb;
-}
-
-.ts-calendar-month-day:last-child {
-  border-right: none;
-}
-
-.ts-calendar-month-day.other-month {
-  background: #f9fafb;
-  color: #9ca3af;
-}
-
-.ts-calendar-month-day.today {
-  background: #eff6ff;
-}
-
-.ts-calendar-day-number {
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 4px;
-  font-size: 14px;
-}
-
-.ts-calendar-month-day.other-month .ts-calendar-day-number {
-  color: #9ca3af;
-}
-
-.ts-calendar-day-events {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.ts-calendar-month-event {
-  padding: 2px 6px;
+.fc-daygrid-event::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  bottom: -1px;
+  border: 1px solid;
+  border-color: inherit;
   border-radius: 4px;
-  font-size: 11px;
-  color: white;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  opacity: 0.7;
+  pointer-events: none;
 }
 
-.ts-calendar-month-event:hover {
-  opacity: 0.8;
+.fc-event-title {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
-.ts-calendar-event-time {
-  font-weight: 600;
-  margin-bottom: 1px;
+.fc-daygrid-event-harness {
+  margin: 1px 0 !important;
 }
 
-.ts-calendar-event-title {
-  font-size: 10px;
-  opacity: 0.9;
+.fc-daygrid-day-events {
+  max-height: calc(100% - 24px) !important;
+  overflow: hidden !important;
 }
 
-.ts-calendar-more-events {
-  font-size: 10px;
-  color: #6b7280;
-  padding: 2px 6px;
-  cursor: pointer;
+.fc-daygrid-more-link {
+  font-size: 10px !important;
+  color: #6b7280 !important;
+  padding: 2px 6px !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  border-radius: 4px !important;
+  background: #f3f4f6 !important;
+  margin-top: 2px !important;
 }
 
-/* Vista Semanal */
-.ts-calendar-week-view {
-  display: flex;
-  flex-direction: column;
+.fc-daygrid-more-link:hover {
+  background: #e5e7eb !important;
 }
 
-.ts-calendar-week-header {
-  display: grid;
-  grid-template-columns: 80px repeat(7, 1fr);
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
+.fc-timegrid-event {
+  margin-bottom: 2px !important;
+  margin-top: 2px !important;
+  min-height: 20px !important;
+  opacity: 0.9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
 }
 
-.ts-calendar-time-column {
-  border-right: 1px solid #e5e7eb;
+.fc-timegrid-event-harness {
+  margin-right: 2px !important;
 }
 
-.ts-calendar-week-day-header {
-  padding: 16px 8px;
-  text-align: center;
-  border-right: 1px solid #e5e7eb;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
+.fc-timegrid-col-events {
+  margin-right: 10px !important;
 }
 
-.ts-calendar-week-day-header:last-child {
-  border-right: none;
+.fc-timegrid-event-harness-inset .fc-timegrid-event {
+  left: 0 !important;
+  right: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 
-.ts-calendar-week-day-header.today {
-  background: #eff6ff;
+.fc-timegrid-event.fc-event-mirror {
+  opacity: 0.3 !important;
 }
 
-.ts-calendar-week-day-name {
-  font-size: 12px;
-  color: #6b7280;
-  font-weight: 500;
-  text-transform: capitalize;
+.fc-timegrid-event-harness[style*="left"] {
+  z-index: 1 !important;
 }
 
-.ts-calendar-week-day-number {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2937;
+.fc-timegrid-event-harness[style*="left: 0"] {
+  z-index: 3 !important;
 }
 
-.ts-calendar-week-day-header.today .ts-calendar-week-day-number {
-  background: #3b82f6;
-  color: white;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.fc-timegrid-event-harness[style*="left: 50"] {
+  z-index: 2 !important;
 }
 
-.ts-calendar-week-grid {
-  display: flex;
-  flex-direction: column;
+.fc-event {
+  border: none !important;
+  background-color: var(--event-bg-color) !important;
+  color: white !important;
 }
 
-.ts-calendar-week-row {
-  display: grid;
-  grid-template-columns: 80px repeat(7, 1fr);
-  min-height: 60px;
-  border-bottom: 1px solid #f3f4f6;
+/* Estilos por tipo de evento */
+.fc-daygrid-event.evento-reunion {
+  background-color: #3b82f6 !important;
+  border-color: #2563eb !important;
 }
 
-.ts-calendar-time-slot {
-  padding: 8px;
-  font-size: 12px;
-  color: #6b7280;
-  border-right: 1px solid #e5e7eb;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  background: #f9fafb;
+.fc-daygrid-event.evento-llamada {
+  background-color: #10b981 !important;
+  border-color: #059669 !important;
 }
 
-.ts-calendar-week-cell {
-  border-right: 1px solid #f3f4f6;
-  padding: 4px;
-  position: relative;
+.fc-daygrid-event.evento-tarea {
+  background-color: #f50bc3 !important;
+  border-color: #db0a8a !important;
 }
 
-.ts-calendar-week-cell:last-child {
-  border-right: none;
+.fc-daygrid-event.evento-recarga {
+  background-color: #f59e0b !important;
+  border-color: #d97706 !important;
 }
 
-.ts-calendar-week-event {
-  background: #3b82f6;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  margin-bottom: 2px;
-  transition: opacity 0.2s ease;
+.fc-daygrid-event.evento-cuenta-cobrar {
+  background-color: #ef4444 !important;
+  border-color: #dc2626 !important;
 }
 
-.ts-calendar-week-event:hover {
-  opacity: 0.8;
+.fc-daygrid-event.evento-cuenta-pagar {
+  background-color: #8b5cf6 !important;
+  border-color: #7c3aed !important;
 }
 
-/* Vista Diaria */
-.ts-calendar-day-view {
-  display: flex;
-  flex-direction: column;
+.fc-timegrid-event.evento-reunion {
+  background-color: #3b82f6 !important;
+  border-color: #2563eb !important;
 }
 
-.ts-calendar-day-header {
-  display: grid;
-  grid-template-columns: 80px 1fr;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
+.fc-timegrid-event.evento-llamada {
+  background-color: #10b981 !important;
+  border-color: #059669 !important;
 }
 
-.ts-calendar-day-column-header {
-  padding: 16px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.ts-calendar-day-name {
-  font-size: 14px;
-  color: #6b7280;
-  font-weight: 500;
-  text-transform: capitalize;
-}
-
-.ts-calendar-day-date {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.ts-calendar-day-grid {
-  display: flex;
-  flex-direction: column;
-}
-
-.ts-calendar-day-row {
-  display: grid;
-  grid-template-columns: 80px 1fr;
-  min-height: 60px;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.ts-calendar-day-cell {
-  padding: 4px 8px;
-  position: relative;
-}
-
-.ts-calendar-day-event {
-  background: #3b82f6;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  margin-bottom: 4px;
-  transition: opacity 0.2s ease;
-}
-
-.ts-calendar-day-event:hover {
-  opacity: 0.8;
+.fc-timegrid-event.evento-tarea {
+  background-color: #f50bc3 !important;
+  border-color: #db0a8a !important;
 }
 
 /* Modal de evento */
@@ -540,33 +403,47 @@
 
   .ts-calendar-header {
     flex-direction: column;
-    gap: 16px;
-    align-items: stretch;
+    gap: 12px;
+    padding: 12px 16px;
   }
 
-  .ts-calendar-header-left,
-  .ts-calendar-header-center,
-  .ts-calendar-header-right {
-    flex: none;
+  .ts-calendar-header-center {
+    order: 2;
+  }
+
+  .ts-calendar-user-filter {
+    order: 1;
+    margin-bottom: 0;
+  }
+
+  .ts-calendar-view-buttons {
+    gap: 4px;
+    justify-content: center;
+  }
+
+  .ts-calendar-view-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .ts-calendar-select {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .ts-calendar-navigation {
+    padding: 12px 16px;
   }
 
   .ts-calendar-title {
-    font-size: 20px;
+    font-size: 18px;
     min-width: auto;
   }
 
-  .ts-calendar-month-grid {
-    grid-template-rows: repeat(6, 100px);
-  }
-
-  .ts-calendar-week-header,
-  .ts-calendar-week-row {
-    grid-template-columns: 60px repeat(7, 1fr);
-  }
-
-  .ts-calendar-day-header,
-  .ts-calendar-day-row {
-    grid-template-columns: 60px 1fr;
+  .ts-calendar-nav-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
   }
 
   .ts-calendar-modal {
@@ -574,41 +451,79 @@
     margin: 20px;
   }
 
-  .ts-calendar-view-buttons {
-    justify-content: center;
+  .fc-timegrid-event {
+    font-size: 11px !important;
+    padding: 2px 4px !important;
+    min-height: 18px !important;
+  }
+
+  .fc-timegrid-event-harness {
+    margin-right: 1px !important;
+  }
+
+  .fc-daygrid-event {
+    font-size: 10px !important;
+    padding: 1px 4px !important;
+    min-height: 14px !important;
   }
 }
 
 @media (max-width: 480px) {
-  .ts-calendar-month-day-header {
-    padding: 8px 4px;
-    font-size: 12px;
+  .ts-calendar-container {
+    padding: 8px;
   }
 
-  .ts-calendar-month-grid {
-    grid-template-rows: repeat(6, 80px);
+  .ts-calendar-header {
+    padding: 8px 12px;
+    gap: 8px;
   }
 
-  .ts-calendar-month-event {
-    font-size: 10px;
-    padding: 1px 4px;
+  .ts-calendar-view-btn {
+    padding: 4px 8px;
+    font-size: 11px;
   }
 
-  .ts-calendar-week-header,
-  .ts-calendar-week-row {
-    grid-template-columns: 50px repeat(7, 1fr);
+  .ts-calendar-select {
+    font-size: 11px;
+    padding: 4px 8px;
   }
 
-  .ts-calendar-time-slot {
-    font-size: 10px;
-    padding: 4px;
+  .ts-calendar-navigation {
+    padding: 8px 12px;
+    gap: 12px;
   }
 
-  .ts-calendar-week-day-name {
-    font-size: 10px;
+  .ts-calendar-title {
+    font-size: 16px;
   }
 
-  .ts-calendar-week-day-number {
+  .ts-calendar-nav-btn {
+    width: 32px;
+    height: 32px;
     font-size: 14px;
+  }
+
+  .fc-timegrid-event {
+    font-size: 10px !important;
+    padding: 1px 3px !important;
+    min-height: 16px !important;
+  }
+
+  .fc-timegrid-slot {
+    height: 40px !important;
+  }
+
+  .fc-timegrid-axis {
+    width: 40px !important;
+  }
+
+  .fc-timegrid-slot-label {
+    font-size: 10px !important;
+  }
+
+  .fc-daygrid-event {
+    font-size: 9px !important;
+    padding: 1px 3px !important;
+    min-height: 12px !important;
   }
 }
