@@ -136,7 +136,13 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
     if (!formData.nombre.trim()) newErrors.nombre = "El nombre es obligatorio";
     if (!formData.razonSocial.trim()) newErrors.razonSocial = "La razón social es obligatoria";
     if (!formData.direccion.trim()) newErrors.direccion = "La dirección es obligatoria";
-    if (!formData.rfc.trim()) newErrors.rfc = "El RFC es obligatorio";
+    if (!formData.rfc.trim()) {
+      newErrors.rfc = "El RFC es obligatorio";
+    } else if (!/^[A-Z0-9&]+$/.test(formData.rfc.trim())) {
+      newErrors.rfc = "El RFC solo debe contener letras mayúsculas, números y &";
+    } else if (formData.rfc.trim().length > 13) {
+      newErrors.rfc = "El RFC no puede tener más de 13 caracteres";
+    }
     if (!formData.telefono.trim()) newErrors.telefono = "El teléfono es obligatorio";
 
     setErrors(newErrors);
@@ -226,12 +232,13 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
         <div className="facturacion-form-group">
           <label htmlFor="rfc">RFC <span className="required"> *</span></label>
           <input
-            type="text"
-            id="rfc"
-            value={formData.rfc}
-            onChange={(e) => handleInputChange("rfc", e.target.value)}
-            className={`facturacion-form-control ${errors.rfc ? "error" : ""}`}
-          />
+  type="text"
+  id="rfc"
+  value={formData.rfc}
+  onChange={(e) => handleInputChange("rfc", e.target.value.toUpperCase())}
+  className={`facturacion-form-control ${errors.rfc ? "error" : ""}`}
+  maxLength={13}
+/>
           {errors.rfc && <span className="facturacion-error-message">{errors.rfc}</span>}
         </div>
         <div className="facturacion-form-group">
@@ -368,47 +375,47 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
   ];
 
   useEffect(() => {
-  if (isOpen) {
-    if (solicitud) {
-      setFormData({
-        id: solicitud.id || null,
-        cotizacion: solicitud.cotizacionId ? String(solicitud.cotizacionId) : "",
-        fechaEmision: solicitud.fechaEmision ? solicitud.fechaEmision.split('T')[0] : "",
-        metodoPago: solicitud.metodoPago || "",
-        formaPago: solicitud.formaPago || "",
-        tipo: solicitud.tipo || "",
-        claveProductoServicio: solicitud.claveProductoServicio || "20121910",
-        claveUnidad: solicitud.claveUnidad || "E48",
-        emisor: solicitud.emisorId ? String(solicitud.emisorId) : (solicitud.emisor?.id ? String(solicitud.emisor.id) : ""),
-        cuentaPorCobrar: solicitud.cuentaPorCobrarId ? String(solicitud.cuentaPorCobrarId) : "", 
-        subtotal: solicitud.subtotal !== undefined ? String(solicitud.subtotal) : "",
-        iva: solicitud.iva !== undefined ? String(solicitud.iva) : "",
-        total: solicitud.total !== undefined ? String(solicitud.total) : "",
-        importeLetra: solicitud.importeLetra || "",
-        usoCfdi: solicitud.usoCfdi || "",
-      });
-    } else {
-      setFormData({
-        id: null,
-        cotizacion: "",
-        fechaEmision: new Date().toLocaleDateString('en-CA'),
-        metodoPago: "",
-        formaPago: "",
-        tipo: "",
-        claveProductoServicio: "20121910",
-        claveUnidad: "E48",
-        emisor: emisores.length > 0 ? String(emisores[0].id) : "",
-        cuentaPorCobrar: "",
-        subtotal: "",
-        iva: "",
-        total: "",
-        importeLetra: "",
-        usoCfdi: "",
-      });
+    if (isOpen) {
+      if (solicitud) {
+        setFormData({
+          id: solicitud.id || null,
+          cotizacion: solicitud.cotizacionId ? String(solicitud.cotizacionId) : "",
+          fechaEmision: solicitud.fechaEmision ? solicitud.fechaEmision.split('T')[0] : "",
+          metodoPago: solicitud.metodoPago || "",
+          formaPago: solicitud.formaPago || "",
+          tipo: solicitud.tipo || "",
+          claveProductoServicio: solicitud.claveProductoServicio || "20121910",
+          claveUnidad: solicitud.claveUnidad || "E48",
+          emisor: solicitud.emisorId ? String(solicitud.emisorId) : (solicitud.emisor?.id ? String(solicitud.emisor.id) : ""),
+          cuentaPorCobrar: solicitud.cuentaPorCobrarId ? String(solicitud.cuentaPorCobrarId) : "",
+          subtotal: solicitud.subtotal !== undefined ? String(solicitud.subtotal) : "",
+          iva: solicitud.iva !== undefined ? String(solicitud.iva) : "",
+          total: solicitud.total !== undefined ? String(solicitud.total) : "",
+          importeLetra: solicitud.importeLetra || "",
+          usoCfdi: solicitud.usoCfdi || "",
+        });
+      } else {
+        setFormData({
+          id: null,
+          cotizacion: "",
+          fechaEmision: new Date().toLocaleDateString('en-CA'),
+          metodoPago: "",
+          formaPago: "",
+          tipo: "",
+          claveProductoServicio: "20121910",
+          claveUnidad: "E48",
+          emisor: emisores.length > 0 ? String(emisores[0].id) : "",
+          cuentaPorCobrar: "",
+          subtotal: "",
+          iva: "",
+          total: "",
+          importeLetra: "",
+          usoCfdi: "",
+        });
+      }
+      setErrors({});
     }
-    setErrors({});
-  }
-}, [isOpen, solicitud, emisores]);
+  }, [isOpen, solicitud, emisores]);
 
   useEffect(() => {
     if (formData.cotizacion && cotizaciones) {
@@ -691,7 +698,7 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
             value={formData.cuentaPorCobrar}
             onChange={(e) => handleInputChange("cuentaPorCobrar", e.target.value)}
             className={`facturacion-form-control ${errors.cuentaPorCobrar ? "error" : ""}`}
-            disabled={true} 
+            disabled={true}
           >
             <option value="">Ninguna seleccionada</option>
             {cuentasPorCobrar
@@ -1118,7 +1125,7 @@ const AdminFacturacion = () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = factura.archivoUrl?.split("/").pop() || "factura.pdf"; 
+      a.download = factura.archivoUrl?.split("/").pop() || "factura.pdf";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

@@ -66,8 +66,6 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
   )
 }
 
-
-
 // Modal de Empresa (Agregar/Editar)
 const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated, users, hasTratos, existingCompanies }) => {
   const [formData, setFormData] = useState({
@@ -236,6 +234,8 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
         newErrors.rfc = "Este campo es obligatorio para estatus Cliente";
       } else if (!/^[A-Z0-9&]+$/.test(formData.rfc.trim())) {
         newErrors.rfc = "Este campo solo debe contener letras mayúsculas, números y &";
+      } else if (formData.rfc.trim().length > 13) {
+        newErrors.rfc = "El RFC no puede tener más de 13 caracteres";
       }
 
       // Razón Social: Solo letras (mayúsculas, minúsculas, Ñ/ñ, acentos)
@@ -482,6 +482,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
                   onChange={(e) => handleInputChange("rfc", e.target.value.toUpperCase())}
                   className={`modal-form-control ${errors.rfc ? "error" : ""}`}
                   placeholder="RFC de la empresa"
+                  maxLength={13}
                 />
                 {errors.rfc && <span className="error-message">{errors.rfc}</span>}
               </div>

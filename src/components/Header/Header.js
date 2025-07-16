@@ -311,6 +311,19 @@ const Header = ({ logoUrl }) => {
     return tipos[tipo] || 'default';
   };
 
+  const obtenerTextoTipoNotificacion = (tipo) => {
+    const tiposTexto = {
+      'ACTIVIDAD': 'Actividad',
+      'CUENTA_COBRAR': 'Cuenta por Cobrar',
+      'CUENTA_PAGAR': 'Cuenta por Pagar',
+      'TRATO_GANADO': 'Trato ganado',
+      'RECARGA': 'Recarga',
+      'CAMBIO_CONTRASENA': 'Cambio de Contraseña',
+      'ESCALAMIENTO': 'Escalamiento'
+    };
+    return tiposTexto[tipo] || tipo;
+  };
+
   // Effect para cargar notificaciones
   useEffect(() => {
     obtenerNotificaciones();
@@ -592,7 +605,7 @@ const Header = ({ logoUrl }) => {
                       >
                         <div className="ts-header-notification-content">
                           <div className="ts-header-notification-title">
-                            {notificacion.tipoNotificacion}
+                            {obtenerTextoTipoNotificacion(notificacion.tipoNotificacion)}
                           </div>
                           <div className="ts-header-notification-message">
                             {notificacion.mensaje}

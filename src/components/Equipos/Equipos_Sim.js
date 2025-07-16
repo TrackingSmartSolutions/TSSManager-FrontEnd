@@ -109,32 +109,50 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'numero') {
+    const numericValue = value.replace(/\D/g, '').slice(0, 10);
+    setFormData((prev) => ({
+      ...prev,
+      [name]: numericValue,
+    }));
+  } else {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
-  };
+  }
+  
+  if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+};
 
   const validateForm = () => {
-    const newErrors = {};
-    const currentDate = new Date().toISOString().split('T')[0];
-    if (!formData.numero.trim()) newErrors.numero = "El número es obligatorio";
-    else if (existingSims.includes(formData.numero) && (!sim || sim.numero !== formData.numero)) {
-      newErrors.numero = "El número ya está en uso por otra SIM";
-    }
-    if (formData.equipo && formData.equipo !== "0") {
-      if (!formData.equipo) newErrors.equipo = "El equipo es obligatorio";
-    }
-    if (formData.responsable === "TSS" && formData.principal === "NO" && !formData.grupo) {
-      newErrors.grupo = "El grupo es obligatorio cuando no es principal";
-    }
-    if (formData.responsable === "TSS" && formData.vigencia && formData.vigencia < currentDate) {
-      newErrors.vigencia = "La vigencia no puede ser en el pasado";
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const newErrors = {};
+  const currentDate = new Date().toISOString().split('T')[0];
+  
+  // Validación del número
+  if (!formData.numero.trim()) {
+    newErrors.numero = "El número es obligatorio";
+  } else if (!/^\d{10}$/.test(formData.numero)) {
+    newErrors.numero = "El número debe tener exactamente 10 dígitos";
+  } else if (existingSims.includes(formData.numero) && (!sim || sim.numero !== formData.numero)) {
+    newErrors.numero = "El número ya está en uso por otra SIM";
+  }
+  
+  if (formData.equipo && formData.equipo !== "0") {
+    if (!formData.equipo) newErrors.equipo = "El equipo es obligatorio";
+  }
+  
+  if (formData.responsable === "TSS" && formData.principal === "NO" && !formData.grupo) {
+    newErrors.grupo = "El grupo es obligatorio cuando no es principal";
+  }
+  
+  if (formData.responsable === "TSS" && formData.vigencia && formData.vigencia < currentDate) {
+    newErrors.vigencia = "La vigencia no puede ser en el pasado";
+  }
+  
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();

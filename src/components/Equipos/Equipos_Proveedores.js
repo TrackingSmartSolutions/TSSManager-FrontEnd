@@ -84,31 +84,69 @@ const ProveedorEquipoFormModal = ({ isOpen, onClose, proveedor = null, onSave })
   }, [isOpen, proveedor])
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }))
-  }
+    const { name, value } = e.target;
+
+    if (name === 'telefono') {
+      let cleanValue = value.replace(/[^\d\s\-+]/g, '');
+
+      if (cleanValue.includes('+')) {
+        const parts = cleanValue.split('+');
+        cleanValue = '+' + parts.join('').replace(/\+/g, '');
+      }
+
+      const digitCount = cleanValue.replace(/[^\d]/g, '').length;
+      if (digitCount <= 15) {
+        setFormData((prev) => ({ ...prev, [name]: cleanValue }));
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
 
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-  const validatePhone = (phone) => /^[+]?[0-9\s\-]{10,}$/.test(phone)
+  const validatePhone = (phone) => {
+    if (!phone.startsWith('+')) return false;
+
+    const cleanPhone = phone.replace(/[\s\-]/g, '');
+
+    if (cleanPhone.length < 8 || cleanPhone.length > 16) return false;
+
+    const numberPart = cleanPhone.substring(1);
+    if (!/^\d+$/.test(numberPart)) return false;
+
+    return true;
+  };
 
   const validateForm = () => {
-    const newErrors = {}
-    if (!formData.nombre.trim()) newErrors.nombre = "El nombre del proveedor es obligatorio"
-    if (!formData.contactoNombre.trim()) newErrors.contactoNombre = "El nombre de contacto es obligatorio"
+    const newErrors = {};
+
+    if (!formData.nombre.trim()) {
+      newErrors.nombre = "El nombre del proveedor es obligatorio";
+    }
+
+    if (!formData.contactoNombre.trim()) {
+      newErrors.contactoNombre = "El nombre de contacto es obligatorio";
+    }
+
     if (!formData.telefono.trim()) {
-      newErrors.telefono = "El teléfono es obligatorio"
+      newErrors.telefono = "El teléfono es obligatorio";
+    } else if (!formData.telefono.startsWith('+')) {
+      newErrors.telefono = "El teléfono debe incluir el código de país (ejemplo: +52)";
     } else if (!validatePhone(formData.telefono)) {
-      newErrors.telefono = "Formato de teléfono inválido"
+      newErrors.telefono = "Formato de teléfono inválido. Debe incluir código de país y tener entre 8-15 dígitos";
     }
+
     if (!formData.correo.trim()) {
-      newErrors.correo = "El correo es obligatorio"
+      newErrors.correo = "El correo es obligatorio";
     } else if (!validateEmail(formData.correo)) {
-      newErrors.correo = "Formato de correo inválido"
+      newErrors.correo = "Formato de correo inválido";
     }
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -178,7 +216,8 @@ const ProveedorEquipoFormModal = ({ isOpen, onClose, proveedor = null, onSave })
             value={formData.telefono}
             onChange={handleInputChange}
             className={`proveedores-form-control ${errors.telefono ? "proveedores-form-control-error" : ""}`}
-            placeholder="555-123-4567"
+            placeholder="+52 555 123 4567"
+            inputMode="tel"
           />
           {errors.telefono && <span className="proveedores-form-error">{errors.telefono}</span>}
         </div>
