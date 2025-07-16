@@ -8,7 +8,7 @@ import Swal from 'sweetalert2';
 import { API_BASE_URL } from '../Config/Config';
 
 const Login = () => {
-  const [showPassword, setShowPassword] = useState(false); 
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -70,6 +70,99 @@ const Login = () => {
     }
   };
 
+  // Función para solicitar cambio de contraseña
+ // Función para solicitar cambio de contraseña
+const manejarSolicitudCambioContrasena = async (e) => {
+  e.preventDefault();
+
+  const { value: correo } = await Swal.fire({
+    title: 'Recuperar contraseña',
+    text: 'Ingresa tu correo electrónico para solicitar un cambio de contraseña',
+    input: 'email',
+    inputPlaceholder: 'tu@email.com',
+    showCancelButton: true,
+    confirmButtonText: 'Enviar solicitud',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#3085d6',
+    inputValidator: (value) => {
+      if (!value) {
+        return 'Debes ingresar tu correo electrónico';
+      }
+    }
+  });
+
+  if (correo) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/solicitar-cambio-contrasena`, {
+        correo: correo
+      });
+
+      // Si la respuesta es exitosa
+      if (response.data.success) {
+        await Swal.fire({
+          icon: 'success',
+          title: '¡Solicitud enviada!',
+          text: 'Los administradores han sido notificados de tu solicitud',
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      }
+    } catch (error) {
+      // Manejar diferentes tipos de errores
+      if (error.response) {
+        const { status, data } = error.response;
+        
+        if (status === 404) {
+          // Correo no encontrado
+          await Swal.fire({
+            icon: 'warning',
+            title: 'Correo no encontrado',
+            text: 'El correo electrónico ingresado no está registrado en el sistema',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#f27474',
+          });
+        } else if (status === 400) {
+          // Error de validación
+          await Swal.fire({
+            icon: 'error',
+            title: 'Error de validación',
+            text: data.message || 'Datos inválidos',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#3085d6',
+          });
+        } else if (status === 500) {
+          // Error del servidor
+          await Swal.fire({
+            icon: 'error',
+            title: 'Error del servidor',
+            text: 'Ocurrió un error interno. Inténtalo más tarde.',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#3085d6',
+          });
+        } else {
+          // Otros errores
+          await Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: data.message || 'No se pudo enviar la solicitud',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#3085d6',
+          });
+        }
+      } else {
+        // Error de red u otros errores
+        await Swal.fire({
+          icon: 'error',
+          title: 'Error de conexión',
+          text: 'No se pudo conectar con el servidor. Verifica tu conexión a internet.',
+          confirmButtonText: 'Aceptar',
+          confirmButtonColor: '#3085d6',
+        });
+      }
+    }
+  }
+};
+
   // Alterna visibilidad de la contraseña
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -121,7 +214,7 @@ const Login = () => {
               {isLoading ? 'Cargando...' : 'Iniciar sesión'}
             </button>
             <div className="forgot-password">
-              <a href="#">¿Olvidaste tu contraseña?</a>
+              <a href="#" onClick={manejarSolicitudCambioContrasena}>¿Olvidaste tu contraseña?</a>
             </div>
           </form>
         </div>

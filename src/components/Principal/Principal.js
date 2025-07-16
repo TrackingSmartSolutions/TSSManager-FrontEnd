@@ -1231,7 +1231,7 @@ const Principal = () => {
     'PRIMER_CONTACTO': 'Primer Contacto',
     'ENVIO_DE_INFORMACION': 'Envío de Información',
     'REUNION': 'Reunión',
-    'COTIZACION_PROPUESTA_PRECIO': 'Cotización Propuesta/Precio',
+    'COTIZACION_PROPUESTA_PRACTICA': 'Cotización Propuesta/Precio',
     'NEGOCIACION_REVISION': 'Negociación/revisión',
     'CERRADO_GANADO': 'Cerrado Ganado',
     'RESPUESTA_POR_CORREO': 'Respuesta por Correo',

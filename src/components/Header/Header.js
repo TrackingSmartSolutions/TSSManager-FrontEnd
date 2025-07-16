@@ -9,12 +9,13 @@ import profilePlaceholder from "../../assets/icons/profile-placeholder.png"
 import dropdownIcon from "../../assets/icons/desplegable.png"
 import clockIcon from "../../assets/icons/clock.png"
 
+
 // Cache global para el logo
 let logoCache = {
   url: null,
   timestamp: null,
   isLoading: false,
-  hasError: false 
+  hasError: false
 };
 
 const Header = ({ logoUrl }) => {
@@ -26,6 +27,7 @@ const Header = ({ logoUrl }) => {
   const navigate = useNavigate()
   const userName = localStorage.getItem("userName") || "Usuario"
   const userRol = localStorage.getItem("userRol") || "EMPLEADO"
+
 
   // Estados para inactividad
   const [lastActivity, setLastActivity] = useState(Date.now())
@@ -41,10 +43,10 @@ const Header = ({ logoUrl }) => {
   });
 
   const [isLogoLoading, setIsLogoLoading] = useState(false)
-  const [logoError, setLogoError] = useState(false) 
+  const [logoError, setLogoError] = useState(false)
   const logoFetchedRef = useRef(false)
   const touchHandledRef = useRef(false)
-  const logoErrorHandled = useRef(false) 
+  const logoErrorHandled = useRef(false)
 
   const preloadImage = (url) => {
     return new Promise((resolve, reject) => {
@@ -58,7 +60,7 @@ const Header = ({ logoUrl }) => {
   // Función para obtener el logo
   const fetchLogo = async (force = false) => {
     if (logoCache.isLoading && !force) return
-    
+
     // Si ya hubo error y no es forzado, no reintentar
     if (logoCache.hasError && !force) {
       setCurrentLogoUrl("/placeholder.svg")
@@ -96,7 +98,7 @@ const Header = ({ logoUrl }) => {
       }
 
       const data = await response.json();
-      
+
       // Verificar si hay logoUrl válida
       if (!data.logoUrl || data.logoUrl.trim() === '') {
         logoCache.url = "/placeholder.svg"
@@ -121,7 +123,7 @@ const Header = ({ logoUrl }) => {
 
         setCurrentLogoUrl(newLogoUrl)
         setLogoError(false)
-        
+
       } catch (imageError) {
         console.warn("Error precargando imagen del logo:", imageError)
         logoCache.url = "/placeholder.svg"
@@ -173,16 +175,16 @@ const Header = ({ logoUrl }) => {
   const handleLogoError = (e) => {
     // Evitar múltiples ejecuciones del mismo error
     if (logoErrorHandled.current) return
-    
+
     logoErrorHandled.current = true
-    
+
     // Solo cambiar a placeholder si no está ya usando el placeholder
     if (e.target.src !== "/placeholder.svg" && !e.target.src.includes("placeholder.svg")) {
       console.warn("Error cargando logo personalizado, usando placeholder")
       setLogoError(true)
       setCurrentLogoUrl("/placeholder.svg")
       logoCache.hasError = true
-      
+
       // Reset después de un breve delay
       setTimeout(() => {
         logoErrorHandled.current = false
@@ -191,41 +193,137 @@ const Header = ({ logoUrl }) => {
     }
   }
 
-  // Notificaciones ficticias
-  const [notifications] = useState([
-    {
-      id: 1,
-      title: "Reunión programada",
-      message: "Reunión con REPIBA en 30 minutos",
-      time: "hace 5 min",
-      type: "meeting",
-      unread: true,
-    },
-    {
-      id: 2,
-      title: "Cuenta por cobrar vencida",
-      message: "REPIBA-01-01 venció ayer",
-      time: "hace 1 hora",
-      type: "payment",
-      unread: true,
-    },
-    {
-      id: 3,
-      title: "Nuevo trato asignado",
-      message: "Se te asignó el trato con Empresa XYZ",
-      time: "hace 2 horas",
-      type: "deal",
-      unread: false,
-    },
-    {
-      id: 4,
-      title: "Recarga de SIM programada",
-      message: "SIM 123456789 - Equipo ABC123",
-      time: "hace 3 horas",
-      type: "recharge",
-      unread: false,
-    },
-  ])
+  const [notificaciones, setNotificaciones] = useState([]);
+  const [cantidadNoLeidas, setCantidadNoLeidas] = useState(0);
+
+  // Función para obtener notificaciones del usuario
+  const obtenerNotificaciones = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const response = await fetch(`${API_BASE_URL}/notificaciones/user`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setNotificaciones(data);
+      }
+    } catch (error) {
+      console.error("Error al obtener notificaciones:", error);
+    }
+  };
+
+  // Función para obtener contador de no leídas
+  const obtenerContadorNoLeidas = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const response = await fetch(`${API_BASE_URL}/notificaciones/user/contador-no-leidas`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCantidadNoLeidas(data.count);
+      }
+    } catch (error) {
+      console.error("Error al obtener contador:", error);
+    }
+  };
+
+  // Función para marcar como leída
+  const marcarComoLeida = async (notificacionId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE_URL}/notificaciones/${notificacionId}/marcar-leida`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        await obtenerNotificaciones();
+        await obtenerContadorNoLeidas();
+      }
+    } catch (error) {
+      console.error("Error al marcar como leída:", error);
+    }
+  };
+
+  // Función para marcar todas como leídas
+  const marcarTodasComoLeidas = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE_URL}/notificaciones/marcar-todas-leidas`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        await obtenerNotificaciones();
+        await obtenerContadorNoLeidas();
+      }
+    } catch (error) {
+      console.error("Error al marcar todas como leídas:", error);
+    }
+  };
+
+  // Función para formatear fecha
+  const formatearFecha = (fecha) => {
+    const ahora = new Date();
+    const fechaNotificacion = new Date(fecha);
+    const diferencia = ahora - fechaNotificacion;
+
+    const minutos = Math.floor(diferencia / 60000);
+    const horas = Math.floor(diferencia / 3600000);
+    const dias = Math.floor(diferencia / 86400000);
+
+    if (minutos < 60) {
+      return `hace ${minutos} min`;
+    } else if (horas < 24) {
+      return `hace ${horas} hora${horas > 1 ? 's' : ''}`;
+    } else {
+      return `hace ${dias} día${dias > 1 ? 's' : ''}`;
+    }
+  };
+
+  // Función para obtener tipo de notificación
+  const obtenerTipoNotificacion = (tipo) => {
+    const tipos = {
+      'ACTIVIDAD': 'meeting',
+      'CUENTA_COBRAR': 'payment',
+      'CUENTA_PAGAR': 'payment',
+      'TRATO_GANADO': 'deal',
+      'RECARGA': 'recharge',
+      'CAMBIO_CONTRASENA': 'security',
+      'ESCALAMIENTO': 'escalation'
+    };
+    return tipos[tipo] || 'default';
+  };
+
+  // Effect para cargar notificaciones
+  useEffect(() => {
+    obtenerNotificaciones();
+    obtenerContadorNoLeidas();
+
+    // Actualizar cada 30 segundos
+    const intervalo = setInterval(() => {
+      obtenerContadorNoLeidas();
+    }, 30000);
+
+    return () => clearInterval(intervalo);
+  }, []);
+
 
   // Maneja temporizador de inactividad
   useEffect(() => {
@@ -390,8 +488,6 @@ const Header = ({ logoUrl }) => {
     })
   }
 
-  const unreadCount = notifications.filter((n) => n.unread).length
-
   return (
     <>
       <header className="ts-header-navbar">
@@ -407,7 +503,6 @@ const Header = ({ logoUrl }) => {
                 }}
                 onError={handleLogoError}
                 onLoad={() => {
-                  // Reset error handling cuando la imagen se carga exitosamente
                   logoErrorHandled.current = false
                   setLogoError(false)
                 }}
@@ -475,33 +570,71 @@ const Header = ({ logoUrl }) => {
           <div className="header-notification-container">
             <button className="ts-header-icon-button ts-header-notification" onClick={handleNotificationClick}>
               <img src={notificationIcon || "/placeholder.svg"} alt="Icono de Notificaciones" />
-              {unreadCount > 0 && <span className="ts-header-badge">{unreadCount}</span>}
+              {cantidadNoLeidas > 0 && (
+                <span className="ts-header-notification-badge">
+                  {cantidadNoLeidas > 99 ? '99+' : cantidadNoLeidas}
+                </span>
+              )}
             </button>
 
             {isNotificationModalOpen && (
               <div className="ts-header-notification-modal">
                 <div className="ts-header-notification-header">
                   <h3>Notificaciones</h3>
-                  <span className="ts-header-notification-count">{unreadCount} sin leer</span>
+                  <span className="ts-header-notification-count">{cantidadNoLeidas} sin leer</span>
                 </div>
                 <div className="ts-header-notification-list">
-                  {notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={`ts-header-notification-item ${notification.unread ? "unread" : ""}`}
-                    >
-                      <div className="ts-header-notification-content">
-                        <div className="ts-header-notification-title">{notification.title}</div>
-                        <div className="ts-header-notification-message">{notification.message}</div>
-                        <div className="ts-header-notification-time">{notification.time}</div>
+                  {notificaciones.length > 0 ? (
+                    notificaciones.map((notificacion) => (
+                      <div
+                        key={notificacion.id}
+                        className={`ts-header-notification-item ${notificacion.estatus === 'NO_LEIDA' ? 'unread' : ''}`}
+                      >
+                        <div className="ts-header-notification-content">
+                          <div className="ts-header-notification-title">
+                            {notificacion.tipoNotificacion}
+                          </div>
+                          <div className="ts-header-notification-message">
+                            {notificacion.mensaje}
+                          </div>
+                          <div className="ts-header-notification-time">
+                            {formatearFecha(notificacion.fechaCreacion)}
+                          </div>
+                        </div>
+                        <div className={`ts-header-notification-type ts-header-type-${obtenerTipoNotificacion(notificacion.tipoNotificacion)}`}></div>
+                        {notificacion.estatus === 'NO_LEIDA' && (
+                          <button
+                            className="ts-header-notification-check-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              marcarComoLeida(notificacion.id);
+                            }}
+                            title="Marcar como leída"
+                          >
+                            ✓
+                          </button>
+                        )}
                       </div>
-                      <div className={`ts-header-notification-type ts-header-type-${notification.type}`}></div>
+                    ))
+                  ) : (
+                    <div className="ts-header-notification-empty">
+                      No tienes notificaciones
                     </div>
-                  ))}
+                  )}
                 </div>
                 <div className="ts-header-notification-footer">
-                  <button className="ts-header-notification-btn">Ver todas</button>
-                  <button className="ts-header-notification-btn">Marcar como leídas</button>
+                  <button
+                    className="ts-header-notification-btn"
+                    onClick={() => setIsNotificationModalOpen(false)}
+                  >
+                    Ver todas
+                  </button>
+                  <button
+                    className="ts-header-notification-btn"
+                    onClick={marcarTodasComoLeidas}
+                  >
+                    Marcar como leídas
+                  </button>
                 </div>
               </div>
             )}

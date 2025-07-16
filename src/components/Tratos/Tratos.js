@@ -1095,7 +1095,7 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
   if (trato.isNeglected) {
     return (
       <img
-        src={activityCall || "/placeholder.svg"}
+        src={neglectedTreatment|| "/placeholder.svg"}
         alt="Trato Desatendido"
         className="activity-icon neglected"
         onClick={(e) => {
@@ -1233,10 +1233,10 @@ const Tratos = () => {
       const userId = localStorage.getItem("userId");
 
       if (userRol === "EMPLEADO" && userId) {
-        params.append("propietarioId", userId); 
-      } else if (selectedUser !== "Todos los usuarios") {
-        params.append("propietarioId", selectedUser); 
-      }
+      params.append("propietarioId", userId); 
+    } else if (selectedUser !== "Todos los usuarios") {
+      params.append("propietarioId", selectedUser);
+    }
       if (startDate) {
         params.append("startDate", startDate.toISOString());
       }
@@ -1425,49 +1425,79 @@ const Tratos = () => {
   };
 
   const handleDrop = async (e, targetColumnId) => {
-    e.preventDefault();
-    const tratoId = Number.parseInt(e.dataTransfer.getData("tratoId"));
-    if (isNaN(tratoId)) {
-      console.error("ID del trato no válido al soltar:", e.dataTransfer.getData("tratoId"));
-      return;
-    }
+  e.preventDefault();
+  const tratoId = Number.parseInt(e.dataTransfer.getData("tratoId"));
+  if (isNaN(tratoId)) {
+    console.error("ID del trato no válido al soltar:", e.dataTransfer.getData("tratoId"));
+    return;
+  }
 
-    const targetColumn = columnas.find((c) => c.id === targetColumnId);
-    const sourceColumn = columnas.find((c) => c.tratos.some((t) => t.id === tratoId));
-    if (!targetColumn || !sourceColumn || targetColumn.id === sourceColumn.id) return;
+  const targetColumn = columnas.find((c) => c.id === targetColumnId);
+  const sourceColumn = columnas.find((c) => c.tratos.some((t) => t.id === tratoId));
+  if (!targetColumn || !sourceColumn || targetColumn.id === sourceColumn.id) return;
 
-    const faseMap = {
-      "clasificacion": "CLASIFICACION",
-      "primer-contacto": "PRIMER_CONTACTO",
-      "envio-de-informacion": "ENVIO_DE_INFORMACION",
-      "reunion": "REUNION",
-      "cotizacion-propuesta-practica": "COTIZACION_PROPUESTA_PRACTICA",
-      "negociacion-revision": "NEGOCIACION_REVISION",
-      "cerrado-ganado": "CERRADO_GANADO",
-      "respuesta-por-correo": "RESPUESTA_POR_CORREO",
-      "interes-futuro": "INTERES_FUTURO",
-      "cerrado-perdido": "CERRADO_PERDIDO",
-    };
-
-    const nuevaFase = faseMap[targetColumn.className];
-    if (!nuevaFase) {
-      console.error("Fase no válida:", targetColumn.className);
-      Swal.fire({ icon: "error", title: "Error", text: "Fase no válida" });
-      return;
-    }
-
-    try {
-      const response = await fetchWithToken(
-        `${API_BASE_URL}/tratos/${tratoId}/mover-fase?nuevaFase=${nuevaFase}`,
-        { method: "PUT" }
-      );
-      const updatedTrato = await response.json();
-      await fetchData();
-    } catch (error) {
-      console.error("Error moving trato:", error);
-      Swal.fire({ icon: "error", title: "Error", text: "No se pudo mover el trato" });
-    }
+  const faseMap = {
+    "clasificacion": "CLASIFICACION",
+    "primer-contacto": "PRIMER_CONTACTO",
+    "envio-de-informacion": "ENVIO_DE_INFORMACION",
+    "reunion": "REUNION",
+    "cotizacion-propuesta-practica": "COTIZACION_PROPUESTA_PRACTICA",
+    "negociacion-revision": "NEGOCIACION_REVISION",
+    "cerrado-ganado": "CERRADO_GANADO",
+    "respuesta-por-correo": "RESPUESTA_POR_CORREO",
+    "interes-futuro": "INTERES_FUTURO",
+    "cerrado-perdido": "CERRADO_PERDIDO",
   };
+
+  const nuevaFase = faseMap[targetColumn.className];
+  if (!nuevaFase) {
+    console.error("Fase no válida:", targetColumn.className);
+    Swal.fire({ icon: "error", title: "Error", text: "Fase no válida" });
+    return;
+  }
+
+  try {
+    const response = await fetchWithToken(
+      `${API_BASE_URL}/tratos/${tratoId}/mover-fase?nuevaFase=${nuevaFase}`,
+      { method: "PUT" }
+    );
+    const updatedTrato = await response.json();
+
+    // Verificar si el trato fue escalado
+    if (updatedTrato.escalado) {
+      Swal.fire({
+        title: "¡Trato Escalado!",
+        html: `
+          <div style="text-align: left;">
+            <p><strong>Fase cambiada a:</strong> ${nuevaFase.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}</p>
+            <p><strong>Trato transferido a:</strong> ${updatedTrato.nuevoAdministradorNombre}</p>
+            <p style="margin-top: 15px; color: #666;">
+              <i class="fas fa-info-circle"></i> Su trato ha sido automáticamente asignado a un administrador para su seguimiento en esta fase crítica.
+            </p>
+          </div>
+        `,
+        icon: "info",
+        iconColor: "#3085d6",
+        confirmButtonText: "Entendido",
+        confirmButtonColor: "#3085d6",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        customClass: {
+          popup: 'swal-escalamiento-popup'
+        }
+      }).then(() => {
+        // Actualizar los datos después de que el usuario cierre el modal
+        fetchData();
+      });
+    } else {
+      // Si no fue escalado, solo actualizar los datos
+      await fetchData();
+    }
+  } catch (error) {
+    console.error("Error moving trato:", error);
+    Swal.fire({ icon: "error", title: "Error", text: "No se pudo mover el trato" });
+  }
+};
 
   const onChangeDateRange = (dates) => {
     const [start, end] = dates;

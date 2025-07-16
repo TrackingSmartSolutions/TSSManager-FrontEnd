@@ -272,26 +272,54 @@
   filter: brightness(0) invert(1);
 }
 
-/* Estilo de la insignia de notificaciones */
-.ts-header-notification .ts-header-badge {
+/* Contenedor de notificaciones - DEBE tener position: relative */
+.header-notification-container {
+  position: relative;
+  display: inline-block; /* Asegura que el contenedor se ajuste al contenido */
+}
+
+/* Botón de notificaciones */
+.ts-header-icon-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+/* Badge de notificaciones - CRÍTICO: position absolute relativo al botón */
+.ts-header-notification-badge {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  background-color: var(--accent-color, #ef4444);
+  top: -2px;           /* Ajustado para mejor visibilidad */
+  right: -2px;         /* Ajustado para mejor visibilidad */
+  background-color: #ef4444;
   color: white;
-  font-size: 10px;
-  width: 16px;
-  height: 16px;
   border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
+  font-size: 11px;
+  font-weight: 600;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 10;         /* Asegura que esté por encima del icono */
+  line-height: 1;      /* Evita problemas de altura de línea */
 }
 
-/* Contenedor de notificaciones */
-.header-notification-container {
-  position: relative;
+/* Asegura que el badge sea visible en pantallas pequeñas */
+@media (max-width: 768px) {
+  .ts-header-notification-badge {
+    min-width: 16px;
+    height: 16px;
+    font-size: 10px;
+    top: -1px;
+    right: -1px;
+  }
 }
 
 /* Modal de notificaciones */
@@ -349,6 +377,7 @@
   gap: 12px;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  position: relative;
 }
 
 .ts-header-notification-item:hover {
@@ -413,6 +442,48 @@
   background-color: #f59e0b;
 }
 
+.ts-header-type-security {
+  background-color: #8b5cf6;
+}
+
+.ts-header-type-escalation {
+  background-color: #f97316;
+}
+
+.ts-header-type-default {
+  background-color: #6b7280;
+}
+
+/* Botón de marcar como leída */
+.ts-header-notification-check-btn {
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.ts-header-notification-check-btn:hover {
+  background-color: #059669;
+}
+
+/* Estado vacío */
+.ts-header-notification-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+}
+
 /* Footer del modal de notificaciones */
 .ts-header-notification-footer {
   padding: 12px 20px;
@@ -438,7 +509,6 @@
   background: #f3f4f6;
   border-color: #9ca3af;
 }
-
 /* Estilo del perfil de usuario */
 .ts-header-user-profile {
   display: flex;

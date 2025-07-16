@@ -1703,7 +1703,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
 };
 
 // Modal para completar actividad 
-const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, contactos, openModal }) => {
+const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, openModal }) => {
   const [formData, setFormData] = useState({
     respuesta: '',
     interes: '',
@@ -3280,32 +3280,60 @@ const DetallesTrato = () => {
     openModal("crearCorreo")
   }
 
-  const handleCambiarFase = async (nuevaFase) => {
-    try {
-      const response = await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}/mover-fase?nuevaFase=${nuevaFase}`, {
-        method: 'PUT',
+ const handleCambiarFase = async (nuevaFase) => {
+  try {
+    const response = await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}/mover-fase?nuevaFase=${nuevaFase}`, {
+      method: 'PUT',
+    });
+    const updatedTrato = await response.json();
+    
+    setTrato((prev) => ({
+      ...prev,
+      fase: updatedTrato.fase,
+      fases: updatedTrato.fases,
+      propietarioId: updatedTrato.propietarioId,
+      propietarioNombre: updatedTrato.propietarioNombre
+    }));
+
+    // Verificar si el trato fue escalado
+    if (updatedTrato.escalado) {
+      Swal.fire({
+        title: "¡Trato Escalado!",
+        html: `
+          <div style="text-align: left;">
+            <p><strong>Fase cambiada a:</strong> ${nuevaFase.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}</p>
+            <p><strong>Trato transferido a:</strong> ${updatedTrato.nuevoAdministradorNombre}</p>
+            <p style="margin-top: 15px; color: #666;">
+              <i class="fas fa-info-circle"></i> Su trato ha sido automáticamente asignado a un administrador para su seguimiento en esta fase crítica.
+            </p>
+          </div>
+        `,
+        icon: "info",
+        iconColor: "#3085d6",
+        confirmButtonText: "Entendido",
+        confirmButtonColor: "#3085d6",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        customClass: {
+          popup: 'swal-escalamiento-popup'
+        }
       });
-      const updatedTrato = await response.json();
-      setTrato((prev) => ({
-        ...prev,
-        fase: updatedTrato.fase,
-        fases: updatedTrato.fases,
-      }));
+    } else {
       Swal.fire({
         title: "¡Éxito!",
         text: `Fase cambiada a ${nuevaFase.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}`,
         icon: "success",
       });
-    } catch (error) {
-      Swal.fire({
-        title: 'Error',
-        text: 'No se pudo cambiar la fase',
-        icon: 'error',
-      });
-      console.error(error);
     }
-  };
-
+  } catch (error) {
+    Swal.fire({
+      title: 'Error',
+      text: 'No se pudo cambiar la fase',
+      icon: 'error',
+    });
+    console.error(error);
+  }
+};
   // Funciones para editar notas inline
   const handleEditarNota = (notaId) => {
     const nota = trato.notas.find((n) => n.id === notaId);
@@ -3432,35 +3460,6 @@ const DetallesTrato = () => {
       });
     }
   };
-
-  const handleClickFase = (faseIndex, fase) => {
-    if (fase.completada) {
-      Swal.fire({
-        title: "Fase Completada",
-        text: `La fase "${fase.nombre}" ya está completada`,
-        icon: "info",
-      })
-    } else if (fase.actual) {
-      Swal.fire({
-        title: "Fase Actual",
-        text: `Actualmente en la fase: "${fase.nombre}"`,
-        icon: "info",
-        showCancelButton: true,
-        confirmButtonText: "Completar fase",
-        cancelButtonText: "Cerrar",
-      }).then((result) => {
-        if (result.isConfirmed) {
-          Swal.fire("¡Fase completada!", `"${fase.nombre}" marcada como completada`, "success")
-        }
-      })
-    } else {
-      Swal.fire({
-        title: "Fase Pendiente",
-        text: `La fase "${fase.nombre}" está pendiente`,
-        icon: "warning",
-      })
-    }
-  }
 
   if (loading) {
     return (
