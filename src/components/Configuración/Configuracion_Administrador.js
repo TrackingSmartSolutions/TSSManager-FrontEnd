@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"
 import "./Configuracion_Administrador.css"
 import Header from "../Header/Header"
@@ -8,16 +8,25 @@ import uploadIcon from "../../assets/icons/subir.png"
 import { API_BASE_URL } from "../Config/Config";
 import Swal from "sweetalert2"
 
-const fetchWithToken = async (url, options = {}) => {
+const fetchWithToken = async (url, options = {}, parseAsJson = true) => {
   const token = localStorage.getItem("token");
   const headers = {
-    "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
+
+  if (!options.body || !(options.body instanceof FormData)) {
+    if (parseAsJson) {
+      headers["Content-Type"] = "application/json";
+    }
+  }
+
   const response = await fetch(url, { ...options, headers });
-  if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`);
-  return response;
+
+  if (!response.ok) {
+    throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`);
+  }
+  return parseAsJson ? response.json() : response;
 };
 
 const ConfiguracionAdministrador = () => {
@@ -33,32 +42,8 @@ const ConfiguracionAdministrador = () => {
     fechaFin: "",
   })
 
-  const [exportHistory, setExportHistory] = useState([
-    {
-      id: 1,
-      tipo: "tratos",
-      formato: "csv",
-      fecha: "2024-01-20T10:30:00Z",
-      nombre: "Exportación de tratos - 20/01/2024",
-      tamaño: "2.5 MB",
-    },
-    {
-      id: 2,
-      tipo: "empresas",
-      formato: "pdf",
-      fecha: "2024-01-18T14:15:00Z",
-      nombre: "Exportación de empresas - 18/01/2024",
-      tamaño: "1.8 MB",
-    },
-    {
-      id: 3,
-      tipo: "contactos",
-      formato: "csv",
-      fecha: "2024-01-15T09:45:00Z",
-      nombre: "Exportación de contactos - 15/01/2024",
-      tamaño: "3.2 MB",
-    },
-  ])
+  const [exportHistory, setExportHistory] = useState([]);
+  const [importHistory, setImportHistory] = useState([]);
 
   const navigate = useNavigate()
 
@@ -66,6 +51,7 @@ const ConfiguracionAdministrador = () => {
     { value: "tratos", label: "Tratos" },
     { value: "empresas", label: "Empresas" },
     { value: "contactos", label: "Contactos" },
+    { value: "correoContactos", label: "Correos de los contactos" },
     { value: "modelos", label: "Modelos" },
     { value: "proveedores", label: "Proveedores" },
     { value: "equipos", label: "Equipos" },
@@ -118,23 +104,36 @@ const ConfiguracionAdministrador = () => {
     }
   }
 
-  const handleDownloadTemplate = () => {
-    const tipoSeleccionado = tiposDatosOptions.find((tipo) => tipo.value === importData.tiposDatos)
+  const handleDownloadTemplate = async () => {
+    const tipoSeleccionado = tiposDatosOptions.find((tipo) => tipo.value === importData.tiposDatos);
 
-    Swal.fire({
-      icon: "info",
-      title: "Descargando plantilla",
-      text: `Descargando plantilla específica para ${tipoSeleccionado.label}...`,
-      showConfirmButton: false,
-      timer: 2000,
-    }).then(() => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/administrador-datos/descargar-plantilla/${importData.tiposDatos}`, {}, false);
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `plantilla_${importData.tiposDatos}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
       Swal.fire({
         icon: "success",
         title: "Plantilla descargada",
         text: `La plantilla para ${tipoSeleccionado.label} se ha descargado correctamente.`,
-      })
-    })
-  }
+      });
+    } catch (error) {
+      console.error("Error al descargar plantilla:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: `No se pudo descargar la plantilla: ${error.message}`,
+      });
+    }
+  };
 
   const handleImportData = async () => {
     if (!importData.archivo) {
@@ -142,10 +141,9 @@ const ConfiguracionAdministrador = () => {
         icon: "warning",
         title: "Archivo requerido",
         text: "Por favor seleccione un archivo CSV para importar.",
-      })
-      return
+      });
+      return;
     }
-
     try {
       const result = await Swal.fire({
         title: "¿Importar datos?",
@@ -154,42 +152,67 @@ const ConfiguracionAdministrador = () => {
         showCancelButton: true,
         confirmButtonText: "Importar",
         cancelButtonText: "Cancelar",
-      })
-
+      });
       if (result.isConfirmed) {
-        // Simular proceso de importación
+        const formData = new FormData();
+        formData.append("archivo", importData.archivo);
+        formData.append("tipoDatos", importData.tiposDatos);
+        formData.append("usuarioId", localStorage.getItem("userId"));
+
         Swal.fire({
           title: "Importando datos...",
           text: "Por favor espere mientras se procesan los datos.",
           allowOutsideClick: false,
           didOpen: () => {
-            Swal.showLoading()
+            Swal.showLoading();
           },
-        })
+        });
 
-        // Simular tiempo de procesamiento
-        setTimeout(() => {
-          Swal.fire({
-            icon: "success",
-            title: "Datos importados",
-            text: `Los datos de ${importData.tiposDatos} se han importado correctamente.`,
-          })
+        const response = await fetchWithToken(`${API_BASE_URL}/administrador-datos/importar-datos`, {
+          method: "POST",
+          body: formData,
+        });
+        const resultData = await response;
 
-          // Limpiar formulario
+        Swal.fire({
+          icon: resultData.exito ? "success" : "error",
+          title: resultData.exito ? "Datos importados" : "Error",
+          text: resultData.mensaje || "Ocurrió un error al importar los datos.",
+        });
+        if (resultData.exito) {
           setImportData({
             tiposDatos: "tratos",
             archivo: null,
-          })
-        }, 3000)
+          });
+          fetchImportHistory();
+        }
       }
     } catch (error) {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Ocurrió un error al importar los datos.",
-      })
+        text: "Ocurrió un error al importar los datos: " + error.message,
+      });
     }
-  }
+  };
+
+  const fetchImportHistory = async () => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/administrador-datos/historial-importaciones/${localStorage.getItem("userId")}`);
+      const data = await response;
+      setImportHistory(data.map(item => ({
+        id: item.id,
+        tipoDatos: item.tipoDatos,
+        nombreArchivo: item.nombreArchivo,
+        fechaCreacion: item.fechaCreacion,
+        registrosExitosos: item.registrosExitosos,
+        registrosFallidos: item.registrosFallidos,
+        errores: item.errores
+      })));
+    } catch (error) {
+      console.error("Error fetching import history:", error);
+    }
+  };
 
   const handleExportData = async () => {
     try {
@@ -200,68 +223,113 @@ const ConfiguracionAdministrador = () => {
         showCancelButton: true,
         confirmButtonText: "Exportar",
         cancelButtonText: "Cancelar",
-      })
-
+      });
       if (result.isConfirmed) {
-        // Simular proceso de exportación
         Swal.fire({
           title: "Exportando datos...",
           text: "Por favor espere mientras se genera el archivo.",
           allowOutsideClick: false,
           didOpen: () => {
-            Swal.showLoading()
+            Swal.showLoading();
           },
-        })
+        });
+        const response = await fetchWithToken(`${API_BASE_URL}/administrador-datos/exportar-datos`, {
+          method: "POST",
+          body: JSON.stringify({
+            tipoDatos: exportData.tiposDatos,
+            formatoExportacion: exportData.formato,
+            fechaInicio: exportData.fechaInicio,
+            fechaFin: exportData.fechaFin,
+            usuarioId: parseInt(localStorage.getItem("userId")),
+          }),
+        });
+        const resultData = await response;
 
-        // Simular tiempo de procesamiento
-        setTimeout(() => {
-          const fechaActual = new Date()
-          const fechaFormateada = fechaActual.toLocaleDateString("es-MX", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          })
-
-          const nuevaExportacion = {
-            id: Date.now(),
-            tipo: exportData.tiposDatos,
-            formato: exportData.formato,
-            fecha: fechaActual.toISOString(),
-            nombre: `Exportación de ${exportData.tiposDatos} - ${fechaFormateada}`,
-            tamaño: `${(Math.random() * 5 + 1).toFixed(1)} MB`,
-          }
-
-          setExportHistory((prev) => [nuevaExportacion, ...prev])
-
-          Swal.fire({
-            icon: "success",
-            title: "Datos exportados",
-            text: `Los datos se han exportado correctamente y están disponibles en el historial.`,
-          })
-        }, 2500)
+        Swal.fire({
+          icon: resultData.exito ? "success" : "error",
+          title: resultData.exito ? "Datos exportados" : "Error",
+          text: resultData.mensaje || "Ocurrió un error al exportar los datos.",
+        });
+        if (resultData.exito) {
+          fetchExportHistory(); // Recargar historial
+        }
       }
     } catch (error) {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Ocurrió un error al exportar los datos.",
-      })
+        text: "Ocurrió un error al exportar los datos: " + error.message,
+      });
     }
-  }
+  };
 
-  const handleDownloadExport = (exportItem) => {
-    Swal.fire({
-      icon: "info",
-      title: "Descargando archivo",
-      text: `Descargando ${exportItem.nombre}...`,
-      showConfirmButton: false,
-      timer: 1500,
-    })
-  }
+  const fetchExportHistory = async () => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/administrador-datos/historial-exportaciones/${localStorage.getItem("userId")}`);
+      const data = await response;
+      setExportHistory(data.map(item => ({
+        id: item.id,
+        tipoDatos: item.tipoDatos,
+        formato: item.formatoExportacion,
+        nombre: item.nombreArchivo,
+        tamaño: item.tamañoArchivo,
+        fecha: item.fechaCreacion,
+        fechaInicio: item.fechaInicio,
+        fechaFin: item.fechaFin
+      })));
+    } catch (error) {
+      console.error("Error fetching export history:", error);
+    }
+  };
+
+  const handleDownloadExport = async (exportItem) => {
+    try {
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/administrador-datos/descargar-exportacion/${exportItem.id}?usuarioId=${localStorage.getItem("userId")}`,
+        {},
+        false
+      );
+
+      // Verificar si la respuesta es exitosa
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      // Obtener el blob del archivo
+      const blob = await response.blob();
+
+      // Verificar que el blob no esté vacío
+      if (blob.size === 0) {
+        throw new Error("El archivo está vacío");
+      }
+
+      // Crear URL para descarga
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = exportItem.nombre;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      Swal.fire({
+        icon: "success",
+        title: "Descarga completada",
+        text: `El archivo ${exportItem.nombre} se ha descargado correctamente.`,
+      });
+    } catch (error) {
+      console.error("Error al descargar archivo:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: `No se pudo descargar el archivo: ${error.message}`,
+      });
+    }
+  };
 
   const handleDeleteExport = async (exportId) => {
-    const exportItem = exportHistory.find((item) => item.id === exportId)
-
+    const exportItem = exportHistory.find((item) => item.id === exportId);
     const result = await Swal.fire({
       title: "¿Eliminar exportación?",
       text: `¿Está seguro de que desea eliminar "${exportItem.nombre}"? Esta acción no se puede deshacer.`,
@@ -270,17 +338,34 @@ const ConfiguracionAdministrador = () => {
       confirmButtonText: "Eliminar",
       cancelButtonText: "Cancelar",
       confirmButtonColor: "#f44336",
-    })
+    });
 
     if (result.isConfirmed) {
-      setExportHistory((prev) => prev.filter((item) => item.id !== exportId))
-      Swal.fire({
-        icon: "success",
-        title: "Exportación eliminada",
-        text: "La exportación se ha eliminado correctamente.",
-      })
+      try {
+        await fetchWithToken(
+          `${API_BASE_URL}/administrador-datos/eliminar-exportacion/${exportId}?usuarioId=${localStorage.getItem("userId")}`,
+          {
+            method: "DELETE",
+          },
+          false
+        );
+
+        setExportHistory((prev) => prev.filter((item) => item.id !== exportId));
+        Swal.fire({
+          icon: "success",
+          title: "Exportación eliminada",
+          text: "La exportación se ha eliminado correctamente.",
+        });
+        fetchExportHistory();
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudo eliminar la exportación.",
+        });
+      }
     }
-  }
+  };
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A"
@@ -297,21 +382,49 @@ const ConfiguracionAdministrador = () => {
   const getDataTypeInfo = (tipo) => {
     const infoMap = {
       tratos: {
-        campos:
-          "Nombre de la Empresa, Contacto de la Empresa, Sector y características del Trato, Correo de Contacto y Teléfono de Contacto",
+        campos: "nombre, empresa_id, contacto_id, propietario_id (opcional), numero_unidades, ingresos_esperados, descripcion, fecha_cierre, no_trato, probabilidad, fase",
         descripcion: "El archivo CSV debe tener las siguientes columnas:",
       },
       empresas: {
-        campos: "Nombre, Estatus, Sitio Web, Sector, Domicilio Físico, RFC, Razón Social",
+        campos: "nombre, estatus, domicilio_fisico, propietario_id, creado_por, fecha_creacion (opcional), sitio_web (opcional), sector (opcional), domicilio_fiscal (opcional), rfc (opcional), razon_social (opcional), regimen_fiscal (opcional), modificado_por (opcional)",
         descripcion: "El archivo CSV debe tener las siguientes columnas:",
       },
       contactos: {
-        campos: "Nombre, Empresa, Correos, Teléfonos, Celular, Rol",
+        campos: "nombre, empresa_id, rol, celular, propietario_id, creado_por, fecha_creacion (opcional), modificado_por (opcional)",
+        descripcion: "El archivo CSV debe tener las siguientes columnas:",
+      },
+      correoContactos: {
+        campos: "contacto_id, correo",
+        descripcion: "El archivo CSV debe tener las siguientes columnas:",
+      },
+      modelos: {
+        campos: "nombre, imagen_url, uso",
+        descripcion: "El archivo CSV debe tener las siguientes columnas:",
+      },
+      proveedores: {
+        campos: "nombre, contacto_nombre, telefono, correo, sitio_web",
+        descripcion: "El archivo CSV debe tener las siguientes columnas:",
+      },
+      equipos: {
+        campos: "imei, nombre, modelo_id, cliente_id (opcional), cliente_default, proveedor_id, tipo, estatus, tipo_activacion (opcional), plataforma (opcional), fecha_activacion (opcional), fecha_expiracion (opcional)",
+        descripcion: "El archivo CSV debe tener las siguientes columnas:",
+      },
+      sims: {
+        campos: "numero, tarifa, vigencia (opcional), recarga (opcional), responsable, principal, grupo (opcional), equipo_id (opcional), contrasena",
+        descripcion: "El archivo CSV debe tener las siguientes columnas:",
+      },
+      historialSaldos: {
+        campos: "sim_id, saldo_actual (opcional), datos (opcional), fecha (opcional - usa fecha actual si está vacío)",
         descripcion: "El archivo CSV debe tener las siguientes columnas:",
       },
     }
     return infoMap[tipo] || infoMap.tratos
   }
+
+  useEffect(() => {
+    fetchExportHistory();
+    fetchImportHistory();
+  }, []);
 
   return (
     <>
@@ -472,7 +585,6 @@ const ConfiguracionAdministrador = () => {
           {/* Historial de Exportaciones */}
           <section className="config-admin-section">
             <h3 className="config-admin-section-title">Historial de exportaciones</h3>
-
             <div className="config-admin-export-history">
               {exportHistory.length > 0 ? (
                 <div className="config-admin-history-list">
@@ -482,8 +594,7 @@ const ConfiguracionAdministrador = () => {
                         <h4>{exportItem.nombre}</h4>
                         <div className="config-admin-history-details">
                           <span className="config-admin-history-type">
-                            {tiposDatosOptions.find((t) => t.value === exportItem.tipo)?.label} -{" "}
-                            {exportItem.formato.toUpperCase()}
+                            {tiposDatosOptions.find((t) => t.value === exportItem.tipoDatos)?.label} - {exportItem.formato.toUpperCase()}
                           </span>
                           <span className="config-admin-history-size">{exportItem.tamaño}</span>
                           <span className="config-admin-history-date">{formatDate(exportItem.fecha)}</span>
@@ -511,6 +622,37 @@ const ConfiguracionAdministrador = () => {
               ) : (
                 <div className="config-admin-no-history">
                   <p>No hay exportaciones en el historial</p>
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="config-admin-section">
+            <h3 className="config-admin-section-title">Historial de importaciones</h3>
+            <div className="config-admin-export-history">
+              {importHistory.length > 0 ? (
+                <div className="config-admin-history-list">
+                  {importHistory.map((importItem) => (
+                    <div key={importItem.id} className="config-admin-history-item">
+                      <div className="config-admin-history-info">
+                        <h4>{importItem.nombreArchivo}</h4>
+                        <div className="config-admin-history-details">
+                          <span className="config-admin-history-type">
+                            {tiposDatosOptions.find((t) => t.value === importItem.tipoDatos)?.label}
+                          </span>
+                          <span className="config-admin-history-date">{formatDate(importItem.fechaCreacion)}</span>
+                          <span className="config-admin-history-size">
+                            {importItem.registrosExitosos} exitosos / {importItem.registrosFallidos} fallidos
+                          </span>
+                        </div>
+                        {importItem.errores && <p className="config-admin-history-errors">Errores: {importItem.errores}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="config-admin-no-history">
+                  <p>No hay importaciones en el historial</p>
                 </div>
               )}
             </div>
