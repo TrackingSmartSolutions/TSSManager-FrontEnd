@@ -2704,6 +2704,8 @@ const DetallesTrato = () => {
   const [editingNoteText, setEditingNoteText] = useState("")
   const [users, setUsers] = useState([]);
   const [companies, setCompanies] = useState([]);
+  const [correosSeguimientoActivo, setCorreosSeguimientoActivo] = useState(false);
+  const [cargandoCorreos, setCargandoCorreos] = useState(false);
 
 
   // Estados para modales
@@ -2773,6 +2775,69 @@ const DetallesTrato = () => {
       [modalType]: { isOpen: false },
     }))
   }
+
+  // Función para obtener el estado actual de los correos de seguimiento
+  const obtenerEstadoCorreosSeguimiento = async (tratoId) => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/correos-seguimiento/estado/${tratoId}`);
+      const activo = await response.json();
+      setCorreosSeguimientoActivo(activo);
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo obtener el estado de los correos de seguimiento'
+      });
+    }
+  };
+
+  // Función para activar/desactivar correos de seguimiento
+  const toggleCorreosSeguimiento = async (tratoId, activar) => {
+    setCargandoCorreos(true);
+
+    try {
+      const endpoint = activar ? 'activar' : 'desactivar';
+      const response = await fetchWithToken(`${API_BASE_URL}/correos-seguimiento/${endpoint}/${tratoId}`, {
+        method: 'POST'
+      });
+
+      const mensaje = await response.text();
+      setCorreosSeguimientoActivo(activar);
+      Swal.fire({
+        icon: 'success',
+        title: activar ? 'Correos de seguimiento activados' : 'Correos de seguimiento desactivados',
+        text: mensaje,
+        showConfirmButton: false,
+        timer: 2000
+      });
+
+    } catch (error) {
+      // Revertir el estado del checkbox si hay error
+      setCorreosSeguimientoActivo(!activar);
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error.message || 'Error al cambiar el estado de los correos de seguimiento'
+      });
+    } finally {
+      setCargandoCorreos(false);
+    }
+  };
+
+  // Función para manejar el cambio del checkbox
+  const handleCorreosSeguimientoChange = (e) => {
+    const isChecked = e.target.checked;
+    toggleCorreosSeguimiento(trato.id, isChecked);
+  };
+
+  // useEffect para cargar el estado inicial cuando se carga el trato
+  useEffect(() => {
+    if (trato && trato.id && ['ENVIO_DE_INFORMACION', 'RESPUESTA_POR_CORREO'].includes(trato.fase)) {
+      obtenerEstadoCorreosSeguimiento(trato.id);
+    }
+  }, [trato]);
+
 
   const handleSelectActivity = (tipo) => {
     const modalMap = {
@@ -3113,23 +3178,23 @@ const DetallesTrato = () => {
           };
         };
         const emailResponse = await fetchWithToken(`${API_BASE_URL}/correos/trato/${params.id}`);
-      let emailData = [];
-      if (emailResponse.status === 204) {
-        setEmailRecords([]);
-      } else if (emailResponse.ok) {
-        emailData = await emailResponse.json();
-        if (Array.isArray(emailData)) {
-          setEmailRecords(emailData);
+        let emailData = [];
+        if (emailResponse.status === 204) {
+          setEmailRecords([]);
+        } else if (emailResponse.ok) {
+          emailData = await emailResponse.json();
+          if (Array.isArray(emailData)) {
+            setEmailRecords(emailData);
+          } else {
+            console.error("Error: La respuesta de correos no es un array", emailData);
+            setEmailRecords([]);
+          }
         } else {
-          console.error("Error: La respuesta de correos no es un array", emailData);
+          console.error(
+            `Error fetching emails: ${emailResponse.status} - ${emailResponse.statusText}`
+          );
           setEmailRecords([]);
         }
-      } else {
-        console.error(
-          `Error fetching emails: ${emailResponse.status} - ${emailResponse.statusText}`
-        );
-        setEmailRecords([]);
-      }
 
         setTrato((prev) => ({
           ...prev,
@@ -3280,26 +3345,26 @@ const DetallesTrato = () => {
     openModal("crearCorreo")
   }
 
- const handleCambiarFase = async (nuevaFase) => {
-  try {
-    const response = await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}/mover-fase?nuevaFase=${nuevaFase}`, {
-      method: 'PUT',
-    });
-    const updatedTrato = await response.json();
-    
-    setTrato((prev) => ({
-      ...prev,
-      fase: updatedTrato.fase,
-      fases: updatedTrato.fases,
-      propietarioId: updatedTrato.propietarioId,
-      propietarioNombre: updatedTrato.propietarioNombre
-    }));
+  const handleCambiarFase = async (nuevaFase) => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}/mover-fase?nuevaFase=${nuevaFase}`, {
+        method: 'PUT',
+      });
+      const updatedTrato = await response.json();
 
-    // Verificar si el trato fue escalado
-    if (updatedTrato.escalado) {
-      Swal.fire({
-        title: "¡Trato Escalado!",
-        html: `
+      setTrato((prev) => ({
+        ...prev,
+        fase: updatedTrato.fase,
+        fases: updatedTrato.fases,
+        propietarioId: updatedTrato.propietarioId,
+        propietarioNombre: updatedTrato.propietarioNombre
+      }));
+
+      // Verificar si el trato fue escalado
+      if (updatedTrato.escalado) {
+        Swal.fire({
+          title: "¡Trato Escalado!",
+          html: `
           <div style="text-align: left;">
             <p><strong>Fase cambiada a:</strong> ${nuevaFase.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}</p>
             <p><strong>Trato transferido a:</strong> ${updatedTrato.nuevoAdministradorNombre}</p>
@@ -3308,32 +3373,32 @@ const DetallesTrato = () => {
             </p>
           </div>
         `,
-        icon: "info",
-        iconColor: "#3085d6",
-        confirmButtonText: "Entendido",
-        confirmButtonColor: "#3085d6",
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        customClass: {
-          popup: 'swal-escalamiento-popup'
-        }
-      });
-    } else {
+          icon: "info",
+          iconColor: "#3085d6",
+          confirmButtonText: "Entendido",
+          confirmButtonColor: "#3085d6",
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          customClass: {
+            popup: 'swal-escalamiento-popup'
+          }
+        });
+      } else {
+        Swal.fire({
+          title: "¡Éxito!",
+          text: `Fase cambiada a ${nuevaFase.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}`,
+          icon: "success",
+        });
+      }
+    } catch (error) {
       Swal.fire({
-        title: "¡Éxito!",
-        text: `Fase cambiada a ${nuevaFase.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}`,
-        icon: "success",
+        title: 'Error',
+        text: 'No se pudo cambiar la fase',
+        icon: 'error',
       });
+      console.error(error);
     }
-  } catch (error) {
-    Swal.fire({
-      title: 'Error',
-      text: 'No se pudo cambiar la fase',
-      icon: 'error',
-    });
-    console.error(error);
-  }
-};
+  };
   // Funciones para editar notas inline
   const handleEditarNota = (notaId) => {
     const nota = trato.notas.find((n) => n.id === notaId);
@@ -3546,10 +3611,17 @@ const DetallesTrato = () => {
             <div className="seccion persona-contacto">
               <div className="seccion-header">
                 <h2>Persona de contacto</h2>
-                {['ENVIO_DE_INFORMACION', 'REUNION', 'COTIZACION_PROPUESTA', 'NEGOCIACION_REVISION', 'RESPUESTA_POR_CORREO'].includes(trato.fase) && (
+                {['ENVIO_DE_INFORMACION', 'RESPUESTA_POR_CORREO'].includes(trato.fase) && (
                   <label className="checkbox-container">
-                    <input type="checkbox" />
-                    <span>Mandar emails de seguimiento</span>
+                    <input
+                      type="checkbox"
+                      checked={correosSeguimientoActivo}
+                      onChange={handleCorreosSeguimientoChange}
+                      disabled={cargandoCorreos}
+                    />
+                    <span>
+                      {cargandoCorreos ? 'Procesando...' : 'Mandar emails de seguimiento'}
+                    </span>
                   </label>
                 )}
               </div>
@@ -3902,55 +3974,55 @@ const DetallesTrato = () => {
             </div>
           </div>
           {/* Correos electrónicos */}
-<div className="seccion correos-electronicos">
-  <div className="seccion-header">
-    <h2>Correos electrónicos</h2>
-    <button onClick={() => handleAgregarCorreo()} className="btn-agregar">
-      <img src={addIcon || "/placeholder.svg"} alt="Agregar" />
-    </button>
-  </div>
-  <div className="correos-contenido">
-    {emailRecords.length > 0 ? (
-      emailRecords.map((email) => (
-        <div key={email.id} className="email-item">
-          <div className="email-header">
-            <div className="email-destinatario">
-              {email.destinatario}
+          <div className="seccion correos-electronicos">
+            <div className="seccion-header">
+              <h2>Correos electrónicos</h2>
+              <button onClick={() => handleAgregarCorreo()} className="btn-agregar">
+                <img src={addIcon || "/placeholder.svg"} alt="Agregar" />
+              </button>
             </div>
-            <div className="email-fecha">
-              {new Date(email.fechaEnvio).toLocaleString()}
+            <div className="correos-contenido">
+              {emailRecords.length > 0 ? (
+                emailRecords.map((email) => (
+                  <div key={email.id} className="email-item">
+                    <div className="email-header">
+                      <div className="email-destinatario">
+                        {email.destinatario}
+                      </div>
+                      <div className="email-fecha">
+                        {new Date(email.fechaEnvio).toLocaleString()}
+                      </div>
+                    </div>
+
+                    <div className="email-asunto">
+                      <span className="email-asunto-label">Asunto</span>
+                      <div className="email-asunto-texto">{email.asunto}</div>
+                    </div>
+
+                    <div className="email-cuerpo">
+                      <span className="email-cuerpo-label">Mensaje</span>
+                      <div className="email-cuerpo-texto">{email.cuerpo}</div>
+                    </div>
+
+                    {email.archivosAdjuntos && (
+                      <div className="email-adjuntos">
+                        <span className="email-adjuntos-label">Archivos adjuntos</span>
+                        <div className="email-adjuntos-lista">
+                          {email.archivosAdjuntos.split(",").join(", ")}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="email-footer">
+                      <div className="email-status">Enviado</div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="no-actividades">No se encontraron registros</p>
+              )}
             </div>
           </div>
-          
-          <div className="email-asunto">
-            <span className="email-asunto-label">Asunto</span>
-            <div className="email-asunto-texto">{email.asunto}</div>
-          </div>
-          
-          <div className="email-cuerpo">
-            <span className="email-cuerpo-label">Mensaje</span>
-            <div className="email-cuerpo-texto">{email.cuerpo}</div>
-          </div>
-          
-          {email.archivosAdjuntos && (
-            <div className="email-adjuntos">
-              <span className="email-adjuntos-label">Archivos adjuntos</span>
-              <div className="email-adjuntos-lista">
-                {email.archivosAdjuntos.split(",").join(", ")}
-              </div>
-            </div>
-          )}
-          
-          <div className="email-footer">
-            <div className="email-status">Enviado</div>
-          </div>
-        </div>
-      ))
-    ) : (
-      <p className="no-actividades">No se encontraron registros</p>
-    )}
-  </div>
-</div>
         </div>
       </main>
 

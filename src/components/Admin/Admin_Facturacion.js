@@ -232,13 +232,13 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
         <div className="facturacion-form-group">
           <label htmlFor="rfc">RFC <span className="required"> *</span></label>
           <input
-  type="text"
-  id="rfc"
-  value={formData.rfc}
-  onChange={(e) => handleInputChange("rfc", e.target.value.toUpperCase())}
-  className={`facturacion-form-control ${errors.rfc ? "error" : ""}`}
-  maxLength={13}
-/>
+            type="text"
+            id="rfc"
+            value={formData.rfc}
+            onChange={(e) => handleInputChange("rfc", e.target.value.toUpperCase())}
+            className={`facturacion-form-control ${errors.rfc ? "error" : ""}`}
+            maxLength={13}
+          />
           {errors.rfc && <span className="facturacion-error-message">{errors.rfc}</span>}
         </div>
         <div className="facturacion-form-group">

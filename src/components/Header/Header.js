@@ -47,6 +47,7 @@ const Header = ({ logoUrl }) => {
   const logoFetchedRef = useRef(false)
   const touchHandledRef = useRef(false)
   const logoErrorHandled = useRef(false)
+  const HELP_URL = "https://docs.google.com/document/d/1yyF87lqDVX6DtblJGia47R3WyuN2X8CE/edit?usp=sharing&ouid=100632793646791947212&rtpof=true&sd=true";
 
   const preloadImage = (url) => {
     return new Promise((resolve, reject) => {
@@ -664,9 +665,14 @@ const Header = ({ logoUrl }) => {
             {isProfileDropdownOpen && (
               <ul className="ts-header-dropdown-menu ts-header-profile-dropdown">
                 <li>
-                  <Link to="/ayuda" onClick={() => setIsProfileDropdownOpen(false)}>
+                  <a
+                    href={HELP_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsProfileDropdownOpen(false)}
+                  >
                     Ayuda
-                  </Link>
+                  </a>
                 </li>
                 {userRol === "ADMINISTRADOR" && (
                   <li>
@@ -758,9 +764,15 @@ const Header = ({ logoUrl }) => {
           </div>
         </nav>
         <div className="ts-header-sidebar-footer">
-          <Link to="/ayuda" onClick={toggleSidebar} className="ts-header-sidebar-footer-link">
+          <a
+            href={HELP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={toggleSidebar}
+            className="ts-header-sidebar-footer-link"
+          >
             Ayuda
-          </Link>
+          </a>
           {userRol === "ADMINISTRADOR" && (
             <Link to="/configuracion_plantillas" onClick={toggleSidebar} className="ts-header-sidebar-footer-link">
               Configuración
