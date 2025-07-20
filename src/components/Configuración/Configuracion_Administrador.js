@@ -251,7 +251,7 @@ const ConfiguracionAdministrador = () => {
           text: resultData.mensaje || "Ocurrió un error al exportar los datos.",
         });
         if (resultData.exito) {
-          fetchExportHistory(); // Recargar historial
+          fetchExportHistory(); 
         }
       }
     } catch (error) {
@@ -410,11 +410,11 @@ const ConfiguracionAdministrador = () => {
         descripcion: "El archivo CSV debe tener las siguientes columnas:",
       },
       sims: {
-        campos: "numero, tarifa, vigencia (opcional), recarga (opcional), responsable, principal, grupo (opcional), equipo_id (opcional), contrasena",
+        campos: "numero, tarifa, vigencia (opcional), recarga (opcional), responsable, principal, grupo (opcional), contrasena, equipo_imei (opcional)",
         descripcion: "El archivo CSV debe tener las siguientes columnas:",
       },
       historialSaldos: {
-        campos: "sim_id, saldo_actual (opcional), datos (opcional), fecha (opcional - usa fecha actual si está vacío)",
+        campos: "saldo_actual (opcional), datos (opcional), fecha (opcional - usa fecha actual si está vacío), sim_numero",
         descripcion: "El archivo CSV debe tener las siguientes columnas:",
       },
     }

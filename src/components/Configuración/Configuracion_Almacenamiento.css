@@ -31,14 +31,50 @@
   --config-almacenamiento-border-radius-sm: 4px;
   --config-almacenamiento-border-radius-md: 8px;
   --config-almacenamiento-border-radius-lg: 12px;
-  --config-almacenamiento-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --config-almacenamiento-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Sutilmente más suave */
   --config-almacenamiento-font-family: "Arial", sans-serif;
-  --config-almacenamiento-font-size-xs: 0.65rem;
-  --config-almacenamiento-font-size-sm: 0.8rem;
-  --config-almacenamiento-font-size-md: 0.9rem;
-  --config-almacenamiento-font-size-lg: 1.1rem;
-  --config-almacenamiento-font-size-xl: 1.3rem;
-  --config-almacenamiento-font-size-xxl: 1.8rem;
+  --config-almacenamiento-font-size-xs: 0.65rem; /* Revertido a 0.65rem */
+  --config-almacenamiento-font-size-sm: 0.8rem; /* Revertido a 0.8rem */
+  --config-almacenamiento-font-size-md: 0.9rem; /* Revertido a 0.9rem */
+  --config-almacenamiento-font-size-lg: 1.1rem; /* Revertido a 1.1rem */
+  --config-almacenamiento-font-size-xl: 1.3rem; /* Revertido a 1.3rem */
+  --config-almacenamiento-font-size-xxl: 1.8rem; /* Revertido a 1.8rem */
+}
+
+/* Loading Spinner */
+.config-almacenamiento-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  font-size: var(--config-almacenamiento-font-size-md);
+  color: var(--config-almacenamiento-primary-color);
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: var(--config-almacenamiento-secondary-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: var(--config-almacenamiento-spacing-md);
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Configuration Header and Navigation */
@@ -85,7 +121,7 @@
 
 /* Layout Principal */
 .config-almacenamiento-main-content {
-  padding: var(--config-almacenamiento-spacing-lg) var(--config-almacenamiento-spacing-xl);
+  padding: var(--config-almacenamiento-spacing-lg) var(--config-almacenamiento-spacing-xl); /* Revertido a spacing-lg para el padding superior/inferior */
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -96,6 +132,9 @@
 .config-almacenamiento-container {
   max-width: 1400px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--config-almacenamiento-spacing-xl); /* Espacio entre secciones */
 }
 
 /* Sección */
@@ -103,7 +142,7 @@
   background-color: var(--config-almacenamiento-panel-background);
   border-radius: var(--config-almacenamiento-border-radius-md);
   box-shadow: var(--config-almacenamiento-box-shadow);
-  padding: var(--config-almacenamiento-spacing-xl);
+  padding: var(--config-almacenamiento-spacing-xl); /* Mantenido como spacing-xl */
 }
 
 .config-almacenamiento-section-title {
@@ -118,6 +157,35 @@
   font-weight: 600;
   color: var(--config-almacenamiento-text-color);
   margin: 0 0 var(--config-almacenamiento-spacing-lg) 0;
+}
+
+/* Summary Info Section */
+.config-almacenamiento-summary-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--config-almacenamiento-spacing-lg);
+  margin-bottom: var(--config-almacenamiento-spacing-xl);
+  padding: var(--config-almacenamiento-spacing-md);
+  background-color: #f8f9fa;
+  border-radius: var(--config-almacenamiento-border-radius-sm);
+  border: 1px solid var(--config-almacenamiento-border-color);
+}
+
+.config-almacenamiento-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--config-almacenamiento-spacing-xs);
+}
+
+.config-almacenamiento-summary-label {
+  font-size: var(--config-almacenamiento-font-size-sm);
+  color: var(--config-almacenamiento-text-light);
+}
+
+.config-almacenamiento-summary-value {
+  font-size: var(--config-almacenamiento-font-size-md);
+  font-weight: 600;
+  color: var(--config-almacenamiento-primary-color);
 }
 
 /* Usage Bar */
@@ -144,7 +212,7 @@
 
 .config-almacenamiento-progress-bar {
   width: 100%;
-  height: 12px;
+  height: 12px; /* Revertido a 12px */
   background-color: #e0e0e0;
   border-radius: var(--config-almacenamiento-border-radius-sm);
   overflow: hidden;
@@ -152,12 +220,24 @@
 
 .config-almacenamiento-progress-fill {
   height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* Progress Fill Variations (based on usage percentage) */
+.config-almacenamiento-progress-safe {
   background: linear-gradient(
     90deg,
     var(--config-almacenamiento-secondary-color) 0%,
     var(--config-almacenamiento-color-light-blue) 100%
   );
-  transition: width 0.3s ease;
+}
+
+.config-almacenamiento-progress-warning {
+  background: linear-gradient(90deg, var(--config-almacenamiento-warning-color) 0%, #ffc107 100%);
+}
+
+.config-almacenamiento-progress-danger {
+  background: linear-gradient(90deg, var(--config-almacenamiento-danger-color) 0%, #e53935 100%);
 }
 
 /* Content Row */
@@ -165,22 +245,31 @@
   display: flex;
   gap: var(--config-almacenamiento-spacing-xl);
   align-items: flex-start;
+  flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
 }
 
 /* Details Section */
 .config-almacenamiento-details-section {
-  flex: 1;
+  flex: 2; /* Ocupa más espacio que la sección de limpieza */
+  min-width: 400px; /* Asegura que no se haga demasiado pequeño */
 }
 
 .config-almacenamiento-details-table {
   border: 1px solid var(--config-almacenamiento-border-color);
   border-radius: var(--config-almacenamiento-border-radius-sm);
   overflow: hidden;
+  overflow-x: auto; /* Añadido para permitir el scroll horizontal */
+}
+
+.config-almacenamiento-table-header,
+.config-almacenamiento-table-row {
+  display: grid;
+  /* 5 columnas: Módulo, Cantidad, Almacenaje, Registros Antiguos, Espacio Recuperable */
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  min-width: 700px; /* Establece un ancho mínimo para la tabla para forzar el scroll */
 }
 
 .config-almacenamiento-table-header {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
   background-color: #f8f9fa;
   border-bottom: 1px solid var(--config-almacenamiento-border-color);
 }
@@ -191,6 +280,7 @@
   font-weight: 600;
   color: var(--config-almacenamiento-text-color);
   border-right: 1px solid var(--config-almacenamiento-border-color);
+  text-align: left;
 }
 
 .config-almacenamiento-header-cell:last-child {
@@ -202,8 +292,6 @@
 }
 
 .config-almacenamiento-table-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
   border-bottom: 1px solid var(--config-almacenamiento-border-color);
 }
 
@@ -239,8 +327,9 @@
 
 /* Cleanup Section */
 .config-almacenamiento-cleanup-section {
-  flex: 1;
-  max-width: 500px;
+  flex: 1; /* Ocupa el espacio restante */
+  min-width: 300px; /* Asegura un tamaño mínimo */
+  max-width: 500px; /* Limita el ancho en pantallas grandes */
 }
 
 .config-almacenamiento-warning-box {
@@ -260,6 +349,7 @@
 .config-almacenamiento-warning-icon img {
   width: 20px;
   height: 20px;
+  /* Mantener el filtro para el icono de advertencia si es un PNG */
   filter: brightness(0) saturate(100%) invert(60%) sepia(98%) saturate(1352%) hue-rotate(15deg) brightness(104%)
     contrast(103%);
 }
@@ -395,78 +485,16 @@
   filter: brightness(0) invert(1);
 }
 
-/* Progress Fill Variations */
-.config-almacenamiento-progress-10 {
-  width: 10%;
-}
-.config-almacenamiento-progress-20 {
-  width: 20%;
-}
-.config-almacenamiento-progress-30 {
-  width: 30%;
-}
-.config-almacenamiento-progress-40 {
-  width: 40%;
-}
-.config-almacenamiento-progress-50 {
-  width: 50%;
-}
-.config-almacenamiento-progress-60 {
-  width: 60%;
-}
-.config-almacenamiento-progress-70 {
-  width: 70%;
-}
-.config-almacenamiento-progress-80 {
-  width: 80%;
-}
-.config-almacenamiento-progress-90 {
-  width: 90%;
-}
-.config-almacenamiento-progress-100 {
-  width: 100%;
-}
-
-/* Module Color Indicators */
-.config-almacenamiento-module-llamadas {
-  background-color: #037ce0;
-}
-.config-almacenamiento-module-notas {
-  background-color: #f27100;
-}
-.config-almacenamiento-module-empresas {
-  background-color: #9c16f7;
-}
-.config-almacenamiento-module-tratos {
-  background-color: #38b6ff;
-}
-.config-almacenamiento-module-tareas {
-  background-color: #af86ff;
-}
-.config-almacenamiento-module-reuniones {
-  background-color: #2a5cf8;
-}
-.config-almacenamiento-module-correos-electronicos {
-  background-color: #00347f;
-}
-
-/* Warning Icon Styling */
-.config-almacenamiento-warning-icon img {
-  width: 20px;
-  height: 20px;
-  filter: brightness(0) saturate(100%) invert(60%) sepia(98%) saturate(1352%) hue-rotate(15deg) brightness(104%)
-    contrast(103%);
-}
-
 /* Responsive Design */
 @media (max-width: 1200px) {
   .config-almacenamiento-content-row {
     flex-direction: column;
     gap: var(--config-almacenamiento-spacing-lg);
   }
-
+  .config-almacenamiento-details-section,
   .config-almacenamiento-cleanup-section {
-    max-width: none;
+    max-width: none; /* Permite que ocupen todo el ancho disponible */
+    width: 100%;
   }
 }
 
@@ -474,20 +502,18 @@
   .config-almacenamiento-config-nav {
     flex-wrap: wrap;
   }
-
   .config-almacenamiento-nav-item {
     flex: 1;
     text-align: center;
     min-width: 150px;
   }
-
   .config-almacenamiento-main-content {
     padding: var(--config-almacenamiento-spacing-md);
   }
-
+  /* Mantener la estructura de 5 columnas en pantallas medianas */
   .config-almacenamiento-table-header,
   .config-almacenamiento-table-row {
-    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-columns: 1.5fr 0.8fr 0.8fr 0.8fr 0.8fr;
   }
 }
 
@@ -495,52 +521,47 @@
   .config-almacenamiento-config-header {
     padding: var(--config-almacenamiento-spacing-md) var(--config-almacenamiento-spacing-lg);
   }
-
   .config-almacenamiento-config-nav {
     flex-direction: column;
   }
-
   .config-almacenamiento-nav-item {
     border-bottom: 1px solid var(--config-almacenamiento-border-color);
     border-right: none;
   }
-
   .config-almacenamiento-nav-item-active {
     border-bottom-color: var(--config-almacenamiento-secondary-color);
   }
-
   .config-almacenamiento-main-content {
     padding: var(--config-almacenamiento-spacing-sm);
   }
-
   .config-almacenamiento-section {
     padding: var(--config-almacenamiento-spacing-md);
   }
-
-  .config-almacenamiento-table-header,
-  .config-almacenamiento-table-row {
-    grid-template-columns: 1fr;
-  }
-
+  /* NO colapsar a 1fr, dejar que el min-width y overflow-x manejen el scroll */
   .config-almacenamiento-header-cell,
   .config-almacenamiento-cell {
-    border-right: none;
+    border-right: 1px solid var(--config-almacenamiento-border-color); /* Asegurar bordes entre celdas */
     border-bottom: 1px solid var(--config-almacenamiento-border-color);
+    padding: var(--config-almacenamiento-spacing-sm); /* Reducir padding */
   }
-
+  .config-almacenamiento-header-cell:last-child,
+  .config-almacenamiento-cell:last-child {
+    border-right: none; /* Eliminar borde derecho en la última celda */
+  }
   .config-almacenamiento-usage-labels {
     flex-direction: column;
     gap: var(--config-almacenamiento-spacing-xs);
   }
-
   .config-almacenamiento-cleanup-stats {
     gap: var(--config-almacenamiento-spacing-xs);
   }
-
   .config-almacenamiento-stat-item {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--config-almacenamiento-spacing-xs);
+  }
+  .config-almacenamiento-summary-info {
+    grid-template-columns: 1fr; /* Una columna en móviles */
   }
 }
 
@@ -548,21 +569,17 @@
   .config-almacenamiento-section {
     padding: var(--config-almacenamiento-spacing-sm);
   }
-
   .config-almacenamiento-header-cell,
   .config-almacenamiento-cell {
     padding: var(--config-almacenamiento-spacing-sm);
   }
-
   .config-almacenamiento-warning-box {
     flex-direction: column;
     gap: var(--config-almacenamiento-spacing-xs);
   }
-
   .config-almacenamiento-cleanup-form {
     gap: var(--config-almacenamiento-spacing-md);
   }
-
   .config-almacenamiento-btn {
     width: 100%;
   }

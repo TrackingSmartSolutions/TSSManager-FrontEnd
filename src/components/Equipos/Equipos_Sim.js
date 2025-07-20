@@ -75,7 +75,7 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
           responsable: sim.responsable || "TSS",
           principal: sim.principal || "NO",
           grupo: sim.grupo?.toString() || "",
-          equipo: sim.equipo?.id?.toString() || "",
+          equipo: sim.equipoImei || "",
           contrasena: sim.contrasena || "tss2025",
         });
       } else {
@@ -110,53 +110,77 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name === 'numero') {
-    const numericValue = value.replace(/\D/g, '').slice(0, 10);
-    setFormData((prev) => ({
-      ...prev,
-      [name]: numericValue,
-    }));
-  } else {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  }
-  
-  if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
-};
+      const numericValue = value.replace(/\D/g, '').slice(0, 10);
+      setFormData((prev) => ({
+        ...prev,
+        [name]: numericValue,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
 
   const validateForm = () => {
-  const newErrors = {};
-  const currentDate = new Date().toISOString().split('T')[0];
-  
-  // Validación del número
-  if (!formData.numero.trim()) {
-    newErrors.numero = "El número es obligatorio";
-  } else if (!/^\d{10}$/.test(formData.numero)) {
-    newErrors.numero = "El número debe tener exactamente 10 dígitos";
-  } else if (existingSims.includes(formData.numero) && (!sim || sim.numero !== formData.numero)) {
-    newErrors.numero = "El número ya está en uso por otra SIM";
-  }
-  
-  if (formData.equipo && formData.equipo !== "0") {
-    if (!formData.equipo) newErrors.equipo = "El equipo es obligatorio";
-  }
-  
-  if (formData.responsable === "TSS" && formData.principal === "NO" && !formData.grupo) {
-    newErrors.grupo = "El grupo es obligatorio cuando no es principal";
-  }
-  
-  if (formData.responsable === "TSS" && formData.vigencia && formData.vigencia < currentDate) {
-    newErrors.vigencia = "La vigencia no puede ser en el pasado";
-  }
-  
-  setErrors(newErrors);
-  return Object.keys(newErrors).length === 0;
-};
+    const newErrors = {};
+    const currentDate = new Date().toISOString().split('T')[0];
+
+    // Validación del número
+    if (!formData.numero.trim()) {
+      newErrors.numero = "El número es obligatorio";
+    } else if (!/^\d{10}$/.test(formData.numero)) {
+      newErrors.numero = "El número debe tener exactamente 10 dígitos";
+    } else if (existingSims.includes(formData.numero) && (!sim || sim.numero !== formData.numero)) {
+      newErrors.numero = "El número ya está en uso por otra SIM";
+    }
+
+    if (formData.equipo && formData.equipo !== "0") {
+      if (!formData.equipo) newErrors.equipo = "El equipo es obligatorio";
+    }
+
+    if (formData.responsable === "TSS" && formData.principal === "NO" && !formData.grupo) {
+      newErrors.grupo = "El grupo es obligatorio cuando no es principal";
+    }
+
+    if (formData.responsable === "TSS" && formData.vigencia && formData.vigencia < currentDate) {
+      newErrors.vigencia = "La vigencia no puede ser en el pasado";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
+
+    // Determinar el grupo correcto
+    let grupoFinal = null;
+    if (formData.responsable === "TSS") {
+      if (formData.principal === "SI") {
+        grupoFinal = sim ? sim.grupo : null;
+      } else {
+        grupoFinal = parseInt(formData.grupo) || null;
+      }
+    } else {
+      grupoFinal = null;
+    }
+
+    // Enviar IMEI en lugar de ID
+    let equipoData = null;
+    if (formData.equipo && formData.equipo !== "0") {
+      const equipoSeleccionado = equipos.find(eq => eq.imei === formData.equipo);
+      if (equipoSeleccionado) {
+        equipoData = {
+          imei: equipoSeleccionado.imei,
+          id: equipoSeleccionado.id
+        };
+      }
+    }
 
     const simData = {
       numero: formData.numero,
@@ -165,8 +189,8 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
       recarga: formData.responsable === "TSS" ? parseFloat(formData.recarga) : null,
       responsable: formData.responsable,
       principal: formData.principal,
-      grupo: formData.responsable === "TSS" && formData.principal === "SI" ? null : parseInt(formData.grupo) || null,
-      equipo: formData.equipo && formData.equipo !== "0" ? { id: parseInt(formData.equipo) } : null,
+      grupo: grupoFinal,
+      equipo: equipoData,
       contrasena: formData.responsable === "TSS" ? formData.contrasena : null,
     };
 
@@ -182,6 +206,35 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
           "Content-Type": "application/json",
         },
       });
+
+      if (!response.ok) {
+        let errorMessage = `Error ${response.status}`;
+
+        try {
+          // Intentar parsear la respuesta como JSON para obtener más detalles
+          const errorData = await response.json();
+          console.log("Error del backend:", errorData);
+
+          if (errorData.message) {
+            errorMessage = errorData.message;
+          } else if (errorData.error) {
+            errorMessage = `${errorData.error}: ${errorData.message || 'Error desconocido'}`;
+          }
+        } catch (parseError) {
+          // Si no es JSON, obtener como texto
+          try {
+            const errorText = await response.text();
+            if (errorText) {
+              errorMessage += `: ${errorText}`;
+            }
+          } catch (textError) {
+            console.error("Error obteniendo texto de error:", textError);
+          }
+        }
+
+        throw new Error(errorMessage);
+      }
+
       const savedSim = await response.json();
       console.log("Respuesta recibida del backend:", savedSim);
       onSave(savedSim);
@@ -190,11 +243,27 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
         title: "Éxito",
         text: sim ? "SIM actualizada correctamente" : "SIM agregada correctamente",
       });
+
     } catch (error) {
+      console.error("Error completo:", error);
+
+      // Mostrar error más específico
+      let errorText = error.message;
+
+      // Errores comunes que podemos manejar mejor
+      if (errorText.includes("IllegalStateException")) {
+        errorText = "No se puede agregar la SIM: posiblemente el grupo está completo o ya existe una SIM principal en ese grupo";
+      } else if (errorText.includes("EntityNotFoundException")) {
+        errorText = "Equipo no encontrado. Verifique que el equipo existe y está disponible";
+      } else if (errorText.includes("IllegalArgumentException")) {
+        errorText = "Los datos enviados no son válidos. Verifique todos los campos";
+      }
+
       Swal.fire({
         icon: "error",
-        title: "Error",
-        text: error.message,
+        title: "Error al guardar SIM",
+        text: errorText,
+        showConfirmButton: true
       });
     }
     onClose();
@@ -242,6 +311,7 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
           >
             <option value="POR_SEGUNDO">Por segundo</option>
             <option value="SIN_LIMITE">Sin límite</option>
+            <option value="M2M_GLOBAL_15">M2M Global 15</option>
           </select>
         </div>
 
@@ -372,13 +442,14 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
           >
             <option value="0">Sin equipo</option>
             {availableEquipos.map((equipo) => (
-              <option key={equipo.id} value={equipo.id}>
-                {equipo.nombre} ({equipo.tipo})
+              <option key={equipo.imei} value={equipo.imei}>
+                {equipo.nombre} ({equipo.tipo}) - IMEI: {equipo.imei}
               </option>
             ))}
-            {sim && sim.equipo && !availableEquipos.find((e) => e.id === sim.equipo.id) && (
-              <option key={sim.equipo.id} value={sim.equipo.id}>
-                {sim.equipo.nombre} ({sim.equipo.tipo}) [Vinculado]
+            {/* Para equipos ya vinculados en edición */}
+            {sim && sim.equipoImei && !availableEquipos.find((e) => e.imei === sim.equipoImei) && (
+              <option key={sim.equipoImei} value={sim.equipoImei}>
+                {sim.equipoNombre} - IMEI: {sim.equipoImei} [Vinculado]
               </option>
             )}
           </select>
@@ -448,7 +519,7 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
   const validateForm = () => {
     const newErrors = {};
     if (sim.tarifa === "POR_SEGUNDO" && !formData.saldoActual) newErrors.saldoActual = "El saldo actual es obligatorio";
-    if (sim.tarifa === "SIN_LIMITE" && !formData.datos) newErrors.datos = "Los datos son obligatorios";
+    if ((sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") && !formData.datos) newErrors.datos = "Los datos son obligatorios";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -459,7 +530,7 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
 
     const saldoData = {
       saldoActual: sim.tarifa === "POR_SEGUNDO" ? parseFloat(formData.saldoActual).toFixed(2) : null,
-      datos: sim.tarifa === "SIN_LIMITE" ? parseFloat(formData.datos) : null,
+      datos: (sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") ? parseFloat(formData.datos) : null,
       fecha: formData.fecha,
     };
 
@@ -507,7 +578,7 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
                 {errors.saldoActual && <span className="sim-form-error">{errors.saldoActual}</span>}
               </div>
             )}
-            {sim.tarifa === "SIN_LIMITE" && (
+            {(sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") && (
               <div className="sim-side-panel-form-group">
                 <label htmlFor="datos" className="sim-form-label">Datos  <span className="required"> *</span></label>
                 <div className="sim-input-group">
@@ -551,7 +622,7 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
                   <tr>
                     <th>Fecha</th>
                     {sim.tarifa === "POR_SEGUNDO" && <th>Saldo Actual</th>}
-                    {sim.tarifa === "SIN_LIMITE" && <th>Datos</th>}
+                    {(sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") && <th>Datos</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -560,7 +631,7 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
                       <tr key={index}>
                         <td>{new Date(registro.fecha + "T00:00:00-06:00").toLocaleDateString("es-MX", { timeZone: "America/Mexico_City" })}</td>
                         {sim.tarifa === "POR_SEGUNDO" && <td>${registro.saldoActual}</td>}
-                        {sim.tarifa === "SIN_LIMITE" && <td>{registro.datos} MB</td>}
+                        {(sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") && <td>{registro.datos} MB</td>}
                       </tr>
                     ))
                   ) : (
@@ -579,7 +650,6 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
     </>
   );
 };
-
 
 const ConfirmarEliminacionModal = ({ isOpen, onClose, sim, onConfirm, hasEquipoVinculado = false }) => {
   const handleConfirm = () => {
@@ -704,7 +774,13 @@ const EquiposSim = () => {
   const handleSaveSim = (simData) => {
     setSims((prev) => {
       const updatedSims = prev.map((sim) =>
-        sim.id === simData.id ? { ...sim, ...simData, compañia: "Telcel" } : sim
+        sim.id === simData.id
+          ? {
+            ...sim,
+            ...simData,
+            compañia: simData.tarifa === "M2M_GLOBAL_15" ? "M2M" : "Telcel",
+          }
+          : sim
       );
       // Remapear el equipo usando la lista completa de equipos
       return updatedSims.map((sim) => {
@@ -866,16 +942,16 @@ const EquiposSim = () => {
                         <tr key={sim.id}>
                           <td>{sim.numero}</td>
                           <td>{sim.tarifa}</td>
-                          <td>{sim.compañia || "Telcel"}</td>
+                          <td>{sim.tarifa === "M2M_GLOBAL_15" ? "M2M" : sim.compañia || "Telcel"}</td>
                           <td>{formatDate(sim.vigencia)}</td>
                           <td>{sim.recarga ? `$${sim.recarga}` : "N/A"}</td>
                           <td>{sim.responsable}</td>
                           <td>{sim.grupo || "N/A"}</td>
                           <td>
-  <span className={sim.principal === "SI" ? "sim-principal-si" : "sim-principal-no"}>
-    {sim.principal}
-  </span>
-</td>
+                            <span className={sim.principal === "SI" ? "sim-principal-si" : "sim-principal-no"}>
+                              {sim.principal}
+                            </span>
+                          </td>
                           <td>{sim.equipo?.nombre || "N/A"}</td>
                           <td>{sim.contrasena || "N/A"}</td>
                           <td>
