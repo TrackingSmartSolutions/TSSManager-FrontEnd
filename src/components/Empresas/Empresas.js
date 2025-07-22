@@ -319,6 +319,16 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
       if (mode === "add") {
         onCompanyCreated(savedEmpresa);
       }
+
+      await Swal.fire({
+        icon: "success",
+        title: mode === "add" ? "¡Empresa creada!" : "¡Empresa actualizada!",
+        text: mode === "add"
+          ? `La empresa "${savedEmpresa.nombre}" ha sido creada exitosamente.`
+          : `La empresa "${savedEmpresa.nombre}" ha sido actualizada exitosamente.`,
+        confirmButtonText: 'OK'
+      });
+
       setIsLoading(false)
     } catch (error) {
       Swal.fire({
@@ -759,6 +769,15 @@ const ContactoModal = ({
 
       const savedContacto = await response.json();
       onSave(savedContacto);
+
+      await Swal.fire({
+        icon: "success",
+        title: mode === "add" ? "¡Contacto agregado!" : "¡Contacto actualizado!",
+        text: mode === "add"
+          ? `El contacto "${savedContacto.nombre}" ha sido agregado exitosamente.`
+          : `El contacto "${savedContacto.nombre}" ha sido actualizado exitosamente.`,
+        confirmButtonText: 'OK'
+      });
     } catch (error) {
       Swal.fire({
         icon: "error",

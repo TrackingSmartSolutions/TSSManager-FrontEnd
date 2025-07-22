@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import "./Configuracion_Copias.css"
 import Header from "../Header/Header"
@@ -22,65 +22,95 @@ const fetchWithToken = async (url, options = {}) => {
 
 const ConfiguracionCopias = () => {
   const [backupSettings, setBackupSettings] = useState({
-    datosRespaldar: "todos",
-    frecuencia: "diario",
+    datosRespaldar: [],
+    frecuencia: "SEMANAL",
     horaRespaldo: "02:00",
   })
 
   const [googleDriveSettings, setGoogleDriveSettings] = useState({
-    email: "backup@trackingsmarts.com",
-    vinculada: true,
+    email: "",
+    vinculada: false,
   })
 
-  const [backupHistory, setBackupHistory] = useState([
-    {
-      id: 1,
-      numeroCopia: "01/04/2025",
-      fechaCreacion: "2025-04-01T02:00:00Z",
-      fechaEliminacion: "2025-07-01T02:00:00Z",
-      estado: "completada",
-      tamaño: "15.2 MB",
-      tipo: "automatica",
-    },
-    {
-      id: 2,
-      numeroCopia: "31/03/2025",
-      fechaCreacion: "2025-03-31T02:00:00Z",
-      fechaEliminacion: "2025-06-30T02:00:00Z",
-      estado: "completada",
-      tamaño: "14.8 MB",
-      tipo: "automatica",
-    },
-    {
-      id: 3,
-      numeroCopia: "30/03/2025",
-      fechaCreacion: "2025-03-30T14:30:00Z",
-      fechaEliminacion: "2025-06-29T14:30:00Z",
-      estado: "completada",
-      tamaño: "14.9 MB",
-      tipo: "instantanea",
-    },
-  ])
+
+
+  const [backupHistory, setBackupHistory] = useState([])
+
+  const usuarioId = localStorage.getItem("userId");
+
+  useEffect(() => {
+    const fetchConfiguracion = async () => {
+      try {
+        const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/configuracion/${usuarioId}`);
+        const data = await response.json();
+        setBackupSettings({
+          datosRespaldar: data.datosRespaldar || [],
+          frecuencia: data.frecuencia || "SEMANAL",
+          horaRespaldo: data.horaRespaldo || "02:00",
+        });
+        setGoogleDriveSettings({
+          email: data.googleDriveEmail || "",
+          vinculada: data.googleDriveVinculada || false,
+        });
+      } catch (error) {
+        console.error("Error al cargar configuración:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudo cargar la configuración de copias de seguridad.",
+        });
+      }
+    };
+
+    const fetchHistorial = async () => {
+      try {
+        const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/usuario/${usuarioId}`);
+        const data = await response.json();
+        setBackupHistory(data.map(copia => ({
+          id: copia.id,
+          tipoDatos: copia.tipoDatos,
+          fechaCreacion: copia.fechaCreacion,
+          fechaEliminacion: copia.fechaEliminacion,
+          estado: copia.estado.toLowerCase(),
+          tamaño: copia.tamañoArchivo,
+          frecuencia: copia.frecuencia,
+        })));
+      } catch (error) {
+        console.error("Error al cargar historial:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudo cargar el historial de copias de seguridad.",
+        });
+      }
+    };
+
+    if (usuarioId) {
+      fetchConfiguracion();
+      fetchHistorial();
+    }
+  }, [usuarioId]);
+
 
   const navigate = useNavigate()
 
   const datosRespaldoOptions = [
-    { value: "todos", label: "Todos" },
-    { value: "tratos", label: "Tratos" },
-    { value: "empresas", label: "Empresas" },
-    { value: "contactos", label: "Contactos" },
+    { value: "TRATOS", label: "Tratos" },
+    { value: "EMPRESAS", label: "Empresas" },
+    { value: "CONTACTOS", label: "Contactos" },
+    { value: "EQUIPOS", label: "Equipos" },
+    { value: "SIMS", label: "SIMs" },
   ]
 
   const frecuenciaOptions = [
-    { value: "diario", label: "Diario" },
-    { value: "semanal", label: "Semanal" },
-    { value: "mensual", label: "Mensual" },
+    { value: "SEMANAL", label: "Semanal" },
+    { value: "MENSUAL", label: "Mensual" },
   ]
 
   const handleSettingChange = (field, value) => {
     setBackupSettings((prev) => ({
       ...prev,
-      [field]: value,
+      [field]: field === "datosRespaldar" ? value : value.toUpperCase(),
     }))
   }
 
@@ -93,7 +123,6 @@ const ConfiguracionCopias = () => {
 
   const handleLinkGoogleDrive = async () => {
     if (googleDriveSettings.vinculada) {
-      // Desvincular cuenta
       const result = await Swal.fire({
         title: "¿Desvincular cuenta?",
         text: "Se desvinculará la cuenta de Google Drive. Las copias futuras no se guardarán automáticamente.",
@@ -102,54 +131,58 @@ const ConfiguracionCopias = () => {
         confirmButtonText: "Desvincular",
         cancelButtonText: "Cancelar",
         confirmButtonColor: "#f44336",
-      })
+      });
 
       if (result.isConfirmed) {
-        setGoogleDriveSettings((prev) => ({
-          ...prev,
-          vinculada: false,
-        }))
-        Swal.fire({
-          icon: "success",
-          title: "Cuenta desvinculada",
-          text: "La cuenta de Google Drive se ha desvinculado correctamente.",
-        })
+        try {
+          const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/google-drive/desvincular/${usuarioId}`, {
+            method: "DELETE",
+          });
+          const data = await response.json();
+          setGoogleDriveSettings((prev) => ({
+            ...prev,
+            vinculada: false,
+            email: "",
+          }));
+          Swal.fire({
+            icon: "success",
+            title: "Cuenta desvinculada",
+            text: data.message,
+          });
+        } catch (error) {
+          console.error("Error al desvincular Google Drive:", error);
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "No se pudo desvincular la cuenta de Google Drive.",
+          });
+        }
       }
     } else {
-      // Vincular cuenta
-      Swal.fire({
-        title: "Vinculando cuenta...",
-        text: "Redirigiendo a Google Drive para autenticación.",
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading()
-        },
-      })
-
-      // Simular proceso de vinculación
-      setTimeout(() => {
-        setGoogleDriveSettings((prev) => ({
-          ...prev,
-          vinculada: true,
-        }))
+      try {
+        const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/google-drive/auth-url/${usuarioId}`);
+        const data = await response.json();
+        window.location.href = data.authUrl; // Redirige al usuario a la URL de autenticación
+      } catch (error) {
+        console.error("Error al obtener URL de autenticación:", error);
         Swal.fire({
-          icon: "success",
-          title: "Cuenta vinculada",
-          text: "La cuenta de Google Drive se ha vinculado correctamente.",
-        })
-      }, 2000)
+          icon: "error",
+          title: "Error",
+          text: "No se pudo iniciar el proceso de vinculación con Google Drive.",
+        });
+      }
     }
-  }
+  };
 
   const handleGenerateInstantBackup = async () => {
     const result = await Swal.fire({
       title: "¿Generar copia instantánea?",
-      text: `Se generará una copia de seguridad de ${datosRespaldoOptions.find((d) => d.value === backupSettings.datosRespaldar)?.label} inmediatamente.`,
+      text: `Se generará una copia de seguridad de los datos seleccionados inmediatamente.`,
       icon: "question",
       showCancelButton: true,
       confirmButtonText: "Generar",
       cancelButtonText: "Cancelar",
-    })
+    });
 
     if (result.isConfirmed) {
       try {
@@ -158,77 +191,108 @@ const ConfiguracionCopias = () => {
           text: "Por favor espere mientras se genera la copia.",
           allowOutsideClick: false,
           didOpen: () => {
-            Swal.showLoading()
+            Swal.showLoading();
           },
-        })
+        });
 
-        // Simular tiempo de procesamiento
-        setTimeout(() => {
-          const now = new Date()
-          const fechaEliminacion = new Date(now)
-          fechaEliminacion.setMonth(fechaEliminacion.getMonth() + 3)
-
-          const nuevaCopia = {
-            id: Date.now(),
-            numeroCopia: now.toLocaleDateString("es-MX", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-            }),
-            fechaCreacion: now.toISOString(),
-            fechaEliminacion: fechaEliminacion.toISOString(),
-            estado: "completada",
-            tamaño: `${(Math.random() * 5 + 10).toFixed(1)} MB`,
-            tipo: "instantanea",
-          }
-
-          setBackupHistory((prev) => [nuevaCopia, ...prev])
-
-          Swal.fire({
-            icon: "success",
-            title: "Copia generada",
-            text: "La copia de seguridad se ha generado correctamente y está disponible para descarga.",
-          })
-        }, 3000)
+        const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/generar/${usuarioId}`, {
+          method: "POST",
+          body: JSON.stringify(backupSettings.datosRespaldar),
+        });
+        const data = await response.json();
+        // Refrescar historial
+        const historyResponse = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/usuario/${usuarioId}`);
+        const newHistory = await historyResponse.json();
+        setBackupHistory(newHistory.map(copia => ({
+          id: copia.id,
+          tipoDatos: copia.tipoDatos,
+          numeroCopia: formatDateShort(copia.fechaCreacion),
+          fechaCreacion: copia.fechaCreacion,
+          fechaEliminacion: copia.fechaEliminacion,
+          estado: copia.estado.toLowerCase(),
+          tamaño: copia.tamañoArchivo,
+          frecuencia: copia.frecuencia,
+        })));
+        const statsResponse = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/estadisticas/${usuarioId}`);
+        const statsData = await statsResponse.json();
+        setEstadisticas({
+          copiasActivas: statsData.copiasActivas || 0,
+          copiasEstesMes: statsData.copiasEstesMes || 0,
+          espacioUtilizado: statsData.espacioUtilizado || "0 B",
+          ultimaCopia: statsData.ultimaCopia ? formatDate(statsData.ultimaCopia) : "N/A",
+        });
+        Swal.fire({
+          icon: "success",
+          title: "Copia generada",
+          text: data.message,
+        });
       } catch (error) {
+        console.error("Error al generar copia:", error);
         Swal.fire({
           icon: "error",
           title: "Error",
           text: "Ocurrió un error al generar la copia de seguridad.",
-        })
+        });
       }
     }
-  }
+  };
 
-  const handleDownloadBackup = (backup, format) => {
-    Swal.fire({
-      icon: "info",
-      title: "Descargando copia",
-      text: `Descargando copia ${backup.numeroCopia} en formato ${format.toUpperCase()}...`,
-      showConfirmButton: false,
-      timer: 2000,
-    })
-  }
+  const handleDownloadBackup = async (backup, format) => {
+    try {
+      Swal.fire({
+        title: `Descargando copia ${format.toUpperCase()}...`,
+        text: "Por favor espere mientras se prepara la descarga.",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
+      const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/descargar/${backup.id}/${format}`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `copia_${backup.id}.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      Swal.fire({
+        icon: "success",
+        title: "Descarga completada",
+        text: `La copia ${backup.numeroCopia} en formato ${format.toUpperCase()} se ha descargado correctamente.`,
+      });
+    } catch (error) {
+      console.error(`Error al descargar ${format}:`, error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: `No se pudo descargar la copia en formato ${format.toUpperCase()}.`,
+      });
+    }
+  };
 
   const handleRestoreBackup = async (backup) => {
     const result = await Swal.fire({
       title: "¿Restaurar copia de seguridad?",
       html: `
-        <div style="text-align: left; margin: 20px 0;">
-          <p><strong>Copia:</strong> ${backup.numeroCopia}</p>
-          <p><strong>Fecha de creación:</strong> ${formatDate(backup.fechaCreacion)}</p>
-          <p><strong>Tamaño:</strong> ${backup.tamaño}</p>
-        </div>
-        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 12px; margin: 15px 0;">
-          <strong>⚠️ Advertencia:</strong> Esta acción sobrescribirá todos los datos actuales del sistema. Esta acción no se puede deshacer.
-        </div>
-      `,
+      <div style="text-align: left; margin: 20px 0;">
+        <p><strong>Copia:</strong> ${backup.numeroCopia}</p>
+        <p><strong>Fecha de creación:</strong> ${formatDate(backup.fechaCreacion)}</p>
+        <p><strong>Tamaño:</strong> ${backup.tamaño}</p>
+      </div>
+      <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 12px; margin: 15px 0;">
+        <strong>⚠️ Advertencia:</strong> Esta acción sobrescribirá todos los datos actuales del sistema. Esta acción no se puede deshacer.
+      </div>
+    `,
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Restaurar",
       cancelButtonText: "Cancelar",
       confirmButtonColor: "#f44336",
-    })
+    });
 
     if (result.isConfirmed) {
       try {
@@ -237,30 +301,32 @@ const ConfiguracionCopias = () => {
           text: "Por favor espere mientras se restauran los datos. No cierre la aplicación.",
           allowOutsideClick: false,
           didOpen: () => {
-            Swal.showLoading()
+            Swal.showLoading();
           },
-        })
+        });
 
-        // Simular tiempo de procesamiento
-        setTimeout(() => {
-          Swal.fire({
-            icon: "success",
-            title: "Datos restaurados",
-            text: "Los datos se han restaurado correctamente desde la copia de seguridad.",
-          })
-        }, 4000)
+        const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/restaurar/${backup.id}`, {
+          method: "POST",
+        });
+        const data = await response.json();
+        Swal.fire({
+          icon: "success",
+          title: "Datos restaurados",
+          text: data.message,
+        });
       } catch (error) {
+        console.error("Error al restaurar copia:", error);
         Swal.fire({
           icon: "error",
           title: "Error",
           text: "Ocurrió un error al restaurar la copia de seguridad.",
-        })
+        });
       }
     }
-  }
+  };
 
   const handleDeleteBackup = async (backupId) => {
-    const backup = backupHistory.find((b) => b.id === backupId)
+    const backup = backupHistory.find((b) => b.id === backupId);
 
     const result = await Swal.fire({
       title: "¿Eliminar copia de seguridad?",
@@ -270,17 +336,38 @@ const ConfiguracionCopias = () => {
       confirmButtonText: "Eliminar",
       cancelButtonText: "Cancelar",
       confirmButtonColor: "#f44336",
-    })
+    });
 
     if (result.isConfirmed) {
-      setBackupHistory((prev) => prev.filter((b) => b.id !== backupId))
-      Swal.fire({
-        icon: "success",
-        title: "Copia eliminada",
-        text: "La copia de seguridad se ha eliminado correctamente.",
-      })
+      try {
+        const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/${backupId}`, {
+          method: "DELETE",
+        });
+        const data = await response.json();
+        setBackupHistory((prev) => prev.filter((b) => b.id !== backupId));
+        const statsResponse = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/estadisticas/${usuarioId}`);
+        const statsData = await statsResponse.json();
+        setEstadisticas({
+          copiasActivas: statsData.copiasActivas || 0,
+          copiasEstesMes: statsData.copiasEstesMes || 0,
+          espacioUtilizado: statsData.espacioUtilizado || "0 B",
+          ultimaCopia: statsData.ultimaCopia ? formatDate(statsData.ultimaCopia) : "N/A",
+        });
+        Swal.fire({
+          icon: "success",
+          title: "Copia eliminada",
+          text: data.message,
+        });
+      } catch (error) {
+        console.error("Error al eliminar copia:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudo eliminar la copia de seguridad.",
+        });
+      }
     }
-  }
+  };
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A"
@@ -304,10 +391,71 @@ const ConfiguracionCopias = () => {
     })
   }
 
+  const handleSaveSettings = async () => {
+    try {
+      const configData = {
+        usuarioId: usuarioId,
+        datosRespaldar: backupSettings.datosRespaldar,
+        frecuencia: backupSettings.frecuencia,
+        horaRespaldo: backupSettings.horaRespaldo,
+      };
+      const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/configuracion`, {
+        method: "POST",
+        body: JSON.stringify(configData),
+      });
+      await response.json();
+      Swal.fire({
+        icon: "success",
+        title: "Configuración guardada",
+        text: "La configuración de copias de seguridad se ha guardado correctamente.",
+      });
+    } catch (error) {
+      console.error("Error al guardar configuración:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo guardar la configuración de copias de seguridad.",
+      });
+    }
+  };
+
+  const [estadisticas, setEstadisticas] = useState({
+    copiasActivas: 0,
+    copiasEstesMes: 0,
+    espacioUtilizado: "0 B",
+    ultimaCopia: null,
+  });
+
+  useEffect(() => {
+    const fetchEstadisticas = async () => {
+      try {
+        const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/estadisticas/${usuarioId}`);
+        const data = await response.json();
+        setEstadisticas({
+          copiasActivas: data.copiasActivas || 0,
+          copiasEstesMes: data.copiasEstesMes || 0,
+          espacioUtilizado: data.espacioUtilizado || "0 B",
+          ultimaCopia: data.ultimaCopia ? formatDate(data.ultimaCopia) : "N/A",
+        });
+      } catch (error) {
+        console.error("Error al cargar estadísticas:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudieron cargar las estadísticas del sistema.",
+        });
+      }
+    };
+
+    if (usuarioId) {
+      fetchEstadisticas();
+    }
+  }, [usuarioId]);
+
   return (
     <>
       <Header />
-      {/* Configuration Navigation */}
+      {/* Configuracion de navegación */}
       <div className="config-copias-config-header">
         <h2 className="config-copias-config-title">Configuración</h2>
         <nav className="config-copias-config-nav">
@@ -335,7 +483,7 @@ const ConfiguracionCopias = () => {
           <section className="config-copias-section">
             <h3 className="config-copias-section-title">Copia de seguridad</h3>
 
-            {/* Information Box */}
+            {/* Box de informacion */}
             <div className="config-copias-info-box">
               <div className="config-copias-info-icon">
                 <img src={alertIcon || "/placeholder.svg"} alt="Información" />
@@ -350,24 +498,35 @@ const ConfiguracionCopias = () => {
             </div>
 
             <div className="config-copias-form-row">
-              {/* Left Column - Backup Settings */}
+              {/* Configuracion respaldo */}
               <div className="config-copias-left-column">
                 <div className="config-copias-form-group">
-                  <label htmlFor="datos-respaldar">Datos a respaldar</label>
-                  <select
-                    id="datos-respaldar"
-                    value={backupSettings.datosRespaldar}
-                    onChange={(e) => handleSettingChange("datosRespaldar", e.target.value)}
-                    className="config-copias-form-control"
-                  >
+                  <label>Datos a respaldar</label>
+                  <div className="config-copias-checkbox-group">
                     {datosRespaldoOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
+                      <div key={option.value} className="config-copias-checkbox-item">
+                        <input
+                          type="checkbox"
+                          id={`datos-${option.value}`}
+                          value={option.value}
+                          checked={backupSettings.datosRespaldar.includes(option.value)}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const isChecked = e.target.checked;
+                            const newSelection = isChecked
+                              ? [...backupSettings.datosRespaldar, value]
+                              : backupSettings.datosRespaldar.filter(item => item !== value);
+                            handleSettingChange("datosRespaldar", newSelection);
+                          }}
+                          className="config-copias-checkbox"
+                        />
+                        <label htmlFor={`datos-${option.value}`} className="config-copias-checkbox-label">
+                          {option.label}
+                        </label>
+                      </div>
                     ))}
-                  </select>
+                  </div>
                 </div>
-
                 <div className="config-copias-form-group">
                   <label htmlFor="frecuencia-respaldo">Frecuencia de respaldo</label>
                   <select
@@ -394,9 +553,18 @@ const ConfiguracionCopias = () => {
                     className="config-copias-form-control"
                   />
                 </div>
+
+                <div className="config-copias-form-group">
+                  <button
+                    className="config-copias-btn config-copias-btn-primary"
+                    onClick={handleSaveSettings}
+                  >
+                    Guardar Configuración
+                  </button>
+                </div>
               </div>
 
-              {/* Right Column - Google Drive Settings */}
+              {/* Google Drive Ajustes */}
               <div className="config-copias-right-column">
                 <div className="config-copias-google-drive-section">
                   <label>Cuenta de Google Drive</label>
@@ -432,7 +600,19 @@ const ConfiguracionCopias = () => {
               </div>
             </div>
 
-            {/* Backup History Table */}
+            <div className="config-copias-statistics-section">
+              <h3 className="config-copias-section-title">Estadísticas de Copias de Seguridad</h3>
+              <div className="config-copias-info-box">
+                <div className="config-copias-info-content">
+                  <p><strong>Copias Activas:</strong> {estadisticas.copiasActivas}</p>
+                  <p><strong>Copias Este Mes:</strong> {estadisticas.copiasEstesMes}</p>
+                  <p><strong>Espacio Utilizado:</strong> {estadisticas.espacioUtilizado}</p>
+                  <p><strong>Última Copia:</strong> {estadisticas.ultimaCopia}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabla de historial de respaldos */}
             <div className="config-copias-history-section">
               <div className="config-copias-history-header">
                 <h4>Historial de copias de seguridad</h4>
@@ -446,18 +626,22 @@ const ConfiguracionCopias = () => {
                 <table className="config-copias-table">
                   <thead>
                     <tr>
-                      <th>Número de copia</th>
-                      <th>Fecha de creación</th>
-                      <th>Fecha de eliminación</th>
+                      <th>Tipo de Datos</th>
+                      <th>Fecha de Creación</th>
+                      <th>Fecha de Eliminación</th>
+                      <th>Tamaño</th>
+                      <th>Frecuencia</th>
                       <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     {backupHistory.map((backup) => (
                       <tr key={backup.id}>
-                        <td>{backup.numeroCopia}</td>
+                        <td>{backup.tipoDatos}</td>
                         <td>{formatDateShort(backup.fechaCreacion)}</td>
                         <td>{formatDateShort(backup.fechaEliminacion)}</td>
+                        <td>{backup.tamaño}</td>
+                        <td>{backup.frecuencia}</td>
                         <td>
                           <div className="config-copias-action-buttons">
                             <button
@@ -481,9 +665,17 @@ const ConfiguracionCopias = () => {
                             >
                               Restaurar
                             </button>
+                            <button
+                              className="config-copias-action-btn config-copias-delete-btn"
+                              onClick={() => handleDeleteBackup(backup.id)}
+                              title="Eliminar"
+                            >
+                              Eliminar
+                            </button>
                           </div>
                         </td>
                       </tr>
+
                     ))}
                   </tbody>
                 </table>

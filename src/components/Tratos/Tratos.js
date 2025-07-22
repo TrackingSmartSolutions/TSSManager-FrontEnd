@@ -410,7 +410,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             >
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.nombreUsuario} 
+                  {user.nombreUsuario}
                 </option>
               ))}
             </select>
@@ -514,6 +514,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
   const [errors, setErrors] = useState({});
   const [contactos, setContactos] = useState([]);
   const [empresa, setEmpresa] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -628,6 +629,8 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     e.preventDefault();
     if (!validateForm()) return;
 
+    setIsLoading(true);
+
     const duracionStr = formData.duracion;
     const horaInicio = formData.horaInicio ? `${formData.horaInicio}:00` : '';
 
@@ -662,6 +665,8 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     } catch (error) {
       console.error("Error al programar la reunión:", error);
       Swal.fire({ icon: "error", title: "Error", text: error.message });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -679,7 +684,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             >
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.nombreUsuario} 
+                  {user.nombreUsuario}
                 </option>
               ))}
             </select>
@@ -846,8 +851,14 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
         </div>
 
         <div className="modal-form-actions">
-          <button type="button" onClick={onClose} className="btn btn-secondary">Cancelar</button>
-          <button type="submit" className="btn btn-primary">Agregar reunión</button>
+          <div className="modal-form-actions">
+            <button type="button" onClick={onClose} className="btn btn-secondary" disabled={isLoading}>
+              Cancelar
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={isLoading}>
+              {isLoading ? "Programando..." : "Agregar reunión"}
+            </button>
+          </div>
         </div>
       </form>
     </Modal>
@@ -1085,94 +1096,94 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
     }
   };
 
- const getActivityIcon = () => {
-  const currentDate = new Date();
-  const tomorrow = new Date(currentDate);
-  tomorrow.setDate(currentDate.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
+  const getActivityIcon = () => {
+    const currentDate = new Date();
+    const tomorrow = new Date(currentDate);
+    tomorrow.setDate(currentDate.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
 
-  // Caso 1: Trato desatendido
-  if (trato.isNeglected) {
+    // Caso 1: Trato desatendido
+    if (trato.isNeglected) {
+      return (
+        <img
+          src={neglectedTreatment || "/placeholder.svg"}
+          alt="Trato Desatendido"
+          className="activity-icon neglected"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/detallestrato/${trato.id}#actividades-abiertas`);
+          }}
+        />
+      );
+    }
+
+    // Caso 2: Sin actividades abiertas
+    const openActivities = trato.actividades?.filter((activity) => activity.estatus === "ABIERTA") || [];
+    if (openActivities.length === 0) {
+      return (
+        <img
+          src={addActivity || "/placeholder.svg"}
+          alt="Agregar Actividad"
+          className="activity-icon add-activity-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onActivityAdded && onActivityAdded(trato.id);
+          }}
+        />
+      );
+    }
+
+    // Caso 3: Actividad más cercana (solo entre actividades abiertas)
+    const nearestActivity = openActivities.reduce((closest, current) => {
+      const closestDate = closest.fechaLimite ? new Date(closest.fechaLimite) : null;
+      const currentDate = current.fechaLimite ? new Date(current.fechaLimite) : null;
+      if (!closestDate) return current;
+      if (!currentDate) return closest;
+      return currentDate < closestDate ? current : closest;
+    }, { fechaLimite: null });
+
+    if (!nearestActivity || !nearestActivity.tipo || !nearestActivity.fechaLimite) {
+      return (
+        <img
+          src={addActivity || "/placeholder.svg"}
+          alt="Agregar Actividad"
+          className="activity-icon add-activity-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onActivityAdded && onActivityAdded(trato.id);
+          }}
+        />
+      );
+    }
+
+    const activityDate = new Date(nearestActivity.fechaLimite);
+    activityDate.setHours(0, 0, 0, 0);
+    const timeDiff = (activityDate - currentDate) / (1000 * 60 * 60 * 24);
+    let iconClass = "activity-icon";
+
+    if (activityDate > tomorrow) iconClass += " activity-future"; // Mañana en adelante
+    else if (activityDate.toDateString() === currentDate.toDateString()) iconClass += " activity-today"; // Hoy
+    else if (activityDate < currentDate) iconClass += " activity-overdue"; // Vencida
+
+    const iconMap = {
+      LLAMADA: activityCall,
+      REUNION: activityMeeting,
+      TAREA: activityTask,
+    };
+    const iconSrc = iconMap[nearestActivity.tipo] || addActivity;
+
     return (
       <img
-        src={neglectedTreatment|| "/placeholder.svg"}
-        alt="Trato Desatendido"
-        className="activity-icon neglected"
+        src={iconSrc || "/placeholder.svg"}
+        alt={`${nearestActivity.tipo} Programada`}
+        className={iconClass}
         onClick={(e) => {
           e.stopPropagation();
           navigate(`/detallestrato/${trato.id}#actividades-abiertas`);
         }}
       />
     );
-  }
-
-  // Caso 2: Sin actividades abiertas
-  const openActivities = trato.actividades?.filter((activity) => activity.estatus === "ABIERTA") || [];
-  if (openActivities.length === 0) {
-    return (
-      <img
-        src={addActivity || "/placeholder.svg"}
-        alt="Agregar Actividad"
-        className="activity-icon add-activity-btn"
-        onClick={(e) => {
-          e.stopPropagation();
-          onActivityAdded && onActivityAdded(trato.id);
-        }}
-      />
-    );
-  }
-
-  // Caso 3: Actividad más cercana (solo entre actividades abiertas)
-  const nearestActivity = openActivities.reduce((closest, current) => {
-    const closestDate = closest.fechaLimite ? new Date(closest.fechaLimite) : null;
-    const currentDate = current.fechaLimite ? new Date(current.fechaLimite) : null;
-    if (!closestDate) return current;
-    if (!currentDate) return closest;
-    return currentDate < closestDate ? current : closest;
-  }, { fechaLimite: null });
-
-  if (!nearestActivity || !nearestActivity.tipo || !nearestActivity.fechaLimite) {
-    return (
-      <img
-        src={addActivity || "/placeholder.svg"}
-        alt="Agregar Actividad"
-        className="activity-icon add-activity-btn"
-        onClick={(e) => {
-          e.stopPropagation();
-          onActivityAdded && onActivityAdded(trato.id);
-        }}
-      />
-    );
-  }
-
-  const activityDate = new Date(nearestActivity.fechaLimite);
-  activityDate.setHours(0, 0, 0, 0);
-  const timeDiff = (activityDate - currentDate) / (1000 * 60 * 60 * 24);
-  let iconClass = "activity-icon";
-
-  if (activityDate > tomorrow) iconClass += " activity-future"; // Mañana en adelante
-  else if (activityDate.toDateString() === currentDate.toDateString()) iconClass += " activity-today"; // Hoy
-  else if (activityDate < currentDate) iconClass += " activity-overdue"; // Vencida
-
-  const iconMap = {
-    LLAMADA: activityCall,
-    REUNION: activityMeeting,
-    TAREA: activityTask,
   };
-  const iconSrc = iconMap[nearestActivity.tipo] || addActivity;
-
-  return (
-    <img
-      src={iconSrc || "/placeholder.svg"}
-      alt={`${nearestActivity.tipo} Programada`}
-      className={iconClass}
-      onClick={(e) => {
-        e.stopPropagation();
-        navigate(`/detallestrato/${trato.id}#actividades-abiertas`);
-      }}
-    />
-  );
-};
 
   return (
     <div
@@ -1233,10 +1244,10 @@ const Tratos = () => {
       const userId = localStorage.getItem("userId");
 
       if (userRol === "EMPLEADO" && userId) {
-      params.append("propietarioId", userId); 
-    } else if (selectedUser !== "Todos los usuarios") {
-      params.append("propietarioId", selectedUser);
-    }
+        params.append("propietarioId", userId);
+      } else if (selectedUser !== "Todos los usuarios") {
+        params.append("propietarioId", selectedUser);
+      }
       if (startDate) {
         params.append("startDate", startDate.toISOString());
       }
@@ -1425,49 +1436,49 @@ const Tratos = () => {
   };
 
   const handleDrop = async (e, targetColumnId) => {
-  e.preventDefault();
-  const tratoId = Number.parseInt(e.dataTransfer.getData("tratoId"));
-  if (isNaN(tratoId)) {
-    console.error("ID del trato no válido al soltar:", e.dataTransfer.getData("tratoId"));
-    return;
-  }
+    e.preventDefault();
+    const tratoId = Number.parseInt(e.dataTransfer.getData("tratoId"));
+    if (isNaN(tratoId)) {
+      console.error("ID del trato no válido al soltar:", e.dataTransfer.getData("tratoId"));
+      return;
+    }
 
-  const targetColumn = columnas.find((c) => c.id === targetColumnId);
-  const sourceColumn = columnas.find((c) => c.tratos.some((t) => t.id === tratoId));
-  if (!targetColumn || !sourceColumn || targetColumn.id === sourceColumn.id) return;
+    const targetColumn = columnas.find((c) => c.id === targetColumnId);
+    const sourceColumn = columnas.find((c) => c.tratos.some((t) => t.id === tratoId));
+    if (!targetColumn || !sourceColumn || targetColumn.id === sourceColumn.id) return;
 
-  const faseMap = {
-    "clasificacion": "CLASIFICACION",
-    "primer-contacto": "PRIMER_CONTACTO",
-    "envio-de-informacion": "ENVIO_DE_INFORMACION",
-    "reunion": "REUNION",
-    "cotizacion-propuesta-practica": "COTIZACION_PROPUESTA_PRACTICA",
-    "negociacion-revision": "NEGOCIACION_REVISION",
-    "cerrado-ganado": "CERRADO_GANADO",
-    "respuesta-por-correo": "RESPUESTA_POR_CORREO",
-    "interes-futuro": "INTERES_FUTURO",
-    "cerrado-perdido": "CERRADO_PERDIDO",
-  };
+    const faseMap = {
+      "clasificacion": "CLASIFICACION",
+      "primer-contacto": "PRIMER_CONTACTO",
+      "envio-de-informacion": "ENVIO_DE_INFORMACION",
+      "reunion": "REUNION",
+      "cotizacion-propuesta-practica": "COTIZACION_PROPUESTA_PRACTICA",
+      "negociacion-revision": "NEGOCIACION_REVISION",
+      "cerrado-ganado": "CERRADO_GANADO",
+      "respuesta-por-correo": "RESPUESTA_POR_CORREO",
+      "interes-futuro": "INTERES_FUTURO",
+      "cerrado-perdido": "CERRADO_PERDIDO",
+    };
 
-  const nuevaFase = faseMap[targetColumn.className];
-  if (!nuevaFase) {
-    console.error("Fase no válida:", targetColumn.className);
-    Swal.fire({ icon: "error", title: "Error", text: "Fase no válida" });
-    return;
-  }
+    const nuevaFase = faseMap[targetColumn.className];
+    if (!nuevaFase) {
+      console.error("Fase no válida:", targetColumn.className);
+      Swal.fire({ icon: "error", title: "Error", text: "Fase no válida" });
+      return;
+    }
 
-  try {
-    const response = await fetchWithToken(
-      `${API_BASE_URL}/tratos/${tratoId}/mover-fase?nuevaFase=${nuevaFase}`,
-      { method: "PUT" }
-    );
-    const updatedTrato = await response.json();
+    try {
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/tratos/${tratoId}/mover-fase?nuevaFase=${nuevaFase}`,
+        { method: "PUT" }
+      );
+      const updatedTrato = await response.json();
 
-    // Verificar si el trato fue escalado
-    if (updatedTrato.escalado) {
-      Swal.fire({
-        title: "¡Trato Escalado!",
-        html: `
+      // Verificar si el trato fue escalado
+      if (updatedTrato.escalado) {
+        Swal.fire({
+          title: "¡Trato Escalado!",
+          html: `
           <div style="text-align: left;">
             <p><strong>Fase cambiada a:</strong> ${nuevaFase.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}</p>
             <p><strong>Trato transferido a:</strong> ${updatedTrato.nuevoAdministradorNombre}</p>
@@ -1476,28 +1487,28 @@ const Tratos = () => {
             </p>
           </div>
         `,
-        icon: "info",
-        iconColor: "#3085d6",
-        confirmButtonText: "Entendido",
-        confirmButtonColor: "#3085d6",
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        customClass: {
-          popup: 'swal-escalamiento-popup'
-        }
-      }).then(() => {
-        // Actualizar los datos después de que el usuario cierre el modal
-        fetchData();
-      });
-    } else {
-      // Si no fue escalado, solo actualizar los datos
-      await fetchData();
+          icon: "info",
+          iconColor: "#3085d6",
+          confirmButtonText: "Entendido",
+          confirmButtonColor: "#3085d6",
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          customClass: {
+            popup: 'swal-escalamiento-popup'
+          }
+        }).then(() => {
+          // Actualizar los datos después de que el usuario cierre el modal
+          fetchData();
+        });
+      } else {
+        // Si no fue escalado, solo actualizar los datos
+        await fetchData();
+      }
+    } catch (error) {
+      console.error("Error moving trato:", error);
+      Swal.fire({ icon: "error", title: "Error", text: "No se pudo mover el trato" });
     }
-  } catch (error) {
-    console.error("Error moving trato:", error);
-    Swal.fire({ icon: "error", title: "Error", text: "No se pudo mover el trato" });
-  }
-};
+  };
 
   const onChangeDateRange = (dates) => {
     const [start, end] = dates;

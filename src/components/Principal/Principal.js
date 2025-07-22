@@ -312,7 +312,7 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
   );
 };
 
-// Modal para reprogramar reunión con duración
+// Modal para reprogramar reunión
 const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
   const [formData, setFormData] = useState({
     asignadoAId: "",
@@ -329,6 +329,8 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
   const [contactos, setContactos] = useState([]);
   const [users, setUsers] = useState([]);
   const [empresa, setEmpresa] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -426,6 +428,8 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
     e.preventDefault();
     if (!validateForm()) return;
 
+    setIsLoading(true);
+
     const duracionStr = formData.duracion;
 
     const actividadDTO = {
@@ -461,6 +465,8 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
     } catch (error) {
       console.error("Error al reprogramar la reunión:", error);
       Swal.fire({ icon: "error", title: "Error", text: error.message });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -639,8 +645,14 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
           {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
         </div>
         <div className="modal-form-actions">
-          <button type="button" onClick={onClose} className="btn btn-secondary">Cancelar</button>
-          <button type="submit" className="btn btn-primary">Confirmar cambios</button>
+          <div className="modal-form-actions">
+            <button type="button" onClick={onClose} className="btn btn-secondary" disabled={isLoading}>
+              Cancelar
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={isLoading}>
+              {isLoading ? "Reprogramando..." : "Confirmar Cambios"}
+            </button>
+          </div>
         </div>
       </form>
     </PrincipalModal>
@@ -1284,7 +1296,7 @@ const Principal = () => {
 
       const response = await fetchWithToken(url);
       const data = await response.json();
-    
+
       const datosNormalizados = normalizarTratosPorFase(data);
 
       setTratosPorFase(datosNormalizados);

@@ -42,7 +42,6 @@
   --config-copias-font-size-xxl: 1.8rem;
 }
 
-/* Configuration Header and Navigation */
 .config-copias-config-header {
   background-color: var(--config-copias-panel-background);
   padding: var(--config-copias-spacing-lg) var(--config-copias-spacing-xl);
@@ -84,7 +83,6 @@
   background-color: rgba(3, 124, 224, 0.05);
 }
 
-/* Layout Principal */
 .config-copias-main-content {
   padding: var(--config-copias-spacing-lg) var(--config-copias-spacing-xl);
   width: 100%;
@@ -114,7 +112,7 @@
   margin: 0 0 var(--config-copias-spacing-xl) 0;
 }
 
-/* Information Box */
+/* Informacion */
 .config-copias-info-box {
   display: flex;
   gap: var(--config-copias-spacing-sm);
@@ -155,7 +153,6 @@
   line-height: 1.4;
 }
 
-/* Form Layout */
 .config-copias-form-row {
   display: flex;
   gap: var(--config-copias-spacing-xl);
@@ -203,7 +200,7 @@
   cursor: not-allowed;
 }
 
-/* Google Drive Section */
+/* Google Drive Seccion */
 .config-copias-google-drive-section {
   display: flex;
   flex-direction: column;
@@ -317,6 +314,29 @@
   color: white;
 }
 
+.config-copias-action-btn.config-copias-delete-btn {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-left: 5px;
+}
+
+.config-copias-action-btn.config-copias-delete-btn:hover {
+  background-color: #d32f2f;
+}
+
+.config-copias-statistics-section {
+  margin-top: 20px;
+}
+
+.config-copias-statistics-section .config-copias-info-content p {
+  margin: 5px 0;
+}
+
 .config-copias-btn-instant:hover {
   background-color: #0056b8;
   transform: translateY(-1px);
@@ -328,7 +348,7 @@
   filter: brightness(0) invert(1);
 }
 
-/* History Section */
+/* Historial */
 .config-copias-history-section {
   margin-top: var(--config-copias-spacing-xl);
 }
@@ -347,7 +367,7 @@
   margin: 0;
 }
 
-/* Table */
+/* Tabla */
 .config-copias-table-container {
   overflow-x: auto;
   border: 1px solid var(--config-copias-border-color);
@@ -395,7 +415,7 @@
   background-color: #f8f9fa;
 }
 
-/* Action Buttons */
+/* Botones */
 .config-copias-action-buttons {
   display: flex;
   gap: var(--config-copias-spacing-xs);
@@ -443,7 +463,115 @@
   transform: translateY(-1px);
 }
 
-/* Responsive Design */
+/* Estilos para el grupo de checkboxes */
+.config-copias-checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.config-copias-checkbox-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.config-copias-checkbox-item:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  transform: translateY(-1px);
+}
+
+.config-copias-checkbox-item:has(input:checked) {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-color: #3b82f6;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25);
+}
+
+.config-copias-checkbox {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.config-copias-checkbox-item::before {
+  content: '';
+  position: relative;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.config-copias-checkbox-item:hover::before {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.config-copias-checkbox-item:has(input:checked)::before {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.config-copias-checkbox-item:has(input:checked)::after {
+  content: '✓';
+  position: absolute;
+  left: 19px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.config-copias-checkbox-label {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  user-select: none;
+  transition: color 0.3s ease;
+  margin: 0;
+  flex: 1;
+}
+
+.config-copias-checkbox-item:has(input:checked) .config-copias-checkbox-label {
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.config-copias-checkbox-item::before,
+.config-copias-checkbox-item::after {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.config-copias-checkbox:focus + .config-copias-checkbox-label {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Diseño Responsivo */
 @media (max-width: 1200px) {
   .config-copias-form-row {
     flex-direction: column;
@@ -519,6 +647,18 @@
   .config-copias-table th,
   .config-copias-table td {
     padding: var(--config-copias-spacing-sm);
+  }
+}
+
+@media (max-width: 768px) {
+  .config-copias-checkbox-group {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+  
+  .config-copias-checkbox-item {
+    padding: 10px 14px;
   }
 }
 

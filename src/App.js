@@ -26,6 +26,7 @@ import ConfiguracionAlmacenamiento from './components/Configuración/Configuraci
 import ConfiguracionCopias from './components/Configuración/Configuracion_Copias';
 import ConfiguracionUsuarios from './components/Configuración/Configuracion_Usuarios';
 import Calendario from './components/Calendario/Calendario';
+import GoogleDriveCallback from './components/Configuración/GoogleDriveCallback';
 
 function App() {
   return (
@@ -57,6 +58,7 @@ function App() {
         <Route path="/configuracion_copias_seguridad" element={<ConfiguracionCopias />} />
         <Route path="/configuracion_usuarios" element={<ConfiguracionUsuarios />} />
         <Route path="/calendario" element={<Calendario />} />
+        <Route path="/google-drive-callback" element={<GoogleDriveCallback />} />
       </Routes>
     </Router>
   );

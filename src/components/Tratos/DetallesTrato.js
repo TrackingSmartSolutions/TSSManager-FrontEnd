@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import "./DetallesTrato.css"
 import Header from "../Header/Header"
@@ -357,6 +357,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
   const [errors, setErrors] = useState({});
   const [contactos, setContactos] = useState([]);
   const [empresa, setEmpresa] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -471,6 +472,8 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     e.preventDefault();
     if (!validateForm()) return;
 
+    setIsLoading(true);
+
     const duracionStr = formData.duracion;
     const horaInicio = formData.horaInicio ? `${formData.horaInicio}:00` : '';
 
@@ -505,6 +508,8 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     } catch (error) {
       console.error("Error al programar la reunión:", error);
       Swal.fire({ icon: "error", title: "Error", text: error.message });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -684,8 +689,14 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
           {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
         </div>
         <div className="modal-form-actions">
-          <button type="button" onClick={onClose} className="btn btn-secondary">Cancelar</button>
-          <button type="submit" className="btn btn-primary">Agregar reunión</button>
+          <div className="modal-form-actions">
+            <button type="button" onClick={onClose} className="btn btn-secondary" disabled={isLoading}>
+              Cancelar
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={isLoading}>
+              {isLoading ? "Programando..." : "Agregar reunión"}
+            </button>
+          </div>
         </div>
       </form>
     </DetallesTratoModal>
@@ -1140,7 +1151,7 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
   );
 };
 
-// Modal para reprogramar reunión con duración
+// Modal para reprogramar reunión 
 const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
   const [formData, setFormData] = useState({
     asignadoAId: "",
@@ -1157,6 +1168,10 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
   const [contactos, setContactos] = useState([]);
   const [users, setUsers] = useState([]);
   const [empresa, setEmpresa] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+
+  const isSubmittingRef = useRef(false);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -1252,7 +1267,15 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+
+    if (loading || isSubmittingRef.current || !validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    // Marcar como enviando
+    isSubmittingRef.current = true;
 
     const duracionStr = formData.duracion;
 
@@ -1274,21 +1297,30 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
     };
 
     try {
+      setLoading(true);
+
       const response = await fetchWithToken(`${API_BASE_URL}/tratos/${actividad.tratoId}/actividades/${actividad.id}`, {
         method: "PUT",
         body: JSON.stringify(actividadDTO),
       });
+
       const updatedActividad = await response.json();
       onSave(updatedActividad);
-      Swal.fire({
+
+      await Swal.fire({
         title: "¡Reunión reprogramada!",
         text: "La reunión se ha reprogramado exitosamente",
         icon: "success",
       });
+
       onClose();
     } catch (error) {
       console.error("Error al reprogramar la reunión:", error);
       Swal.fire({ icon: "error", title: "Error", text: error.message });
+    } finally {
+      setIsLoading(false);
+      setLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -1467,8 +1499,14 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
           {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
         </div>
         <div className="modal-form-actions">
-          <button type="button" onClick={onClose} className="btn btn-secondary">Cancelar</button>
-          <button type="submit" className="btn btn-primary">Confirmar cambios</button>
+          <div className="modal-form-actions">
+            <button type="button" onClick={onClose} className="btn btn-secondary" disabled={isLoading}>
+              Cancelar
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={isLoading}>
+              {isLoading ? "Reprogramando..." : "Confirmar Cambios"}
+            </button>
+          </div>
         </div>
       </form>
     </DetallesTratoModal>
