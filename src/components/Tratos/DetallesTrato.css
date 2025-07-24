@@ -1849,7 +1849,6 @@
   border-color: var(--secondary-color);
 }
 
-/* Estilos específicos para el modal de completar actividad */
 
 /* Botones de respuesta */
 .detalles-trato-modal-overlay .response-buttons {
@@ -1993,6 +1992,298 @@
   color: var(--text-color);
 }
 
+
+.confirmacion-envio-modal {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.confirmacion-envio-modal .modal-content {
+  /* Sombra normal */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  background: white;
+  /* Animación sencilla */
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.confirmacion-envio-modal .modal-header {
+  background: var(--color-dark-blue-1);
+  border-radius: 12px 12px 0 0;
+  padding: 20px 24px;
+}
+
+.confirmacion-envio-modal .modal-title {
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.confirmacion-envio-modal .modal-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.confirmacion-envio-modal .modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Estilos para el paso 1 - Confirmación inicial */
+.confirmacion-envio-step1 {
+  padding: 28px 24px;
+  text-align: center;
+}
+
+.confirmacion-envio-step1 .confirmation-icon {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 20px;
+  background: var(--color-orange);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.confirmacion-envio-step1 .confirmation-icon::before {
+  content: '📤';
+}
+
+.confirmacion-envio-step1 .confirmation-message {
+  font-size: 1rem;
+  color: var(--text-color);
+  font-weight: 500;
+  line-height: 1.5;
+  margin-bottom: 28px;
+}
+
+.confirmacion-envio-step1 .modal-form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  margin: 0;
+}
+
+.confirmacion-envio-step1 .btn {
+  min-width: 100px;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirmacion-envio-step1 .btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.confirmacion-envio-step1 .btn-secondary:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+.confirmacion-envio-step1 .btn-primary {
+  background: var(--color-orange);
+  color: white;
+}
+
+.confirmacion-envio-step1 .btn-primary:hover {
+  background: #d86600;
+  transform: translateY(-1px);
+}
+
+/* Estilos para el paso 2 - Selección de método */
+.confirmacion-envio-step2 {
+  padding: 28px 24px;
+}
+
+.confirmacion-envio-step2 .method-selection-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.confirmacion-envio-step2 .method-selection-title {
+  font-size: 1rem;
+  color: var(--text-color);
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.confirmacion-envio-step2 .contact-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0f8ff;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  color: var(--color-blue-1);
+  border: 1px solid #e3f2fd;
+}
+
+.confirmacion-envio-step2 .contact-info::before {
+  content: '👤';
+  font-size: 12px;
+}
+
+.confirmacion-envio-step2 .method-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.confirmacion-envio-step2 .btn-method {
+  flex: 1;
+  max-width: 140px;
+  padding: 16px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  font-weight: 500;
+  font-size: 0.9rem;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.confirmacion-envio-step2 .btn-method .method-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+/* Botón de correo */
+.confirmacion-envio-step2 .btn-method.email {
+  color: #6c757d;
+}
+
+.confirmacion-envio-step2 .btn-method.email .method-icon {
+  background: #f8f9fa;
+}
+
+.confirmacion-envio-step2 .btn-method.email .method-icon::before {
+  content: '✉️';
+}
+
+.confirmacion-envio-step2 .btn-method.email:hover:not(:disabled) {
+  border-color: #6c757d;
+  background: #f8f9fa;
+}
+
+.confirmacion-envio-step2 .btn-method.email:disabled {
+  background: #f8f9fa;
+  color: #adb5bd;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Botón de WhatsApp */
+.confirmacion-envio-step2 .btn-method.whatsapp {
+  color: #25d366;
+}
+
+.confirmacion-envio-step2 .btn-method.whatsapp .method-icon {
+  background: #e8f5e8;
+}
+
+.confirmacion-envio-step2 .btn-method.whatsapp .method-icon::before {
+  content: '📱';
+}
+
+.confirmacion-envio-step2 .btn-method.whatsapp:hover:not(:disabled) {
+  border-color: #25d366;
+  background: #f0fdf4;
+}
+
+.confirmacion-envio-step2 .btn-method.whatsapp:disabled {
+  background: #f8f9fa;
+  color: #adb5bd;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Estado de carga */
+.confirmacion-envio-step2 .btn-method.loading {
+  pointer-events: none;
+}
+
+.confirmacion-envio-step2 .btn-method .loading-text {
+  display: none;
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.confirmacion-envio-step2 .btn-method.loading .method-label {
+  display: none;
+}
+
+.confirmacion-envio-step2 .btn-method.loading .loading-text {
+  display: block;
+}
+
+/* Indicador de no disponible */
+.confirmacion-envio-step2 .btn-method.unavailable::after {
+  content: '❌';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 12px;
+}
+
+.confirmacion-envio-step2 .btn-method {
+  position: relative;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .confirmacion-envio-step2 .method-buttons {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .confirmacion-envio-step2 .btn-method {
+    max-width: none;
+    flex-direction: row;
+    padding: 14px 16px;
+  }
+  
+  .confirmacion-envio-step2 .btn-method .method-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+}
+
 /* Efectos de animación para los botones activos */
 .detalles-trato-modal-overlay .btn-response.active,
 .detalles-trato-modal-overlay .btn-interest.active {
@@ -2113,11 +2404,9 @@
   .fases-container {
     margin: 0;
     justify-content: center;
-    /* Permite el scroll horizontal si hay muchas fases */
     overflow-x: auto;
     width: 100%;
     padding-bottom: var(--spacing-sm);
-    /* Espacio para la barra de desplazamiento */
   }
 
   /* La información de contacto se apila verticalmente y se centra */
@@ -2131,7 +2420,6 @@
   .correos-tabs {
     flex-wrap: wrap;
     justify-content: center;
-    /* Centra las pestañas si se envuelven */
   }
 
   /* Se ajusta el tamaño de la fuente base para móviles */

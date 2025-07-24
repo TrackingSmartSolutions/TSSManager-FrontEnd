@@ -72,13 +72,14 @@ const ModeloFormModal = ({ isOpen, onClose, modelo = null, onSave }) => {
   const fileInputRef = useRef(null);
 
   const usoOptions = [
-    { value: "PERSONAL", label: "Personal" },
-    { value: "AUTONOMO", label: "Autónomo" },
-    { value: "OBD2", label: "OBD2" },
-    { value: "VEHICULO_BASICO", label: "Vehículo básico" },
-    { value: "VEHICULO_AVANZADO", label: "Vehículo avanzado" },
-    { value: "DASHCAM", label: "Dashcam" },
-  ];
+  { value: "PERSONAL", label: "Personal" },
+  { value: "AUTONOMO", label: "Autónomo" },
+  { value: "OBD2", label: "OBD2" },
+  { value: "VEHICULO_BASICO", label: "Vehículo básico" },
+  { value: "VEHICULO_AVANZADO", label: "Vehículo avanzado" },
+  { value: "DASHCAM", label: "Dashcam" },
+  { value: "CANDADO", label: "Candado" },
+];
 
   useEffect(() => {
     if (isOpen) {

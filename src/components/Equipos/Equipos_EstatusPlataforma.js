@@ -73,7 +73,7 @@ const processEstatusPorCliente = (equipos, estatusData, clientes) => {
     const fueraLinea = estatus.filter(es => es.estatus === "NO_REPORTANDO").length;
 
     const clienteNombre = clientes.find(c => c.id === clienteId)?.nombre ||
-      (clienteId === "AG" || clienteId === "BN" ? clienteId : "Sin Cliente");
+      (clienteId === "AG" || clienteId === "BN" || clienteId === "PERDIDO" ? clienteId : "Sin Cliente");
 
     return { cliente: clienteNombre, enLinea, fueraLinea };
   });
@@ -84,6 +84,7 @@ const processEquiposPorPlataforma = (equipos) => {
     TRACK_SOLID: "Track Solid",
     WHATSGPS: "WhatsGPS",
     TRACKERKING: "TrackerKing",
+    JOINTCLOUD: "JointCloud"
   };
   const uniquePlatforms = [...new Set(equipos.map(e => e.plataforma))].filter(p => p);
   return uniquePlatforms.map(p => ({
@@ -130,9 +131,11 @@ const CheckEquiposSidePanel = ({
     TRACKERKING: "TrackerKing",
     TRACK_SOLID: "Track Solid",
     WHATSGPS: "WhatsGPS",
+    JOINTCLOUD: "JointCloud"
+
   };
 
-  const fixedPlatforms = ["TRACKERKING", "TRACK_SOLID", "WHATSGPS"];
+  const fixedPlatforms = ["TRACKERKING", "TRACK_SOLID", "WHATSGPS", "JOINTCLOUD"];
   const dynamicPlatforms = [...new Set(equipos.map(e => e.plataforma))].filter(p => p && !fixedPlatforms.includes(p));
   const plataformas = ["Todos", ...fixedPlatforms, ...dynamicPlatforms];
 

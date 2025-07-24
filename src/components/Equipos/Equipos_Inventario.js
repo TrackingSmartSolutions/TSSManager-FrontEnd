@@ -62,8 +62,8 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
     imei: "",
     nombre: "",
     modeloId: "",
-    clienteId: null, // Cambiar a null por defecto
-    clienteDefault: null, // Nueva propiedad para AG/BN
+    clienteId: null,
+    clienteDefault: null,
     proveedorId: "",
     tipo: "ALMACEN",
     estatus: "INACTIVO",
@@ -157,7 +157,7 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
         const url = equipo ? `${API_BASE_URL}/equipos/${equipo.id}` : `${API_BASE_URL}/equipos`;
         const method = equipo ? "PUT" : "POST";
         const submitData = { ...formData };
-        if (submitData.clienteId === "AG" || submitData.clienteId === "BN") {
+        if (submitData.clienteId === "AG" || submitData.clienteId === "BN" || submitData.clienteId === "PERDIDO") {
           submitData.clienteDefault = submitData.clienteId;
           submitData.clienteId = null;
         }
@@ -243,6 +243,7 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
             <option value="">Seleccione un cliente</option>
             <option value="AG">AG</option>
             <option value="BN">BN</option>
+            <option value="PERDIDO">PERDIDO</option>
             {clientes.map((cliente) => (
               <option key={cliente.id} value={cliente.id}>
                 {cliente.nombre}
@@ -327,6 +328,7 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
             <option value="TRACK_SOLID">Track Solid</option>
             <option value="WHATSGPS">Whats GPS</option>
             <option value="TRACKERKING">Trackerking</option>
+            <option value="JOINTCLOUD">Joint Cloud</option>
           </select>
         </div>
 
@@ -468,6 +470,7 @@ const EquiposInventario = () => {
     { value: "", label: "Todos los clientes" },
     { value: "AG", label: "AG" },
     { value: "BN", label: "BN" },
+    { value: "PERDIDO", label: "PERDIDO" },
     ...clientes.map(cliente => ({ value: cliente.id, label: cliente.nombre }))
   ];
 
@@ -550,8 +553,8 @@ const EquiposInventario = () => {
   const filteredEquipos = equipos.filter((equipo) => {
     const matchesTipo = !filterTipo || equipo.tipo === filterTipo;
     const matchesCliente = !filterCliente ||
-      (equipo.clienteId && equipo.clienteId.toString() === filterCliente) || 
-      (equipo.clienteDefault && equipo.clienteDefault === filterCliente); 
+      (equipo.clienteId && equipo.clienteId.toString() === filterCliente) ||
+      (equipo.clienteDefault && equipo.clienteDefault === filterCliente);
     return matchesTipo && matchesCliente;
   });
 

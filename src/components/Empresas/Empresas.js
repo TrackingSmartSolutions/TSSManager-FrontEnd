@@ -84,28 +84,181 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
 
+  // Reemplazar el sectorMap actual con:
   const sectorMap = {
-    AGRICULTURA: "(11) Agricultura, cría y explotación de animales, aprovechamiento forestal, pesca y caza",
-    MINERIA: "(21) Minería",
-    ENERGIA: "(22) Generación, transmisión y distribución de energía eléctrica, suministro de agua y de gas",
-    CONSTRUCCION: "(23) Construcción",
-    MANUFACTURA: "(31-33) Industrias manufactureras",
-    COMERCIO_MAYOR: "(43) Comercio al por mayor",
-    COMERCIO_MENOR: "(46) Comercio al por menor",
-    TRANSPORTE: "(48-49) Transportes, correos y almacenamiento",
-    MEDIOS: "(51) Información en medios masivos",
-    FINANCIERO: "(52) Servicios financieros y de seguros",
-    INMOBILIARIO: "(53) Servicios inmobiliarios y de alquiler de bienes muebles e intangibles",
-    PROFESIONAL: "(54) Servicios profesionales, científicos y técnicos",
-    CORPORATIVO: "(55) Corporativos",
-    APOYO_NEGOCIOS: "(56) Servicios de apoyo a los negocios y manejo de desechos",
-    EDUCACION: "(61) Servicios educativos",
-    SALUD: "(62) Servicios de salud y de asistencia social",
-    ESPARCIMIENTO: "(71) Servicios de esparcimiento culturales y deportivos",
-    ALOJAMIENTO: "(72) Servicios de alojamiento temporal y de preparación de alimentos",
-    OTROS_SERVICIOS: "(81) Otros servicios excepto actividades gubernamentales",
-    GUBERNAMENTAL: "(93) Actividades legislativas, gubernamentales, de impartición de justicia",
-  }
+    // SECTOR PRIMARIO
+    AGRICULTURA_CULTIVOS: "(11) Agricultura - Cultivos y horticultura",
+    AGRICULTURA_GANADERIA: "(11) Agricultura - Ganadería y avicultura",
+    AGRICULTURA_FORESTAL: "(11) Agricultura - Forestal y silvicultura",
+    AGRICULTURA_PESCA: "(11) Agricultura - Pesca y acuacultura",
+
+    // MINERÍA
+    MINERIA_PETROLEO: "(21) Minería - Petróleo y gas",
+    MINERIA_MINERALES: "(21) Minería - Minerales metálicos",
+    MINERIA_NO_METALICOS: "(21) Minería - Minerales no metálicos",
+    MINERIA_CARBON: "(21) Minería - Carbón y otros",
+
+    // ENERGÍA Y SERVICIOS PÚBLICOS  
+    ENERGIA_ELECTRICA: "(22) Energía - Generación eléctrica",
+    ENERGIA_GAS: "(22) Energía - Suministro de gas",
+    ENERGIA_AGUA: "(22) Energía - Suministro de agua",
+    ENERGIA_RENOVABLE: "(22) Energía - Renovables",
+
+    // CONSTRUCCIÓN
+    CONSTRUCCION_EDIFICACION: "(23) Construcción - Edificación residencial",
+    CONSTRUCCION_INDUSTRIAL: "(23) Construcción - Obras industriales",
+    CONSTRUCCION_INFRAESTRUCTURA: "(23) Construcción - Infraestructura",
+    CONSTRUCCION_ESPECIALIZADA: "(23) Construcción - Trabajos especializados",
+
+    // MANUFACTURA
+    MANUFACTURA_ALIMENTOS: "(31) Manufactura - Alimentos y bebidas",
+    MANUFACTURA_TEXTIL: "(31) Manufactura - Textil y confección",
+    MANUFACTURA_MADERA: "(31) Manufactura - Madera y muebles",
+    MANUFACTURA_PAPEL: "(31) Manufactura - Papel e impresión",
+    MANUFACTURA_QUIMICA: "(32) Manufactura - Química y petroquímica",
+    MANUFACTURA_PLASTICOS: "(32) Manufactura - Plásticos y caucho",
+    MANUFACTURA_MINERALES: "(32) Manufactura - Productos minerales no metálicos",
+    MANUFACTURA_METAL_BASIC: "(33) Manufactura - Industrias metálicas básicas",
+    MANUFACTURA_METAL_PROD: "(33) Manufactura - Productos metálicos",
+    MANUFACTURA_MAQUINARIA: "(33) Manufactura - Maquinaria y equipo",
+    MANUFACTURA_ELECTRONICA: "(33) Manufactura - Electrónica y computación",
+    MANUFACTURA_ELECTRICA: "(33) Manufactura - Equipo eléctrico",
+    MANUFACTURA_TRANSPORTE: "(33) Manufactura - Equipo de transporte",
+    MANUFACTURA_OTROS: "(33) Manufactura - Otras industrias",
+
+    // COMERCIO AL POR MAYOR
+    COMERCIO_MAYOR_AGRICOLA: "(43) Comercio mayoreo - Productos agrícolas",
+    COMERCIO_MAYOR_ALIMENTOS: "(43) Comercio mayoreo - Alimentos procesados",
+    COMERCIO_MAYOR_BEBIDAS: "(43) Comercio mayoreo - Bebidas y tabaco",
+    COMERCIO_MAYOR_TEXTIL: "(43) Comercio mayoreo - Textiles y vestido",
+    COMERCIO_MAYOR_FARMACEUTICO: "(43) Comercio mayoreo - Productos farmacéuticos",
+    COMERCIO_MAYOR_QUIMICOS: "(43) Comercio mayoreo - Productos químicos",
+    COMERCIO_MAYOR_PETROLEO: "(43) Comercio mayoreo - Productos de petróleo",
+    COMERCIO_MAYOR_MATERIALES: "(43) Comercio mayoreo - Materiales construcción",
+    COMERCIO_MAYOR_MAQUINARIA: "(43) Comercio mayoreo - Maquinaria y equipo",
+    COMERCIO_MAYOR_ELECTRONICA: "(43) Comercio mayoreo - Electrónicos",
+    COMERCIO_MAYOR_VEHICULOS: "(43) Comercio mayoreo - Vehículos y refacciones",
+    COMERCIO_MAYOR_MUEBLES: "(43) Comercio mayoreo - Muebles y enseres",
+    COMERCIO_MAYOR_OTROS: "(43) Comercio mayoreo - Otros productos",
+
+    // COMERCIO AL POR MENOR
+    COMERCIO_MENOR_ALIMENTOS: "(46) Comercio menudeo - Alimentos y bebidas",
+    COMERCIO_MENOR_ABARROTES: "(46) Comercio menudeo - Abarrotes y ultramarinos",
+    COMERCIO_MENOR_FARMACIA: "(46) Comercio menudeo - Farmacias",
+    COMERCIO_MENOR_COMBUSTIBLES: "(46) Comercio menudeo - Combustibles",
+    COMERCIO_MENOR_VESTIDO: "(46) Comercio menudeo - Ropa y calzado",
+    COMERCIO_MENOR_MUEBLES: "(46) Comercio menudeo - Muebles y electrodomésticos",
+    COMERCIO_MENOR_ELECTRONICA: "(46) Comercio menudeo - Electrónicos",
+    COMERCIO_MENOR_FERRETERIA: "(46) Comercio menudeo - Ferretería y materiales",
+    COMERCIO_MENOR_VEHICULOS: "(46) Comercio menudeo - Vehículos automotores",
+    COMERCIO_MENOR_REFACCIONES: "(46) Comercio menudeo - Refacciones y accesorios",
+    COMERCIO_MENOR_DEPARTAMENTAL: "(46) Comercio menudeo - Tiendas departamentales",
+    COMERCIO_MENOR_OTROS: "(46) Comercio menudeo - Otros productos",
+
+    // TRANSPORTE Y LOGÍSTICA
+    TRANSPORTE_AEREO: "(48) Transporte - Aéreo",
+    TRANSPORTE_FERROVIARIO: "(48) Transporte - Ferroviario",
+    TRANSPORTE_MARITIMO: "(48) Transporte - Marítimo",
+    TRANSPORTE_TERRESTRE_CARGA: "(48) Transporte - Terrestre de carga",
+    TRANSPORTE_TERRESTRE_PASAJE: "(49) Transporte - Terrestre de pasajeros",
+    TRANSPORTE_TURISTICO: "(49) Transporte - Turístico",
+    TRANSPORTE_CORREOS: "(49) Servicios - Correos y paquetería",
+    TRANSPORTE_ALMACENAMIENTO: "(49) Servicios - Almacenamiento",
+
+    // MEDIOS E INFORMACIÓN
+    MEDIOS_EDITORIALES: "(51) Medios - Industrias editoriales",
+    MEDIOS_AUDIOVISUAL: "(51) Medios - Industrias audiovisuales",
+    MEDIOS_RADIO_TV: "(51) Medios - Radio y televisión",
+    MEDIOS_TELECOMUNICACIONES: "(51) Medios - Telecomunicaciones",
+    MEDIOS_PROCESAMIENTO_DATOS: "(51) Medios - Procesamiento de datos",
+    MEDIOS_OTROS: "(51) Medios - Otros servicios información",
+
+    // SERVICIOS FINANCIEROS
+    FINANCIERO_BANCA: "(52) Financiero - Instituciones bancarias",
+    FINANCIERO_VALORES: "(52) Financiero - Actividades bursátiles",
+    FINANCIERO_SEGUROS: "(52) Financiero - Seguros y fianzas",
+    FINANCIERO_PENSIONES: "(52) Financiero - Fondos y pensiones",
+    FINANCIERO_OTROS: "(52) Financiero - Otros servicios financieros",
+
+    // INMOBILIARIO Y ALQUILER
+    INMOBILIARIO_COMPRAVENTA: "(53) Inmobiliario - Compraventa de inmuebles",
+    INMOBILIARIO_ALQUILER: "(53) Inmobiliario - Alquiler de inmuebles",
+    INMOBILIARIO_MAQUINARIA: "(53) Servicios - Alquiler de maquinaria",
+    INMOBILIARIO_VEHICULOS: "(53) Servicios - Alquiler de vehículos",
+    INMOBILIARIO_OTROS: "(53) Servicios - Alquiler de otros bienes",
+
+    // SERVICIOS PROFESIONALES
+    PROFESIONAL_JURIDICOS: "(54) Profesional - Servicios jurídicos",
+    PROFESIONAL_CONTABLES: "(54) Profesional - Servicios contables",
+    PROFESIONAL_ARQUITECTURA: "(54) Profesional - Arquitectura e ingeniería",
+    PROFESIONAL_DISENO: "(54) Profesional - Diseño especializado",
+    PROFESIONAL_CONSULTORIA: "(54) Profesional - Consultoría",
+    PROFESIONAL_INVESTIGACION: "(54) Profesional - Investigación científica",
+    PROFESIONAL_PUBLICIDAD: "(54) Profesional - Publicidad y marketing",
+    PROFESIONAL_VETERINARIOS: "(54) Profesional - Servicios veterinarios",
+    PROFESIONAL_OTROS: "(54) Profesional - Otros servicios técnicos",
+
+    // CORPORATIVOS
+    CORPORATIVO_HOLDING: "(55) Corporativo - Tenencia de acciones",
+    CORPORATIVO_MATRIZ: "(55) Corporativo - Casas matrices",
+
+    // APOYO A NEGOCIOS
+    APOYO_EMPLEO: "(56) Apoyo - Servicios de empleo",
+    APOYO_ADMINISTRATIVO: "(56) Apoyo - Servicios administrativos",
+    APOYO_SEGURIDAD: "(56) Apoyo - Servicios de seguridad",
+    APOYO_LIMPIEZA: "(56) Apoyo - Servicios de limpieza",
+    APOYO_PAISAJISMO: "(56) Apoyo - Jardinería y paisajismo",
+    APOYO_VIAJES: "(56) Apoyo - Agencias de viajes",
+    APOYO_INVESTIGACION: "(56) Apoyo - Servicios de investigación",
+    APOYO_DESECHOS: "(56) Apoyo - Manejo de desechos",
+    APOYO_OTROS: "(56) Apoyo - Otros servicios",
+
+    // EDUCACIÓN
+    EDUCACION_PREESCOLAR: "(61) Educación - Preescolar",
+    EDUCACION_PRIMARIA: "(61) Educación - Primaria",
+    EDUCACION_SECUNDARIA: "(61) Educación - Secundaria",
+    EDUCACION_MEDIA_SUPERIOR: "(61) Educación - Media superior",
+    EDUCACION_SUPERIOR: "(61) Educación - Superior",
+    EDUCACION_POSGRADO: "(61) Educación - Posgrado",
+    EDUCACION_TECNICA: "(61) Educación - Técnica y capacitación",
+    EDUCACION_OTROS: "(61) Educación - Otros servicios educativos",
+
+    // SALUD
+    SALUD_HOSPITALES: "(62) Salud - Servicios hospitalarios",
+    SALUD_AMBULATORIOS: "(62) Salud - Servicios ambulatorios",
+    SALUD_ASISTENCIA_SOCIAL: "(62) Salud - Servicios de asistencia social",
+
+    // ESPARCIMIENTO
+    ESPARCIMIENTO_ARTISTICOS: "(71) Esparcimiento - Servicios artísticos",
+    ESPARCIMIENTO_DEPORTIVOS: "(71) Esparcimiento - Servicios deportivos",
+    ESPARCIMIENTO_RECREATIVOS: "(71) Esparcimiento - Servicios recreativos",
+    ESPARCIMIENTO_MUSEOS: "(71) Esparcimiento - Museos y sitios históricos",
+    ESPARCIMIENTO_OTROS: "(71) Esparcimiento - Otros servicios",
+
+    // ALOJAMIENTO Y ALIMENTOS
+    ALOJAMIENTO_HOTELES: "(72) Alojamiento - Hoteles y moteles",
+    ALOJAMIENTO_TEMPORAL: "(72) Alojamiento - Otros alojamientos",
+    ALIMENTOS_RESTAURANTES: "(72) Alimentos - Restaurantes con servicio",
+    ALIMENTOS_LIMITADO: "(72) Alimentos - Establecimientos con servicio limitado",
+    ALIMENTOS_PREPARACION: "(72) Alimentos - Servicios de preparación",
+
+    // OTROS SERVICIOS
+    OTROS_REPARACION: "(81) Otros - Reparación y mantenimiento",
+    OTROS_PERSONALES: "(81) Otros - Servicios personales",
+    OTROS_RELIGIOSOS: "(81) Otros - Organizaciones religiosas",
+    OTROS_CIVICAS: "(81) Otros - Organizaciones cívicas",
+    OTROS_PROFESIONALES: "(81) Otros - Organizaciones profesionales",
+    OTROS_LABORALES: "(81) Otros - Organizaciones laborales",
+    OTROS_POLITICAS: "(81) Otros - Organizaciones políticas",
+
+    // GUBERNAMENTAL
+    GUBERNAMENTAL_FEDERAL: "(93) Gubernamental - Órganos legislativos federales",
+    GUBERNAMENTAL_ESTATAL: "(93) Gubernamental - Órganos legislativos estatales",
+    GUBERNAMENTAL_MUNICIPAL: "(93) Gubernamental - Órganos legislativos municipales",
+    GUBERNAMENTAL_JUSTICIA: "(93) Gubernamental - Impartición de justicia",
+    GUBERNAMENTAL_SEGURIDAD: "(93) Gubernamental - Seguridad nacional",
+    GUBERNAMENTAL_OTROS: "(93) Gubernamental - Otras actividades"
+  };
 
   const regimenFiscalOptions = [
     { clave: "605", descripcion: "Sueldos y Salarios e Ingresos Asimilados a Salarios" },
@@ -213,13 +366,6 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
       }
     }
 
-    // Validación Domicilio Físico: No vacío y caracteres válidos
-    if (!formData.domicilioFisico.trim()) {
-      newErrors.domicilioFisico = "Este campo es obligatorio";
-    } else if (!/^[A-Za-z0-9\s,.\-ÁÉÍÓÚáéíóúÑñ]+$/.test(formData.domicilioFisico.trim())) {
-      newErrors.domicilioFisico = "Este campo contiene caracteres no permitidos";
-    }
-
     // Validaciones para estatus CLIENTE
     if (formData.estatus === "CLIENTE") {
       // Domicilio Fiscal
@@ -276,9 +422,11 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
         return;
       }
     }
-    const formattedDomicilioFisico = formData.domicilioFisico.endsWith(", México")
-      ? formData.domicilioFisico
-      : `${formData.domicilioFisico}, México`;
+    const formattedDomicilioFisico = formData.domicilioFisico && formData.domicilioFisico.trim()
+      ? (formData.domicilioFisico.endsWith(", México")
+        ? formData.domicilioFisico
+        : `${formData.domicilioFisico}, México`)
+      : null;
 
     const empresaData = {
       nombre: formData.nombre,
@@ -445,7 +593,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
         <div className="modal-form-row">
           <div className="modal-form-group full-width">
             <label htmlFor="domicilioFisico">
-              Domicilio Físico <span className="required">*</span>
+              Domicilio Físico
             </label>
             <input
               type="text"
@@ -984,28 +1132,181 @@ const DetallesEmpresaModal = ({ isOpen, onClose, empresa }) => {
     CLIENTE: "Cliente",
   }
 
+  // Reemplazar el sectorMap actual con:
   const sectorMap = {
-    AGRICULTURA: "(11) Agricultura, cría y explotación de animales, aprovechamiento forestal, pesca y caza",
-    MINERIA: "(21) Minería",
-    ENERGIA: "(22) Generación, transmisión y distribución de energía eléctrica, suministro de agua y de gas",
-    CONSTRUCCION: "(23) Construcción",
-    MANUFACTURA: "(31-33) Industrias manufactureras",
-    COMERCIO_MAYOR: "(43) Comercio al por mayor",
-    COMERCIO_MENOR: "(46) Comercio al por menor",
-    TRANSPORTE: "(48-49) Transportes, correos y almacenamiento",
-    MEDIOS: "(51) Información en medios masivos",
-    FINANCIERO: "(52) Servicios financieros y de seguros",
-    INMOBILIARIO: "(53) Servicios inmobiliarios y de alquiler de bienes muebles e intangibles",
-    PROFESIONAL: "(54) Servicios profesionales, científicos y técnicos",
-    CORPORATIVO: "(55) Corporativos",
-    APOYO_NEGOCIOS: "(56) Servicios de apoyo a los negocios y manejo de desechos",
-    EDUCACION: "(61) Servicios educativos",
-    SALUD: "(62) Servicios de salud y de asistencia social",
-    ESPARCIMIENTO: "(71) Servicios de esparcimiento culturales y deportivos",
-    ALOJAMIENTO: "(72) Servicios de alojamiento temporal y de preparación de alimentos",
-    OTROS_SERVICIOS: "(81) Otros servicios excepto actividades gubernamentales",
-    GUBERNAMENTAL: "(93) Actividades legislativas, gubernamentales, de impartición de justicia",
-  }
+    // SECTOR PRIMARIO
+    AGRICULTURA_CULTIVOS: "(11) Agricultura - Cultivos y horticultura",
+    AGRICULTURA_GANADERIA: "(11) Agricultura - Ganadería y avicultura",
+    AGRICULTURA_FORESTAL: "(11) Agricultura - Forestal y silvicultura",
+    AGRICULTURA_PESCA: "(11) Agricultura - Pesca y acuacultura",
+
+    // MINERÍA
+    MINERIA_PETROLEO: "(21) Minería - Petróleo y gas",
+    MINERIA_MINERALES: "(21) Minería - Minerales metálicos",
+    MINERIA_NO_METALICOS: "(21) Minería - Minerales no metálicos",
+    MINERIA_CARBON: "(21) Minería - Carbón y otros",
+
+    // ENERGÍA Y SERVICIOS PÚBLICOS  
+    ENERGIA_ELECTRICA: "(22) Energía - Generación eléctrica",
+    ENERGIA_GAS: "(22) Energía - Suministro de gas",
+    ENERGIA_AGUA: "(22) Energía - Suministro de agua",
+    ENERGIA_RENOVABLE: "(22) Energía - Renovables",
+
+    // CONSTRUCCIÓN
+    CONSTRUCCION_EDIFICACION: "(23) Construcción - Edificación residencial",
+    CONSTRUCCION_INDUSTRIAL: "(23) Construcción - Obras industriales",
+    CONSTRUCCION_INFRAESTRUCTURA: "(23) Construcción - Infraestructura",
+    CONSTRUCCION_ESPECIALIZADA: "(23) Construcción - Trabajos especializados",
+
+    // MANUFACTURA
+    MANUFACTURA_ALIMENTOS: "(31) Manufactura - Alimentos y bebidas",
+    MANUFACTURA_TEXTIL: "(31) Manufactura - Textil y confección",
+    MANUFACTURA_MADERA: "(31) Manufactura - Madera y muebles",
+    MANUFACTURA_PAPEL: "(31) Manufactura - Papel e impresión",
+    MANUFACTURA_QUIMICA: "(32) Manufactura - Química y petroquímica",
+    MANUFACTURA_PLASTICOS: "(32) Manufactura - Plásticos y caucho",
+    MANUFACTURA_MINERALES: "(32) Manufactura - Productos minerales no metálicos",
+    MANUFACTURA_METAL_BASIC: "(33) Manufactura - Industrias metálicas básicas",
+    MANUFACTURA_METAL_PROD: "(33) Manufactura - Productos metálicos",
+    MANUFACTURA_MAQUINARIA: "(33) Manufactura - Maquinaria y equipo",
+    MANUFACTURA_ELECTRONICA: "(33) Manufactura - Electrónica y computación",
+    MANUFACTURA_ELECTRICA: "(33) Manufactura - Equipo eléctrico",
+    MANUFACTURA_TRANSPORTE: "(33) Manufactura - Equipo de transporte",
+    MANUFACTURA_OTROS: "(33) Manufactura - Otras industrias",
+
+    // COMERCIO AL POR MAYOR
+    COMERCIO_MAYOR_AGRICOLA: "(43) Comercio mayoreo - Productos agrícolas",
+    COMERCIO_MAYOR_ALIMENTOS: "(43) Comercio mayoreo - Alimentos procesados",
+    COMERCIO_MAYOR_BEBIDAS: "(43) Comercio mayoreo - Bebidas y tabaco",
+    COMERCIO_MAYOR_TEXTIL: "(43) Comercio mayoreo - Textiles y vestido",
+    COMERCIO_MAYOR_FARMACEUTICO: "(43) Comercio mayoreo - Productos farmacéuticos",
+    COMERCIO_MAYOR_QUIMICOS: "(43) Comercio mayoreo - Productos químicos",
+    COMERCIO_MAYOR_PETROLEO: "(43) Comercio mayoreo - Productos de petróleo",
+    COMERCIO_MAYOR_MATERIALES: "(43) Comercio mayoreo - Materiales construcción",
+    COMERCIO_MAYOR_MAQUINARIA: "(43) Comercio mayoreo - Maquinaria y equipo",
+    COMERCIO_MAYOR_ELECTRONICA: "(43) Comercio mayoreo - Electrónicos",
+    COMERCIO_MAYOR_VEHICULOS: "(43) Comercio mayoreo - Vehículos y refacciones",
+    COMERCIO_MAYOR_MUEBLES: "(43) Comercio mayoreo - Muebles y enseres",
+    COMERCIO_MAYOR_OTROS: "(43) Comercio mayoreo - Otros productos",
+
+    // COMERCIO AL POR MENOR
+    COMERCIO_MENOR_ALIMENTOS: "(46) Comercio menudeo - Alimentos y bebidas",
+    COMERCIO_MENOR_ABARROTES: "(46) Comercio menudeo - Abarrotes y ultramarinos",
+    COMERCIO_MENOR_FARMACIA: "(46) Comercio menudeo - Farmacias",
+    COMERCIO_MENOR_COMBUSTIBLES: "(46) Comercio menudeo - Combustibles",
+    COMERCIO_MENOR_VESTIDO: "(46) Comercio menudeo - Ropa y calzado",
+    COMERCIO_MENOR_MUEBLES: "(46) Comercio menudeo - Muebles y electrodomésticos",
+    COMERCIO_MENOR_ELECTRONICA: "(46) Comercio menudeo - Electrónicos",
+    COMERCIO_MENOR_FERRETERIA: "(46) Comercio menudeo - Ferretería y materiales",
+    COMERCIO_MENOR_VEHICULOS: "(46) Comercio menudeo - Vehículos automotores",
+    COMERCIO_MENOR_REFACCIONES: "(46) Comercio menudeo - Refacciones y accesorios",
+    COMERCIO_MENOR_DEPARTAMENTAL: "(46) Comercio menudeo - Tiendas departamentales",
+    COMERCIO_MENOR_OTROS: "(46) Comercio menudeo - Otros productos",
+
+    // TRANSPORTE Y LOGÍSTICA
+    TRANSPORTE_AEREO: "(48) Transporte - Aéreo",
+    TRANSPORTE_FERROVIARIO: "(48) Transporte - Ferroviario",
+    TRANSPORTE_MARITIMO: "(48) Transporte - Marítimo",
+    TRANSPORTE_TERRESTRE_CARGA: "(48) Transporte - Terrestre de carga",
+    TRANSPORTE_TERRESTRE_PASAJE: "(49) Transporte - Terrestre de pasajeros",
+    TRANSPORTE_TURISTICO: "(49) Transporte - Turístico",
+    TRANSPORTE_CORREOS: "(49) Servicios - Correos y paquetería",
+    TRANSPORTE_ALMACENAMIENTO: "(49) Servicios - Almacenamiento",
+
+    // MEDIOS E INFORMACIÓN
+    MEDIOS_EDITORIALES: "(51) Medios - Industrias editoriales",
+    MEDIOS_AUDIOVISUAL: "(51) Medios - Industrias audiovisuales",
+    MEDIOS_RADIO_TV: "(51) Medios - Radio y televisión",
+    MEDIOS_TELECOMUNICACIONES: "(51) Medios - Telecomunicaciones",
+    MEDIOS_PROCESAMIENTO_DATOS: "(51) Medios - Procesamiento de datos",
+    MEDIOS_OTROS: "(51) Medios - Otros servicios información",
+
+    // SERVICIOS FINANCIEROS
+    FINANCIERO_BANCA: "(52) Financiero - Instituciones bancarias",
+    FINANCIERO_VALORES: "(52) Financiero - Actividades bursátiles",
+    FINANCIERO_SEGUROS: "(52) Financiero - Seguros y fianzas",
+    FINANCIERO_PENSIONES: "(52) Financiero - Fondos y pensiones",
+    FINANCIERO_OTROS: "(52) Financiero - Otros servicios financieros",
+
+    // INMOBILIARIO Y ALQUILER
+    INMOBILIARIO_COMPRAVENTA: "(53) Inmobiliario - Compraventa de inmuebles",
+    INMOBILIARIO_ALQUILER: "(53) Inmobiliario - Alquiler de inmuebles",
+    INMOBILIARIO_MAQUINARIA: "(53) Servicios - Alquiler de maquinaria",
+    INMOBILIARIO_VEHICULOS: "(53) Servicios - Alquiler de vehículos",
+    INMOBILIARIO_OTROS: "(53) Servicios - Alquiler de otros bienes",
+
+    // SERVICIOS PROFESIONALES
+    PROFESIONAL_JURIDICOS: "(54) Profesional - Servicios jurídicos",
+    PROFESIONAL_CONTABLES: "(54) Profesional - Servicios contables",
+    PROFESIONAL_ARQUITECTURA: "(54) Profesional - Arquitectura e ingeniería",
+    PROFESIONAL_DISENO: "(54) Profesional - Diseño especializado",
+    PROFESIONAL_CONSULTORIA: "(54) Profesional - Consultoría",
+    PROFESIONAL_INVESTIGACION: "(54) Profesional - Investigación científica",
+    PROFESIONAL_PUBLICIDAD: "(54) Profesional - Publicidad y marketing",
+    PROFESIONAL_VETERINARIOS: "(54) Profesional - Servicios veterinarios",
+    PROFESIONAL_OTROS: "(54) Profesional - Otros servicios técnicos",
+
+    // CORPORATIVOS
+    CORPORATIVO_HOLDING: "(55) Corporativo - Tenencia de acciones",
+    CORPORATIVO_MATRIZ: "(55) Corporativo - Casas matrices",
+
+    // APOYO A NEGOCIOS
+    APOYO_EMPLEO: "(56) Apoyo - Servicios de empleo",
+    APOYO_ADMINISTRATIVO: "(56) Apoyo - Servicios administrativos",
+    APOYO_SEGURIDAD: "(56) Apoyo - Servicios de seguridad",
+    APOYO_LIMPIEZA: "(56) Apoyo - Servicios de limpieza",
+    APOYO_PAISAJISMO: "(56) Apoyo - Jardinería y paisajismo",
+    APOYO_VIAJES: "(56) Apoyo - Agencias de viajes",
+    APOYO_INVESTIGACION: "(56) Apoyo - Servicios de investigación",
+    APOYO_DESECHOS: "(56) Apoyo - Manejo de desechos",
+    APOYO_OTROS: "(56) Apoyo - Otros servicios",
+
+    // EDUCACIÓN
+    EDUCACION_PREESCOLAR: "(61) Educación - Preescolar",
+    EDUCACION_PRIMARIA: "(61) Educación - Primaria",
+    EDUCACION_SECUNDARIA: "(61) Educación - Secundaria",
+    EDUCACION_MEDIA_SUPERIOR: "(61) Educación - Media superior",
+    EDUCACION_SUPERIOR: "(61) Educación - Superior",
+    EDUCACION_POSGRADO: "(61) Educación - Posgrado",
+    EDUCACION_TECNICA: "(61) Educación - Técnica y capacitación",
+    EDUCACION_OTROS: "(61) Educación - Otros servicios educativos",
+
+    // SALUD
+    SALUD_HOSPITALES: "(62) Salud - Servicios hospitalarios",
+    SALUD_AMBULATORIOS: "(62) Salud - Servicios ambulatorios",
+    SALUD_ASISTENCIA_SOCIAL: "(62) Salud - Servicios de asistencia social",
+
+    // ESPARCIMIENTO
+    ESPARCIMIENTO_ARTISTICOS: "(71) Esparcimiento - Servicios artísticos",
+    ESPARCIMIENTO_DEPORTIVOS: "(71) Esparcimiento - Servicios deportivos",
+    ESPARCIMIENTO_RECREATIVOS: "(71) Esparcimiento - Servicios recreativos",
+    ESPARCIMIENTO_MUSEOS: "(71) Esparcimiento - Museos y sitios históricos",
+    ESPARCIMIENTO_OTROS: "(71) Esparcimiento - Otros servicios",
+
+    // ALOJAMIENTO Y ALIMENTOS
+    ALOJAMIENTO_HOTELES: "(72) Alojamiento - Hoteles y moteles",
+    ALOJAMIENTO_TEMPORAL: "(72) Alojamiento - Otros alojamientos",
+    ALIMENTOS_RESTAURANTES: "(72) Alimentos - Restaurantes con servicio",
+    ALIMENTOS_LIMITADO: "(72) Alimentos - Establecimientos con servicio limitado",
+    ALIMENTOS_PREPARACION: "(72) Alimentos - Servicios de preparación",
+
+    // OTROS SERVICIOS
+    OTROS_REPARACION: "(81) Otros - Reparación y mantenimiento",
+    OTROS_PERSONALES: "(81) Otros - Servicios personales",
+    OTROS_RELIGIOSOS: "(81) Otros - Organizaciones religiosas",
+    OTROS_CIVICAS: "(81) Otros - Organizaciones cívicas",
+    OTROS_PROFESIONALES: "(81) Otros - Organizaciones profesionales",
+    OTROS_LABORALES: "(81) Otros - Organizaciones laborales",
+    OTROS_POLITICAS: "(81) Otros - Organizaciones políticas",
+
+    // GUBERNAMENTAL
+    GUBERNAMENTAL_FEDERAL: "(93) Gubernamental - Órganos legislativos federales",
+    GUBERNAMENTAL_ESTATAL: "(93) Gubernamental - Órganos legislativos estatales",
+    GUBERNAMENTAL_MUNICIPAL: "(93) Gubernamental - Órganos legislativos municipales",
+    GUBERNAMENTAL_JUSTICIA: "(93) Gubernamental - Impartición de justicia",
+    GUBERNAMENTAL_SEGURIDAD: "(93) Gubernamental - Seguridad nacional",
+    GUBERNAMENTAL_OTROS: "(93) Gubernamental - Otras actividades"
+  };
 
   const getStatusText = (status) => statusMap[status] || status
   const getSectorText = (sector) => sectorMap[sector] || sector || "N/A"
@@ -1293,28 +1594,181 @@ const Empresas = () => {
     CLIENTE: "Cliente",
   }
 
+  // Reemplazar el sectorMap actual con:
   const sectorMap = {
-    AGRICULTURA: "(11) Agricultura, cría y explotación de animales, aprovechamiento forestal, pesca y caza",
-    MINERIA: "(21) Minería",
-    ENERGIA: "(22) Generación, transmisión y distribución de energía eléctrica, suministro de agua y de gas",
-    CONSTRUCCION: "(23) Construcción",
-    MANUFACTURA: "(31-33) Industrias manufactureras",
-    COMERCIO_MAYOR: "(43) Comercio al por mayor",
-    COMERCIO_MENOR: "(46) Comercio al por menor",
-    TRANSPORTE: "(48-49) Transportes, correos y almacenamiento",
-    MEDIOS: "(51) Información en medios masivos",
-    FINANCIERO: "(52) Servicios financieros y de seguros",
-    INMOBILIARIO: "(53) Servicios inmobiliarios y de alquiler de bienes muebles e intangibles",
-    PROFESIONAL: "(54) Servicios profesionales, científicos y técnicos",
-    CORPORATIVO: "(55) Corporativos",
-    APOYO_NEGOCIOS: "(56) Servicios de apoyo a los negocios y manejo de desechos",
-    EDUCACION: "(61) Servicios educativos",
-    SALUD: "(62) Servicios de salud y de asistencia social",
-    ESPARCIMIENTO: "(71) Servicios de esparcimiento culturales y deportivos",
-    ALOJAMIENTO: "(72) Servicios de alojamiento temporal y de preparación de alimentos",
-    OTROS_SERVICIOS: "(81) Otros servicios excepto actividades gubernamentales",
-    GUBERNAMENTAL: "(93) Actividades legislativas, gubernamentales, de impartición de justicia",
-  }
+    // SECTOR PRIMARIO
+    AGRICULTURA_CULTIVOS: "(11) Agricultura - Cultivos y horticultura",
+    AGRICULTURA_GANADERIA: "(11) Agricultura - Ganadería y avicultura",
+    AGRICULTURA_FORESTAL: "(11) Agricultura - Forestal y silvicultura",
+    AGRICULTURA_PESCA: "(11) Agricultura - Pesca y acuacultura",
+
+    // MINERÍA
+    MINERIA_PETROLEO: "(21) Minería - Petróleo y gas",
+    MINERIA_MINERALES: "(21) Minería - Minerales metálicos",
+    MINERIA_NO_METALICOS: "(21) Minería - Minerales no metálicos",
+    MINERIA_CARBON: "(21) Minería - Carbón y otros",
+
+    // ENERGÍA Y SERVICIOS PÚBLICOS  
+    ENERGIA_ELECTRICA: "(22) Energía - Generación eléctrica",
+    ENERGIA_GAS: "(22) Energía - Suministro de gas",
+    ENERGIA_AGUA: "(22) Energía - Suministro de agua",
+    ENERGIA_RENOVABLE: "(22) Energía - Renovables",
+
+    // CONSTRUCCIÓN
+    CONSTRUCCION_EDIFICACION: "(23) Construcción - Edificación residencial",
+    CONSTRUCCION_INDUSTRIAL: "(23) Construcción - Obras industriales",
+    CONSTRUCCION_INFRAESTRUCTURA: "(23) Construcción - Infraestructura",
+    CONSTRUCCION_ESPECIALIZADA: "(23) Construcción - Trabajos especializados",
+
+    // MANUFACTURA
+    MANUFACTURA_ALIMENTOS: "(31) Manufactura - Alimentos y bebidas",
+    MANUFACTURA_TEXTIL: "(31) Manufactura - Textil y confección",
+    MANUFACTURA_MADERA: "(31) Manufactura - Madera y muebles",
+    MANUFACTURA_PAPEL: "(31) Manufactura - Papel e impresión",
+    MANUFACTURA_QUIMICA: "(32) Manufactura - Química y petroquímica",
+    MANUFACTURA_PLASTICOS: "(32) Manufactura - Plásticos y caucho",
+    MANUFACTURA_MINERALES: "(32) Manufactura - Productos minerales no metálicos",
+    MANUFACTURA_METAL_BASIC: "(33) Manufactura - Industrias metálicas básicas",
+    MANUFACTURA_METAL_PROD: "(33) Manufactura - Productos metálicos",
+    MANUFACTURA_MAQUINARIA: "(33) Manufactura - Maquinaria y equipo",
+    MANUFACTURA_ELECTRONICA: "(33) Manufactura - Electrónica y computación",
+    MANUFACTURA_ELECTRICA: "(33) Manufactura - Equipo eléctrico",
+    MANUFACTURA_TRANSPORTE: "(33) Manufactura - Equipo de transporte",
+    MANUFACTURA_OTROS: "(33) Manufactura - Otras industrias",
+
+    // COMERCIO AL POR MAYOR
+    COMERCIO_MAYOR_AGRICOLA: "(43) Comercio mayoreo - Productos agrícolas",
+    COMERCIO_MAYOR_ALIMENTOS: "(43) Comercio mayoreo - Alimentos procesados",
+    COMERCIO_MAYOR_BEBIDAS: "(43) Comercio mayoreo - Bebidas y tabaco",
+    COMERCIO_MAYOR_TEXTIL: "(43) Comercio mayoreo - Textiles y vestido",
+    COMERCIO_MAYOR_FARMACEUTICO: "(43) Comercio mayoreo - Productos farmacéuticos",
+    COMERCIO_MAYOR_QUIMICOS: "(43) Comercio mayoreo - Productos químicos",
+    COMERCIO_MAYOR_PETROLEO: "(43) Comercio mayoreo - Productos de petróleo",
+    COMERCIO_MAYOR_MATERIALES: "(43) Comercio mayoreo - Materiales construcción",
+    COMERCIO_MAYOR_MAQUINARIA: "(43) Comercio mayoreo - Maquinaria y equipo",
+    COMERCIO_MAYOR_ELECTRONICA: "(43) Comercio mayoreo - Electrónicos",
+    COMERCIO_MAYOR_VEHICULOS: "(43) Comercio mayoreo - Vehículos y refacciones",
+    COMERCIO_MAYOR_MUEBLES: "(43) Comercio mayoreo - Muebles y enseres",
+    COMERCIO_MAYOR_OTROS: "(43) Comercio mayoreo - Otros productos",
+
+    // COMERCIO AL POR MENOR
+    COMERCIO_MENOR_ALIMENTOS: "(46) Comercio menudeo - Alimentos y bebidas",
+    COMERCIO_MENOR_ABARROTES: "(46) Comercio menudeo - Abarrotes y ultramarinos",
+    COMERCIO_MENOR_FARMACIA: "(46) Comercio menudeo - Farmacias",
+    COMERCIO_MENOR_COMBUSTIBLES: "(46) Comercio menudeo - Combustibles",
+    COMERCIO_MENOR_VESTIDO: "(46) Comercio menudeo - Ropa y calzado",
+    COMERCIO_MENOR_MUEBLES: "(46) Comercio menudeo - Muebles y electrodomésticos",
+    COMERCIO_MENOR_ELECTRONICA: "(46) Comercio menudeo - Electrónicos",
+    COMERCIO_MENOR_FERRETERIA: "(46) Comercio menudeo - Ferretería y materiales",
+    COMERCIO_MENOR_VEHICULOS: "(46) Comercio menudeo - Vehículos automotores",
+    COMERCIO_MENOR_REFACCIONES: "(46) Comercio menudeo - Refacciones y accesorios",
+    COMERCIO_MENOR_DEPARTAMENTAL: "(46) Comercio menudeo - Tiendas departamentales",
+    COMERCIO_MENOR_OTROS: "(46) Comercio menudeo - Otros productos",
+
+    // TRANSPORTE Y LOGÍSTICA
+    TRANSPORTE_AEREO: "(48) Transporte - Aéreo",
+    TRANSPORTE_FERROVIARIO: "(48) Transporte - Ferroviario",
+    TRANSPORTE_MARITIMO: "(48) Transporte - Marítimo",
+    TRANSPORTE_TERRESTRE_CARGA: "(48) Transporte - Terrestre de carga",
+    TRANSPORTE_TERRESTRE_PASAJE: "(49) Transporte - Terrestre de pasajeros",
+    TRANSPORTE_TURISTICO: "(49) Transporte - Turístico",
+    TRANSPORTE_CORREOS: "(49) Servicios - Correos y paquetería",
+    TRANSPORTE_ALMACENAMIENTO: "(49) Servicios - Almacenamiento",
+
+    // MEDIOS E INFORMACIÓN
+    MEDIOS_EDITORIALES: "(51) Medios - Industrias editoriales",
+    MEDIOS_AUDIOVISUAL: "(51) Medios - Industrias audiovisuales",
+    MEDIOS_RADIO_TV: "(51) Medios - Radio y televisión",
+    MEDIOS_TELECOMUNICACIONES: "(51) Medios - Telecomunicaciones",
+    MEDIOS_PROCESAMIENTO_DATOS: "(51) Medios - Procesamiento de datos",
+    MEDIOS_OTROS: "(51) Medios - Otros servicios información",
+
+    // SERVICIOS FINANCIEROS
+    FINANCIERO_BANCA: "(52) Financiero - Instituciones bancarias",
+    FINANCIERO_VALORES: "(52) Financiero - Actividades bursátiles",
+    FINANCIERO_SEGUROS: "(52) Financiero - Seguros y fianzas",
+    FINANCIERO_PENSIONES: "(52) Financiero - Fondos y pensiones",
+    FINANCIERO_OTROS: "(52) Financiero - Otros servicios financieros",
+
+    // INMOBILIARIO Y ALQUILER
+    INMOBILIARIO_COMPRAVENTA: "(53) Inmobiliario - Compraventa de inmuebles",
+    INMOBILIARIO_ALQUILER: "(53) Inmobiliario - Alquiler de inmuebles",
+    INMOBILIARIO_MAQUINARIA: "(53) Servicios - Alquiler de maquinaria",
+    INMOBILIARIO_VEHICULOS: "(53) Servicios - Alquiler de vehículos",
+    INMOBILIARIO_OTROS: "(53) Servicios - Alquiler de otros bienes",
+
+    // SERVICIOS PROFESIONALES
+    PROFESIONAL_JURIDICOS: "(54) Profesional - Servicios jurídicos",
+    PROFESIONAL_CONTABLES: "(54) Profesional - Servicios contables",
+    PROFESIONAL_ARQUITECTURA: "(54) Profesional - Arquitectura e ingeniería",
+    PROFESIONAL_DISENO: "(54) Profesional - Diseño especializado",
+    PROFESIONAL_CONSULTORIA: "(54) Profesional - Consultoría",
+    PROFESIONAL_INVESTIGACION: "(54) Profesional - Investigación científica",
+    PROFESIONAL_PUBLICIDAD: "(54) Profesional - Publicidad y marketing",
+    PROFESIONAL_VETERINARIOS: "(54) Profesional - Servicios veterinarios",
+    PROFESIONAL_OTROS: "(54) Profesional - Otros servicios técnicos",
+
+    // CORPORATIVOS
+    CORPORATIVO_HOLDING: "(55) Corporativo - Tenencia de acciones",
+    CORPORATIVO_MATRIZ: "(55) Corporativo - Casas matrices",
+
+    // APOYO A NEGOCIOS
+    APOYO_EMPLEO: "(56) Apoyo - Servicios de empleo",
+    APOYO_ADMINISTRATIVO: "(56) Apoyo - Servicios administrativos",
+    APOYO_SEGURIDAD: "(56) Apoyo - Servicios de seguridad",
+    APOYO_LIMPIEZA: "(56) Apoyo - Servicios de limpieza",
+    APOYO_PAISAJISMO: "(56) Apoyo - Jardinería y paisajismo",
+    APOYO_VIAJES: "(56) Apoyo - Agencias de viajes",
+    APOYO_INVESTIGACION: "(56) Apoyo - Servicios de investigación",
+    APOYO_DESECHOS: "(56) Apoyo - Manejo de desechos",
+    APOYO_OTROS: "(56) Apoyo - Otros servicios",
+
+    // EDUCACIÓN
+    EDUCACION_PREESCOLAR: "(61) Educación - Preescolar",
+    EDUCACION_PRIMARIA: "(61) Educación - Primaria",
+    EDUCACION_SECUNDARIA: "(61) Educación - Secundaria",
+    EDUCACION_MEDIA_SUPERIOR: "(61) Educación - Media superior",
+    EDUCACION_SUPERIOR: "(61) Educación - Superior",
+    EDUCACION_POSGRADO: "(61) Educación - Posgrado",
+    EDUCACION_TECNICA: "(61) Educación - Técnica y capacitación",
+    EDUCACION_OTROS: "(61) Educación - Otros servicios educativos",
+
+    // SALUD
+    SALUD_HOSPITALES: "(62) Salud - Servicios hospitalarios",
+    SALUD_AMBULATORIOS: "(62) Salud - Servicios ambulatorios",
+    SALUD_ASISTENCIA_SOCIAL: "(62) Salud - Servicios de asistencia social",
+
+    // ESPARCIMIENTO
+    ESPARCIMIENTO_ARTISTICOS: "(71) Esparcimiento - Servicios artísticos",
+    ESPARCIMIENTO_DEPORTIVOS: "(71) Esparcimiento - Servicios deportivos",
+    ESPARCIMIENTO_RECREATIVOS: "(71) Esparcimiento - Servicios recreativos",
+    ESPARCIMIENTO_MUSEOS: "(71) Esparcimiento - Museos y sitios históricos",
+    ESPARCIMIENTO_OTROS: "(71) Esparcimiento - Otros servicios",
+
+    // ALOJAMIENTO Y ALIMENTOS
+    ALOJAMIENTO_HOTELES: "(72) Alojamiento - Hoteles y moteles",
+    ALOJAMIENTO_TEMPORAL: "(72) Alojamiento - Otros alojamientos",
+    ALIMENTOS_RESTAURANTES: "(72) Alimentos - Restaurantes con servicio",
+    ALIMENTOS_LIMITADO: "(72) Alimentos - Establecimientos con servicio limitado",
+    ALIMENTOS_PREPARACION: "(72) Alimentos - Servicios de preparación",
+
+    // OTROS SERVICIOS
+    OTROS_REPARACION: "(81) Otros - Reparación y mantenimiento",
+    OTROS_PERSONALES: "(81) Otros - Servicios personales",
+    OTROS_RELIGIOSOS: "(81) Otros - Organizaciones religiosas",
+    OTROS_CIVICAS: "(81) Otros - Organizaciones cívicas",
+    OTROS_PROFESIONALES: "(81) Otros - Organizaciones profesionales",
+    OTROS_LABORALES: "(81) Otros - Organizaciones laborales",
+    OTROS_POLITICAS: "(81) Otros - Organizaciones políticas",
+
+    // GUBERNAMENTAL
+    GUBERNAMENTAL_FEDERAL: "(93) Gubernamental - Órganos legislativos federales",
+    GUBERNAMENTAL_ESTATAL: "(93) Gubernamental - Órganos legislativos estatales",
+    GUBERNAMENTAL_MUNICIPAL: "(93) Gubernamental - Órganos legislativos municipales",
+    GUBERNAMENTAL_JUSTICIA: "(93) Gubernamental - Impartición de justicia",
+    GUBERNAMENTAL_SEGURIDAD: "(93) Gubernamental - Seguridad nacional",
+    GUBERNAMENTAL_OTROS: "(93) Gubernamental - Otras actividades"
+  };
 
   const estatusOptions = [
     { value: "POR_CONTACTAR", label: "Por Contactar" },

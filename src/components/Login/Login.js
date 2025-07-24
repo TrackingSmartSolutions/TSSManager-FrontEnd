@@ -26,6 +26,18 @@ const Login = () => {
     e.preventDefault();
     const username = e.target.username.value;
     const password = e.target.password.value;
+
+     if (!username || !password) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Campos incompletos',
+      text: 'Por favor ingresa tu usuario y contraseña',
+      confirmButtonText: 'Aceptar',
+      confirmButtonColor: '#f27474',
+    });
+    return;
+  }
+  
     setIsLoading(true);
 
     try {

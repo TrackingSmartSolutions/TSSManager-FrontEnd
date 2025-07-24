@@ -330,6 +330,8 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
   const [users, setUsers] = useState([]);
   const [empresa, setEmpresa] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
+  const [actividadActualizada, setActividadActualizada] = useState(null);
 
 
   useEffect(() => {
@@ -455,13 +457,10 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
         body: JSON.stringify(actividadDTO),
       });
       const updatedActividad = await response.json();
-      onSave(updatedActividad);
-      Swal.fire({
-        title: "¡Reunión reprogramada!",
-        text: "La reunión se ha reprogramado exitosamente",
-        icon: "success",
-      });
-      onClose();
+
+      setActividadActualizada(updatedActividad);
+      setMostrarConfirmacion(true);
+
     } catch (error) {
       console.error("Error al reprogramar la reunión:", error);
       Swal.fire({ icon: "error", title: "Error", text: error.message });
@@ -655,6 +654,29 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
           </div>
         </div>
       </form>
+      <ConfirmacionEnvioModal
+        isOpen={mostrarConfirmacion}
+        onClose={() => {
+          setMostrarConfirmacion(false);
+          setActividadActualizada(null);
+          onClose();
+        }}
+        onConfirm={() => {
+          // Mostrar Sweet Alert aquí
+          Swal.fire({
+            title: "¡Reunión reprogramada!",
+            text: "La reunión se ha reprogramado exitosamente",
+            icon: "success",
+          });
+
+          onSave(actividadActualizada);
+          setMostrarConfirmacion(false);
+          setActividadActualizada(null);
+        }}
+        tratoId={actividad?.tratoId}
+        actividadId={actividadActualizada?.id}
+        esReprogramacion={true}
+      />
     </PrincipalModal>
   );
 };
@@ -1198,6 +1220,203 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
     </PrincipalModal>
   );
 };
+
+const ConfirmacionEnvioModal = ({ isOpen, onClose, onConfirm, tratoId, actividadId, esReprogramacion = false }) => {
+  const [step, setStep] = useState(1);
+  const [datosContacto, setDatosContacto] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingMethod, setLoadingMethod] = useState(null); // 'correo' o 'whatsapp'
+
+  useEffect(() => {
+    if (isOpen && tratoId) {
+      verificarDatosContacto();
+    }
+  }, [isOpen, tratoId]);
+
+  const verificarDatosContacto = async () => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}/contacto/verificar-datos`);
+      const datos = await response.json();
+      setDatosContacto(datos);
+    } catch (error) {
+      console.error('Error al verificar datos del contacto:', error);
+    }
+  };
+
+  const handleConfirmarEnvio = () => {
+    if (!datosContacto.tieneCorreo && !datosContacto.tieneCelular) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Datos faltantes',
+        text: 'El contacto necesita tener al menos un correo electrónico o un número de celular para enviar la confirmación.',
+      });
+      onClose();
+      return;
+    }
+    setStep(2);
+  };
+
+  const handleMetodoEnvio = async (metodo) => {
+    if (metodo === 'correo' && !datosContacto.tieneCorreo) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Sin correo electrónico',
+        text: 'El contacto no tiene un correo electrónico registrado.',
+      });
+      return;
+    }
+
+    if (metodo === 'whatsapp' && !datosContacto.tieneCelular) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Sin número de celular',
+        text: 'El contacto no tiene un número de celular registrado.',
+      });
+      return;
+    }
+
+    setLoading(true);
+    setLoadingMethod(metodo);
+
+    try {
+      if (metodo === 'correo') {
+        const endpoint = esReprogramacion
+          ? `${API_BASE_URL}/tratos/${tratoId}/actividades/${actividadId}/enviar-notificacion-email-reprogramada`
+          : `${API_BASE_URL}/tratos/${tratoId}/actividades/${actividadId}/enviar-notificacion-email`;
+
+        await fetchWithToken(endpoint, { method: 'POST' });
+
+        Swal.fire({
+          icon: 'success',
+          title: '¡Correo enviado!',
+          text: `Se ha enviado la ${esReprogramacion ? 'notificación de reprogramación' : 'confirmación'} por correo electrónico.`,
+        });
+      } else if (metodo === 'whatsapp') {
+        const response = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}/generar-mensaje-whatsapp`, {
+          method: 'POST',
+          body: JSON.stringify({
+            actividadId: actividadId,
+            esReprogramacion: esReprogramacion ? 1 : 0
+          }),
+        });
+
+        const { urlWhatsApp } = await response.json();
+        window.open(urlWhatsApp, '_blank');
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: `Error al enviar la notificación: ${error.message}`,
+      });
+    } finally {
+      setLoading(false);
+      setLoadingMethod(null);
+      onConfirm();
+      onClose();
+    }
+  };
+
+  const resetModal = () => {
+    setStep(1);
+    setDatosContacto(null);
+    setLoading(false);
+    setLoadingMethod(null);
+  };
+
+  const handleClose = () => {
+    resetModal();
+    onClose();
+  };
+
+  if (step === 1) {
+    return (
+      <PrincipalModal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title="Confirmar envío"
+        size="sm"
+        className="confirmacion-envio-modal"
+      >
+        <div className="modal-form">
+          <div className="confirmacion-envio-step1">
+            <div className="confirmation-icon"></div>
+            <p className="confirmation-message">
+              ¿Desea enviar el mensaje de {esReprogramacion ? 'reprogramación' : 'confirmación'} de la reunión?
+            </p>
+            <div className="modal-form-actions">
+              <button
+                type="button"
+                onClick={() => {
+                  onConfirm();
+                  onClose();
+                }}
+                className="btn btn-secondary"
+              >
+                No
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmarEnvio}
+                className="btn btn-primary"
+              >
+                Sí
+              </button>
+            </div>
+          </div>
+        </div>
+      </PrincipalModal>
+    );
+  }
+
+  return (
+    <PrincipalModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Método de envío"
+      size="sm"
+      className="confirmacion-envio-modal"
+    >
+      <div className="modal-form">
+        <div className="confirmacion-envio-step2">
+          <div className="method-selection-header">
+            <h3 className="method-selection-title">¿Cómo desea enviar la notificación?</h3>
+            {datosContacto && (
+              <div className="contact-info">
+                <span>{datosContacto.nombreContacto}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="method-buttons">
+            <button
+              type="button"
+              onClick={() => handleMetodoEnvio('correo')}
+              className={`btn-method email ${!datosContacto?.tieneCorreo ? 'unavailable' : ''} ${loadingMethod === 'correo' ? 'loading' : ''}`}
+              disabled={loading || !datosContacto?.tieneCorreo}
+            >
+              <div className="method-icon"></div>
+              <span className="method-label">Correo</span>
+              <span className="loading-text">Enviando...</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleMetodoEnvio('whatsapp')}
+              className={`btn-method whatsapp ${!datosContacto?.tieneCelular ? 'unavailable' : ''} ${loadingMethod === 'whatsapp' ? 'loading' : ''}`}
+              disabled={loading || !datosContacto?.tieneCelular}
+            >
+              <div className="method-icon"></div>
+              <span className="method-label">WhatsApp</span>
+              <span className="loading-text">Generando...</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </PrincipalModal>
+  );
+};
+
 
 const Principal = () => {
   const navigate = useNavigate();

@@ -119,28 +119,22 @@ const ProveedorEquipoFormModal = ({ isOpen, onClose, proveedor = null, onSave })
     return true;
   };
 
-  const validateForm = () => {
+   const validateForm = () => {
     const newErrors = {};
 
+    // Solo el nombre es obligatorio
     if (!formData.nombre.trim()) {
       newErrors.nombre = "El nombre del proveedor es obligatorio";
     }
 
-    if (!formData.contactoNombre.trim()) {
-      newErrors.contactoNombre = "El nombre de contacto es obligatorio";
-    }
-
-    if (!formData.telefono.trim()) {
-      newErrors.telefono = "El teléfono es obligatorio";
-    } else if (!formData.telefono.startsWith('+')) {
+    // Validaciones opcionales - solo si se proporciona el dato
+    if (formData.telefono.trim() && !formData.telefono.startsWith('+')) {
       newErrors.telefono = "El teléfono debe incluir el código de país (ejemplo: +52)";
-    } else if (!validatePhone(formData.telefono)) {
+    } else if (formData.telefono.trim() && !validatePhone(formData.telefono)) {
       newErrors.telefono = "Formato de teléfono inválido. Debe incluir código de país y tener entre 8-15 dígitos";
     }
 
-    if (!formData.correo.trim()) {
-      newErrors.correo = "El correo es obligatorio";
-    } else if (!validateEmail(formData.correo)) {
+    if (formData.correo.trim() && !validateEmail(formData.correo)) {
       newErrors.correo = "Formato de correo inválido";
     }
 
@@ -176,7 +170,7 @@ const ProveedorEquipoFormModal = ({ isOpen, onClose, proveedor = null, onSave })
     }
   }
 
-  return (
+   return (
     <Modal isOpen={isOpen} onClose={onClose} title={proveedor ? "Editar proveedor" : "Nuevo proveedor"} size="md">
       <form onSubmit={handleSubmit} className="proveedores-form">
         <div className="proveedores-form-group">
@@ -194,21 +188,20 @@ const ProveedorEquipoFormModal = ({ isOpen, onClose, proveedor = null, onSave })
         </div>
 
         <div className="proveedores-form-group">
-          <label htmlFor="contactoNombre" className="proveedores-form-label">Contacto Nombre <span className="required"> *</span></label>
+          <label htmlFor="contactoNombre" className="proveedores-form-label">Contacto Nombre</label>
           <input
             type="text"
             id="contactoNombre"
             name="contactoNombre"
             value={formData.contactoNombre}
             onChange={handleInputChange}
-            className={`proveedores-form-control ${errors.contactoNombre ? "proveedores-form-control-error" : ""}`}
+            className="proveedores-form-control"
             placeholder="Ingrese el nombre del contacto"
           />
-          {errors.contactoNombre && <span className="proveedores-form-error">{errors.contactoNombre}</span>}
         </div>
 
         <div className="proveedores-form-group">
-          <label htmlFor="telefono" className="proveedores-form-label">Teléfono <span className="required"> *</span></label>
+          <label htmlFor="telefono" className="proveedores-form-label">Teléfono</label>
           <input
             type="tel"
             id="telefono"
@@ -223,7 +216,7 @@ const ProveedorEquipoFormModal = ({ isOpen, onClose, proveedor = null, onSave })
         </div>
 
         <div className="proveedores-form-group">
-          <label htmlFor="correo" className="proveedores-form-label">Correo <span className="required"> *</span></label>
+          <label htmlFor="correo" className="proveedores-form-label">Correo</label>
           <input
             type="email"
             id="correo"
