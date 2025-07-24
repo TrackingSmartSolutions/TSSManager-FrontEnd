@@ -1526,9 +1526,6 @@
   padding: var(--spacing-sm);
 }
 
-
-/* ===== ESTILOS DE MODALES ESPECÍFICOS PARA DETALLES TRATO ===== */
-
 .detalles-trato-modal-overlay {
   position: fixed;
   top: 0;

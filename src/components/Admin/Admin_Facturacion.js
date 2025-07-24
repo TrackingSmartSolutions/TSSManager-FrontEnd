@@ -72,6 +72,8 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
   });
   const [errors, setErrors] = useState({});
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const isEditing = !!emisor;
 
   useEffect(() => {
@@ -152,6 +154,7 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
+      setIsLoading(true);
       const formDataToSend = new FormData();
       const emisorData = {
         id: formData.id,
@@ -189,6 +192,8 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
         });
       } catch (error) {
         Swal.fire({ icon: "error", title: "Error", text: error.message });
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -278,8 +283,12 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
         </div>
         <div className="facturacion-form-actions">
           <button type="button" onClick={onClose} className="facturacion-btn facturacion-btn-cancel">Cancelar</button>
-          <button type="submit" className="facturacion-btn facturacion-btn-primary">
-            {isEditing ? "Guardar cambios" : "Agregar"}
+          <button
+            type="submit"
+            className="facturacion-btn facturacion-btn-primary"
+            disabled={isLoading}
+          >
+            {isLoading ? "Guardando..." : (isEditing ? "Guardar cambios" : "Agregar")}
           </button>
         </div>
       </form>
@@ -744,6 +753,8 @@ const TimbrarModal = ({ isOpen, onClose, onSave, solicitud }) => {
   });
   const [errors, setErrors] = useState({});
 
+  const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
     if (isOpen && solicitud) {
       setFormData({
@@ -796,6 +807,7 @@ const TimbrarModal = ({ isOpen, onClose, onSave, solicitud }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
+      setIsLoading(true);
       const formDataToSend = new FormData();
       formDataToSend.append("factura", new Blob([JSON.stringify({
         folioFiscal: formData.folioFiscal,
@@ -819,6 +831,8 @@ const TimbrarModal = ({ isOpen, onClose, onSave, solicitud }) => {
         });
       } catch (error) {
         Swal.fire({ icon: "error", title: "Error", text: error.message });
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -871,7 +885,13 @@ const TimbrarModal = ({ isOpen, onClose, onSave, solicitud }) => {
         </div>
         <div className="facturacion-form-actions">
           <button type="button" onClick={onClose} className="facturacion-btn facturacion-btn-cancel">Cancelar</button>
-          <button type="submit" className="facturacion-btn facturacion-btn-primary">Agregar</button>
+          <button
+            type="submit"
+            className="facturacion-btn facturacion-btn-primary"
+            disabled={isLoading}
+          >
+            {isLoading ? "Agregando..." : "Agregar"}
+          </button>
         </div>
       </form>
     </Modal>

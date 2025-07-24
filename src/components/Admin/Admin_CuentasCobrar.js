@@ -189,6 +189,8 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
   });
   const [errors, setErrors] = useState({});
 
+  const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
     if (isOpen) {
       setFormData({
@@ -245,6 +247,7 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
   };
 
   const handleSubmit = async (e) => {
+    setIsLoading(true);
     e.preventDefault();
     if (validateForm()) {
       const formDataToSend = new FormData();
@@ -260,6 +263,8 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
         onClose();
       } catch (error) {
         Swal.fire({ icon: "error", title: "Error", text: error.message });
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -298,8 +303,12 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
           <button type="button" onClick={onClose} className="cuentascobrar-btn cuentascobrar-btn-cancel">
             Cancelar
           </button>
-          <button type="submit" className="cuentascobrar-btn cuentascobrar-btn-primary">
-            Guardar
+          <button
+            type="submit"
+            className="cuentascobrar-btn cuentascobrar-btn-primary"
+            disabled={isLoading}
+          >
+            {isLoading ? "Guardando..." : "Guardar"}
           </button>
         </div>
       </form>
