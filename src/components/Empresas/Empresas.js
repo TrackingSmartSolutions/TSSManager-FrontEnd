@@ -1827,9 +1827,11 @@ const Empresas = () => {
         const companiesWithColors = data.map((company) => ({
           ...company,
           statusColor: getStatusColor(company.estatus),
-          domicilioFisico: company.domicilioFisico.endsWith(", México")
-            ? company.domicilioFisico
-            : `${company.domicilioFisico}, México`,
+          domicilioFisico: company.domicilioFisico
+            ? (company.domicilioFisico.endsWith(", México")
+              ? company.domicilioFisico
+              : `${company.domicilioFisico}, México`)
+            : null, 
         }));
         setCompanies(companiesWithColors);
 
@@ -1984,9 +1986,11 @@ const Empresas = () => {
   }
 
   const handleSaveEmpresa = async (empresaData) => {
-    const formattedDomicilioFisico = empresaData.domicilioFisico.endsWith(", México")
+    const formattedDomicilioFisico = empresaData.domicilioFisico
+  ? (empresaData.domicilioFisico.endsWith(", México")
       ? empresaData.domicilioFisico
-      : `${empresaData.domicilioFisico}, México`
+      : `${empresaData.domicilioFisico}, México`)
+  : null;
 
     const updatedEmpresa = {
       ...empresaData,
@@ -2007,9 +2011,11 @@ const Empresas = () => {
   }
 
   const handleCompanyCreated = (empresaData) => {
-    const formattedDomicilioFisico = empresaData.domicilioFisico.endsWith(", México")
+    const formattedDomicilioFisico = empresaData.domicilioFisico
+  ? (empresaData.domicilioFisico.endsWith(", México")
       ? empresaData.domicilioFisico
-      : `${empresaData.domicilioFisico}, México`
+      : `${empresaData.domicilioFisico}, México`)
+  : null;
 
     const newCompany = {
       ...empresaData,
@@ -2238,11 +2244,11 @@ const Empresas = () => {
                     <div className="form-group address-group">
                       <label>Domicilio</label>
                       <input
-                        type="text"
-                        value={selectedCompany.domicilioFisico || "N/A"}
-                        className="form-control"
-                        readOnly
-                      />
+  type="text"
+  value={selectedCompany.domicilioFisico || "Sin domicilio"} // En lugar de "N/A"
+  className="form-control"
+  readOnly
+/>
                       <button className="btn btn-ver-en-el-mapa" onClick={handleViewMap} title="Ver en el mapa">
                         Ver en el mapa
                       </button>
