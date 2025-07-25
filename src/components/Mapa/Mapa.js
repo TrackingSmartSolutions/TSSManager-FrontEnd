@@ -8,6 +8,8 @@ import "leaflet/dist/leaflet.css";
 import carIcon from "../../assets/icons/car.png";
 import redMarker from "../../assets/icons/marcador-rojo.png";
 import blackMarker from "../../assets/icons/marcador.png";
+import AddressCleaner from '../Utils/AddressCleaner';
+
 
 // Define íconos personalizados para los marcadores
 const redIcon = new L.Icon({
@@ -74,10 +76,12 @@ const Mapa = () => {
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isCrmDropdownOpen, setIsCrmDropdownOpen] = useState(false);
-    const [selectedSector, setSelectedSector] = useState("TODOS"); // Estado para el filtro de sector
+    const [selectedSector, setSelectedSector] = useState("TODOS"); 
+
+        const addressCleaner = new AddressCleaner();
+
 
     // Mapa de sectores
-    // Reemplazar el sectorMap actual con:
     const sectorMap = {
         // SECTOR PRIMARIO
         AGRICULTURA_CULTIVOS: "(11) Agricultura - Cultivos y horticultura",
@@ -259,7 +263,19 @@ const Mapa = () => {
             return coordinatesCache[address];
         }
 
-        const formattedAddress = address.endsWith(", México") ? address : `${address}, México`;
+        // Limpiar la dirección usando AddressCleaner
+        const cleanedAddress = addressCleaner.cleanAddress(address);
+        console.log(`Dirección original: ${address}`);
+        console.log(`Dirección limpia: ${cleanedAddress}`);
+
+        // Verificar si ya tenemos la dirección limpia en caché
+        if (coordinatesCache[cleanedAddress]) {
+            // Guardar también la dirección original en caché
+            setCoordinatesCache(prev => ({ ...prev, [address]: coordinatesCache[cleanedAddress] }));
+            return coordinatesCache[cleanedAddress];
+        }
+
+        const formattedAddress = cleanedAddress.endsWith(", México") ? cleanedAddress : `${cleanedAddress}, México`;
 
         try {
             const response = await fetch(
@@ -272,9 +288,32 @@ const Mapa = () => {
 
             if (data.length > 0) {
                 const coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-                setCoordinatesCache((prev) => ({ ...prev, [address]: coords }));
+                // Guardar en caché tanto la dirección original como la limpia
+                setCoordinatesCache((prev) => ({ 
+                    ...prev, 
+                    [address]: coords,
+                    [cleanedAddress]: coords 
+                }));
                 return coords;
             } else {
+                // Si no se encuentra con la dirección limpia, intentar con la original
+                console.log(`No se encontraron coordenadas para dirección limpia: ${cleanedAddress}`);
+                console.log(`Intentando con dirección original: ${address}`);
+                
+                const originalFormattedAddress = address.endsWith(", México") ? address : `${address}, México`;
+                const fallbackResponse = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(originalFormattedAddress)}&limit=1`
+                );
+                
+                if (fallbackResponse.ok) {
+                    const fallbackData = await fallbackResponse.json();
+                    if (fallbackData.length > 0) {
+                        const coords = [parseFloat(fallbackData[0].lat), parseFloat(fallbackData[0].lon)];
+                        setCoordinatesCache((prev) => ({ ...prev, [address]: coords }));
+                        return coords;
+                    }
+                }
+                
                 throw new Error(`No se encontraron coordenadas para: ${address}`);
             }
         } catch (err) {
