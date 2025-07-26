@@ -594,6 +594,7 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, usuario }) => {
 const ConfiguracionUsuarios = () => {
 
   const [usuarios, setUsuarios] = useState([]);
+  const [isLoading, setIsLoading] = useState(true); 
   const [modals, setModals] = useState({
     usuario: { isOpen: false, mode: "add", data: null },
     restablecerContrasena: { isOpen: false, data: null },
@@ -605,6 +606,7 @@ const ConfiguracionUsuarios = () => {
   }, []);
 
   const fetchData = async () => {
+     setIsLoading(true);
     try {
       const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
       const data = await response.json();
@@ -621,8 +623,11 @@ const ConfiguracionUsuarios = () => {
       })));
     } catch (error) {
       Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los usuarios" });
-    }
+    }finally {
+    setIsLoading(false); 
+  }
   };
+
   const navigate = useNavigate()
   const openModal = (modalType, mode = "add", data = null) => {
     setModals((prev) => ({
@@ -769,7 +774,12 @@ const ConfiguracionUsuarios = () => {
   return (
     <>
       <Header />
-      {/* Configuration Navigation */}
+      {isLoading && (
+      <div className="config-usuarios-loading">
+        <div className="spinner"></div>
+        <p>Cargando usuarios...</p>
+      </div>
+    )}
       <div className="config-usuarios-config-header">
         <h2 className="config-usuarios-config-title">Configuración</h2>
         <nav className="config-usuarios-config-nav">

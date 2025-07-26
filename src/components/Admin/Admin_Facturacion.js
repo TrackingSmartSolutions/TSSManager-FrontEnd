@@ -936,6 +936,7 @@ const AdminFacturacion = () => {
   const [facturas, setFacturas] = useState([]);
   const [cotizaciones, setCotizaciones] = useState([]);
   const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [modals, setModals] = useState({
     emisor: { isOpen: false, emisor: null },
@@ -946,6 +947,7 @@ const AdminFacturacion = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
         const [emisoresResp, cotizacionesResp, cuentasResp, solicitudesResp, facturasResp] = await Promise.all([
           fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/emisores`),
@@ -961,7 +963,9 @@ const AdminFacturacion = () => {
         setFacturas(await facturasResp.json());
       } catch (error) {
         Swal.fire({ icon: "error", title: "Error", text: error.message });
-      }
+      }finally {
+      setIsLoading(false); 
+    }
     };
     fetchData();
   }, []);
@@ -1178,6 +1182,12 @@ const AdminFacturacion = () => {
   return (
     <>
       <Header />
+       {isLoading && (
+      <div className="facturacion-loading">
+        <div className="spinner"></div>
+        <p>Cargando datos de facturación...</p>
+      </div>
+    )}
       <main className="facturacion-main-content">
         <div className="facturacion-container">
           <section className="facturacion-sidebar">

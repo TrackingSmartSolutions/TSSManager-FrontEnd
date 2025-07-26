@@ -21,6 +21,7 @@ const fetchWithToken = async (url, options = {}) => {
 const AdminCajaChica = () => {
   const navigate = useNavigate()
   const [transaccionesEfectivo, setTransaccionesEfectivo] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
   const [resumenCajaChica, setResumenCajaChica] = useState({
     totalIngresos: 0,
     totalGastos: 0,
@@ -32,6 +33,7 @@ const AdminCajaChica = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true)
       try {
         const [transaccionesResp, categoriasResp, cuentasResp] = await Promise.all([
           fetchWithToken(`${API_BASE_URL}/transacciones`),
@@ -55,6 +57,8 @@ const AdminCajaChica = () => {
           title: "Error",
           text: "No se pudieron cargar los datos",
         })
+      } finally {
+        setIsLoading(false)
       }
     }
     fetchData()
@@ -385,6 +389,12 @@ const AdminCajaChica = () => {
   return (
     <>
       <Header />
+      {isLoading && (
+        <div className="cajachica-loading">
+          <div className="spinner"></div>
+          <p>Cargando datos de caja chica...</p>
+        </div>
+      )}
       <main className="cajachica-main-content">
         <div className="cajachica-container">
           <section className="cajachica-sidebar">

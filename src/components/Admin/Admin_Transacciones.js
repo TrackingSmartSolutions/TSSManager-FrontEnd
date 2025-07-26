@@ -752,6 +752,7 @@ const AdminTransacciones = () => {
   const [categorias, setCategorias] = useState([]);
   const [cuentas, setCuentas] = useState([]);
   const [filtrosCuenta, setFiltrosCuenta] = useState("Todas");
+  const [isLoading, setIsLoading] = useState(true);
   const [modals, setModals] = useState({
     nuevaTransaccion: { isOpen: false },
     gestionarCategorias: { isOpen: false },
@@ -785,6 +786,7 @@ const AdminTransacciones = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
         const [transaccionesResp, categoriasResp, cuentasResp] = await Promise.all([
           fetchWithToken(`${API_BASE_URL}/transacciones`),
@@ -800,7 +802,9 @@ const AdminTransacciones = () => {
           title: "Error",
           text: "No se pudieron cargar los datos: " + error.message,
         });
-      }
+      }finally {
+      setIsLoading(false); 
+    }
     };
     fetchData();
   }, []);
@@ -987,6 +991,12 @@ const AdminTransacciones = () => {
   return (
     <>
       <Header />
+      {isLoading && (
+      <div className="transacciones-loading">
+        <div className="spinner"></div>
+        <p>Cargando datos de transacciones...</p>
+      </div>
+    )}
       <main className="transacciones-main-content">
         <div className="transacciones-container">
           <section className="transacciones-sidebar">

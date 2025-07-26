@@ -44,6 +44,7 @@ const ConfiguracionAdministrador = () => {
 
   const [exportHistory, setExportHistory] = useState([]);
   const [importHistory, setImportHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(true)
 
   const navigate = useNavigate()
 
@@ -251,7 +252,7 @@ const ConfiguracionAdministrador = () => {
           text: resultData.mensaje || "Ocurrió un error al exportar los datos.",
         });
         if (resultData.exito) {
-          fetchExportHistory(); 
+          fetchExportHistory();
         }
       }
     } catch (error) {
@@ -421,14 +422,34 @@ const ConfiguracionAdministrador = () => {
     return infoMap[tipo] || infoMap.tratos
   }
 
+  const cargarDatosIniciales = async () => {
+  setIsLoading(true)
+  try {
+    await Promise.all([
+      fetchExportHistory(),
+      fetchImportHistory()
+    ])
+  } catch (error) {
+    console.error('Error al cargar datos iniciales:', error)
+  } finally {
+    setIsLoading(false)
+  }
+}
+
   useEffect(() => {
-    fetchExportHistory();
-    fetchImportHistory();
-  }, []);
+  cargarDatosIniciales()
+}, [])
+
 
   return (
     <>
       <Header />
+      {isLoading && (
+        <div className="config-admin-loading">
+          <div className="spinner"></div>
+          <p>Cargando configuración...</p>
+        </div>
+      )}
       {/* Configuration Navigation */}
       <div className="config-admin-config-header">
         <h2 className="config-admin-config-title">Configuración</h2>

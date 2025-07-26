@@ -43,7 +43,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
   }
 
   return (
-    <div className="cuentaspagar-modal-overlay" onClick={canClose ? onClose : () => {}}>
+    <div className="cuentaspagar-modal-overlay" onClick={canClose ? onClose : () => { }}>
       <div className={`cuentaspagar-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="cuentaspagar-modal-header">
           <h2 className="cuentaspagar-modal-title">{title}</h2>
@@ -105,7 +105,7 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta }) => {
         fechaPago: formData.fechaPago,
         monto: Number.parseFloat(formData.monto),
       };
-      
+
       onSave(cuentaActualizada);
       onClose();
     }
@@ -201,6 +201,7 @@ const RegenerarModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
 const AdminCuentasPagar = () => {
   const navigate = useNavigate();
   const [cuentasPagar, setCuentasPagar] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [modals, setModals] = useState({
     marcarPagada: { isOpen: false, cuenta: null },
     confirmarEliminacion: { isOpen: false, cuenta: null },
@@ -209,6 +210,7 @@ const AdminCuentasPagar = () => {
 
   useEffect(() => {
     const fetchCuentasPagar = async () => {
+      setIsLoading(true);
       try {
         const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar`);
         const data = await response.json();
@@ -219,6 +221,8 @@ const AdminCuentasPagar = () => {
           title: "Error",
           text: "No se pudieron cargar las cuentas por pagar",
         });
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchCuentasPagar();
@@ -316,70 +320,70 @@ const AdminCuentasPagar = () => {
     }
   };
 
-const handleMarcarPagada = async (cuentaActualizada) => {
-  try {
-    const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/marcar-como-pagada`, {
-      method: "POST",
-      body: JSON.stringify({
-        id: cuentaActualizada.id,
-        fechaPago: cuentaActualizada.fechaPago,
-        monto: cuentaActualizada.monto,
-        usuarioId: 1, 
-      }),
-    });
-    
-    if (response.status === 204) {
-      setCuentasPagar((prev) =>
-        prev.map((c) => (c.id === cuentaActualizada.id ? { ...c, ...cuentaActualizada } : c))
-      );
-      
-      const esUltimaCuenta = cuentaActualizada.numeroPago === cuentaActualizada.totalPagos && cuentaActualizada.esquema !== "Única";
-      if (esUltimaCuenta) {
-        openModal("regenerar", { cuenta: cuentaActualizada });
-      } else {
-        Swal.fire({
-          icon: "success",
-          title: "Éxito",
-          text: "Cuenta marcada como pagada",
-        });
+  const handleMarcarPagada = async (cuentaActualizada) => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/marcar-como-pagada`, {
+        method: "POST",
+        body: JSON.stringify({
+          id: cuentaActualizada.id,
+          fechaPago: cuentaActualizada.fechaPago,
+          monto: cuentaActualizada.monto,
+          usuarioId: 1,
+        }),
+      });
+
+      if (response.status === 204) {
+        setCuentasPagar((prev) =>
+          prev.map((c) => (c.id === cuentaActualizada.id ? { ...c, ...cuentaActualizada } : c))
+        );
+
+        const esUltimaCuenta = cuentaActualizada.numeroPago === cuentaActualizada.totalPagos && cuentaActualizada.esquema !== "Única";
+        if (esUltimaCuenta) {
+          openModal("regenerar", { cuenta: cuentaActualizada });
+        } else {
+          Swal.fire({
+            icon: "success",
+            title: "Éxito",
+            text: "Cuenta marcada como pagada",
+          });
+        }
       }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo marcar como pagada",
+      });
     }
-  } catch (error) {
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "No se pudo marcar como pagada",
-    });
-  }
-};
+  };
 
   const handleDeleteCuenta = (cuenta) => {
     openModal("confirmarEliminacion", { cuenta });
   };
 
   const handleConfirmDelete = async () => {
-  const cuentaId = modals.confirmarEliminacion.cuenta?.id;
-  try {
-    const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/${cuentaId}?usuarioId=1`, {
-      method: "DELETE",
-    });
-    if (response.status === 204) {
-      setCuentasPagar((prev) => prev.filter((c) => c.id !== cuentaId));
-      closeModal("confirmarEliminacion");
+    const cuentaId = modals.confirmarEliminacion.cuenta?.id;
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/${cuentaId}?usuarioId=1`, {
+        method: "DELETE",
+      });
+      if (response.status === 204) {
+        setCuentasPagar((prev) => prev.filter((c) => c.id !== cuentaId));
+        closeModal("confirmarEliminacion");
+        Swal.fire({
+          icon: "success",
+          title: "Éxito",
+          text: "Cuenta por pagar eliminada",
+        });
+      }
+    } catch (error) {
       Swal.fire({
-        icon: "success",
-        title: "Éxito",
-        text: "Cuenta por pagar eliminada",
+        icon: "error",
+        title: "Error",
+        text: "No se pudo eliminar la cuenta",
       });
     }
-  } catch (error) {
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "No se pudo eliminar la cuenta",
-    });
-  }
-};
+  };
 
   const handleRegenerar = async (confirmar, cuenta) => {
     closeModal("regenerar");
@@ -441,6 +445,12 @@ const handleMarcarPagada = async (cuentaActualizada) => {
   return (
     <>
       <Header />
+      {isLoading && (
+        <div className="cuentaspagar-loading">
+          <div className="spinner"></div>
+          <p>Cargando datos de cuentas por pagar...</p>
+        </div>
+      )}
       <main className="cuentaspagar-main-content">
         <div className="cuentaspagar-container">
           <section className="cuentaspagar-sidebar">

@@ -32,65 +32,74 @@ const ConfiguracionCopias = () => {
     vinculada: false,
   })
 
-
-
+  const [isLoading, setIsLoading] = useState(true)
   const [backupHistory, setBackupHistory] = useState([])
-
   const usuarioId = localStorage.getItem("userId");
 
-  useEffect(() => {
+ const cargarDatosIniciales = async () => {
+  setIsLoading(true)
+  try {
     const fetchConfiguracion = async () => {
-      try {
-        const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/configuracion/${usuarioId}`);
-        const data = await response.json();
-        setBackupSettings({
-          datosRespaldar: data.datosRespaldar || [],
-          frecuencia: data.frecuencia || "SEMANAL",
-          horaRespaldo: data.horaRespaldo || "02:00",
-        });
-        setGoogleDriveSettings({
-          email: data.googleDriveEmail || "",
-          vinculada: data.googleDriveVinculada || false,
-        });
-      } catch (error) {
-        console.error("Error al cargar configuración:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "No se pudo cargar la configuración de copias de seguridad.",
-        });
-      }
+      const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/configuracion/${usuarioId}`);
+      const data = await response.json();
+      setBackupSettings({
+        datosRespaldar: data.datosRespaldar || [],
+        frecuencia: data.frecuencia || "SEMANAL",
+        horaRespaldo: data.horaRespaldo || "02:00",
+      });
+      setGoogleDriveSettings({
+        email: data.googleDriveEmail || "",
+        vinculada: data.googleDriveVinculada || false,
+      });
     };
 
     const fetchHistorial = async () => {
-      try {
-        const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/usuario/${usuarioId}`);
-        const data = await response.json();
-        setBackupHistory(data.map(copia => ({
-          id: copia.id,
-          tipoDatos: copia.tipoDatos,
-          fechaCreacion: copia.fechaCreacion,
-          fechaEliminacion: copia.fechaEliminacion,
-          estado: copia.estado.toLowerCase(),
-          tamaño: copia.tamañoArchivo,
-          frecuencia: copia.frecuencia,
-        })));
-      } catch (error) {
-        console.error("Error al cargar historial:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "No se pudo cargar el historial de copias de seguridad.",
-        });
-      }
+      const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/usuario/${usuarioId}`);
+      const data = await response.json();
+      setBackupHistory(data.map(copia => ({
+        id: copia.id,
+        tipoDatos: copia.tipoDatos,
+        fechaCreacion: copia.fechaCreacion,
+        fechaEliminacion: copia.fechaEliminacion,
+        estado: copia.estado.toLowerCase(),
+        tamaño: copia.tamañoArchivo,
+        frecuencia: copia.frecuencia,
+      })));
+    };
+
+    const fetchEstadisticas = async () => {
+      const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/estadisticas/${usuarioId}`);
+      const data = await response.json();
+      setEstadisticas({
+        copiasActivas: data.copiasActivas || 0,
+        copiasEstesMes: data.copiasEstesMes || 0,
+        espacioUtilizado: data.espacioUtilizado || "0 B",
+        ultimaCopia: data.ultimaCopia ? formatDate(data.ultimaCopia) : "N/A",
+      });
     };
 
     if (usuarioId) {
-      fetchConfiguracion();
-      fetchHistorial();
+      await Promise.all([
+        fetchConfiguracion(),
+        fetchHistorial(),
+        fetchEstadisticas()
+      ]);
     }
-  }, [usuarioId]);
+  } catch (error) {
+    console.error("Error al cargar datos iniciales:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "No se pudieron cargar los datos del módulo.",
+    });
+  } finally {
+    setIsLoading(false)
+  }
+}
 
+useEffect(() => {
+  cargarDatosIniciales()
+}, [usuarioId]);
 
   const navigate = useNavigate()
 
@@ -162,7 +171,7 @@ const ConfiguracionCopias = () => {
       try {
         const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/google-drive/auth-url/${usuarioId}`);
         const data = await response.json();
-        window.location.href = data.authUrl; // Redirige al usuario a la URL de autenticación
+        window.location.href = data.authUrl;
       } catch (error) {
         console.error("Error al obtener URL de autenticación:", error);
         Swal.fire({
@@ -426,35 +435,16 @@ const ConfiguracionCopias = () => {
     ultimaCopia: null,
   });
 
-  useEffect(() => {
-    const fetchEstadisticas = async () => {
-      try {
-        const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/estadisticas/${usuarioId}`);
-        const data = await response.json();
-        setEstadisticas({
-          copiasActivas: data.copiasActivas || 0,
-          copiasEstesMes: data.copiasEstesMes || 0,
-          espacioUtilizado: data.espacioUtilizado || "0 B",
-          ultimaCopia: data.ultimaCopia ? formatDate(data.ultimaCopia) : "N/A",
-        });
-      } catch (error) {
-        console.error("Error al cargar estadísticas:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "No se pudieron cargar las estadísticas del sistema.",
-        });
-      }
-    };
-
-    if (usuarioId) {
-      fetchEstadisticas();
-    }
-  }, [usuarioId]);
 
   return (
     <>
       <Header />
+      {isLoading && (
+        <div className="config-copias-loading">
+          <div className="spinner"></div>
+          <p>Cargando configuración...</p>
+        </div>
+      )}
       {/* Configuracion de navegación */}
       <div className="config-copias-config-header">
         <h2 className="config-copias-config-title">Configuración</h2>

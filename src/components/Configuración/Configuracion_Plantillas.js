@@ -22,6 +22,7 @@ const ConfiguracionPlantillas = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [templates, setTemplates] = useState([]);
+  const [isLoading, setIsLoading] = useState(true)
   const [formData, setFormData] = useState({
     nombre: "",
     asunto: "",
@@ -38,19 +39,22 @@ const ConfiguracionPlantillas = () => {
   }, []);
 
   const fetchTemplates = async () => {
+    setIsLoading(true)
     try {
       const response = await fetchWithToken(`${API_BASE_URL}/plantillas`);
       const data = await response.json();
       setTemplates(data);
     } catch (error) {
+      console.error('Error al cargar plantillas:', error);
       Swal.fire({
         icon: "error",
         title: "Error",
         text: "No se pudieron cargar las plantillas.",
       });
+    } finally {
+      setIsLoading(false)
     }
   };
-
   const filteredTemplates = templates.filter((template) => {
     const matchesSearch =
       template.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -89,144 +93,144 @@ const ConfiguracionPlantillas = () => {
     }));
   };
 
- const handleSaveTemplate = async () => {
-  if (!formData.nombre.trim() || !formData.asunto.trim() || !formData.contenido.trim()) {
-    Swal.fire({
-      icon: "warning",
-      title: "Campos requeridos",
-      text: "Por favor complete todos los campos obligatorios.",
-    });
-    return;
-  }
-
-  try {
-    const result = await Swal.fire({
-      title: isEditing ? "¿Guardar cambios?" : "¿Crear plantilla?",
-      text: isEditing
-        ? "Los cambios se guardarán en la plantilla."
-        : "Se creará una nueva plantilla de correo.",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: isEditing ? "Guardar" : "Crear",
-      cancelButtonText: "Cancelar",
-    });
-
-    if (result.isConfirmed) {
-      const url = isEditing ? `${API_BASE_URL}/plantillas/${editingId}` : `${API_BASE_URL}/plantillas`;
-      const method = isEditing ? "PUT" : "POST";
-      const body = new FormData();
-      body.append("plantilla", new Blob([JSON.stringify({
-        nombre: formData.nombre,
-        asunto: formData.asunto,
-        mensaje: formData.contenido,
-      })], { type: "application/json" }));
-
-      // Enviar solo los archivos nuevos como "adjuntos"
-      formData.adjuntos.forEach((adjunto, index) => {
-        if (adjunto instanceof File) {
-          body.append("adjuntos", adjunto);
-        }
+  const handleSaveTemplate = async () => {
+    if (!formData.nombre.trim() || !formData.asunto.trim() || !formData.contenido.trim()) {
+      Swal.fire({
+        icon: "warning",
+        title: "Campos requeridos",
+        text: "Por favor complete todos los campos obligatorios.",
       });
-
-      // Enviar la lista de URLs de adjuntos a eliminar (si es edición)
-      if (isEditing && selectedTemplate) {
-        const existingAdjuntos = selectedTemplate.adjuntos || [];
-        const adjuntosToRemove = existingAdjuntos
-          .map((a) => a.adjuntoUrl)
-          .filter((url) => !formData.adjuntos.some((adj) => adj.adjuntoUrl === url && !(adj instanceof File)));
-        if (adjuntosToRemove.length > 0) {
-          body.append("adjuntosToRemove", JSON.stringify(adjuntosToRemove));
-        }
-      }
-
-      const response = await fetchWithToken(url, {
-        method,
-        body,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Error: ${response.status} - ${errorText || "Tamaño de archivo excedido"}`);
-      }
-
-      const data = await response.json();
-      if (isEditing) {
-        await fetchTemplates(); // Recarga la lista tras editar
-        Swal.fire({
-          icon: "success",
-          title: "Plantilla actualizada",
-          text: "La plantilla se ha actualizado correctamente.",
-        });
-      } else {
-        await fetchTemplates(); // Recarga la lista tras crear
-        setSelectedTemplate(templates.find(t => t.id === data.id)); // Selecciona la nueva plantilla
-        setIsEditing(true);
-        setEditingId(data.id);
-        Swal.fire({
-          icon: "success",
-          title: "Plantilla creada",
-          text: "La plantilla se ha creado correctamente.",
-        });
-      }
-      setFormData({
-        nombre: "",
-        asunto: "",
-        contenido: "",
-        adjuntos: [],
-      });
-      setSelectedTemplate(null);
-      setIsEditing(false);
-      setEditingId(null);
+      return;
     }
-  } catch (error) {
-    Swal.fire({
-      icon: "error",
-      title: "Error al guardar",
-      text: error.message.includes("Tamaño de archivo excedido")
-        ? "El tamaño total de los archivos excede el límite permitido (máx. 10MB). Por favor, suba archivos más pequeños o reduzca la cantidad."
-        : `Ocurrió un error al guardar la plantilla: ${error.message}`,
-      confirmButtonText: "Aceptar",
-    });
-  }
-};
 
- const handleDeleteTemplate = async (templateId) => {
-  const result = await Swal.fire({
-    title: "¿Eliminar plantilla?",
-    text: `¿Está seguro de que desea eliminar la plantilla "${templates.find((t) => t.id === templateId).nombre}"? Esta acción no se puede deshacer.`,
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Eliminar",
-    cancelButtonText: "Cancelar",
-    confirmButtonColor: "#f44336",
-  });
-
-  if (result.isConfirmed) {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/plantillas/${templateId}`, { method: "DELETE" });
-      if (response.status === 204) {
-        await fetchTemplates(); // Recarga la lista tras eliminar
-        if (selectedTemplate?.id === templateId) {
-          setSelectedTemplate(null);
-          setFormData({ nombre: "", asunto: "", contenido: "", adjuntos: [] });
-          setIsEditing(false);
-          setEditingId(null);
-        }
-        Swal.fire({
-          icon: "success",
-          title: "Plantilla eliminada",
-          text: "La plantilla se ha eliminado correctamente.",
+      const result = await Swal.fire({
+        title: isEditing ? "¿Guardar cambios?" : "¿Crear plantilla?",
+        text: isEditing
+          ? "Los cambios se guardarán en la plantilla."
+          : "Se creará una nueva plantilla de correo.",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: isEditing ? "Guardar" : "Crear",
+        cancelButtonText: "Cancelar",
+      });
+
+      if (result.isConfirmed) {
+        const url = isEditing ? `${API_BASE_URL}/plantillas/${editingId}` : `${API_BASE_URL}/plantillas`;
+        const method = isEditing ? "PUT" : "POST";
+        const body = new FormData();
+        body.append("plantilla", new Blob([JSON.stringify({
+          nombre: formData.nombre,
+          asunto: formData.asunto,
+          mensaje: formData.contenido,
+        })], { type: "application/json" }));
+
+        // Enviar solo los archivos nuevos como "adjuntos"
+        formData.adjuntos.forEach((adjunto, index) => {
+          if (adjunto instanceof File) {
+            body.append("adjuntos", adjunto);
+          }
         });
+
+        // Enviar la lista de URLs de adjuntos a eliminar (si es edición)
+        if (isEditing && selectedTemplate) {
+          const existingAdjuntos = selectedTemplate.adjuntos || [];
+          const adjuntosToRemove = existingAdjuntos
+            .map((a) => a.adjuntoUrl)
+            .filter((url) => !formData.adjuntos.some((adj) => adj.adjuntoUrl === url && !(adj instanceof File)));
+          if (adjuntosToRemove.length > 0) {
+            body.append("adjuntosToRemove", JSON.stringify(adjuntosToRemove));
+          }
+        }
+
+        const response = await fetchWithToken(url, {
+          method,
+          body,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Error: ${response.status} - ${errorText || "Tamaño de archivo excedido"}`);
+        }
+
+        const data = await response.json();
+        if (isEditing) {
+          await fetchTemplates(); // Recarga la lista tras editar
+          Swal.fire({
+            icon: "success",
+            title: "Plantilla actualizada",
+            text: "La plantilla se ha actualizado correctamente.",
+          });
+        } else {
+          await fetchTemplates(); // Recarga la lista tras crear
+          setSelectedTemplate(templates.find(t => t.id === data.id)); // Selecciona la nueva plantilla
+          setIsEditing(true);
+          setEditingId(data.id);
+          Swal.fire({
+            icon: "success",
+            title: "Plantilla creada",
+            text: "La plantilla se ha creado correctamente.",
+          });
+        }
+        setFormData({
+          nombre: "",
+          asunto: "",
+          contenido: "",
+          adjuntos: [],
+        });
+        setSelectedTemplate(null);
+        setIsEditing(false);
+        setEditingId(null);
       }
     } catch (error) {
       Swal.fire({
         icon: "error",
-        title: "Error",
-        text: `Ocurrió un error al eliminar la plantilla: ${error.message}`,
+        title: "Error al guardar",
+        text: error.message.includes("Tamaño de archivo excedido")
+          ? "El tamaño total de los archivos excede el límite permitido (máx. 10MB). Por favor, suba archivos más pequeños o reduzca la cantidad."
+          : `Ocurrió un error al guardar la plantilla: ${error.message}`,
+        confirmButtonText: "Aceptar",
       });
     }
-  }
-};
+  };
+
+  const handleDeleteTemplate = async (templateId) => {
+    const result = await Swal.fire({
+      title: "¿Eliminar plantilla?",
+      text: `¿Está seguro de que desea eliminar la plantilla "${templates.find((t) => t.id === templateId).nombre}"? Esta acción no se puede deshacer.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Eliminar",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#f44336",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetchWithToken(`${API_BASE_URL}/plantillas/${templateId}`, { method: "DELETE" });
+        if (response.status === 204) {
+          await fetchTemplates(); // Recarga la lista tras eliminar
+          if (selectedTemplate?.id === templateId) {
+            setSelectedTemplate(null);
+            setFormData({ nombre: "", asunto: "", contenido: "", adjuntos: [] });
+            setIsEditing(false);
+            setEditingId(null);
+          }
+          Swal.fire({
+            icon: "success",
+            title: "Plantilla eliminada",
+            text: "La plantilla se ha eliminado correctamente.",
+          });
+        }
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: `Ocurrió un error al eliminar la plantilla: ${error.message}`,
+        });
+      }
+    }
+  };
 
   const handleFileUpload = async (event) => {
     const files = Array.from(event.target.files);
@@ -272,6 +276,12 @@ const ConfiguracionPlantillas = () => {
   return (
     <>
       <Header />
+      {isLoading && (
+        <div className="correo-plantillas-loading">
+          <div className="spinner"></div>
+          <p>Cargando plantillas de correo...</p>
+        </div>
+      )}
       <div className="correo-plantillas-config-header">
         <h2 className="correo-plantillas-config-title">Configuración</h2>
         <nav className="correo-plantillas-config-nav">

@@ -897,6 +897,7 @@ const AdminCotizaciones = () => {
   const [filterReceptor, setFilterReceptor] = useState("");
 
   const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [modals, setModals] = useState({
     cotizacion: { isOpen: false, cotizacion: null },
@@ -907,6 +908,7 @@ const AdminCotizaciones = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
         const [clientesClienteResp, clientesEnProcesoResp, cotizacionesResp, usersResp, emisoresResp, cuentasResp] = await Promise.all([
           fetchWithToken(`${API_BASE_URL}/empresas?estatus=CLIENTE`),
@@ -943,6 +945,8 @@ const AdminCotizaciones = () => {
           title: "Error",
           text: "No se pudieron cargar los datos: " + error.message,
         });
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchData();
@@ -1133,6 +1137,12 @@ const AdminCotizaciones = () => {
   return (
     <>
       <Header />
+      {isLoading && (
+        <div className="cotizaciones-loading">
+          <div className="spinner"></div>
+          <p>Cargando cotizaciones...</p>
+        </div>
+      )}
       <main className="cotizaciones-main-content">
         <div className="cotizaciones-container">
           <section className="cotizaciones-sidebar">

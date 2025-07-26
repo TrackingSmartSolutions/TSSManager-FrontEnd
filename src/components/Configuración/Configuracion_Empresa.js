@@ -33,34 +33,40 @@ const ConfiguracionEmpresa = () => {
     logoPreview: null,
   });
   const [hasChanges, setHasChanges] = useState(false);
+  const [isLoading, setIsLoading] = useState(true)
   const navigate = useNavigate();
 
   useEffect(() => {
-    const cargarConfiguracion = async () => {
-      try {
-        const response = await fetchWithToken(`${API_BASE_URL}/configuracion/empresa`);
-        const data = await response.json();
-        setCompanyData({
-          id: data.id,
-          nombre: data.nombre || "",
-          eslogan: data.eslogan || "",
-          correoContacto: data.correoContacto || "",
-          telefonoMovil: data.telefonoMovil || "",
-          telefonoFijo: data.telefonoFijo || "",
-          direccionPrincipal: data.direccionPrincipal || "",
-          logo: null,
-          logoPreview: data.logoUrl || null,
-        });
-      } catch (error) {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "No se pudo cargar la configuración.",
-        });
-      }
-    };
-    cargarConfiguracion();
-  }, []);
+  const cargarConfiguracion = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/configuracion/empresa`);
+      const data = await response.json();
+      setCompanyData({
+        id: data.id,
+        nombre: data.nombre || "",
+        eslogan: data.eslogan || "",
+        correoContacto: data.correoContacto || "",
+        telefonoMovil: data.telefonoMovil || "",
+        telefonoFijo: data.telefonoFijo || "",
+        direccionPrincipal: data.direccionPrincipal || "",
+        logo: null,
+        logoPreview: data.logoUrl || null,
+      });
+    } catch (error) {
+      console.error('Error al cargar configuración:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo cargar la configuración de la empresa.",
+      });
+    } finally {
+      setIsLoading(false)
+    }
+  };
+  
+  cargarConfiguracion();
+}, []);
 
   const handleInputChange = (field, value) => {
     setCompanyData((prev) => ({
@@ -261,6 +267,12 @@ const ConfiguracionEmpresa = () => {
   return (
     <>
       <Header logoUrl={companyData.logoPreview} />
+      {isLoading && (
+        <div className="config-empresa-loading">
+          <div className="spinner"></div>
+          <p>Cargando configuración de la empresa...</p>
+        </div>
+      )}
       <div className="config-empresa-config-header">
         <h2 className="config-empresa-config-title">Configuración</h2>
         <nav className="config-empresa-config-nav">

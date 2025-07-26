@@ -30,6 +30,7 @@ const AdminBalance = () => {
     acumuladoCuentas: [],
     equiposVendidos: [],
   })
+  const [isLoading, setIsLoading] = useState(true)
   const [filtros, setFiltros] = useState({
     tiempoGrafico: "Año",
     cuentaSeleccionada: "Todas",
@@ -191,6 +192,7 @@ const AdminBalance = () => {
   }
 
   const fetchData = async () => {
+    setIsLoading(true)
     try {
       const [transaccionesResp, categoriasResp, cuentasResp, cuentasPorCobrarResp, cotizacionesResp] =
         await Promise.all([
@@ -252,6 +254,8 @@ const AdminBalance = () => {
         title: "Error",
         text: "No se pudieron cargar los datos: " + error.message,
       })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -320,16 +324,16 @@ const AdminBalance = () => {
           </thead>
           <tbody>
             ${datos
-              .map(
-                (fila, index) => `
+        .map(
+          (fila, index) => `
               <tr style="background-color: ${index % 2 === 0 ? "#ffffff" : "#f9f9f9"}; page-break-inside: avoid;">
                 ${Object.values(fila)
-                  .map((valor) => `<td style="border: 1px solid #ddd; padding: 8px;">${valor}</td>`)
-                  .join("")}
+              .map((valor) => `<td style="border: 1px solid #ddd; padding: 8px;">${valor}</td>`)
+              .join("")}
               </tr>
             `,
-              )
-              .join("")}
+        )
+        .join("")}
           </tbody>
         </table>
       </div>
@@ -590,24 +594,24 @@ const AdminBalance = () => {
   const graficoBalanceData =
     balanceData.graficoMensual.length > 0
       ? {
-          labels: balanceData.graficoMensual.map((item) => item.mes),
-          datasets: [
-            {
-              label: "Ingresos",
-              data: balanceData.graficoMensual.map((item) => item.ingresos),
-              backgroundColor: "#4CAF50",
-              borderColor: "#4CAF50",
-              borderWidth: 1,
-            },
-            {
-              label: "Gastos",
-              data: balanceData.graficoMensual.map((item) => item.gastos),
-              backgroundColor: "#f44336",
-              borderColor: "#f44336",
-              borderWidth: 1,
-            },
-          ],
-        }
+        labels: balanceData.graficoMensual.map((item) => item.mes),
+        datasets: [
+          {
+            label: "Ingresos",
+            data: balanceData.graficoMensual.map((item) => item.ingresos),
+            backgroundColor: "#4CAF50",
+            borderColor: "#4CAF50",
+            borderWidth: 1,
+          },
+          {
+            label: "Gastos",
+            data: balanceData.graficoMensual.map((item) => item.gastos),
+            backgroundColor: "#f44336",
+            borderColor: "#f44336",
+            borderWidth: 1,
+          },
+        ],
+      }
       : { labels: [], datasets: [] }
 
   const chartOptions = {
@@ -662,6 +666,12 @@ const AdminBalance = () => {
   return (
     <>
       <Header />
+      {isLoading && (
+        <div className="adminbalance-loading">
+          <div className="spinner"></div>
+          <p>Cargando datos del balance...</p>
+        </div>
+      )}
       <main className="adminbalance-main-content">
         <div className="adminbalance-container">
           <section className="adminbalance-sidebar">

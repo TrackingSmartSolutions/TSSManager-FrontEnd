@@ -31,14 +31,14 @@
   --config-almacenamiento-border-radius-sm: 4px;
   --config-almacenamiento-border-radius-md: 8px;
   --config-almacenamiento-border-radius-lg: 12px;
-  --config-almacenamiento-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); 
+  --config-almacenamiento-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   --config-almacenamiento-font-family: "Arial", sans-serif;
-  --config-almacenamiento-font-size-xs: 0.65rem; 
-  --config-almacenamiento-font-size-sm: 0.8rem; 
-  --config-almacenamiento-font-size-md: 0.9rem; 
-  --config-almacenamiento-font-size-lg: 1.1rem; 
-  --config-almacenamiento-font-size-xl: 1.3rem; 
-  --config-almacenamiento-font-size-xxl: 1.8rem; 
+  --config-almacenamiento-font-size-xs: 0.65rem;
+  --config-almacenamiento-font-size-sm: 0.8rem;
+  --config-almacenamiento-font-size-md: 0.9rem;
+  --config-almacenamiento-font-size-lg: 1.1rem;
+  --config-almacenamiento-font-size-xl: 1.3rem;
+  --config-almacenamiento-font-size-xxl: 1.8rem;
 }
 
 /* Loading Spinner */
@@ -55,7 +55,7 @@
   align-items: center;
   z-index: 1000;
   font-size: var(--config-almacenamiento-font-size-md);
-  color: var(--config-almacenamiento-primary-color);
+  color: #037ce0;
 }
 
 .spinner {
@@ -72,6 +72,7 @@
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -120,7 +121,8 @@
 
 /* Layout Principal */
 .config-almacenamiento-main-content {
-  padding: var(--config-almacenamiento-spacing-lg) var(--config-almacenamiento-spacing-xl); /* Revertido a spacing-lg para el padding superior/inferior */
+  padding: var(--config-almacenamiento-spacing-lg) var(--config-almacenamiento-spacing-xl);
+  /* Revertido a spacing-lg para el padding superior/inferior */
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -133,7 +135,7 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: var(--config-almacenamiento-spacing-xl); 
+  gap: var(--config-almacenamiento-spacing-xl);
 }
 
 /* Sección */
@@ -141,7 +143,7 @@
   background-color: var(--config-almacenamiento-panel-background);
   border-radius: var(--config-almacenamiento-border-radius-md);
   box-shadow: var(--config-almacenamiento-box-shadow);
-  padding: var(--config-almacenamiento-spacing-xl); 
+  padding: var(--config-almacenamiento-spacing-xl);
 }
 
 .config-almacenamiento-section-title {
@@ -209,7 +211,8 @@
 
 .config-almacenamiento-progress-bar {
   width: 100%;
-  height: 12px; /* Revertido a 12px */
+  height: 12px;
+  /* Revertido a 12px */
   background-color: #e0e0e0;
   border-radius: var(--config-almacenamiento-border-radius-sm);
   overflow: hidden;
@@ -221,11 +224,9 @@
 }
 
 .config-almacenamiento-progress-safe {
-  background: linear-gradient(
-    90deg,
-    var(--config-almacenamiento-secondary-color) 0%,
-    var(--config-almacenamiento-color-light-blue) 100%
-  );
+  background: linear-gradient(90deg,
+      var(--config-almacenamiento-secondary-color) 0%,
+      var(--config-almacenamiento-color-light-blue) 100%);
 }
 
 .config-almacenamiento-progress-warning {
@@ -245,22 +246,22 @@
 }
 
 .config-almacenamiento-details-section {
-  flex: 2; 
-  min-width: 400px; 
+  flex: 2;
+  min-width: 400px;
 }
 
 .config-almacenamiento-details-table {
   border: 1px solid var(--config-almacenamiento-border-color);
   border-radius: var(--config-almacenamiento-border-radius-sm);
   overflow: hidden;
-  overflow-x: auto; 
+  overflow-x: auto;
 }
 
 .config-almacenamiento-table-header,
 .config-almacenamiento-table-row {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  min-width: 700px; 
+  min-width: 700px;
 }
 
 .config-almacenamiento-table-header {
@@ -320,9 +321,9 @@
 }
 
 .config-almacenamiento-cleanup-section {
-  flex: 1; 
-  min-width: 300px; 
-  max-width: 500px; 
+  flex: 1;
+  min-width: 300px;
+  max-width: 500px;
 }
 
 .config-almacenamiento-warning-box {
@@ -342,8 +343,7 @@
 .config-almacenamiento-warning-icon img {
   width: 20px;
   height: 20px;
-  filter: brightness(0) saturate(100%) invert(60%) sepia(98%) saturate(1352%) hue-rotate(15deg) brightness(104%)
-    contrast(103%);
+  filter: brightness(0) saturate(100%) invert(60%) sepia(98%) saturate(1352%) hue-rotate(15deg) brightness(104%) contrast(103%);
 }
 
 .config-almacenamiento-warning-content {
@@ -479,9 +479,10 @@
     flex-direction: column;
     gap: var(--config-almacenamiento-spacing-lg);
   }
+
   .config-almacenamiento-details-section,
   .config-almacenamiento-cleanup-section {
-    max-width: none; 
+    max-width: none;
     width: 100%;
   }
 }
@@ -490,11 +491,13 @@
   .config-almacenamiento-config-nav {
     flex-wrap: wrap;
   }
+
   .config-almacenamiento-nav-item {
     flex: 1;
     text-align: center;
     min-width: 150px;
   }
+
   .config-almacenamiento-main-content {
     padding: var(--config-almacenamiento-spacing-md);
   }
@@ -509,47 +512,57 @@
   .config-almacenamiento-config-header {
     padding: var(--config-almacenamiento-spacing-md) var(--config-almacenamiento-spacing-lg);
   }
+
   .config-almacenamiento-config-nav {
     flex-direction: column;
   }
+
   .config-almacenamiento-nav-item {
     border-bottom: 1px solid var(--config-almacenamiento-border-color);
     border-right: none;
   }
+
   .config-almacenamiento-nav-item-active {
     border-bottom-color: var(--config-almacenamiento-secondary-color);
   }
+
   .config-almacenamiento-main-content {
     padding: var(--config-almacenamiento-spacing-sm);
   }
+
   .config-almacenamiento-section {
     padding: var(--config-almacenamiento-spacing-md);
   }
-  
+
   .config-almacenamiento-header-cell,
   .config-almacenamiento-cell {
-    border-right: 1px solid var(--config-almacenamiento-border-color); 
+    border-right: 1px solid var(--config-almacenamiento-border-color);
     border-bottom: 1px solid var(--config-almacenamiento-border-color);
-    padding: var(--config-almacenamiento-spacing-sm); 
+    padding: var(--config-almacenamiento-spacing-sm);
   }
+
   .config-almacenamiento-header-cell:last-child,
   .config-almacenamiento-cell:last-child {
-    border-right: none; 
+    border-right: none;
   }
+
   .config-almacenamiento-usage-labels {
     flex-direction: column;
     gap: var(--config-almacenamiento-spacing-xs);
   }
+
   .config-almacenamiento-cleanup-stats {
     gap: var(--config-almacenamiento-spacing-xs);
   }
+
   .config-almacenamiento-stat-item {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--config-almacenamiento-spacing-xs);
   }
+
   .config-almacenamiento-summary-info {
-    grid-template-columns: 1fr; 
+    grid-template-columns: 1fr;
   }
 }
 
@@ -557,17 +570,21 @@
   .config-almacenamiento-section {
     padding: var(--config-almacenamiento-spacing-sm);
   }
+
   .config-almacenamiento-header-cell,
   .config-almacenamiento-cell {
     padding: var(--config-almacenamiento-spacing-sm);
   }
+
   .config-almacenamiento-warning-box {
     flex-direction: column;
     gap: var(--config-almacenamiento-spacing-xs);
   }
+
   .config-almacenamiento-cleanup-form {
     gap: var(--config-almacenamiento-spacing-md);
   }
+
   .config-almacenamiento-btn {
     width: 100%;
   }

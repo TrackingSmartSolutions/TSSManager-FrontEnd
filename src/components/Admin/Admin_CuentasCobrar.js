@@ -259,7 +259,7 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
           method: "POST",
           body: formDataToSend,
         });
-        onSave(updatedCuenta); // Pass the parsed response directly
+        onSave(updatedCuenta); 
         onClose();
       } catch (error) {
         Swal.fire({ icon: "error", title: "Error", text: error.message });
@@ -806,6 +806,7 @@ const AdminCuentasCobrar = () => {
   const [solicitudes, setSolicitudes] = useState([]);
   const [cotizaciones, setCotizaciones] = useState([]);
   const [emisores, setEmisores] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [modals, setModals] = useState({
     crearCuentas: { isOpen: false },
@@ -817,6 +818,7 @@ const AdminCuentasCobrar = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+       setIsLoading(true); 
       try {
         const [clientesData, cuentasData, cotizacionesData, emisoresData] = await Promise.all([
           fetchWithToken(`${API_BASE_URL}/empresas?estatus=CLIENTE`),
@@ -830,7 +832,9 @@ const AdminCuentasCobrar = () => {
         setEmisores(emisoresData);
       } catch (error) {
         Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos" });
-      }
+      }finally {
+      setIsLoading(false); 
+    }
     };
     fetchData();
   }, []);
@@ -1082,6 +1086,12 @@ const AdminCuentasCobrar = () => {
   return (
     <>
       <Header />
+      {isLoading && (
+      <div className="cuentascobrar-loading">
+        <div className="spinner"></div>
+        <p>Cargando datos de cuentas por cobrar...</p>
+      </div>
+    )}
       <main className="cuentascobrar-main-content">
         <div className="cuentascobrar-container">
           <section className="cuentascobrar-sidebar">
