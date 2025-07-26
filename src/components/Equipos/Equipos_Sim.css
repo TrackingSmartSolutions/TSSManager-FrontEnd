@@ -141,6 +141,31 @@
   margin: 0;
 }
 
+.sim-filter-input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  width: 200px;
+  transition: all 0.2s ease;
+  background-color: #ffffff;
+}
+
+.sim-filter-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.sim-filter-input::placeholder {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.sim-filter-input:hover {
+  border-color: #9ca3af;
+}
+
 /* Botones */
 .sim-btn {
   padding: var(--sim-spacing-sm) var(--sim-spacing-lg);
