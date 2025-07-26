@@ -119,7 +119,7 @@ const ProveedorEquipoFormModal = ({ isOpen, onClose, proveedor = null, onSave })
     return true;
   };
 
-   const validateForm = () => {
+  const validateForm = () => {
     const newErrors = {};
 
     // Solo el nombre es obligatorio
@@ -170,7 +170,7 @@ const ProveedorEquipoFormModal = ({ isOpen, onClose, proveedor = null, onSave })
     }
   }
 
-   return (
+  return (
     <Modal isOpen={isOpen} onClose={onClose} title={proveedor ? "Editar proveedor" : "Nuevo proveedor"} size="md">
       <form onSubmit={handleSubmit} className="proveedores-form">
         <div className="proveedores-form-group">
@@ -273,6 +273,7 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, proveedor, onConfirm }) =>
 const EquiposProveedores = () => {
   const navigate = useNavigate()
   const [proveedores, setProveedores] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
   const [modals, setModals] = useState({
     form: { isOpen: false, proveedor: null },
     confirmDelete: { isOpen: false, proveedor: null },
@@ -284,6 +285,7 @@ const EquiposProveedores = () => {
 
   const fetchData = async () => {
     try {
+      setIsLoading(true)
       const response = await fetchWithToken(`${API_BASE_URL}/proveedores`)
       const data = await response.json()
       setProveedores(data)
@@ -293,6 +295,8 @@ const EquiposProveedores = () => {
         title: "Error",
         text: "No se pudieron cargar los proveedores",
       })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -333,7 +337,7 @@ const EquiposProveedores = () => {
       }
       return [...prev, proveedorData]
     })
-    fetchData() // Refrescar para asegurar consistencia con la API
+    fetchData()
   }
 
   const handleDeleteProveedor = async () => {
@@ -359,6 +363,12 @@ const EquiposProveedores = () => {
   return (
     <>
       <Header />
+      {isLoading && (
+      <div className="proveedores-loading">
+        <div className="spinner"></div>
+        <p>Cargando proveedores...</p>
+      </div>
+    )}
       <main className="proveedores-main-content">
         <div className="proveedores-container">
           <section className="proveedores-sidebar">

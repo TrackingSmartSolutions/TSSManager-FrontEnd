@@ -435,9 +435,11 @@ const EquiposEstatusPlataforma = () => {
   });
 
   const [lastCheckTime, setLastCheckTime] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = async () => {
     try {
+      setIsLoading(true); 
       const [equiposResponse, estatusResponse, clientesResponse] = await Promise.all([
         fetchWithToken(`${API_BASE_URL}/equipos`),
         fetchWithToken(`${API_BASE_URL}/equipos/estatus`),
@@ -466,7 +468,9 @@ const EquiposEstatusPlataforma = () => {
         title: "Error",
         text: "No se pudieron cargar los datos",
       });
-    }
+    }finally {
+    setIsLoading(false); 
+  }
   };
 
   useEffect(() => {
@@ -693,6 +697,12 @@ const EquiposEstatusPlataforma = () => {
   return (
     <>
       <Header />
+      {isLoading && (
+      <div className="estatusplataforma-loading">
+        <div className="spinner"></div>
+        <p>Cargando datos de equipos...</p>
+      </div>
+    )}
       <main className="estatusplataforma-main-content">
         <div className="estatusplataforma-container">
           <section className="estatusplataforma-sidebar">

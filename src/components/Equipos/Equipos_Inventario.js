@@ -447,6 +447,7 @@ const EquiposInventario = () => {
   const [sims, setSims] = useState([]);
   const [filterTipo, setFilterTipo] = useState("");
   const [filterCliente, setFilterCliente] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const [modals, setModals] = useState({
     form: { isOpen: false, equipo: null },
     detalles: { isOpen: false, equipo: null },
@@ -480,6 +481,7 @@ const EquiposInventario = () => {
 
   const fetchData = async () => {
     try {
+      setIsLoading(true);
       const [equiposResponse, modelosResponse, proveedoresResponse, empresasResponse, simsResponse] = await Promise.all([
         fetchWithToken(`${API_BASE_URL}/equipos`),
         fetchWithToken(`${API_BASE_URL}/modelos`),
@@ -503,6 +505,8 @@ const EquiposInventario = () => {
         title: "Error",
         text: "No se pudieron cargar los datos",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -514,7 +518,6 @@ const EquiposInventario = () => {
   }, [equipos, modelos]);
 
   const generateChartData = () => {
-    // Obtener etiquetas únicas de uso (basadas en el enum UsoModeloEquipoEnum)
     const usos = [...new Set(equipos.map(e => {
       const modelo = modelos.find(m => m.id === e.modeloId);
       return modelo ? modelo.uso : "Desconocido";
@@ -669,6 +672,12 @@ const EquiposInventario = () => {
   return (
     <>
       <Header />
+      {isLoading && (
+        <div className="inventario-loading">
+          <div className="spinner"></div>
+          <p>Cargando inventario de equipos...</p>
+        </div>
+      )}
       <main className="inventario-main-content">
         <div className="inventario-container">
           <section className="inventario-sidebar">

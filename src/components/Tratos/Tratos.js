@@ -1440,6 +1440,7 @@ const Tratos = () => {
   const [columnas, setColumnas] = useState([]);
   const [draggedTrato, setDraggedTrato] = useState(null);
   const [users, setUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const userRol = localStorage.getItem("userRol") || "EMPLEADO";
 
   const [modals, setModals] = useState({
@@ -1457,6 +1458,7 @@ const Tratos = () => {
 
   const fetchData = async () => {
     try {
+      setIsLoading(true);
       const params = new URLSearchParams();
       const userId = localStorage.getItem("userId");
 
@@ -1533,6 +1535,8 @@ const Tratos = () => {
     } catch (error) {
       console.error("Error al cargar datos:", error);
       Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos" });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -1745,6 +1749,12 @@ const Tratos = () => {
   return (
     <>
       <Header />
+      {isLoading && (
+        <div className="tratos-loading">
+          <div className="spinner"></div>
+          <p>Cargando tratos...</p>
+        </div>
+      )}
       <main className="main-content">
         <div className="tratos-container">
           <div className="tratos-controls">

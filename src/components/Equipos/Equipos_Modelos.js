@@ -390,6 +390,7 @@ const ModeloCard = ({ modelo, onEdit, onDelete }) => {
 const EquiposModelos = () => {
   const navigate = useNavigate();
   const [modelos, setModelos] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [modals, setModals] = useState({
     form: { isOpen: false, modelo: null },
     confirmDelete: { isOpen: false, modelo: null },
@@ -401,6 +402,7 @@ const EquiposModelos = () => {
 
   const fetchData = async () => {
     try {
+       setIsLoading(true);
       const [modelosResponse, equiposCountResponse] = await Promise.all([
         fetchWithToken(`${API_BASE_URL}/modelos`),
         fetchWithToken(`${API_BASE_URL}/equipos/count-by-modelo`),
@@ -408,7 +410,6 @@ const EquiposModelos = () => {
       const modelosData = await modelosResponse.json();
       const equiposCountData = await equiposCountResponse.json();
 
-      // Enriquecer los modelos con el conteo de equipos
       const modelosConConteo = modelosData.map(modelo => ({
         ...modelo,
         cantidad: equiposCountData[modelo.id] || 0,
@@ -420,7 +421,9 @@ const EquiposModelos = () => {
         title: "Error",
         text: "No se pudieron cargar los modelos",
       });
-    }
+    }finally {
+    setIsLoading(false); 
+  }
   };
 
   const openModal = (modalType, data = {}) => {
@@ -497,6 +500,12 @@ const EquiposModelos = () => {
   return (
     <>
       <Header />
+      {isLoading && (
+      <div className="modelos-loading">
+        <div className="spinner"></div>
+        <p>Cargando modelos de equipos...</p>
+      </div>
+    )}
       <main className="modelos-main-content">
         <div className="modelos-container">
           <section className="modelos-sidebar">
