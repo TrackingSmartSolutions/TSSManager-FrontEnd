@@ -1649,7 +1649,9 @@ body {
     padding: 4px 6px;
     font-size: 0.7rem;
   }
-  
+}
+
+/* Loading Spinner para Empresas */
 .empresas-loading {
   position: fixed;
   top: 0;
@@ -1688,5 +1690,4 @@ body {
 .empresas-loading p {
   margin: 0;
   font-weight: 500;
-}
 }
