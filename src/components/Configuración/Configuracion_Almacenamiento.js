@@ -39,12 +39,11 @@ const ConfiguracionAlmacenamiento = () => {
     available: 100,
     totalSpaceMB: 0,
     espacioRecuperable: 0,
-    maxCapacity: 1024, // 1GB en MB como capacidad máxima por defecto
+    maxCapacity: 1024,
   })
 
   const navigate = useNavigate()
 
-  // Opciones exactas del backend
   const tiposRegistrosOptions = [
     { value: "Tratos", label: "Tratos" },
     { value: "Empresas", label: "Empresas" },
@@ -65,7 +64,6 @@ const ConfiguracionAlmacenamiento = () => {
     { value: "2años", label: "Más de 2 años" },
   ]
 
-  // Mapeo exacto del backend
   const tablaToModulo = {
     "Tratos": "Tratos",
     "Empresas": "Empresas",
@@ -114,23 +112,23 @@ const ConfiguracionAlmacenamiento = () => {
     }
   }
 
-  // Cargar resumen de almacenamiento con datos reales
+
   const cargarResumenAlmacenamiento = async () => {
     try {
       const response = await fetchWithToken(`${API_BASE_URL}/almacenamiento/resumen`)
       const data = await response.json()
 
-      // Usar los datos reales del backend
+
       const espacioTotalMB = parseFloat(data.espacioTotalMb) || 0
       const espacioRecuperableMB = parseFloat(data.espacioRecuperableMb) || 0
-      const capacidadMaxima = 1024 // 1GB por defecto, esto debería venir de configuración
+      const capacidadMaxima = 1024 
 
-      // Calcular porcentajes reales
+
       const porcentajeUsado = capacidadMaxima > 0 ? Math.min((espacioTotalMB / capacidadMaxima) * 100, 100) : 0
       const porcentajeDisponible = 100 - porcentajeUsado
 
       setTotalUsage({
-        used: Math.round(porcentajeUsado * 10) / 10, // Redondear a 1 decimal
+        used: Math.round(porcentajeUsado * 10) / 10,
         available: Math.round(porcentajeDisponible * 10) / 10,
         totalSpaceMB: espacioTotalMB,
         espacioRecuperable: espacioRecuperableMB,
@@ -141,7 +139,6 @@ const ConfiguracionAlmacenamiento = () => {
       })
     } catch (error) {
       console.error('Error al cargar resumen:', error)
-      // En caso de error, establecer valores por defecto
       setTotalUsage(prevState => ({
         ...prevState,
         used: 0,
@@ -152,7 +149,7 @@ const ConfiguracionAlmacenamiento = () => {
     }
   }
 
-  // Función para obtener color por módulo
+
   const getColorForModule = (modulo) => {
     const colors = {
       "Tratos": "#037ce0",
@@ -188,7 +185,6 @@ const ConfiguracionAlmacenamiento = () => {
     cargarDatosIniciales()
   }, [])
 
-  // useEffect para actualizar estadísticas cuando cambian los criterios
   useEffect(() => {
     if (cleanupSettings.tipoRegistros && cleanupSettings.antiguedadMinima && !isLoading) {
       calcularEstadisticasLimpieza()
@@ -197,7 +193,7 @@ const ConfiguracionAlmacenamiento = () => {
 
   const calcularEstadisticasLimpieza = async () => {
     try {
-      const tablaNombre = cleanupSettings.tipoRegistros; // Ya viene como nombre de tabla del backend
+      const tablaNombre = cleanupSettings.tipoRegistros; 
       
       const diasMap = {
         "3meses": 90,

@@ -39,7 +39,6 @@
   --font-size-xxl: 1.8rem;
 }
 
-/* Restablecimiento y Estilos Base */
 /* Resetea márgenes, padding y establece box-sizing para todos los elementos */
 * {
   margin: 0;
@@ -1650,4 +1649,39 @@ body {
     padding: 4px 6px;
     font-size: 0.7rem;
   }
+
+  .empresas-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  font-size: var(--config-almacenamiento-font-size-md);
+  color: var(--config-almacenamiento-primary-color);
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: var(--config-almacenamiento-secondary-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: var(--config-almacenamiento-spacing-md);
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
 }

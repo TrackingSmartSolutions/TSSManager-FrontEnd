@@ -1586,6 +1586,8 @@ const Empresas = () => {
     fetchTratos();
   }, [selectedCompany?.id]);
 
+  const [isLoading, setIsLoading] = useState(true)
+
   const statusMap = {
     POR_CONTACTAR: "Por Contactar",
     EN_PROCESO: "En Proceso",
@@ -1594,7 +1596,6 @@ const Empresas = () => {
     CLIENTE: "Cliente",
   }
 
-  // Reemplazar el sectorMap actual con:
   const sectorMap = {
     // SECTOR PRIMARIO
     AGRICULTURA_CULTIVOS: "(11) Agricultura - Cultivos y horticultura",
@@ -1792,64 +1793,82 @@ const Empresas = () => {
   const getStatusText = (status) => statusMap[status] || status
   const getSectorText = (sector) => sectorMap[sector] || sector || "N/A"
 
-  // Obtener la lista de usuarios al montar el componente
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await fetchWithToken(`${API_BASE_URL}/auth/users`)
-        if (!response.ok) throw new Error("Error al cargar los usuarios")
-        const data = await response.json()
-        setUsers(data)
-      } catch (error) {
-        console.error("Error al cargar usuarios:", error)
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: error.message,
-        })
-      }
+  // Cargar datos iniciales
+  const cargarDatosIniciales = async () => {
+    setIsLoading(true)
+    try {
+      await Promise.all([
+        fetchUsers(),
+        fetchCompanies()
+      ])
+    } catch (error) {
+      console.error('Error al cargar datos iniciales:', error)
+    } finally {
+      setIsLoading(false)
     }
+  }
 
-    fetchUsers()
+  // Función para cargar usuarios
+  const fetchUsers = async () => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/auth/users`)
+      if (!response.ok) throw new Error("Error al cargar los usuarios")
+      const data = await response.json()
+      setUsers(data)
+    } catch (error) {
+      console.error("Error al cargar usuarios:", error)
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.message,
+      })
+    }
+  }
+
+  // Función para cargar empresas
+  const fetchCompanies = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (searchTerm) params.append("nombre", searchTerm);
+      if (filterStatus) params.append("estatus", filterStatus);
+
+      const response = await fetchWithToken(`${API_BASE_URL}/empresas?${params.toString()}`);
+      if (!response.ok) throw new Error("Error al cargar las empresas");
+      const data = await response.json();
+
+      const companiesWithColors = data.map((company) => ({
+        ...company,
+        statusColor: getStatusColor(company.estatus),
+        domicilioFisico: company.domicilioFisico
+          ? (company.domicilioFisico.endsWith(", México")
+            ? company.domicilioFisico
+            : `${company.domicilioFisico}, México`)
+          : null,
+      }));
+      setCompanies(companiesWithColors);
+
+      if (companiesWithColors.length > 0 && !selectedCompany) {
+        setSelectedCompany(companiesWithColors[0]);
+      }
+    } catch (error) {
+      console.error("Error al cargar empresas:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.message,
+      });
+    }
+  };
+
+  useEffect(() => {
+    cargarDatosIniciales()
   }, [])
 
   useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        const params = new URLSearchParams();
-        if (searchTerm) params.append("nombre", searchTerm);
-        if (filterStatus) params.append("estatus", filterStatus);
-
-        const response = await fetchWithToken(`${API_BASE_URL}/empresas?${params.toString()}`);
-        if (!response.ok) throw new Error("Error al cargar las empresas");
-        const data = await response.json();
-
-        const companiesWithColors = data.map((company) => ({
-          ...company,
-          statusColor: getStatusColor(company.estatus),
-          domicilioFisico: company.domicilioFisico
-            ? (company.domicilioFisico.endsWith(", México")
-              ? company.domicilioFisico
-              : `${company.domicilioFisico}, México`)
-            : null, 
-        }));
-        setCompanies(companiesWithColors);
-
-        if (companiesWithColors.length > 0 && !selectedCompany) {
-          setSelectedCompany(companiesWithColors[0]);
-        }
-      } catch (error) {
-        console.error("Error al cargar empresas:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: error.message,
-        });
-      }
-    };
-
-    fetchCompanies();
-  }, [searchTerm, filterStatus, selectedCompany]);
+    if (!isLoading) {
+      fetchCompanies()
+    }
+  }, [searchTerm, filterStatus])
 
 
   useEffect(() => {
@@ -1987,10 +2006,10 @@ const Empresas = () => {
 
   const handleSaveEmpresa = async (empresaData) => {
     const formattedDomicilioFisico = empresaData.domicilioFisico
-  ? (empresaData.domicilioFisico.endsWith(", México")
-      ? empresaData.domicilioFisico
-      : `${empresaData.domicilioFisico}, México`)
-  : null;
+      ? (empresaData.domicilioFisico.endsWith(", México")
+        ? empresaData.domicilioFisico
+        : `${empresaData.domicilioFisico}, México`)
+      : null;
 
     const updatedEmpresa = {
       ...empresaData,
@@ -2012,10 +2031,10 @@ const Empresas = () => {
 
   const handleCompanyCreated = (empresaData) => {
     const formattedDomicilioFisico = empresaData.domicilioFisico
-  ? (empresaData.domicilioFisico.endsWith(", México")
-      ? empresaData.domicilioFisico
-      : `${empresaData.domicilioFisico}, México`)
-  : null;
+      ? (empresaData.domicilioFisico.endsWith(", México")
+        ? empresaData.domicilioFisico
+        : `${empresaData.domicilioFisico}, México`)
+      : null;
 
     const newCompany = {
       ...empresaData,
@@ -2140,6 +2159,12 @@ const Empresas = () => {
   return (
     <>
       <Header />
+      {isLoading && (
+        <div className="empresas-loading">
+          <div className="spinner"></div>
+          <p>Cargando empresas...</p>
+        </div>
+      )}
       <main className="main-content">
         <div className="empresas-container">
           <section className="companies-panel">
@@ -2244,11 +2269,11 @@ const Empresas = () => {
                     <div className="form-group address-group">
                       <label>Domicilio</label>
                       <input
-  type="text"
-  value={selectedCompany.domicilioFisico || "Sin domicilio"} // En lugar de "N/A"
-  className="form-control"
-  readOnly
-/>
+                        type="text"
+                        value={selectedCompany.domicilioFisico || "Sin domicilio"}
+                        className="form-control"
+                        readOnly
+                      />
                       <button className="btn btn-ver-en-el-mapa" onClick={handleViewMap} title="Ver en el mapa">
                         Ver en el mapa
                       </button>
