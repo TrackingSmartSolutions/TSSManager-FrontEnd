@@ -1550,6 +1550,7 @@ const Empresas = () => {
   const [contactRole, setContactRole] = useState("")
   const [users, setUsers] = useState([])
   const [companies, setCompanies] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
   const navigate = useNavigate()
 
   const [modals, setModals] = useState({
@@ -1585,8 +1586,6 @@ const Empresas = () => {
 
     fetchTratos();
   }, [selectedCompany?.id]);
-
-  const [isLoading, setIsLoading] = useState(true)
 
   const statusMap = {
     POR_CONTACTAR: "Por Contactar",
@@ -1793,50 +1792,25 @@ const Empresas = () => {
   const getStatusText = (status) => statusMap[status] || status
   const getSectorText = (sector) => sectorMap[sector] || sector || "N/A"
 
-  // Cargar datos iniciales
   const cargarDatosIniciales = async () => {
-    setIsLoading(true)
-    try {
-      await Promise.all([
-        fetchUsers(),
-        fetchCompanies()
-      ])
-    } catch (error) {
-      console.error('Error al cargar datos iniciales:', error)
-    } finally {
-      setIsLoading(false)
+  setIsLoading(true)
+  try {
+    // Cargar usuarios
+    const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`)
+    if (usersResponse.ok) {
+      const usersData = await usersResponse.json()
+      setUsers(usersData)
     }
-  }
 
-  // Función para cargar usuarios
-  const fetchUsers = async () => {
-    try {
-      const response = await fetchWithToken(`${API_BASE_URL}/auth/users`)
-      if (!response.ok) throw new Error("Error al cargar los usuarios")
-      const data = await response.json()
-      setUsers(data)
-    } catch (error) {
-      console.error("Error al cargar usuarios:", error)
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.message,
-      })
-    }
-  }
-
-  // Función para cargar empresas
-  const fetchCompanies = async () => {
-    try {
-      const params = new URLSearchParams();
-      if (searchTerm) params.append("nombre", searchTerm);
-      if (filterStatus) params.append("estatus", filterStatus);
-
-      const response = await fetchWithToken(`${API_BASE_URL}/empresas?${params.toString()}`);
-      if (!response.ok) throw new Error("Error al cargar las empresas");
-      const data = await response.json();
-
-      const companiesWithColors = data.map((company) => ({
+    // Cargar empresas
+    const params = new URLSearchParams();
+    if (searchTerm) params.append("nombre", searchTerm);
+    if (filterStatus) params.append("estatus", filterStatus);
+    const companiesResponse = await fetchWithToken(`${API_BASE_URL}/empresas?${params.toString()}`);
+    
+    if (companiesResponse.ok) {
+      const companiesData = await companiesResponse.json();
+      const companiesWithColors = companiesData.map((company) => ({
         ...company,
         statusColor: getStatusColor(company.estatus),
         domicilioFisico: company.domicilioFisico
@@ -1846,29 +1820,25 @@ const Empresas = () => {
           : null,
       }));
       setCompanies(companiesWithColors);
-
       if (companiesWithColors.length > 0 && !selectedCompany) {
         setSelectedCompany(companiesWithColors[0]);
       }
-    } catch (error) {
-      console.error("Error al cargar empresas:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.message,
-      });
     }
-  };
+  } catch (error) {
+    console.error("Error al cargar datos iniciales:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Error al cargar los datos iniciales",
+    });
+  } finally {
+    setIsLoading(false)
+  }
+}
 
   useEffect(() => {
-    cargarDatosIniciales()
-  }, [])
-
-  useEffect(() => {
-    if (!isLoading) {
-      fetchCompanies()
-    }
-  }, [searchTerm, filterStatus])
+  cargarDatosIniciales()
+}, [searchTerm, filterStatus])
 
 
   useEffect(() => {
@@ -2160,11 +2130,11 @@ const Empresas = () => {
     <>
       <Header />
       {isLoading && (
-        <div className="empresas-loading">
-          <div className="spinner"></div>
-          <p>Cargando empresas...</p>
-        </div>
-      )}
+      <div className="empresas-loading">
+        <div className="spinner"></div>
+        <p>Cargando datos de empresas...</p>
+      </div>
+    )}
       <main className="main-content">
         <div className="empresas-container">
           <section className="companies-panel">
@@ -2270,7 +2240,7 @@ const Empresas = () => {
                       <label>Domicilio</label>
                       <input
                         type="text"
-                        value={selectedCompany.domicilioFisico || "Sin domicilio"}
+                        value={selectedCompany.domicilioFisico || "Sin domicilio"} 
                         className="form-control"
                         readOnly
                       />

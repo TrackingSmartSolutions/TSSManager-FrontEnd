@@ -1649,8 +1649,8 @@ body {
     padding: 4px 6px;
     font-size: 0.7rem;
   }
-
-  .empresas-loading {
+  
+.empresas-loading {
   position: fixed;
   top: 0;
   left: 0;
@@ -1662,18 +1662,18 @@ body {
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  font-size: var(--config-almacenamiento-font-size-md);
-  color: var(--config-almacenamiento-primary-color);
+  font-size: var(--font-size-md);
+  color: var(--primary-color);
 }
 
-.spinner {
+.empresas-loading .spinner {
   border: 4px solid rgba(0, 0, 0, 0.1);
-  border-left-color: var(--config-almacenamiento-secondary-color);
+  border-left-color: var(--secondary-color);
   border-radius: 50%;
   width: 40px;
   height: 40px;
   animation: spin 1s linear infinite;
-  margin-bottom: var(--config-almacenamiento-spacing-md);
+  margin-bottom: var(--spacing-md);
 }
 
 @keyframes spin {
@@ -1683,5 +1683,10 @@ body {
   100% {
     transform: rotate(360deg);
   }
+}
+
+.empresas-loading p {
+  margin: 0;
+  font-weight: 500;
 }
 }

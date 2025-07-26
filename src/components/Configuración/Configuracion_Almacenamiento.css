@@ -31,14 +31,14 @@
   --config-almacenamiento-border-radius-sm: 4px;
   --config-almacenamiento-border-radius-md: 8px;
   --config-almacenamiento-border-radius-lg: 12px;
-  --config-almacenamiento-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Sutilmente más suave */
+  --config-almacenamiento-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); 
   --config-almacenamiento-font-family: "Arial", sans-serif;
-  --config-almacenamiento-font-size-xs: 0.65rem; /* Revertido a 0.65rem */
-  --config-almacenamiento-font-size-sm: 0.8rem; /* Revertido a 0.8rem */
-  --config-almacenamiento-font-size-md: 0.9rem; /* Revertido a 0.9rem */
-  --config-almacenamiento-font-size-lg: 1.1rem; /* Revertido a 1.1rem */
-  --config-almacenamiento-font-size-xl: 1.3rem; /* Revertido a 1.3rem */
-  --config-almacenamiento-font-size-xxl: 1.8rem; /* Revertido a 1.8rem */
+  --config-almacenamiento-font-size-xs: 0.65rem; 
+  --config-almacenamiento-font-size-sm: 0.8rem; 
+  --config-almacenamiento-font-size-md: 0.9rem; 
+  --config-almacenamiento-font-size-lg: 1.1rem; 
+  --config-almacenamiento-font-size-xl: 1.3rem; 
+  --config-almacenamiento-font-size-xxl: 1.8rem; 
 }
 
 /* Loading Spinner */
@@ -77,7 +77,6 @@
   }
 }
 
-/* Configuration Header and Navigation */
 .config-almacenamiento-config-header {
   background-color: var(--config-almacenamiento-panel-background);
   padding: var(--config-almacenamiento-spacing-lg) var(--config-almacenamiento-spacing-xl);
@@ -134,7 +133,7 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: var(--config-almacenamiento-spacing-xl); /* Espacio entre secciones */
+  gap: var(--config-almacenamiento-spacing-xl); 
 }
 
 /* Sección */
@@ -142,7 +141,7 @@
   background-color: var(--config-almacenamiento-panel-background);
   border-radius: var(--config-almacenamiento-border-radius-md);
   box-shadow: var(--config-almacenamiento-box-shadow);
-  padding: var(--config-almacenamiento-spacing-xl); /* Mantenido como spacing-xl */
+  padding: var(--config-almacenamiento-spacing-xl); 
 }
 
 .config-almacenamiento-section-title {
@@ -159,7 +158,6 @@
   margin: 0 0 var(--config-almacenamiento-spacing-lg) 0;
 }
 
-/* Summary Info Section */
 .config-almacenamiento-summary-info {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -188,7 +186,6 @@
   color: var(--config-almacenamiento-primary-color);
 }
 
-/* Usage Bar */
 .config-almacenamiento-usage-bar {
   margin-bottom: var(--config-almacenamiento-spacing-xl);
 }
@@ -223,7 +220,6 @@
   transition: width 0.3s ease, background-color 0.3s ease;
 }
 
-/* Progress Fill Variations (based on usage percentage) */
 .config-almacenamiento-progress-safe {
   background: linear-gradient(
     90deg,
@@ -240,33 +236,31 @@
   background: linear-gradient(90deg, var(--config-almacenamiento-danger-color) 0%, #e53935 100%);
 }
 
-/* Content Row */
+
 .config-almacenamiento-content-row {
   display: flex;
   gap: var(--config-almacenamiento-spacing-xl);
   align-items: flex-start;
-  flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
+  flex-wrap: wrap;
 }
 
-/* Details Section */
 .config-almacenamiento-details-section {
-  flex: 2; /* Ocupa más espacio que la sección de limpieza */
-  min-width: 400px; /* Asegura que no se haga demasiado pequeño */
+  flex: 2; 
+  min-width: 400px; 
 }
 
 .config-almacenamiento-details-table {
   border: 1px solid var(--config-almacenamiento-border-color);
   border-radius: var(--config-almacenamiento-border-radius-sm);
   overflow: hidden;
-  overflow-x: auto; /* Añadido para permitir el scroll horizontal */
+  overflow-x: auto; 
 }
 
 .config-almacenamiento-table-header,
 .config-almacenamiento-table-row {
   display: grid;
-  /* 5 columnas: Módulo, Cantidad, Almacenaje, Registros Antiguos, Espacio Recuperable */
   grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  min-width: 700px; /* Establece un ancho mínimo para la tabla para forzar el scroll */
+  min-width: 700px; 
 }
 
 .config-almacenamiento-table-header {
@@ -325,11 +319,10 @@
   flex-shrink: 0;
 }
 
-/* Cleanup Section */
 .config-almacenamiento-cleanup-section {
-  flex: 1; /* Ocupa el espacio restante */
-  min-width: 300px; /* Asegura un tamaño mínimo */
-  max-width: 500px; /* Limita el ancho en pantallas grandes */
+  flex: 1; 
+  min-width: 300px; 
+  max-width: 500px; 
 }
 
 .config-almacenamiento-warning-box {
@@ -349,7 +342,6 @@
 .config-almacenamiento-warning-icon img {
   width: 20px;
   height: 20px;
-  /* Mantener el filtro para el icono de advertencia si es un PNG */
   filter: brightness(0) saturate(100%) invert(60%) sepia(98%) saturate(1352%) hue-rotate(15deg) brightness(104%)
     contrast(103%);
 }
@@ -373,7 +365,6 @@
   line-height: 1.4;
 }
 
-/* Cleanup Form */
 .config-almacenamiento-cleanup-form {
   display: flex;
   flex-direction: column;
@@ -409,7 +400,6 @@
   box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
 }
 
-/* Cleanup Stats */
 .config-almacenamiento-cleanup-stats {
   display: flex;
   flex-direction: column;
@@ -473,19 +463,17 @@
   justify-content: flex-end;
 }
 
-/* SweetAlert Custom Styles */
 .config-almacenamiento-swal-popup {
   font-family: var(--config-almacenamiento-font-family);
 }
 
-/* Delete Icon */
 .config-almacenamiento-delete-icon {
   width: 12px;
   height: 12px;
   filter: brightness(0) invert(1);
 }
 
-/* Responsive Design */
+
 @media (max-width: 1200px) {
   .config-almacenamiento-content-row {
     flex-direction: column;
@@ -493,7 +481,7 @@
   }
   .config-almacenamiento-details-section,
   .config-almacenamiento-cleanup-section {
-    max-width: none; /* Permite que ocupen todo el ancho disponible */
+    max-width: none; 
     width: 100%;
   }
 }
@@ -510,7 +498,7 @@
   .config-almacenamiento-main-content {
     padding: var(--config-almacenamiento-spacing-md);
   }
-  /* Mantener la estructura de 5 columnas en pantallas medianas */
+
   .config-almacenamiento-table-header,
   .config-almacenamiento-table-row {
     grid-template-columns: 1.5fr 0.8fr 0.8fr 0.8fr 0.8fr;
@@ -537,16 +525,16 @@
   .config-almacenamiento-section {
     padding: var(--config-almacenamiento-spacing-md);
   }
-  /* NO colapsar a 1fr, dejar que el min-width y overflow-x manejen el scroll */
+  
   .config-almacenamiento-header-cell,
   .config-almacenamiento-cell {
-    border-right: 1px solid var(--config-almacenamiento-border-color); /* Asegurar bordes entre celdas */
+    border-right: 1px solid var(--config-almacenamiento-border-color); 
     border-bottom: 1px solid var(--config-almacenamiento-border-color);
-    padding: var(--config-almacenamiento-spacing-sm); /* Reducir padding */
+    padding: var(--config-almacenamiento-spacing-sm); 
   }
   .config-almacenamiento-header-cell:last-child,
   .config-almacenamiento-cell:last-child {
-    border-right: none; /* Eliminar borde derecho en la última celda */
+    border-right: none; 
   }
   .config-almacenamiento-usage-labels {
     flex-direction: column;
@@ -561,7 +549,7 @@
     gap: var(--config-almacenamiento-spacing-xs);
   }
   .config-almacenamiento-summary-info {
-    grid-template-columns: 1fr; /* Una columna en móviles */
+    grid-template-columns: 1fr; 
   }
 }
 
