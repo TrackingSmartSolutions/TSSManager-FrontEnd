@@ -72,14 +72,14 @@ const ModeloFormModal = ({ isOpen, onClose, modelo = null, onSave }) => {
   const fileInputRef = useRef(null);
 
   const usoOptions = [
-  { value: "PERSONAL", label: "Personal" },
-  { value: "AUTONOMO", label: "Autónomo" },
-  { value: "OBD2", label: "OBD2" },
-  { value: "VEHICULO_BASICO", label: "Vehículo básico" },
-  { value: "VEHICULO_AVANZADO", label: "Vehículo avanzado" },
-  { value: "DASHCAM", label: "Dashcam" },
-  { value: "CANDADO", label: "Candado" },
-];
+    { value: "PERSONAL", label: "Personal" },
+    { value: "AUTONOMO", label: "Autónomo" },
+    { value: "OBD2", label: "OBD2" },
+    { value: "VEHICULO_BASICO", label: "Vehículo básico" },
+    { value: "VEHICULO_AVANZADO", label: "Vehículo avanzado" },
+    { value: "DASHCAM", label: "Dashcam" },
+    { value: "CANDADO", label: "Candado" },
+  ];
 
   useEffect(() => {
     if (isOpen) {
@@ -390,6 +390,7 @@ const ModeloCard = ({ modelo, onEdit, onDelete }) => {
 const EquiposModelos = () => {
   const navigate = useNavigate();
   const [modelos, setModelos] = useState([]);
+  const [filtroNombre, setFiltroNombre] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [modals, setModals] = useState({
     form: { isOpen: false, modelo: null },
@@ -402,7 +403,7 @@ const EquiposModelos = () => {
 
   const fetchData = async () => {
     try {
-       setIsLoading(true);
+      setIsLoading(true);
       const [modelosResponse, equiposCountResponse] = await Promise.all([
         fetchWithToken(`${API_BASE_URL}/modelos`),
         fetchWithToken(`${API_BASE_URL}/equipos/count-by-modelo`),
@@ -421,9 +422,9 @@ const EquiposModelos = () => {
         title: "Error",
         text: "No se pudieron cargar los modelos",
       });
-    }finally {
-    setIsLoading(false); 
-  }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const openModal = (modalType, data = {}) => {
@@ -439,6 +440,10 @@ const EquiposModelos = () => {
       [modalType]: { isOpen: false },
     }));
   };
+
+  const modelosFiltrados = modelos.filter(modelo =>
+    modelo.nombre.toLowerCase().includes(filtroNombre.toLowerCase())
+  );
 
   const handleMenuNavigation = (menuItem) => {
     switch (menuItem) {
@@ -501,11 +506,11 @@ const EquiposModelos = () => {
     <>
       <Header />
       {isLoading && (
-      <div className="modelos-loading">
-        <div className="spinner"></div>
-        <p>Cargando modelos de equipos...</p>
-      </div>
-    )}
+        <div className="modelos-loading">
+          <div className="spinner"></div>
+          <p>Cargando modelos de equipos...</p>
+        </div>
+      )}
       <main className="modelos-main-content">
         <div className="modelos-container">
           <section className="modelos-sidebar">
@@ -541,6 +546,13 @@ const EquiposModelos = () => {
                 <p className="modelos-subtitle">Gestión de modelos de equipos</p>
               </div>
               <div className="modelos-header-actions">
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre de modelo..."
+                  value={filtroNombre}
+                  onChange={(e) => setFiltroNombre(e.target.value)}
+                  className="modelos-search-input"
+                />
                 <button className="modelos-btn modelos-btn-primary" onClick={() => openModal("form", { modelo: null })}>
                   Agregar modelo
                 </button>
@@ -548,8 +560,8 @@ const EquiposModelos = () => {
             </div>
 
             <div className="modelos-grid">
-              {modelos.length > 0 ? (
-                modelos.map((modelo) => (
+              {modelosFiltrados.length > 0 ? (
+                modelosFiltrados.map((modelo) => (
                   <ModeloCard
                     key={modelo.id}
                     modelo={modelo}
