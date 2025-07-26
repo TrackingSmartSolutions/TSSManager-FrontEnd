@@ -702,6 +702,7 @@ const EquiposSim = () => {
   const [gruposDisponibles, setGruposDisponibles] = useState([]);
   const [filterGrupo, setFilterGrupo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [filterNumero, setFilterNumero] = useState("");
   const [modals, setModals] = useState({
     form: { isOpen: false, sim: null },
     saldos: { isOpen: false, sim: null },
@@ -740,9 +741,9 @@ const EquiposSim = () => {
       setGruposDisponibles(gruposData);
     } catch (error) {
       Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos" });
-    }finally {
-    setIsLoading(false); 
-  }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const openModal = (modalType, data = {}) => {
@@ -867,12 +868,12 @@ const EquiposSim = () => {
   return (
     <>
       <Header />
-       {isLoading && (
-      <div className="sim-loading">
-        <div className="spinner"></div>
-        <p>Cargando datos de SIM...</p>
-      </div>
-    )}
+      {isLoading && (
+        <div className="sim-loading">
+          <div className="spinner"></div>
+          <p>Cargando datos de SIM...</p>
+        </div>
+      )}
       <main className="sim-main-content">
         <div className="sim-container">
           <section className="sim-sidebar">
@@ -910,6 +911,13 @@ const EquiposSim = () => {
               <div className="sim-table-header">
                 <h4 className="sim-table-title">SIMs</h4>
                 <div className="sim-table-controls">
+                  <input
+                    type="text"
+                    placeholder="Buscar por número..."
+                    value={filterNumero}
+                    onChange={(e) => setFilterNumero(e.target.value)}
+                    className="sim-filter-input"
+                  />
                   <select
                     value={filterGrupo}
                     onChange={(e) => setFilterGrupo(e.target.value)}
@@ -947,7 +955,11 @@ const EquiposSim = () => {
                   </thead>
                   <tbody>
                     {sims
-                      .filter((sim) => !filterGrupo || sim.grupo?.toString() === filterGrupo)
+                      .filter((sim) => {
+                        const matchesGrupo = !filterGrupo || sim.grupo?.toString() === filterGrupo;
+                        const matchesNumero = !filterNumero || sim.numero?.toLowerCase().includes(filterNumero.toLowerCase());
+                        return matchesGrupo && matchesNumero;
+                      })
                       .map((sim) => (
                         <tr key={sim.id}>
                           <td>{sim.numero}</td>
@@ -996,13 +1008,17 @@ const EquiposSim = () => {
                           </td>
                         </tr>
                       ))}
-                    {sims.filter((sim) => !filterGrupo || sim.grupo?.toString() === filterGrupo).length === 0 && (
-                      <tr>
-                        <td colSpan="11" className="sim-no-data">
-                          No se encontraron SIMs
-                        </td>
-                      </tr>
-                    )}
+                    {sims.filter((sim) => {
+                      const matchesGrupo = !filterGrupo || sim.grupo?.toString() === filterGrupo;
+                      const matchesNumero = !filterNumero || sim.numero?.toLowerCase().includes(filterNumero.toLowerCase());
+                      return matchesGrupo && matchesNumero;
+                    }).length === 0 && (
+                        <tr>
+                          <td colSpan="11" className="sim-no-data">
+                            No se encontraron SIMs
+                          </td>
+                        </tr>
+                      )}
                   </tbody>
                 </table>
               </div>
