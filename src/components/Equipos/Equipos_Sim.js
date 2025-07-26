@@ -701,6 +701,7 @@ const EquiposSim = () => {
   const [equipos, setEquipos] = useState([]);
   const [gruposDisponibles, setGruposDisponibles] = useState([]);
   const [filterGrupo, setFilterGrupo] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [modals, setModals] = useState({
     form: { isOpen: false, sim: null },
     saldos: { isOpen: false, sim: null },
@@ -716,6 +717,7 @@ const EquiposSim = () => {
 
   const fetchData = async () => {
     try {
+      setIsLoading(true);
       const [simsResponse, equiposResponse, gruposResponse] = await Promise.all([
         fetchWithToken(`${API_BASE_URL}/sims`),
         fetchWithToken(`${API_BASE_URL}/equipos`),
@@ -738,7 +740,9 @@ const EquiposSim = () => {
       setGruposDisponibles(gruposData);
     } catch (error) {
       Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos" });
-    }
+    }finally {
+    setIsLoading(false); 
+  }
   };
 
   const openModal = (modalType, data = {}) => {
@@ -863,6 +867,12 @@ const EquiposSim = () => {
   return (
     <>
       <Header />
+       {isLoading && (
+      <div className="sim-loading">
+        <div className="spinner"></div>
+        <p>Cargando datos de SIM...</p>
+      </div>
+    )}
       <main className="sim-main-content">
         <div className="sim-container">
           <section className="sim-sidebar">

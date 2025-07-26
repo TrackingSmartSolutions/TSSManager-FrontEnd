@@ -716,6 +716,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -728,6 +729,7 @@
 
 /* Ajustes para impresión */
 @media print {
+
   .proveedores-sidebar,
   .proveedores-header-actions,
   .proveedores-actions {
@@ -759,18 +761,15 @@
 .proveedores-action-icon {
   width: 16px;
   height: 16px;
-  filter: brightness(0) saturate(100%) invert(44%) sepia(7%) saturate(1102%) hue-rotate(169deg) brightness(96%)
-    contrast(88%);
+  filter: brightness(0) saturate(100%) invert(44%) sepia(7%) saturate(1102%) hue-rotate(169deg) brightness(96%) contrast(88%);
 }
 
 .proveedores-edit-btn .proveedores-action-icon {
-  filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(200deg) brightness(104%)
-    contrast(97%);
+  filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(200deg) brightness(104%) contrast(97%);
 }
 
 .proveedores-delete-btn .proveedores-action-icon {
-  filter: brightness(0) saturate(100%) invert(27%) sepia(98%) saturate(7462%) hue-rotate(3deg) brightness(103%)
-    contrast(97%);
+  filter: brightness(0) saturate(100%) invert(27%) sepia(98%) saturate(7462%) hue-rotate(3deg) brightness(103%) contrast(97%);
 }
 
 .proveedores-action-btn {
@@ -799,7 +798,8 @@
   align-items: center;
   z-index: 1000;
   font-size: var(--proveedores-font-size-md, 16px);
-  color: var(--proveedores-primary-color, #007bff);
+  color: #037ce0;
+
 }
 
 .proveedores-loading .spinner {
@@ -816,6 +816,7 @@
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

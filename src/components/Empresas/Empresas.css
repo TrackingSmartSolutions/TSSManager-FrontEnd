@@ -1664,7 +1664,7 @@ body {
   align-items: center;
   z-index: 1000;
   font-size: var(--font-size-md);
-  color: var(--primary-color);
+  color: #037ce0;
 }
 
 .empresas-loading .spinner {
