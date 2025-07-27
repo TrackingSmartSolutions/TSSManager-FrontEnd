@@ -80,6 +80,20 @@ const getTodayDate = () => {
   return `${year}-${month}-${day}`;
 };
 
+const getDefaultPagos = (esquema) => {
+  switch (esquema) {
+    case "UNICA": return 1;
+    case "SEMANAL": return 4;
+    case "QUINCENAL": return 6;
+    case "MENSUAL": return 12;
+    case "BIMESTRAL": return 6;
+    case "TRIMESTRAL": return 4;
+    case "SEMESTRAL": return 4;
+    case "ANUAL": return 3;
+    default: return 1;
+  }
+};
+
 const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, formasPago }) => {
   const [formData, setFormData] = useState({
     fecha: getTodayDate(),
@@ -94,7 +108,7 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
   });
   const [errors, setErrors] = useState({});
   const [dynamicCuentas, setDynamicCuentas] = useState([]);
-  const esquemas = ["UNICA", "MENSUAL", "ANUAL"];
+  const esquemas = ["UNICA", "SEMANAL", "QUINCENAL", "MENSUAL", "BIMESTRAL", "TRIMESTRAL", "SEMESTRAL", "ANUAL"];
 
   useEffect(() => {
     if (isOpen) {
@@ -105,6 +119,7 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
         categoria: "",
         cuenta: "",
         esquema: "UNICA",
+        numeroPagos: "",
         fechaPago: today,
         monto: "",
         formaPago: "01",
@@ -116,27 +131,16 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
   }, [isOpen]);
 
   useEffect(() => {
-    if (formData.esquema && formData.fecha) {
-      const fechaBase = new Date(formData.fecha);
-      let nuevaFechaPago = new Date(fechaBase);
+    if (formData.esquema) {
 
-      switch (formData.esquema) {
-        case "MENSUAL":
-          nuevaFechaPago.setDate(nuevaFechaPago.getDate() + 30);
-          break;
-        case "ANUAL":
-          nuevaFechaPago.setDate(nuevaFechaPago.getDate() + 365);
-          break;
-        default:
-          nuevaFechaPago = fechaBase;
-      }
-
+      const defaultPagos = getDefaultPagos(formData.esquema);
       setFormData((prev) => ({
         ...prev,
-        fechaPago: nuevaFechaPago.toISOString().split("T")[0],
+        numeroPagos: defaultPagos.toString(),
       }));
     }
-  }, [formData.esquema, formData.fecha]);
+  }, [formData.esquema]);
+
 
   useEffect(() => {
     const fetchDynamicCuentas = async () => {
@@ -180,40 +184,41 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (validateForm()) {
-    try {
-      const newTransaccion = await fetchWithToken(`${API_BASE_URL}/transacciones/crear`, {
-        method: "POST",
-        body: JSON.stringify({
-          fecha: formData.fecha,
-          tipo: formData.tipo,
-          categoriaId: categorias.find((c) => c.descripcion === formData.categoria)?.id,
-          cuentaId: cuentas.find((c) => c.nombre === formData.cuenta)?.id || null,
-          monto: parseFloat(formData.monto),
-          esquema: formData.esquema,
-          fechaPago: formData.fechaPago,
-          formaPago: formData.formaPago,
-          notas: formData.nota,
-        }),
-      });
-      
-      onSave(newTransaccion);
-      onClose();
-      Swal.fire({
-        icon: "success",
-        title: "Éxito",
-        text: "Transacción creada correctamente",
-      });
-    } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.message || "No se pudo crear la transacción",
-      });
+    e.preventDefault();
+    if (validateForm()) {
+      try {
+        const newTransaccion = await fetchWithToken(`${API_BASE_URL}/transacciones/crear`, {
+          method: "POST",
+          body: JSON.stringify({
+            fecha: formData.fecha,
+            tipo: formData.tipo,
+            categoriaId: categorias.find((c) => c.descripcion === formData.categoria)?.id,
+            cuentaId: cuentas.find((c) => c.nombre === formData.cuenta)?.id || null,
+            monto: parseFloat(formData.monto),
+            esquema: formData.esquema,
+            numeroPagos: parseInt(formData.numeroPagos),
+            fechaPago: formData.fechaPago,
+            formaPago: formData.formaPago,
+            notas: formData.nota,
+          }),
+        });
+
+        onSave(newTransaccion);
+        onClose();
+        Swal.fire({
+          icon: "success",
+          title: "Éxito",
+          text: "Transacción creada correctamente",
+        });
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.message || "No se pudo crear la transacción",
+        });
+      }
     }
-  }
-};
+  };
   const categoriasFiltradas = categorias ? categorias.filter((cat) => cat && cat.tipo === formData.tipo) : [];
   const cuentasFiltradas = dynamicCuentas.length > 0 ? dynamicCuentas : cuentas.filter(c => c.categoria && c.categoria.descripcion === formData.categoria).map(c => c.nombre);
 
@@ -300,10 +305,31 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
             >
               {esquemas.map((esquema) => (
                 <option key={esquema} value={esquema}>
-                  {esquema === "UNICA" ? "Única" : esquema === "MENSUAL" ? "Mensual" : "Anual"}
+                  {esquema === "UNICA" ? "Única" :
+                    esquema === "SEMANAL" ? "Semanal" :
+                      esquema === "QUINCENAL" ? "Quincenal" :
+                        esquema === "MENSUAL" ? "Mensual" :
+                          esquema === "BIMESTRAL" ? "Bimestral" :
+                            esquema === "TRIMESTRAL" ? "Trimestral" :
+                              esquema === "SEMESTRAL" ? "Semestral" :
+                                "Anual"}
                 </option>
               ))}
             </select>
+          </div>
+        </div>
+        <div className="transacciones-form-row">
+          <div className="transacciones-form-group">
+            <label htmlFor="numeroPagos">Número de pagos <span className="required"> *</span></label>
+            <input
+              type="number"
+              id="numeroPagos"
+              value={formData.numeroPagos}
+              onChange={(e) => handleInputChange("numeroPagos", e.target.value)}
+              className="transacciones-form-control"
+              min="1"
+              placeholder="Número de pagos"
+            />
           </div>
         </div>
         <div className="transacciones-form-row">
@@ -315,7 +341,7 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
               value={formData.fechaPago}
               onChange={(e) => handleInputChange("fechaPago", e.target.value)}
               className={`transacciones-form-control ${errors.fechaPago ? "error" : ""}`}
-              disabled={formData.esquema !== "UNICA"}
+              disabled={false}
             />
             {errors.fechaPago && <span className="transacciones-error-message">{errors.fechaPago}</span>}
           </div>
@@ -391,45 +417,45 @@ const GestionarCategoriasModal = ({ isOpen, onClose, categorias, onSaveCategoria
     setErrors({})
   }
 
- const handleSaveCategoria = async (e) => {
-  e.preventDefault()
-  const newErrors = {}
+  const handleSaveCategoria = async (e) => {
+    e.preventDefault()
+    const newErrors = {}
 
-  if (!formData.descripcion.trim()) {
-    newErrors.descripcion = "La descripción es obligatoria"
-  }
-
-  if (Object.keys(newErrors).length === 0) {
-    try {
-      const response = await fetchWithToken(`${API_BASE_URL}/categorias/crear`, {
-        method: "POST",
-        body: JSON.stringify({
-          tipo: formData.tipo.toUpperCase(),
-          descripcion: formData.descripcion.trim(),
-        }),
-      })
-      
-      
-      onSaveCategoria(response)
-      
-      setShowAddForm(false)
-      setFormData({ tipo: "INGRESO", descripcion: "" })
-      Swal.fire({
-        icon: "success",
-        title: "Éxito",
-        text: "Categoría creada correctamente",
-      })
-    } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.message || "No se pudo crear la categoría",
-      })
+    if (!formData.descripcion.trim()) {
+      newErrors.descripcion = "La descripción es obligatoria"
     }
-  } else {
-    setErrors(newErrors)
+
+    if (Object.keys(newErrors).length === 0) {
+      try {
+        const response = await fetchWithToken(`${API_BASE_URL}/categorias/crear`, {
+          method: "POST",
+          body: JSON.stringify({
+            tipo: formData.tipo.toUpperCase(),
+            descripcion: formData.descripcion.trim(),
+          }),
+        })
+
+
+        onSaveCategoria(response)
+
+        setShowAddForm(false)
+        setFormData({ tipo: "INGRESO", descripcion: "" })
+        Swal.fire({
+          icon: "success",
+          title: "Éxito",
+          text: "Categoría creada correctamente",
+        })
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.message || "No se pudo crear la categoría",
+        })
+      }
+    } else {
+      setErrors(newErrors)
+    }
   }
-}
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Categorías" size="lg">
@@ -793,8 +819,8 @@ const AdminTransacciones = () => {
           fetchWithToken(`${API_BASE_URL}/categorias`),
           fetchWithToken(`${API_BASE_URL}/cuentas`),
         ]);
-        setTransacciones(transaccionesResp.data || []); 
-        setCategorias(categoriasResp.data || []); 
+        setTransacciones(transaccionesResp.data || []);
+        setCategorias(categoriasResp.data || []);
         setCuentas(cuentasResp.data || []);
       } catch (error) {
         Swal.fire({
@@ -802,17 +828,17 @@ const AdminTransacciones = () => {
           title: "Error",
           text: "No se pudieron cargar los datos: " + error.message,
         });
-      }finally {
-      setIsLoading(false); 
-    }
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchData();
   }, []);
 
- const isFullyPaid = (transaccionId) => {
-  const transaccion = transacciones.find((t) => t.id === transaccionId);
-  return transaccion && transaccion.notas === "Transacción generada desde Cuentas por Pagar";
-};
+  const isFullyPaid = (transaccionId) => {
+    const transaccion = transacciones.find((t) => t.id === transaccionId);
+    return transaccion && transaccion.notas === "Transacción generada desde Cuentas por Pagar";
+  };
   const openModal = (modalType, data = {}) => {
     setModals((prev) => ({
       ...prev,
@@ -981,8 +1007,8 @@ const AdminTransacciones = () => {
   };
 
   const transaccionesFiltradas = filtrosCuenta === "Todas"
-  ? transacciones.filter((t) => t.tipo === "INGRESO" || (t.tipo === "GASTO" && isFullyPaid(t.id)))
-  : transacciones.filter(
+    ? transacciones.filter((t) => t.tipo === "INGRESO" || (t.tipo === "GASTO" && isFullyPaid(t.id)))
+    : transacciones.filter(
       (t) => t.cuenta.nombre === filtrosCuenta && (t.tipo === "INGRESO" || (t.tipo === "GASTO" && isFullyPaid(t.id)))
     );
 
@@ -992,11 +1018,11 @@ const AdminTransacciones = () => {
     <>
       <Header />
       {isLoading && (
-      <div className="transacciones-loading">
-        <div className="spinner"></div>
-        <p>Cargando datos de transacciones...</p>
-      </div>
-    )}
+        <div className="transacciones-loading">
+          <div className="spinner"></div>
+          <p>Cargando datos de transacciones...</p>
+        </div>
+      )}
       <main className="transacciones-main-content">
         <div className="transacciones-container">
           <section className="transacciones-sidebar">
