@@ -24,6 +24,7 @@ const Calendario = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const userRol = localStorage.getItem("userRol");
   const userName = localStorage.getItem("userName");
+  const [isLoading, setIsLoading] = useState(true);
 
   // Inicializar selectedUser basándose en el rol
   const [selectedUser, setSelectedUser] = useState(
@@ -110,6 +111,8 @@ const Calendario = () => {
         return;
       }
 
+      setIsLoading(true);
+
       const start = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1).toISOString();
       const end = new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 0).toISOString();
 
@@ -130,7 +133,7 @@ const Calendario = () => {
             start: new Date(event.inicio),
             color: event.color,
             allDay: event.allDay || false,
-            className: getEventClassName(event.tipo), // Agregar esta línea
+            className: getEventClassName(event.tipo),
             extendedProps: {
               tipo: event.tipo,
               asignadoA: event.asignadoA,
@@ -156,6 +159,8 @@ const Calendario = () => {
         setEvents(processedEvents);
       } catch (error) {
         console.error("ERROR al cargar eventos:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -196,9 +201,13 @@ const Calendario = () => {
   return (
     <>
       <Header />
+      {isLoading && (
+        <div className="calendario-loading">
+          <div className="spinner"></div>
+          <p>Cargando calendario...</p>
+        </div>
+      )}
       <div className="ts-calendar-container">
-
-
         <div className="ts-calendar-header">
 
           {userRol === "ADMINISTRADOR" && (
