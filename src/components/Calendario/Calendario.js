@@ -173,7 +173,7 @@ const Calendario = () => {
     if (selectedUser) {
       loadEvents();
     }
- }, [currentDate, selectedUser, userRol, isInitialLoad]);
+  }, [currentDate, selectedUser, userRol, isInitialLoad]);
 
   const closeEventModal = () => {
     setSelectedEvent(null);
@@ -272,14 +272,15 @@ const Calendario = () => {
             selectable={true}
             locale="es"
             headerToolbar={false}
-            // Agregar estas propiedades:
+
             slotMinTime="06:00:00"
             slotMaxTime="22:00:00"
             slotDuration="00:30:00"
             expandRows={true}
-            eventMaxStack={3}
-            dayMaxEvents={true}
-            dayMaxEventRows={3}
+            dayMaxEvents={4}
+            dayMaxEventRows={4}
+            moreLinkClick="popover"
+            moreLinkText={(num) => `+${num} more`}
             eventDisplay="block"
             // Para eventos superpuestos:
             slotEventOverlap={false}
