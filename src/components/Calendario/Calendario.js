@@ -25,6 +25,7 @@ const Calendario = () => {
   const userRol = localStorage.getItem("userRol");
   const userName = localStorage.getItem("userName");
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Inicializar selectedUser basándose en el rol
   const [selectedUser, setSelectedUser] = useState(
@@ -111,7 +112,9 @@ const Calendario = () => {
         return;
       }
 
-      setIsLoading(true);
+      if (isInitialLoad) {
+        setIsLoading(true);
+      }
 
       const start = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1).toISOString();
       const end = new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 0).toISOString();
@@ -161,13 +164,16 @@ const Calendario = () => {
         console.error("ERROR al cargar eventos:", error);
       } finally {
         setIsLoading(false);
+        if (isInitialLoad) {
+          setIsInitialLoad(false);
+        }
       }
     };
 
     if (selectedUser) {
       loadEvents();
     }
-  }, [currentDate, selectedUser, userRol]);
+ }, [currentDate, selectedUser, userRol, isInitialLoad]);
 
   const closeEventModal = () => {
     setSelectedEvent(null);
