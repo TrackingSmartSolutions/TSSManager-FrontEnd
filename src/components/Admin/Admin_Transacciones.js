@@ -33,6 +33,37 @@ const fetchWithToken = async (url, options = {}) => {
   }
 };
 
+const fetchEmpresas = async () => {
+  try {
+    const response = await fetchWithToken(`${API_BASE_URL}/empresas?estatus=CLIENTE`);
+    const clientesResponse = await fetchWithToken(`${API_BASE_URL}/empresas?estatus=EN_PROCESO`);
+    return [...(response.data || []), ...(clientesResponse.data || [])];
+  } catch (error) {
+    console.error("Error fetching empresas:", error);
+    return [];
+  }
+};
+
+const fetchProveedores = async () => {
+  try {
+    const response = await fetchWithToken(`${API_BASE_URL}/proveedores`);
+    return response.data || [];
+  } catch (error) {
+    console.error("Error fetching proveedores:", error);
+    return [];
+  }
+};
+
+const fetchUsuarios = async () => {
+  try {
+    const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+    return response.data || [];
+  } catch (error) {
+    console.error("Error fetching usuarios:", error);
+    return [];
+  }
+};
+
 const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
   useEffect(() => {
     if (isOpen) {
@@ -108,6 +139,7 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
   });
   const [errors, setErrors] = useState({});
   const [dynamicCuentas, setDynamicCuentas] = useState([]);
+  const [apiCuentas, setApiCuentas] = useState([]);
   const esquemas = ["UNICA", "SEMANAL", "QUINCENAL", "MENSUAL", "BIMESTRAL", "TRIMESTRAL", "SEMESTRAL", "ANUAL"];
 
   useEffect(() => {
@@ -147,13 +179,37 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
       if (formData.categoria) {
         const cat = categorias.find(c => c.descripcion === formData.categoria);
         if (cat) {
-          const cuentasForCat = cuentas.filter(c => c.categoriaId === cat.id).map(c => c.nombre);
-          setDynamicCuentas([...cuentasForCat]);
+          // Cuentas existentes en base de datos
+          const cuentasForCat = cuentas.filter(c => c.categoria && c.categoria.id === cat.id).map(c => c.nombre);
+
+          // Cuentas dinámicas desde APIs
+          let cuentasAPI = [];
+          const categoriaDesc = formData.categoria.toLowerCase();
+
+          if (formData.tipo === "INGRESO" && ["ventas", "datos y plataforma", "revisiones", "equipos", "pagos de préstamo", "depósitos en garantía"].includes(categoriaDesc)) {
+            const empresas = await fetchEmpresas();
+            cuentasAPI = empresas.map(emp => emp.nombre);
+          } else if (formData.tipo === "GASTO") {
+            if (["rentas", "compra y activación de sim", "recargas de saldos"].includes(categoriaDesc)) {
+              const empresas = await fetchEmpresas();
+              cuentasAPI = empresas.map(emp => emp.nombre);
+            } else if (["compra de equipos", "créditos plataforma"].includes(categoriaDesc)) {
+              const proveedores = await fetchProveedores();
+              cuentasAPI = proveedores.map(prov => prov.nombre);
+            } else if (categoriaDesc === "comisiones") {
+              const usuarios = await fetchUsuarios();
+              cuentasAPI = usuarios.map(user => `${user.nombre} ${user.apellidos}`);
+            }
+          }
+
+          const todasLasCuentas = [...cuentasForCat, ...cuentasAPI];
+          setDynamicCuentas(todasLasCuentas);
+          setApiCuentas([]);
         }
       }
     };
     fetchDynamicCuentas();
-  }, [formData.categoria, cuentas, categorias]);
+  }, [formData.categoria, formData.tipo, cuentas, categorias]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -194,6 +250,7 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
             tipo: formData.tipo,
             categoriaId: categorias.find((c) => c.descripcion === formData.categoria)?.id,
             cuentaId: cuentas.find((c) => c.nombre === formData.cuenta)?.id || null,
+            cuentaNombre: formData.cuenta,
             monto: parseFloat(formData.monto),
             esquema: formData.esquema,
             numeroPagos: parseInt(formData.numeroPagos),
@@ -220,7 +277,7 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
     }
   };
   const categoriasFiltradas = categorias ? categorias.filter((cat) => cat && cat.tipo === formData.tipo) : [];
-  const cuentasFiltradas = dynamicCuentas.length > 0 ? dynamicCuentas : cuentas.filter(c => c.categoria && c.categoria.descripcion === formData.categoria).map(c => c.nombre);
+  const cuentasFiltradas = dynamicCuentas;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Nueva transacción" size="md">
@@ -1009,10 +1066,10 @@ const AdminTransacciones = () => {
   const transaccionesFiltradas = filtrosCuenta === "Todas"
     ? transacciones.filter((t) => t.tipo === "INGRESO" || (t.tipo === "GASTO" && isFullyPaid(t.id)))
     : transacciones.filter(
-      (t) => t.cuenta.nombre === filtrosCuenta && (t.tipo === "INGRESO" || (t.tipo === "GASTO" && isFullyPaid(t.id)))
+      (t) => t.cuenta && t.cuenta.nombre === filtrosCuenta && (t.tipo === "INGRESO" || (t.tipo === "GASTO" && isFullyPaid(t.id)))
     );
 
-  const cuentasUnicas = ["Todas", ...new Set(cuentas.map((c) => c.nombre))];
+  const cuentasUnicas = ["Todas", ...new Set(cuentas.filter(c => c && c.nombre).map((c) => c.nombre))];
 
   return (
     <>
@@ -1128,8 +1185,8 @@ const AdminTransacciones = () => {
                               {transaccion.tipo}
                             </span>
                           </td>
-                          <td>{transaccion.categoria.descripcion}</td>
-                          <td>{transaccion.cuenta.nombre}</td>
+                          <td>{transaccion.categoria?.descripcion || 'N/A'}</td>
+                          <td>{transaccion.cuenta?.nombre || 'N/A'}</td>
                           <td>${transaccion.monto.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
                           <td>
                             {formasPago.find((fp) => fp.value === transaccion.formaPago)?.label || transaccion.formaPago}
