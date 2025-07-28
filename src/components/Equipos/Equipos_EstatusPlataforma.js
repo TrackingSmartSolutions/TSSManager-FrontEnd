@@ -126,6 +126,7 @@ const CheckEquiposSidePanel = ({
 }) => {
   const [selectedPlatform, setSelectedPlatform] = useState("Todos");
   const [equiposStatus, setEquiposStatus] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
 
   const platformMap = {
     TRACKERKING: "TrackerKing",
@@ -152,9 +153,14 @@ const CheckEquiposSidePanel = ({
     }
   }, [isOpen, equipos]);
 
-  const filteredEquipos = equipos.filter(
-    (equipo) => selectedPlatform === "Todos" || equipo.plataforma === selectedPlatform,
-  );
+  const filteredEquipos = equipos
+  .filter((equipo) => selectedPlatform === "Todos" || equipo.plataforma === selectedPlatform)
+  .sort((a, b) => {
+    // Ordena por nombre del equipo alfabéticamente
+    const nombreA = a.nombre ? a.nombre.toLowerCase() : '';
+    const nombreB = b.nombre ? b.nombre.toLowerCase() : '';
+    return nombreA.localeCompare(nombreB);
+  });
 
   const handleStatusChange = (equipoId, newStatus) => {
     const equipo = equipos.find(e => e.id === equipoId);
@@ -204,6 +210,8 @@ const CheckEquiposSidePanel = ({
       return;
     }
 
+    setIsSaving(true);
+
     try {
       await fetchWithToken(`${API_BASE_URL}/equipos/estatus`, {
         method: "POST",
@@ -224,6 +232,8 @@ const CheckEquiposSidePanel = ({
         title: "Error",
         text: error.message,
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -329,9 +339,9 @@ const CheckEquiposSidePanel = ({
             type="button"
             onClick={handleSaveChecklist}
             className="estatusplataforma-btn estatusplataforma-btn-primary estatusplataforma-btn-full-width"
-            disabled={!canCheck || filteredEquipos.length === 0}
+            disabled={!canCheck || filteredEquipos.length === 0 || isSaving}
           >
-            Guardar checklist
+            {isSaving ? "Guardando..." : "Guardar checklist"}
           </button>
         </div>
       </div>
@@ -358,6 +368,8 @@ const ConfirmarCambioEstatusModal = ({
     "Expirado",
     "Apagado",
     "En reparación",
+    "Falla del equipo",
+    "Sin Plataforma"
   ];
 
   const handleConfirm = () => {
@@ -439,7 +451,7 @@ const EquiposEstatusPlataforma = () => {
 
   const fetchData = async () => {
     try {
-      setIsLoading(true); 
+      setIsLoading(true);
       const [equiposResponse, estatusResponse, clientesResponse] = await Promise.all([
         fetchWithToken(`${API_BASE_URL}/equipos`),
         fetchWithToken(`${API_BASE_URL}/equipos/estatus`),
@@ -468,9 +480,9 @@ const EquiposEstatusPlataforma = () => {
         title: "Error",
         text: "No se pudieron cargar los datos",
       });
-    }finally {
-    setIsLoading(false); 
-  }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -511,14 +523,14 @@ const EquiposEstatusPlataforma = () => {
     }
   };
 
- const handleGeneratePDF = async () => {
-  const element = document.createElement("div");
-  const chartImages = await Promise.all([
-    getChartImage("estatusClienteChart"),
-    getChartImage("plataformaChart"),
-  ]);
+  const handleGeneratePDF = async () => {
+    const element = document.createElement("div");
+    const chartImages = await Promise.all([
+      getChartImage("estatusClienteChart"),
+      getChartImage("plataformaChart"),
+    ]);
 
-  element.innerHTML = `
+    element.innerHTML = `
     <h1>Reporte de Estatus Plataforma - ${new Date().toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' })}</h1>
     <h2>Gráfica de Estatus por Cliente</h2>
     <img src="${chartImages[0]}" style="width: 100%; height: auto; max-width: 800px;" />
@@ -549,51 +561,51 @@ const EquiposEstatusPlataforma = () => {
     </table>
   `;
 
-  const opt = {
-    margin: 0.5,
-    filename: `reporte_estatus_${new Date().toISOString().split('T')[0]}.pdf`,
-    image: { type: 'jpeg', quality: 1.0 },
-    html2canvas: { 
-      scale: 3, 
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff'
-    },
-    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+    const opt = {
+      margin: 0.5,
+      filename: `reporte_estatus_${new Date().toISOString().split('T')[0]}.pdf`,
+      image: { type: 'jpeg', quality: 1.0 },
+      html2canvas: {
+        scale: 3,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+    };
+
+    html2pdf().set(opt).from(element).save();
   };
 
-  html2pdf().set(opt).from(element).save();
-};
 
+  const getChartImage = (chartId) => {
+    return new Promise((resolve) => {
+      const chartInstance = chartRefs.current[chartId];
+      if (chartInstance) {
+        const canvas = chartInstance.canvas;
+        const ctx = canvas.getContext('2d');
+        const tempCanvas = document.createElement('canvas');
+        const scale = 4;
+        tempCanvas.width = canvas.width * scale;
+        tempCanvas.height = canvas.height * scale;
 
- const getChartImage = (chartId) => {
-  return new Promise((resolve) => {
-    const chartInstance = chartRefs.current[chartId];
-    if (chartInstance) {
-      const canvas = chartInstance.canvas;
-      const ctx = canvas.getContext('2d');
-      const tempCanvas = document.createElement('canvas');
-      const scale = 4; 
-      tempCanvas.width = canvas.width * scale;
-      tempCanvas.height = canvas.height * scale;
-      
-      const tempCtx = tempCanvas.getContext('2d');
-      tempCtx.scale(scale, scale);
-      
-      chartInstance.draw();
-      tempCtx.drawImage(canvas, 0, 0);
-      
-      resolve(tempCanvas.toDataURL('image/png', 1.0));
-    } else {
-      const canvas = document.querySelector(`#${chartId} canvas`);
-      if (canvas) {
-        resolve(canvas.toDataURL('image/png', 1.0));
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.scale(scale, scale);
+
+        chartInstance.draw();
+        tempCtx.drawImage(canvas, 0, 0);
+
+        resolve(tempCanvas.toDataURL('image/png', 1.0));
       } else {
-        resolve('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==');
+        const canvas = document.querySelector(`#${chartId} canvas`);
+        if (canvas) {
+          resolve(canvas.toDataURL('image/png', 1.0));
+        } else {
+          resolve('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==');
+        }
       }
-    }
-  });
-};
+    });
+  };
 
   const estatusClienteChartData = {
     labels: equiposData.estatusPorCliente.map((item) => item.cliente),
@@ -629,49 +641,49 @@ const EquiposEstatusPlataforma = () => {
   };
 
   const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  devicePixelRatio: 2, 
-  plugins: {
-    legend: {
-      position: "top",
-      labels: {
-        usePointStyle: true,
-        padding: 20,
-        font: {
-          size: 14, 
+    responsive: true,
+    maintainAspectRatio: false,
+    devicePixelRatio: 2,
+    plugins: {
+      legend: {
+        position: "top",
+        labels: {
+          usePointStyle: true,
+          padding: 20,
+          font: {
+            size: 14,
+          },
         },
       },
     },
-  },
-  scales: {
-    y: {
-      beginAtZero: true,
-      ticks: {
-        stepSize: 2,
-        font: {
-          size: 12, 
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 2,
+          font: {
+            size: 12,
+          },
+        },
+      },
+      x: {
+        ticks: {
+          font: {
+            size: 12,
+          },
         },
       },
     },
-    x: {
-      ticks: {
-        font: {
-          size: 12, 
-        },
-      },
-    },
-  },
-  animation: {
-    onComplete: function() {
-      const chartId = this.canvas.parentElement.id;
-      if (chartId) {
-        chartRefs.current[chartId] = this;
+    animation: {
+      onComplete: function () {
+        const chartId = this.canvas.parentElement.id;
+        if (chartId) {
+          chartRefs.current[chartId] = this;
+        }
       }
-    }
-  },
-};
-  
+    },
+  };
+
   const handleMenuNavigation = (menuItem) => {
     switch (menuItem) {
       case "estatus-plataforma":
@@ -698,11 +710,11 @@ const EquiposEstatusPlataforma = () => {
     <>
       <Header />
       {isLoading && (
-      <div className="estatusplataforma-loading">
-        <div className="spinner"></div>
-        <p>Cargando datos de equipos...</p>
-      </div>
-    )}
+        <div className="estatusplataforma-loading">
+          <div className="spinner"></div>
+          <p>Cargando datos de equipos...</p>
+        </div>
+      )}
       <main className="estatusplataforma-main-content">
         <div className="estatusplataforma-container">
           <section className="estatusplataforma-sidebar">

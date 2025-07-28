@@ -924,11 +924,13 @@ const EquiposSim = () => {
                     className="sim-filter-select"
                   >
                     <option value="">Todos los grupos</option>
-                    {[...new Set(sims.map((sim) => sim.grupo))].map((grupo) => (
-                      <option key={grupo} value={grupo}>
-                        Grupo {grupo}
-                      </option>
-                    ))}
+                    {[...new Set(sims.map((sim) => sim.grupo))]
+                      .sort((a, b) => Number(a) - Number(b))
+                      .map((grupo) => (
+                        <option key={grupo} value={grupo}>
+                          Grupo {grupo}
+                        </option>
+                      ))}
                   </select>
                   <button className="sim-btn sim-btn-primary" onClick={() => openModal("form", { sim: null })}>
                     Agregar SIM
@@ -959,6 +961,14 @@ const EquiposSim = () => {
                         const matchesGrupo = !filterGrupo || sim.grupo?.toString() === filterGrupo;
                         const matchesNumero = !filterNumero || sim.numero?.toLowerCase().includes(filterNumero.toLowerCase());
                         return matchesGrupo && matchesNumero;
+                      })
+                      .sort((a, b) => {
+
+                        if (filterGrupo) {
+                          if (a.principal === "SI" && b.principal === "NO") return -1;
+                          if (a.principal === "NO" && b.principal === "SI") return 1;
+                        }
+                        return 0;
                       })
                       .map((sim) => (
                         <tr key={sim.id}>
