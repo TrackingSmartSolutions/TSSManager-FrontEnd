@@ -60,10 +60,11 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
 }
 
 // Modal para Marcar como Pagada
-const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta }) => {
+const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
   const [formData, setFormData] = useState({
     fechaPago: "",
     monto: "",
+    formaPago: "",
   });
   const [errors, setErrors] = useState({});
 
@@ -72,6 +73,7 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta }) => {
       setFormData({
         fechaPago: new Date().toISOString().split("T")[0],
         monto: cuenta.monto.toString(),
+        formaPago: cuenta.formaPago,
       });
       setErrors({});
     }
@@ -90,6 +92,7 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta }) => {
     if (!formData.fechaPago) newErrors.fechaPago = "La fecha de pago es obligatoria";
     if (!formData.monto || Number.parseFloat(formData.monto) <= 0) {
       newErrors.monto = "El monto debe ser mayor a 0";
+    if (!formData.formaPago) newErrors.formaPago = "La forma de pago es obligatoria";
     }
 
     setErrors(newErrors);
@@ -104,6 +107,7 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta }) => {
         estatus: "Pagado",
         fechaPago: formData.fechaPago,
         monto: Number.parseFloat(formData.monto),
+        formaPago: formData.formaPago,
       };
 
       onSave(cuentaActualizada);
@@ -140,6 +144,24 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta }) => {
             />
           </div>
           {errors.monto && <span className="cuentaspagar-error-message">{errors.monto}</span>}
+        </div>
+
+        <div className="cuentaspagar-form-group">
+          <label htmlFor="formaPago">Forma de Pago <span className="required"> *</span></label>
+          <select
+            id="formaPago"
+            value={formData.formaPago}
+            onChange={(e) => handleInputChange("formaPago", e.target.value)}
+            className={`cuentaspagar-form-control ${errors.formaPago ? "error" : ""}`}
+          >
+            <option value="">Seleccionar forma de pago</option>
+            {Object.entries(formasPago).map(([key, value]) => (
+              <option key={key} value={key}>
+                {value}
+              </option>
+            ))}
+          </select>
+          {errors.formaPago && <span className="cuentaspagar-error-message">{errors.formaPago}</span>}
         </div>
 
         <div className="cuentaspagar-form-actions">
@@ -328,6 +350,7 @@ const AdminCuentasPagar = () => {
           id: cuentaActualizada.id,
           fechaPago: cuentaActualizada.fechaPago,
           monto: cuentaActualizada.monto,
+          formaPago: cuentaActualizada.formaPago,
           usuarioId: 1,
         }),
       });
@@ -576,6 +599,7 @@ const AdminCuentasPagar = () => {
           onClose={() => closeModal("marcarPagada")}
           onSave={handleMarcarPagada}
           cuenta={modals.marcarPagada.cuenta}
+          formasPago={formasPago}
         />
 
         <ConfirmarEliminacionModal
