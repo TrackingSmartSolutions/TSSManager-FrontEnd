@@ -257,7 +257,10 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
     GUBERNAMENTAL_MUNICIPAL: "(93) Gubernamental - Órganos legislativos municipales",
     GUBERNAMENTAL_JUSTICIA: "(93) Gubernamental - Impartición de justicia",
     GUBERNAMENTAL_SEGURIDAD: "(93) Gubernamental - Seguridad nacional",
-    GUBERNAMENTAL_OTROS: "(93) Gubernamental - Otras actividades"
+    GUBERNAMENTAL_OTROS: "(93) Gubernamental - Otras actividades",
+
+    // PARTICULAR
+    PARTICULAR: "(99) Particular"
   };
 
   const regimenFiscalOptions = [
@@ -282,9 +285,12 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
     { clave: "623", descripcion: "Opcional para Grupos de Sociedades" },
     { clave: "624", descripcion: "Coordinados" },
     { clave: "628", descripcion: "Hidrocarburos" },
+    { clave: "NO_APLICA", descripcion: "No aplica" },
   ]
 
-  const sectores = Object.entries(sectorMap).map(([value, label]) => ({ value, label }))
+  const sectores = Object.entries(sectorMap)
+    .map(([value, label]) => ({ value, label }))
+    .sort((a, b) => b.label.localeCompare(a.label, 'es', { sensitivity: 'base' }))
 
   const estatusOptions = [
     { value: "POR_CONTACTAR", label: "Por Contactar" },
@@ -303,7 +309,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
         sector: empresa.sector || "",
         domicilioFisico: empresa.domicilioFisico || "",
         domicilioFiscal: empresa.domicilioFiscal || "",
-        rfc: empresa.rfc || "",
+        rfc: empresa.rfc || "XAXX010101000",
         razonSocial: empresa.razonSocial || "",
         regimenFiscal: empresa.regimenFiscal || "",
         propietarioId: empresa.propietario?.id || null,
@@ -316,7 +322,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
         sector: "",
         domicilioFisico: "",
         domicilioFiscal: "",
-        rfc: "",
+        rfc: "XAXX010101000",
         razonSocial: "",
         regimenFiscal: "",
         propietarioId: null,
@@ -378,6 +384,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
       // RFC: Solo letras mayúsculas, números y &
       if (!formData.rfc?.trim()) {
         newErrors.rfc = "Este campo es obligatorio para estatus Cliente";
+        setFormData(prev => ({ ...prev, rfc: "XAXX010101000" }));
       } else if (!/^[A-Z0-9&]+$/.test(formData.rfc.trim())) {
         newErrors.rfc = "Este campo solo debe contener letras mayúsculas, números y &";
       } else if (formData.rfc.trim().length > 13) {

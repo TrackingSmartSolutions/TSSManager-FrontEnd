@@ -92,7 +92,7 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
     if (!formData.fechaPago) newErrors.fechaPago = "La fecha de pago es obligatoria";
     if (!formData.monto || Number.parseFloat(formData.monto) <= 0) {
       newErrors.monto = "El monto debe ser mayor a 0";
-    if (!formData.formaPago) newErrors.formaPago = "La forma de pago es obligatoria";
+      if (!formData.formaPago) newErrors.formaPago = "La forma de pago es obligatoria";
     }
 
     setErrors(newErrors);
@@ -465,6 +465,21 @@ const AdminCuentasPagar = () => {
     return new Date(dateString).toLocaleDateString("es-MX");
   };
 
+  const getDiasRenovacion = (esquema) => {
+  const diasPorEsquema = {
+    "UNICA": 0,
+    "SEMANAL": 7,
+    "QUINCENAL": 14,
+    "MENSUAL": 30,
+    "BIMESTRAL": 60,
+    "TRIMESTRAL": 90,
+    "SEMESTRAL": 180,
+    "ANUAL": 365
+  };
+  
+  return diasPorEsquema[esquema] || 0;
+};
+
   return (
     <>
       <Header />
@@ -530,6 +545,8 @@ const AdminCuentasPagar = () => {
                       <th>Cuenta</th>
                       <th>Monto</th>
                       <th>Forma de Pago</th>
+                      <th>Categoría</th>
+                      <th>Renovación (días)</th>
                       <th>Estatus</th>
                       <th>Nota</th>
                       <th>Acciones</th>
@@ -544,6 +561,8 @@ const AdminCuentasPagar = () => {
                           <td>{cuenta.cuenta.nombre}</td>
                           <td>{formatCurrency(cuenta.monto)}</td>
                           <td>{formasPago[cuenta.formaPago]}</td>
+                          <td>{cuenta.transaccion?.categoria?.descripcion || "-"}</td>
+                          <td>{getDiasRenovacion(cuenta.transaccion?.esquema)}</td>
                           <td>
                             <span className={`cuentaspagar-estatus-badge ${getEstatusClass(cuenta.estatus)}`}>
                               {cuenta.estatus}
@@ -582,7 +601,7 @@ const AdminCuentasPagar = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="8" className="cuentaspagar-no-data">
+                       <td colSpan="10" className="cuentaspagar-no-data">
                           No hay cuentas por pagar registradas
                         </td>
                       </tr>

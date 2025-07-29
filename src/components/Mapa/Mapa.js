@@ -76,9 +76,9 @@ const Mapa = () => {
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isCrmDropdownOpen, setIsCrmDropdownOpen] = useState(false);
-    const [selectedSector, setSelectedSector] = useState("TODOS"); 
+    const [selectedSector, setSelectedSector] = useState("TODOS");
 
-        const addressCleaner = new AddressCleaner();
+    const addressCleaner = new AddressCleaner();
 
 
     // Mapa de sectores
@@ -254,7 +254,10 @@ const Mapa = () => {
         GUBERNAMENTAL_MUNICIPAL: "(93) Gubernamental - Órganos legislativos municipales",
         GUBERNAMENTAL_JUSTICIA: "(93) Gubernamental - Impartición de justicia",
         GUBERNAMENTAL_SEGURIDAD: "(93) Gubernamental - Seguridad nacional",
-        GUBERNAMENTAL_OTROS: "(93) Gubernamental - Otras actividades"
+        GUBERNAMENTAL_OTROS: "(93) Gubernamental - Otras actividades",
+
+        // PARTICULAR
+        PARTICULAR: "(99) Particular"
     };
 
     // Función para obtener coordenadas de una dirección usando Nominatim
@@ -289,22 +292,22 @@ const Mapa = () => {
             if (data.length > 0) {
                 const coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
                 // Guardar en caché tanto la dirección original como la limpia
-                setCoordinatesCache((prev) => ({ 
-                    ...prev, 
+                setCoordinatesCache((prev) => ({
+                    ...prev,
                     [address]: coords,
-                    [cleanedAddress]: coords 
+                    [cleanedAddress]: coords
                 }));
                 return coords;
             } else {
                 // Si no se encuentra con la dirección limpia, intentar con la original
                 console.log(`No se encontraron coordenadas para dirección limpia: ${cleanedAddress}`);
                 console.log(`Intentando con dirección original: ${address}`);
-                
+
                 const originalFormattedAddress = address.endsWith(", México") ? address : `${address}, México`;
                 const fallbackResponse = await fetch(
                     `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(originalFormattedAddress)}&limit=1`
                 );
-                
+
                 if (fallbackResponse.ok) {
                     const fallbackData = await fallbackResponse.json();
                     if (fallbackData.length > 0) {
@@ -313,7 +316,7 @@ const Mapa = () => {
                         return coords;
                     }
                 }
-                
+
                 throw new Error(`No se encontraron coordenadas para: ${address}`);
             }
         } catch (err) {
