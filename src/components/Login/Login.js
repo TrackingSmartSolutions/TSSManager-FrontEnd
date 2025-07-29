@@ -82,7 +82,6 @@ const Login = () => {
     }
   };
 
-  // Función para solicitar cambio de contraseña
  // Función para solicitar cambio de contraseña
 const manejarSolicitudCambioContrasena = async (e) => {
   e.preventDefault();
