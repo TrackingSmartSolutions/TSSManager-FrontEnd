@@ -342,43 +342,48 @@ const AdminCuentasPagar = () => {
     }
   };
 
-  const handleMarcarPagada = async (cuentaActualizada) => {
-    try {
-      const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/marcar-como-pagada`, {
-        method: "POST",
-        body: JSON.stringify({
-          id: cuentaActualizada.id,
-          fechaPago: cuentaActualizada.fechaPago,
-          monto: cuentaActualizada.monto,
-          formaPago: cuentaActualizada.formaPago,
-          usuarioId: 1,
-        }),
-      });
+ const handleMarcarPagada = async (cuentaActualizada) => {
+  try {
+    const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/marcar-como-pagada`, {
+      method: "POST",
+      body: JSON.stringify({
+        id: cuentaActualizada.id,
+        fechaPago: cuentaActualizada.fechaPago,
+        monto: cuentaActualizada.monto,
+        formaPago: cuentaActualizada.formaPago,
+        usuarioId: 1,
+      }),
+    });
 
-      if (response.status === 204) {
-        setCuentasPagar((prev) =>
-          prev.map((c) => (c.id === cuentaActualizada.id ? { ...c, ...cuentaActualizada } : c))
-        );
+    if (response.status === 204) {
+      setCuentasPagar((prev) =>
+        prev.map((c) => (c.id === cuentaActualizada.id ? { ...c, ...cuentaActualizada } : c))
+      );
 
-        const esUltimaCuenta = cuentaActualizada.numeroPago === cuentaActualizada.totalPagos && cuentaActualizada.esquema !== "Única";
-        if (esUltimaCuenta) {
-          openModal("regenerar", { cuenta: cuentaActualizada });
-        } else {
-          Swal.fire({
-            icon: "success",
-            title: "Éxito",
-            text: "Cuenta marcada como pagada",
-          });
-        }
+      // Verificar si es la última cuenta Y no es esquema UNICA
+      const esUltimaCuenta = cuentaActualizada.numeroPago === cuentaActualizada.totalPagos && 
+                            cuentaActualizada.transaccion.esquema !== "UNICA";
+      
+      if (esUltimaCuenta) {
+        openModal("regenerar", { cuenta: cuentaActualizada });
+      } else {
+        Swal.fire({
+          icon: "success",
+          title: "Éxito",
+          text: "Cuenta marcada como pagada",
+        });
       }
-    } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "No se pudo marcar como pagada",
-      });
     }
-  };
+  } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "No se pudo marcar como pagada",
+    });
+  }
+};
+
+
 
   const handleDeleteCuenta = (cuenta) => {
     openModal("confirmarEliminacion", { cuenta });
@@ -409,38 +414,47 @@ const AdminCuentasPagar = () => {
   };
 
   const handleRegenerar = async (confirmar, cuenta) => {
-    closeModal("regenerar");
-    if (confirmar) {
-      try {
-        const response = await fetchWithToken(`${API_BASE_URL}/transacciones/crear`, {
-          method: "POST",
-          body: JSON.stringify({
-            fecha: cuenta.transaccionOriginal.fechaInicial,
-            tipo: "GASTO",
-            categoriaId: cuenta.transaccionOriginal.categoriaId,
-            cuentaId: cuenta.transaccionOriginal.cuentaId,
-            monto: cuenta.transaccionOriginal.monto,
-            esquema: cuenta.transaccionOriginal.esquema,
-            fechaPago: cuenta.transaccionOriginal.fechaInicial,
-            formaPago: cuenta.transaccionOriginal.formaPago,
-            notas: "Regenerada automáticamente",
-          }),
-        });
-        const newTransaccion = await response.json();
+  closeModal("regenerar");
+  
+  if (confirmar) {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/regenerar`, {
+        method: "POST",
+        body: JSON.stringify({
+          transaccionId: cuenta.transaccion.id,
+          fechaUltimoPago: cuenta.fechaPago
+        }),
+      });
+      
+      if (response.ok) {
+        // Actualizar la lista de cuentas por pagar
+        const cuentasResponse = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar`);
+        const updatedCuentas = await cuentasResponse.json();
+        setCuentasPagar(updatedCuentas);
+        
         Swal.fire({
           icon: "success",
           title: "Éxito",
-          text: "Nuevas cuentas por pagar generadas",
-        });
-      } catch (error) {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "No se pudieron regenerar las cuentas",
+          text: "Nuevas cuentas por pagar generadas correctamente",
         });
       }
+    } catch (error) {
+      console.error("Error al regenerar cuentas:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudieron regenerar las cuentas por pagar",
+      });
     }
-  };
+  } else {
+    // Si cancela, solo mostrar mensaje de éxito del pago
+    Swal.fire({
+      icon: "success",
+      title: "Éxito",
+      text: "Cuenta marcada como pagada",
+    });
+  }
+};
 
   const getEstatusClass = (estatus) => {
     switch (estatus) {

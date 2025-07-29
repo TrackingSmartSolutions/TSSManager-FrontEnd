@@ -148,7 +148,9 @@ const Calendario = () => {
               numeroCuenta: event.numeroCuenta,
               cliente: event.cliente,
               estado: event.estado,
-              esquema: event.esquema
+              esquema: event.esquema,
+              monto: event.monto,
+              nota: event.nota
             }
           };
 
@@ -386,11 +388,19 @@ const Calendario = () => {
                       <strong>Fecha de Pago:</strong> {new Date(selectedEvent.start).toLocaleDateString('es-ES')}
                     </div>
                     <div className="ts-calendar-modal-field">
-                      <strong>Cuenta:</strong> {selectedEvent.cliente}
+                      <strong>Monto:</strong> ${selectedEvent.monto ? Number(selectedEvent.monto).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : 'No disponible'}
                     </div>
                     <div className="ts-calendar-modal-field">
-                      <strong>Estatus:</strong> {selectedEvent.estado}
+                      <strong>Estatus:</strong> {selectedEvent.estado || 'No disponible'}
                     </div>
+                    <div className="ts-calendar-modal-field">
+                      <strong>Cuenta:</strong> {selectedEvent.cliente}
+                    </div>
+                    {selectedEvent.nota && selectedEvent.nota.trim() !== '' && (
+                      <div className="ts-calendar-modal-field">
+                        <strong>Nota:</strong> {selectedEvent.nota}
+                      </div>
+                    )}
                   </>
                 )}
               </div>
