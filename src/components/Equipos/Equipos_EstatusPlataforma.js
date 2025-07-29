@@ -142,25 +142,29 @@ const CheckEquiposSidePanel = ({
 
   useEffect(() => {
     if (isOpen && equipos.length > 0) {
-      const initialStatus = {};
-      equipos.forEach((equipo) => {
-        initialStatus[equipo.id] = {
-          status: null,
-          motivo: "",
-        };
+      setEquiposStatus(prevStatus => {
+        const newStatus = { ...prevStatus };
+        equipos.forEach((equipo) => {
+          if (!newStatus[equipo.id]) {
+            newStatus[equipo.id] = {
+              status: null,
+              motivo: "",
+            };
+          }
+        });
+        return newStatus;
       });
-      setEquiposStatus(initialStatus);
     }
   }, [isOpen, equipos]);
 
   const filteredEquipos = equipos
-  .filter((equipo) => selectedPlatform === "Todos" || equipo.plataforma === selectedPlatform)
-  .sort((a, b) => {
-    // Ordena por nombre del equipo alfabéticamente
-    const nombreA = a.nombre ? a.nombre.toLowerCase() : '';
-    const nombreB = b.nombre ? b.nombre.toLowerCase() : '';
-    return nombreA.localeCompare(nombreB);
-  });
+    .filter((equipo) => selectedPlatform === "Todos" || equipo.plataforma === selectedPlatform)
+    .sort((a, b) => {
+      // Ordena por nombre del equipo alfabéticamente
+      const nombreA = a.nombre ? a.nombre.toLowerCase() : '';
+      const nombreB = b.nombre ? b.nombre.toLowerCase() : '';
+      return nombreA.localeCompare(nombreB);
+    });
 
   const handleStatusChange = (equipoId, newStatus) => {
     const equipo = equipos.find(e => e.id === equipoId);
@@ -200,12 +204,13 @@ const CheckEquiposSidePanel = ({
         motivo: data.motivo || null,
       }));
 
-    // Validar que todos los equipos tengan estatus
-    if (equiposConStatus.length !== filteredEquipos.length) {
+    // Validar que todos los equipos de TODAS las plataformas tengan estatus
+    const totalEquiposParaCheck = equipos.length;
+    if (equiposConStatus.length !== totalEquiposParaCheck) {
       Swal.fire({
         icon: "warning",
         title: "Advertencia",
-        text: "Debes asignar un estatus a todos los equipos antes de guardar.",
+        text: `Debes asignar un estatus a todos los equipos antes de guardar. (${equiposConStatus.length}/${totalEquiposParaCheck} completados)`,
       });
       return;
     }
@@ -267,6 +272,12 @@ const CheckEquiposSidePanel = ({
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="estatusplataforma-side-panel-form-group">
+            <div className="estatusplataforma-progress-info">
+              <span>Progreso total: {Object.values(equiposStatus).filter(s => s.status !== null).length} / {equipos.length} equipos</span>
+            </div>
           </div>
 
           <div className="estatusplataforma-side-panel-table-container">

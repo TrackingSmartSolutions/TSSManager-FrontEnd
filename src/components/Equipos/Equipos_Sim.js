@@ -144,6 +144,8 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
 
     if (formData.responsable === "TSS" && formData.principal === "NO" && !formData.grupo) {
       newErrors.grupo = "El grupo es obligatorio cuando no es principal";
+    } else if (formData.tarifa === "M2M_GLOBAL_15" && formData.grupo !== "0") {
+      newErrors.grupo = "Las SIMs M2M Global 15 deben ir en el Grupo 0";
     }
 
     if (formData.responsable === "TSS" && formData.vigencia && formData.vigencia < currentDate) {
@@ -396,17 +398,21 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
               >
                 <option value="">Seleccionar grupo</option>
                 {!isPrincipal &&
-                  gruposDisponibles.map((grupo) => {
-                    const simsInGroup = (sims || []).filter((s) => s.grupo === grupo);
-                    const principalCount = simsInGroup.filter((s) => s.principal === "SI").length;
-                    const nonPrincipalCount = simsInGroup.filter((s) => s.principal === "NO").length;
-                    const remaining = 6 - (principalCount + nonPrincipalCount);
-                    return (
-                      <option key={grupo} value={grupo}>
-                        Grupo {grupo} ({remaining}/6)
-                      </option>
-                    );
-                  })}
+                  (formData.tarifa === "M2M_GLOBAL_15" ? (
+                    <option value="0">Grupo 0 (M2M)</option>
+                  ) : (
+                    gruposDisponibles.map((grupo) => {
+                      const simsInGroup = (sims || []).filter((s) => s.grupo === grupo);
+                      const principalCount = simsInGroup.filter((s) => s.principal === "SI").length;
+                      const nonPrincipalCount = simsInGroup.filter((s) => s.principal === "NO").length;
+                      const remaining = 6 - (principalCount + nonPrincipalCount);
+                      return (
+                        <option key={grupo} value={grupo}>
+                          Grupo {grupo} ({remaining}/6)
+                        </option>
+                      );
+                    })
+                  ))}
               </select>
               {!isPrincipal && <small className="sim-help-text">Seleccione un grupo disponible</small>}
               {errors.grupo && <span className="sim-form-error">{errors.grupo}</span>}
@@ -978,7 +984,7 @@ const EquiposSim = () => {
                           <td>{formatDate(sim.vigencia)}</td>
                           <td>{sim.recarga ? `$${sim.recarga}` : "N/A"}</td>
                           <td>{sim.responsable}</td>
-                          <td>{sim.grupo || "N/A"}</td>
+                          <td>{sim.grupo !== null && sim.grupo !== undefined ? `Grupo ${sim.grupo}` : "N/A"}</td>
                           <td>
                             <span className={sim.principal === "SI" ? "sim-principal-si" : "sim-principal-no"}>
                               {sim.principal}

@@ -957,6 +957,37 @@
   }
 }
 
+.estatusplataforma-progress-info {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 8px 0;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.estatusplataforma-progress-info:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.estatusplataforma-progress-info span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.estatusplataforma-progress-info span::before {
+  content: "📊";
+  font-size: 16px;
+}
+
 .estatusplataforma-loading {
   position: fixed;
   top: 0;
