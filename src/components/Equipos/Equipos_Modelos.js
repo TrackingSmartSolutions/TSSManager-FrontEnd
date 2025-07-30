@@ -330,7 +330,6 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, modelo, onConfirm }) => {
 }
 
 // Componente de Tarjeta de Modelo
-// Componente de Tarjeta de Modelo
 const ModeloCard = ({ modelo, onEdit, onDelete }) => {
   const [showOptions, setShowOptions] = useState(false);
 

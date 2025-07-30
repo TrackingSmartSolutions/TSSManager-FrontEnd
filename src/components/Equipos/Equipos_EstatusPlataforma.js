@@ -510,51 +510,85 @@ const EquiposEstatusPlataforma = () => {
 
   const [lastCheckTime, setLastCheckTime] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [heavyDataLoaded, setHeavyDataLoaded] = useState(false);
+  const [chartsVisible, setChartsVisible] = useState(false);
 
   const fetchData = async () => {
+  try {
+    setIsLoading(true);
+    
+    // Cargar todo de una vez
+    const [dashboardResponse, equiposResponse, clientesResponse] = await Promise.all([
+      fetchWithToken(`${API_BASE_URL}/equipos/dashboard`),
+      fetchWithToken(`${API_BASE_URL}/equipos`),
+      fetchWithToken(`${API_BASE_URL}/empresas`)
+    ]);
+    
+    const dashboardData = await dashboardResponse.json();
+    const equipos = await equiposResponse.json();
+    const empresas = await clientesResponse.json();
+    const clientes = empresas.filter(emp => ["CLIENTE", "EN_PROCESO"].includes(emp.estatus));
+
+    // Procesar fecha
+    let fechaUltimoCheck = new Date().toISOString().split("T")[0];
+    let lastCheckTimestamp = null;
+
+    if (dashboardData.ultimoEstatus.length > 0) {
+      const fechaMasReciente = Math.max(...dashboardData.ultimoEstatus.map(es => new Date(es.fechaCheck).getTime()));
+      fechaUltimoCheck = new Date(fechaMasReciente).toISOString().split("T")[0];
+      lastCheckTimestamp = fechaMasReciente;
+    }
+
+    setLastCheckTime(lastCheckTimestamp);
+
+    setEquiposData({
+      estatusPorCliente: processEstatusPorCliente(equipos, dashboardData.ultimoEstatus, clientes),
+      equiposPorPlataforma: Object.entries(dashboardData.conteosPorPlataforma).map(([plataforma, cantidad]) => ({
+        plataforma,
+        cantidad
+      })),
+      equiposOffline: processEquiposOffline(equipos, dashboardData.ultimoEstatus, clientes),
+      equiposParaCheck: dashboardData.equiposParaCheck,
+      fechaUltimoCheck,
+    });
+    
+    setHeavyDataLoaded(true);
+  } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "No se pudieron cargar los datos",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+  const loadHeavyData = async () => {
+    if (heavyDataLoaded) return;
+
     try {
-      setIsLoading(true);
-      const [equiposResponse, estatusResponse, clientesResponse] = await Promise.all([
+      const [equiposResponse, clientesResponse] = await Promise.all([
         fetchWithToken(`${API_BASE_URL}/equipos`),
-        fetchWithToken(`${API_BASE_URL}/equipos/estatus`),
-        fetchWithToken(`${API_BASE_URL}/empresas`),
+        fetchWithToken(`${API_BASE_URL}/empresas`)
       ]);
 
       const equipos = await equiposResponse.json();
-      const estatusData = await estatusResponse.json();
       const empresas = await clientesResponse.json();
       const clientes = empresas.filter(emp => ["CLIENTE", "EN_PROCESO"].includes(emp.estatus));
 
-      // Obtener la fecha más reciente correctamente
-      let fechaUltimoCheck = new Date().toISOString().split("T")[0];
-      let lastCheckTimestamp = null;
+      const estatusData = equiposData.equiposParaCheck.length > 0 ?
+        await fetchWithToken(`${API_BASE_URL}/equipos/estatus`).then(r => r.json()) : [];
 
-      if (estatusData.length > 0) {
-        // Encontrar la fecha más reciente
-        const fechaMasReciente = Math.max(...estatusData.map(es => new Date(es.fechaCheck).getTime()));
-        fechaUltimoCheck = new Date(fechaMasReciente).toISOString().split("T")[0];
-        lastCheckTimestamp = fechaMasReciente;
-      }
-
-      setLastCheckTime(lastCheckTimestamp);
-
-      const equiposParaCheck = equipos.filter(e => ["VENDIDO", "DEMO"].includes(e.tipo));
-
-      setEquiposData({
+      setEquiposData(prev => ({
+        ...prev,
         estatusPorCliente: processEstatusPorCliente(equipos, estatusData, clientes),
-        equiposPorPlataforma: processEquiposPorPlataforma(equipos),
-        equiposOffline: processEquiposOffline(equipos, estatusData, clientes), 
-        equiposParaCheck,
-        fechaUltimoCheck,
-      });
+        equiposOffline: processEquiposOffline(equipos, estatusData, clientes)
+      }));
+
+      setHeavyDataLoaded(true);
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "No se pudieron cargar los datos",
-      });
-    } finally {
-      setIsLoading(false);
+      console.error('Error cargando datos pesados:', error);
     }
   };
 
@@ -835,8 +869,23 @@ const EquiposEstatusPlataforma = () => {
             <div className="estatusplataforma-charts-grid">
               <div className="estatusplataforma-chart-card">
                 <h4 className="estatusplataforma-chart-title">Estatus de equipos por cliente</h4>
-                <div id="estatusClienteChart" className="estatusplataforma-chart-container">
-                  <Bar data={estatusClienteChartData} options={chartOptions} />
+                <div
+                  id="estatusClienteChart"
+                  className="estatusplataforma-chart-container"
+                  onMouseEnter={() => {
+                    if (!chartsVisible) {
+                      setChartsVisible(true);
+                      loadHeavyData();
+                    }
+                  }}
+                >
+                  {heavyDataLoaded && equiposData.estatusPorCliente.length > 0 ? (
+                    <Bar data={estatusClienteChartData} options={chartOptions} />
+                  ) : (
+                    <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {chartsVisible ? 'Cargando gráfica...' : 'Pase el mouse para cargar'}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -862,22 +911,35 @@ const EquiposEstatusPlataforma = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {equiposData.equiposOffline.length > 0 ? (
-                      equiposData.equiposOffline.map((equipo, index) => (
-                        <tr key={index}>
-                          <td>{equipo.cliente}</td>
-                          <td>{equipo.nombre}</td>
-                          <td>{equipo.plataforma}</td>
-                          <td>
-                            <span className="estatusplataforma-status-cross">✗</span>
+                    {heavyDataLoaded ? (
+                      equiposData.equiposOffline.length > 0 ? (
+                        equiposData.equiposOffline.map((equipo, index) => (
+                          <tr key={index}>
+                            <td>{equipo.cliente}</td>
+                            <td>{equipo.nombre}</td>
+                            <td>{equipo.plataforma}</td>
+                            <td>
+                              <span className="estatusplataforma-status-cross">✗</span>
+                            </td>
+                            <td>{equipo.motivo}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="5" className="estatusplataforma-no-data">
+                            No hay equipos offline
                           </td>
-                          <td>{equipo.motivo}</td>
                         </tr>
-                      ))
+                      )
                     ) : (
                       <tr>
                         <td colSpan="5" className="estatusplataforma-no-data">
-                          No hay equipos offline
+                          <button
+                            onClick={loadHeavyData}
+                            className="estatusplataforma-btn estatusplataforma-btn-primary"
+                          >
+                            Cargar datos de equipos offline
+                          </button>
                         </td>
                       </tr>
                     )}
