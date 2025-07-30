@@ -3401,14 +3401,70 @@ const DetallesTrato = () => {
     const loadTrato = async () => {
       setLoading(true);
       try {
-        const data = await fetchTrato(params.id);
-        const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
-        const usersData = await usersResponse.json();
-        const users = usersData.map((user) => ({ id: user.id, nombre: user.nombreUsuario, nombreReal: user.nombre }));
+        // Cargar datos básicos primero
+        const [tratoData, usersData] = await Promise.all([
+          fetchTrato(params.id),
+          fetchWithToken(`${API_BASE_URL}/auth/users`).then(res => res.json())
+        ]);
+
+        const users = usersData.map((user) => ({ 
+          id: user.id, 
+          nombre: user.nombreUsuario, 
+          nombreReal: user.nombre 
+        }));
         setUsers(users);
 
-        const companiesResponse = await fetchWithToken(`${API_BASE_URL}/empresas`);
-        const companiesData = await companiesResponse.json();
+        const propietarioUser = users.find((user) => user.id === tratoData.propietarioId);
+        const propietarioNombre = propietarioUser ? propietarioUser.nombre : tratoData.propietarioNombre || "";
+
+        setTrato({
+          id: tratoData.id || "",
+          nombre: tratoData.nombre || "",
+          contacto: tratoData.contacto || { nombre: "", telefono: "", whatsapp: "", email: "" },
+          propietario: propietarioNombre,
+          numeroTrato: tratoData.noTrato || "",
+          nombreEmpresa: tratoData.empresaNombre || "",
+          descripcion: tratoData.descripcion || "",
+          domicilio: tratoData.domicilio || "",
+          ingresosEsperados: tratoData.ingresosEsperados ? `$${tratoData.ingresosEsperados.toFixed(2)}` : "",
+          numeroUnidades: tratoData.numeroUnidades || "",
+          sitioWeb: tratoData.sitioWeb || "",
+          sector: tratoData.sector || "",
+          fechaCreacion: tratoData.fechaCreacion ? new Date(tratoData.fechaCreacion).toLocaleDateString() : "",
+          fechaCierre: tratoData.fechaCierre ? new Date(tratoData.fechaCierre).toLocaleDateString() : "",
+          fase: tratoData.fase || "",
+          fases: tratoData.fases || [],
+          actividadesAbiertas: { tareas: [], llamadas: [], reuniones: [] },
+          historialInteracciones: [],
+          notas: [],
+        });
+
+        setLoading(false); 
+
+        // Cargar datos secundarios de forma asíncrona
+        loadSecondaryData(tratoData, users);
+
+      } catch (error) {
+        console.error("Error fetching trato:", error);
+        setLoading(false);
+        Swal.fire({
+          title: "Error",
+          text: "No se pudo cargar el trato",
+          icon: "error",
+        });
+      }
+    };
+
+    const loadSecondaryData = async (tratoData, users) => {
+      try {
+        const [companiesData, emailData] = await Promise.all([
+          fetchWithToken(`${API_BASE_URL}/empresas`).then(res => res.json()),
+          fetchWithToken(`${API_BASE_URL}/correos/trato/${params.id}`)
+            .then(res => res.status === 204 ? [] : res.json())
+            .catch(() => [])
+        ]);
+
+        // Cargar contactos de empresas solo si es necesario
         const companiesWithContacts = await Promise.all(
           companiesData.map(async (company) => {
             try {
@@ -3416,16 +3472,15 @@ const DetallesTrato = () => {
               const contactosData = await contactosResponse.json();
               return { id: company.id, nombre: company.nombre, contactos: contactosData };
             } catch (error) {
-              console.error(`Error fetching contactos for empresa ${company.id}:`, error);
               return { id: company.id, nombre: company.nombre, contactos: [] };
             }
           })
         );
+
         setCompanies(companiesWithContacts);
+        setEmailRecords(Array.isArray(emailData) ? emailData : []);
 
-        const propietarioUser = users.find((user) => user.id === data.propietarioId);
-        const propietarioNombre = propietarioUser ? propietarioUser.nombre : data.propietarioNombre || "";
-
+        // Procesar actividades e historial
         const mapActividad = (actividad) => {
           let nombreContacto = "Sin contacto";
           if (actividad.contactoId) {
@@ -3433,9 +3488,10 @@ const DetallesTrato = () => {
               .flatMap((c) => c.contactos || [])
               .find((c) => c.id === actividad.contactoId);
             nombreContacto = contacto ? contacto.nombre : "Sin contacto";
-          } else if (data.contacto?.nombre) {
-            nombreContacto = data.contacto.nombre;
+          } else if (tratoData.contacto?.nombre) {
+            nombreContacto = tratoData.contacto.nombre;
           }
+          
           return {
             ...actividad,
             nombreContacto: nombreContacto,
@@ -3450,49 +3506,22 @@ const DetallesTrato = () => {
             finalidad: actividad.finalidad || "Sin finalidad",
           };
         };
-        const emailResponse = await fetchWithToken(`${API_BASE_URL}/correos/trato/${params.id}`);
-        let emailData = [];
-        if (emailResponse.status === 204) {
-          setEmailRecords([]);
-        } else if (emailResponse.ok) {
-          emailData = await emailResponse.json();
-          if (Array.isArray(emailData)) {
-            setEmailRecords(emailData);
-          } else {
-            console.error("Error: La respuesta de correos no es un array", emailData);
-            setEmailRecords([]);
-          }
-        } else {
-          console.error(
-            `Error fetching emails: ${emailResponse.status} - ${emailResponse.statusText}`
-          );
-          setEmailRecords([]);
-        }
 
-        setTrato((prev) => ({
+        // Actualizar el trato con los datos procesados
+        setTrato(prev => ({
           ...prev,
-          id: data.id || "",
-          nombre: data.nombre || "",
-          contacto: data.contacto || { nombre: "", telefono: "", whatsapp: "", email: "" },
-          propietario: propietarioNombre,
-          numeroTrato: data.noTrato || "",
-          nombreEmpresa: data.empresaNombre || "",
-          descripcion: data.descripcion || "",
-          domicilio: data.domicilio || "",
-          ingresosEsperados: data.ingresosEsperados ? `$${data.ingresosEsperados.toFixed(2)}` : "",
-          numeroUnidades: data.numeroUnidades || "",
-          sitioWeb: data.sitioWeb || "",
-          sector: data.sector || "",
-          fechaCreacion: data.fechaCreacion ? new Date(data.fechaCreacion).toLocaleDateString() : "",
-          fechaCierre: data.fechaCierre ? new Date(data.fechaCierre).toLocaleDateString() : "",
-          fase: data.fase || "",
-          fases: data.fases || [],
           actividadesAbiertas: {
-            tareas: (data.actividadesAbiertas.tareas || []).filter(a => a.estatus !== "CERRADA").map(mapActividad),
-            llamadas: (data.actividadesAbiertas.llamadas || []).filter(a => a.estatus !== "CERRADA").map(mapActividad),
-            reuniones: (data.actividadesAbiertas.reuniones || []).filter(a => a.estatus !== "CERRADA").map(mapActividad),
+            tareas: (tratoData.actividadesAbiertas?.tareas || [])
+              .filter(a => a.estatus !== "CERRADA")
+              .map(mapActividad),
+            llamadas: (tratoData.actividadesAbiertas?.llamadas || [])
+              .filter(a => a.estatus !== "CERRADA")
+              .map(mapActividad),
+            reuniones: (tratoData.actividadesAbiertas?.reuniones || [])
+              .filter(a => a.estatus !== "CERRADA")
+              .map(mapActividad),
           },
-          historialInteracciones: (data.historialInteracciones || []).map(interaccion => ({
+          historialInteracciones: (tratoData.historialInteracciones || []).map(interaccion => ({
             id: interaccion.id,
             fecha: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toISOString().split('T')[0] : "Sin fecha",
             hora: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : "Sin hora",
@@ -3502,27 +3531,22 @@ const DetallesTrato = () => {
             resultado: interaccion.respuesta ? (interaccion.respuesta === "SI" ? "POSITIVO" : "NEGATIVO") : "Sin resultado",
             interes: interaccion.interes || "Sin interés",
             notas: interaccion.notas || "",
-          })) || [],
-          notas: data.notas.map((n) => ({
+          })),
+          notas: (tratoData.notas || []).map((n) => ({
             id: n.id,
             texto: n.nota.replace(/\\"/g, '"').replace(/^"|"$/g, ''),
             autor: n.autorNombre,
             fecha: n.fechaCreacion ? new Date(n.fechaCreacion).toLocaleDateString() : "",
             editadoPor: n.editadoPorName || null,
             fechaEdicion: n.fechaEdicion ? new Date(n.fechaEdicion).toLocaleDateString() : null,
-          })) || [],
+          })),
         }));
+
       } catch (error) {
-        console.error("Error fetching trato:", error);
-        Swal.fire({
-          title: "Error",
-          text: "No se pudo cargar el trato",
-          icon: "error",
-        });
-      } finally {
-        setLoading(false);
+        console.error("Error loading secondary data:", error);
       }
     };
+
     loadTrato();
   }, [params.id]);
 

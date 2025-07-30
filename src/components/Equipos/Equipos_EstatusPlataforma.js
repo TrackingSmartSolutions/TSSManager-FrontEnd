@@ -196,51 +196,66 @@ const CheckEquiposSidePanel = ({
 
 
   const handleSaveChecklist = async () => {
-    const equiposConStatus = Object.entries(equiposStatus)
-      .filter(([_, data]) => data.status !== null)
-      .map(([equipoId, data]) => ({
-        equipoId: Number.parseInt(equipoId),
-        status: data.status ? "REPORTANDO" : "NO_REPORTANDO",
-        motivo: data.motivo || null,
-      }));
+  const equiposConStatus = Object.entries(equiposStatus)
+    .filter(([_, data]) => data.status !== null)
+    .map(([equipoId, data]) => ({
+      equipoId: Number.parseInt(equipoId),
+      status: data.status ? "REPORTANDO" : "NO_REPORTANDO",
+      motivo: data.motivo || null,
+    }));
 
-    // Validar que todos los equipos de TODAS las plataformas tengan estatus
-    const totalEquiposParaCheck = equipos.length;
-    if (equiposConStatus.length !== totalEquiposParaCheck) {
-      Swal.fire({
-        icon: "warning",
-        title: "Advertencia",
-        text: `Debes asignar un estatus a todos los equipos antes de guardar. (${equiposConStatus.length}/${totalEquiposParaCheck} completados)`,
-      });
-      return;
-    }
 
-    setIsSaving(true);
+  if (equiposConStatus.length === 0) {
+    Swal.fire({
+      icon: "warning",
+      title: "Advertencia",
+      text: "Debes asignar un estatus a al menos un equipo antes de guardar.",
+    });
+    return;
+  }
 
-    try {
-      await fetchWithToken(`${API_BASE_URL}/equipos/estatus`, {
-        method: "POST",
-        body: JSON.stringify(equiposConStatus),
-      });
-      Swal.fire({
-        icon: "success",
-        title: "Éxito",
-        text: `Se ha guardado el checklist de ${equiposConStatus.length} equipos.`,
-      });
-      const todayStart = getTodayStart();
-      setLastCheckTime(todayStart);
-      fetchData();
-      closeModal("checkEquipos");
-    } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.message,
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const equiposSinMotivo = equiposConStatus.filter(e => 
+    e.status === "NO_REPORTANDO" && (!e.motivo || e.motivo.trim() === "")
+  );
+  
+  if (equiposSinMotivo.length > 0) {
+    Swal.fire({
+      icon: "warning",
+      title: "Advertencia",
+      text: "Todos los equipos marcados como 'NO_REPORTANDO' deben tener un motivo.",
+    });
+    return;
+  }
+
+  setIsSaving(true);
+
+  try {
+    await fetchWithToken(`${API_BASE_URL}/equipos/estatus`, {
+      method: "POST",
+      body: JSON.stringify(equiposConStatus),
+    });
+    
+    Swal.fire({
+      icon: "success",
+      title: "Éxito",
+      text: `Se ha guardado el checklist de ${equiposConStatus.length} equipos.`,
+    });
+    
+    const todayStart = getTodayStart();
+    setLastCheckTime(todayStart);
+    fetchData();
+    closeModal("checkEquipos");
+  } catch (error) {
+    console.error("Error al guardar checklist:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: error.message || "Error al guardar el checklist",
+    });
+  } finally {
+    setIsSaving(false);
+  }
+};
 
 
   const canCheck = !lastCheckTime || (Date.now() - lastCheckTime >= 24 * 60 * 60 * 1000);
