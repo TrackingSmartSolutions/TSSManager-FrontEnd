@@ -58,7 +58,6 @@ const fetchWithToken = async (url, options = {}) => {
 const fetchWithRetry = async (url, options = {}, maxRetries = 3) => {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`Intento ${attempt} para: ${url}`);
       return await fetchWithToken(url, options);
     } catch (error) {
       console.warn(`Intento ${attempt} fallido:`, error.message);
@@ -69,7 +68,6 @@ const fetchWithRetry = async (url, options = {}, maxRetries = 3) => {
 
       // Esperar antes del siguiente intento: 2s, 4s, 8s
       const delay = Math.pow(2, attempt) * 1000;
-      console.log(`Esperando ${delay / 1000}s antes del siguiente intento...`);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
@@ -1505,124 +1503,128 @@ const Tratos = () => {
 
 
   const fetchData = async () => {
-    try {
-      setIsLoading(true);
-      const params = new URLSearchParams();
-      const userId = localStorage.getItem("userId");
+  try {
+    setIsLoading(true);
+    // Limpiar datos anteriores
+    setColumnas([]);
+    
+    const params = new URLSearchParams();
+    const userId = localStorage.getItem("userId");
 
-      if (userRol === "EMPLEADO" && userId) {
-        params.append("propietarioId", userId);
-      } else if (selectedUser !== "Todos los usuarios") {
-        params.append("propietarioId", selectedUser);
-      }
-      if (startDate) {
-        params.append("startDate", startDate.toISOString());
-      }
-      if (endDate) {
-        params.append("endDate", endDate.toISOString());
-      }
-
-      console.log("Iniciando carga de datos...");
-
-
-      let usersData = [];
-      if (userRol === "ADMINISTRADOR") {
-        try {
-          const usersResponse = await fetchWithRetry(`${API_BASE_URL}/auth/users`);
-          usersData = await usersResponse.json();
-          setUsers(usersData);
-        } catch (error) {
-          console.error("Error al cargar usuarios:", error);
-        }
-      }
-
-
-      console.log("Cargando tratos...");
-      const tratosResponse = await fetchWithRetry(`${API_BASE_URL}/tratos/filtrar/basico?${params.toString()}`);
-      const tratosBasicos = await tratosResponse.json();
-      console.log(`Tratos básicos cargados: ${tratosBasicos.length} tratos`);
-
-      const columnasData = [
-        { id: 1, nombre: "Clasificación", color: "#E180F4", className: "clasificacion", tratos: [], count: 0 },
-        { id: 2, nombre: "Primer contacto", color: "#C680F4", className: "primer-contacto", tratos: [], count: 0 },
-        { id: 3, nombre: "Envío de información", color: "#AB80F4", className: "envio-de-informacion", tratos: [], count: 0 },
-        { id: 4, nombre: "Reunión", color: "#9280F4", className: "reunion", tratos: [], count: 0 },
-        { id: 5, nombre: "Cotización Propuesta", color: "#8098F4", className: "cotizacion-propuesta-practica", tratos: [], count: 0 },
-        { id: 6, nombre: "Negociación/Revisión", color: "#80C0F4", className: "negociacion-revision", tratos: [], count: 0 },
-        { id: 7, nombre: "Cerrado ganado", color: "#69ED95", className: "cerrado-ganado", tratos: [], count: 0 },
-        { id: 8, nombre: "Respuesta por correo", color: "#EFD47B", className: "respuesta-por-correo", tratos: [], count: 0 },
-        { id: 9, nombre: "Interés futuro", color: "#FFBC79", className: "interes-futuro", tratos: [], count: 0 },
-        { id: 10, nombre: "Cerrado perdido", color: "#FA8585", className: "cerrado-perdido", tratos: [], count: 0 },
-      ];
-
-      tratosBasicos.forEach((tratoBasico) => {
-        const columnaClass = tratoBasico.fase.toLowerCase().replace(/[_ ]/g, "-");
-        const columna = columnasData.find((c) => c.className === columnaClass);
-
-        if (columna) {
-          const tratoFormatted = {
-            id: tratoBasico.id,
-            nombre: tratoBasico.nombre,
-            propietario: tratoBasico.propietarioNombre || "Usuario",
-            fechaCierre: new Date(tratoBasico.fechaCierre).toLocaleDateString(),
-            empresa: tratoBasico.empresaNombre || "Empresa Asociada",
-            numero: tratoBasico.noTrato || "Sin número",
-            ingresoEsperado: tratoBasico.ingresoEsperado,
-            isNeglected: tratoBasico.isNeglected,
-            hasActivities: tratoBasico.hasActivities,
-            actividades: [],
-            lastActivityType: tratoBasico.proximaActividadTipo || null,
-            creatorId: tratoBasico.propietarioId,
-            fechaUltimaActividad: tratoBasico.fechaUltimaActividad,
-            contactoId: tratoBasico.contactoId,
-            proximaActividadTipo: tratoBasico.proximaActividadTipo,
-            proximaActividadFecha: tratoBasico.proximaActividadFecha,
-            actividadesAbiertasCount: tratoBasico.actividadesAbiertasCount
-          };
-
-          columna.tratos.push(tratoFormatted);
-          columna.count++;
-        }
-      });
-      setColumnas(columnasData);
-      console.log("Datos procesados y estado actualizado");
-
-    } catch (error) {
-      console.error("Error al cargar datos:", error);
-
-      // Mensajes de error más útiles
-      let errorMessage = "No se pudieron cargar los datos";
-      let errorTitle = "Error de conexión";
-
-      if (error.message.includes('timeout') || error.message.includes('tardó demasiado')) {
-        errorTitle = "Timeout del servidor";
-        errorMessage = "La consulta tardó demasiado tiempo. El servidor puede estar sobrecargado. Intenta de nuevo en unos minutos.";
-      } else if (error.message.includes('Failed to fetch')) {
-        errorTitle = "Sin conexión";
-        errorMessage = "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
-      } else if (error.message.includes('524')) {
-        errorTitle = "Servidor sobrecargado";
-        errorMessage = "El servidor está experimentando alta carga. Los datos se cargarán automáticamente cuando esté disponible.";
-      }
-
-      Swal.fire({
-        icon: "error",
-        title: errorTitle,
-        text: errorMessage,
-        showCancelButton: true,
-        confirmButtonText: "Reintentar",
-        cancelButtonText: "Cancelar",
-        footer: "Si el problema persiste, contacta al administrador"
-      }).then((result) => {
-        if (result.isConfirmed) {
-
-          setTimeout(() => fetchData(), 2000);
-        }
-      });
-    } finally {
-      setIsLoading(false);
+    if (userRol === "EMPLEADO" && userId) {
+      params.append("propietarioId", userId);
+    } else if (selectedUser !== "Todos los usuarios") {
+      params.append("propietarioId", selectedUser);
     }
-  };
+    if (startDate) {
+      params.append("startDate", startDate.toISOString());
+    }
+    if (endDate) {
+      params.append("endDate", endDate.toISOString());
+    }
+
+    let usersData = [];
+    if (userRol === "ADMINISTRADOR") {
+      try {
+        const usersResponse = await fetchWithRetry(`${API_BASE_URL}/auth/users`);
+        usersData = await usersResponse.json();
+        setUsers(usersData);
+      } catch (error) {
+        console.error("Error al cargar usuarios:", error);
+        setUsers([]); 
+      }
+    }
+
+    const tratosResponse = await fetchWithRetry(`${API_BASE_URL}/tratos/filtrar/basico?${params.toString()}`);
+    const tratosBasicos = await tratosResponse.json();
+
+    if (!Array.isArray(tratosBasicos)) {
+      throw new Error('Los datos de tratos no son válidos');
+    }
+
+    const columnasData = [
+      { id: 1, nombre: "Clasificación", color: "#E180F4", className: "clasificacion", tratos: [], count: 0 },
+      { id: 2, nombre: "Primer contacto", color: "#C680F4", className: "primer-contacto", tratos: [], count: 0 },
+      { id: 3, nombre: "Envío de información", color: "#AB80F4", className: "envio-de-informacion", tratos: [], count: 0 },
+      { id: 4, nombre: "Reunión", color: "#9280F4", className: "reunion", tratos: [], count: 0 },
+      { id: 5, nombre: "Cotización Propuesta", color: "#8098F4", className: "cotizacion-propuesta-practica", tratos: [], count: 0 },
+      { id: 6, nombre: "Negociación/Revisión", color: "#80C0F4", className: "negociacion-revision", tratos: [], count: 0 },
+      { id: 7, nombre: "Cerrado ganado", color: "#69ED95", className: "cerrado-ganado", tratos: [], count: 0 },
+      { id: 8, nombre: "Respuesta por correo", color: "#EFD47B", className: "respuesta-por-correo", tratos: [], count: 0 },
+      { id: 9, nombre: "Interés futuro", color: "#FFBC79", className: "interes-futuro", tratos: [], count: 0 },
+      { id: 10, nombre: "Cerrado perdido", color: "#FA8585", className: "cerrado-perdido", tratos: [], count: 0 },
+    ];
+
+    tratosBasicos.forEach((tratoBasico) => {
+      const columnaClass = tratoBasico.fase.toLowerCase().replace(/[_ ]/g, "-");
+      const columna = columnasData.find((c) => c.className === columnaClass);
+
+      if (columna) {
+        const tratoFormatted = {
+          id: tratoBasico.id,
+          nombre: tratoBasico.nombre,
+          propietario: tratoBasico.propietarioNombre || "Usuario",
+          fechaCierre: new Date(tratoBasico.fechaCierre).toLocaleDateString(),
+          empresa: tratoBasico.empresaNombre || "Empresa Asociada",
+          numero: tratoBasico.noTrato || "Sin número",
+          ingresoEsperado: tratoBasico.ingresoEsperado,
+          isNeglected: tratoBasico.isNeglected,
+          hasActivities: tratoBasico.hasActivities,
+          actividades: [],
+          lastActivityType: tratoBasico.proximaActividadTipo || null,
+          creatorId: tratoBasico.propietarioId,
+          fechaUltimaActividad: tratoBasico.fechaUltimaActividad,
+          contactoId: tratoBasico.contactoId,
+          proximaActividadTipo: tratoBasico.proximaActividadTipo,
+          proximaActividadFecha: tratoBasico.proximaActividadFecha,
+          actividadesAbiertasCount: tratoBasico.actividadesAbiertasCount
+        };
+
+        columna.tratos.push(tratoFormatted);
+        columna.count++;
+      }
+    });
+    
+    setColumnas(columnasData);
+
+  } catch (error) {
+    console.error("Error al cargar datos:", error);
+    
+
+    setColumnas([]);
+    setUsers([]);
+
+    let errorMessage = "No se pudieron cargar los datos";
+    let errorTitle = "Error de conexión";
+
+    if (error.message.includes('timeout') || error.message.includes('tardó demasiado')) {
+      errorTitle = "Timeout del servidor";
+      errorMessage = "La consulta tardó demasiado tiempo. El servidor puede estar sobrecargado. Intenta de nuevo en unos minutos.";
+    } else if (error.message.includes('Failed to fetch')) {
+      errorTitle = "Sin conexión";
+      errorMessage = "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
+    } else if (error.message.includes('524')) {
+      errorTitle = "Servidor sobrecargado";
+      errorMessage = "El servidor está experimentando alta carga. Los datos se cargarán automáticamente cuando esté disponible.";
+    }
+    Swal.fire({
+      icon: "error",
+      title: errorTitle,
+      text: errorMessage,
+      showCancelButton: true,
+      confirmButtonText: "Reintentar",
+      cancelButtonText: "Cancelar",
+      footer: "Si el problema persiste, contacta al administrador"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setTimeout(() => fetchData(), 2000);
+      }
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const loadTratoDetalles = async (tratoId) => {
     if (tratosDetalles.has(tratoId)) {
@@ -1642,9 +1644,20 @@ const Tratos = () => {
   };
 
   useEffect(() => {
+    setColumnas([]);
+    setTratosDetalles(new Map());
+    setIsLoading(true);
+
     fetchData();
   }, [selectedUser, startDate, endDate]);
 
+  useEffect(() => {
+    return () => {
+      setColumnas([]);
+      setTratosDetalles(new Map());
+      setIsLoading(false);
+    };
+  }, []);
 
   useEffect(() => {
     if (startDate && endDate) {
@@ -1810,13 +1823,27 @@ const Tratos = () => {
   };
 
   const handleTratoClick = async (trato) => {
+  try {
     const detalles = await loadTratoDetalles(trato.id);
     if (detalles) {
-      navigate(`/detallestrato/${trato.id}`, { state: { trato: detalles } });
+      navigate(`/detallestrato/${trato.id}`, { 
+        state: { trato: detalles },
+        replace: false
+      });
     } else {
-      navigate(`/detallestrato/${trato.id}`, { state: { trato } });
+      navigate(`/detallestrato/${trato.id}`, { 
+        state: { trato },
+        replace: false
+      });
     }
-  };
+  } catch (error) {
+    console.error("Error al navegar a detalles:", error);
+    navigate(`/detallestrato/${trato.id}`, { 
+      state: { trato },
+      replace: false
+    });
+  }
+};
 
   const allExpanded = expandedColumns.length === columnas.length;
   const handleToggleAllColumns = () => {
