@@ -282,7 +282,7 @@ const CheckEquiposSidePanel = ({
 };
 
 
-  const canCheck = !lastCheckTime || (Date.now() - lastCheckTime >= 16 * 60 * 60 * 1000);
+  const canCheck = !lastCheckTime || (Date.now() - lastCheckTime >= 24 * 60 * 60 * 1000);
 
   return (
     <>
