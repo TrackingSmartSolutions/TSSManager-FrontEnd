@@ -735,17 +735,29 @@ const EquiposEstatusPlataforma = () => {
   };
 
   const plataformaChartData = {
-    labels: equiposData.equiposPorPlataforma.map((item) => item.plataforma),
-    datasets: [
-      {
-        label: "Cantidad de Equipos",
-        data: equiposData.equiposPorPlataforma.map((item) => item.cantidad),
-        backgroundColor: ["#037ce0", "#4CAF50", "#FF9800"],
-        borderColor: ["#037ce0", "#4CAF50", "#FF9800"],
-        borderWidth: 1,
-      },
-    ],
-  };
+  labels: equiposData.equiposPorPlataforma.map((item) => 
+    item.plataforma === "SIN_PLATAFORMA" ? "Sin Plataforma" : item.plataforma
+  ),
+  datasets: [
+    {
+      label: "Cantidad de Equipos",
+      data: equiposData.equiposPorPlataforma.map((item) => item.cantidad),
+      backgroundColor: [
+        "#037ce0", 
+        "#4CAF50", 
+        "#FF9800", 
+        "#9E9E9E" 
+      ],
+      borderColor: [
+        "#037ce0", 
+        "#4CAF50", 
+        "#FF9800", 
+        "#9E9E9E"
+      ],
+      borderWidth: 1,
+    },
+  ],
+};
 
   const chartOptions = {
     responsive: true,
