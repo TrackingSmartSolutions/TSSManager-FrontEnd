@@ -64,22 +64,22 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
 
 const processEstatusPorCliente = (equipos, estatusData, clientes) => {
   const clienteIds = [...new Set(equipos.map(e => e.clienteId || e.clienteDefault || null))].filter(id => id !== null);
-  
+
   // Obtener la fecha más reciente de los datos de estatus
-  const fechaUltimoCheck = estatusData.length > 0 
+  const fechaUltimoCheck = estatusData.length > 0
     ? Math.max(...estatusData.map(es => new Date(es.fechaCheck).getTime()))
     : null;
-  
-  const fechaUltimoCheckStr = fechaUltimoCheck 
-    ? new Date(fechaUltimoCheck).toISOString().split('T')[0] 
+
+  const fechaUltimoCheckStr = fechaUltimoCheck
+    ? new Date(fechaUltimoCheck).toISOString().split('T')[0]
     : null;
 
   return clienteIds.map(clienteId => {
     const equiposCliente = equipos.filter(e => e.clienteId === clienteId || e.clienteDefault === clienteId);
-    
+
     // Filtrar solo los estatus de la fecha más reciente
-    const estatus = estatusData.filter(es => 
-      equiposCliente.some(e => e.id === es.equipoId) && 
+    const estatus = estatusData.filter(es =>
+      equiposCliente.some(e => e.id === es.equipoId) &&
       es.fechaCheck === fechaUltimoCheckStr
     );
 
@@ -107,23 +107,35 @@ const processEquiposPorPlataforma = (equipos) => {
   })).filter(p => p.cantidad > 0);
 };
 
-const processEquiposOffline = (equipos, estatusData) => {
+const processEquiposOffline = (equipos, estatusData, clientes) => {
   if (!estatusData.length) return [];
-  
+
   // Obtener la fecha más reciente
   const fechaUltimo = Math.max(...estatusData.map(es => new Date(es.fechaCheck).getTime()));
   const fechaUltimoStr = new Date(fechaUltimo).toISOString().split('T')[0];
-  
+
   // Filtrar solo los equipos offline de la fecha más reciente
-  const offline = estatusData.filter(es => 
-    es.estatus === "NO_REPORTANDO" && 
+  const offline = estatusData.filter(es =>
+    es.estatus === "NO_REPORTANDO" &&
     es.fechaCheck === fechaUltimoStr
   );
-  
+
   return offline.map(es => {
     const equipo = equipos.find(e => e.id === es.equipoId);
+
+
+    let clienteNombre = "N/A";
+
+    if (equipo.clienteId) {
+
+      const cliente = clientes.find(c => c.id === equipo.clienteId);
+      clienteNombre = cliente?.nombre || `Cliente ID: ${equipo.clienteId}`;
+    } else if (equipo.clienteDefault) {
+      clienteNombre = equipo.clienteDefault;
+    }
+
     return {
-      cliente: equipo.clienteId ? equipos.find(e => e.id === equipo.clienteId)?.nombre || equipo.clienteId : equipo.clienteDefault || "N/A",
+      cliente: clienteNombre,
       nombre: equipo.nombre,
       plataforma: equipo.plataforma,
       motivo: es.motivo,
@@ -220,69 +232,70 @@ const CheckEquiposSidePanel = ({
 
 
   const handleSaveChecklist = async () => {
-  const equiposConStatus = Object.entries(equiposStatus)
-    .filter(([_, data]) => data.status !== null)
-    .map(([equipoId, data]) => ({
-      equipoId: Number.parseInt(equipoId),
-      status: data.status ? "REPORTANDO" : "NO_REPORTANDO",
-      motivo: data.motivo || null,
-    }));
+    const equiposConStatus = Object.entries(equiposStatus)
+      .filter(([_, data]) => data.status !== null)
+      .map(([equipoId, data]) => ({
+        equipoId: Number.parseInt(equipoId),
+        status: data.status ? "REPORTANDO" : "NO_REPORTANDO",
+        motivo: data.motivo || null,
+      }));
 
 
-  if (equiposConStatus.length === 0) {
-    Swal.fire({
-      icon: "warning",
-      title: "Advertencia",
-      text: "Debes asignar un estatus a al menos un equipo antes de guardar.",
-    });
-    return;
-  }
+    if (equiposConStatus.length === 0) {
+      Swal.fire({
+        icon: "warning",
+        title: "Advertencia",
+        text: "Debes asignar un estatus a al menos un equipo antes de guardar.",
+      });
+      return;
+    }
 
-  const equiposSinMotivo = equiposConStatus.filter(e => 
-    e.status === "NO_REPORTANDO" && (!e.motivo || e.motivo.trim() === "")
-  );
-  
-  if (equiposSinMotivo.length > 0) {
-    Swal.fire({
-      icon: "warning",
-      title: "Advertencia",
-      text: "Todos los equipos marcados como 'NO_REPORTANDO' deben tener un motivo.",
-    });
-    return;
-  }
+    const equiposSinMotivo = equiposConStatus.filter(e =>
+      e.status === "NO_REPORTANDO" && (!e.motivo || e.motivo.trim() === "")
+    );
 
-  setIsSaving(true);
+    if (equiposSinMotivo.length > 0) {
+      Swal.fire({
+        icon: "warning",
+        title: "Advertencia",
+        text: "Todos los equipos marcados como 'NO_REPORTANDO' deben tener un motivo.",
+      });
+      return;
+    }
 
-  try {
-    await fetchWithToken(`${API_BASE_URL}/equipos/estatus`, {
-      method: "POST",
-      body: JSON.stringify(equiposConStatus),
-    });
-    
-    Swal.fire({
-      icon: "success",
-      title: "Éxito",
-      text: `Se ha guardado el checklist de ${equiposConStatus.length} equipos.`,
-    });
-    
-    const todayStart = getTodayStart();
-    setLastCheckTime(todayStart);
-    fetchData();
-    closeModal("checkEquipos");
-  } catch (error) {
-    console.error("Error al guardar checklist:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: error.message || "Error al guardar el checklist",
-    });
-  } finally {
-    setIsSaving(false);
-  }
-};
+    setIsSaving(true);
+
+    try {
+      await fetchWithToken(`${API_BASE_URL}/equipos/estatus`, {
+        method: "POST",
+        body: JSON.stringify(equiposConStatus),
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: "Éxito",
+        text: `Se ha guardado el checklist de ${equiposConStatus.length} equipos.`,
+      });
+
+      const todayStart = getTodayStart();
+      setLastCheckTime(todayStart);
+      fetchData();
+      closeModal("checkEquipos");
+    } catch (error) {
+      console.error("Error al guardar checklist:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.message || "Error al guardar el checklist",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
 
-const canCheck = true;
+  const canCheck = !lastCheckTime || (Date.now() - lastCheckTime >= 16 * 60 * 60 * 1000);
+
   return (
     <>
       {isOpen && <div className="estatusplataforma-side-panel-overlay" onClick={onClose}></div>}
@@ -499,51 +512,51 @@ const EquiposEstatusPlataforma = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = async () => {
-  try {
-    setIsLoading(true);
-    const [equiposResponse, estatusResponse, clientesResponse] = await Promise.all([
-      fetchWithToken(`${API_BASE_URL}/equipos`),
-      fetchWithToken(`${API_BASE_URL}/equipos/estatus`),
-      fetchWithToken(`${API_BASE_URL}/empresas`),
-    ]);
-    
-    const equipos = await equiposResponse.json();
-    const estatusData = await estatusResponse.json();
-    const empresas = await clientesResponse.json();
-    const clientes = empresas.filter(emp => ["CLIENTE", "EN_PROCESO"].includes(emp.estatus));
+    try {
+      setIsLoading(true);
+      const [equiposResponse, estatusResponse, clientesResponse] = await Promise.all([
+        fetchWithToken(`${API_BASE_URL}/equipos`),
+        fetchWithToken(`${API_BASE_URL}/equipos/estatus`),
+        fetchWithToken(`${API_BASE_URL}/empresas`),
+      ]);
 
-    // Obtener la fecha más reciente correctamente
-    let fechaUltimoCheck = new Date().toISOString().split("T")[0];
-    let lastCheckTimestamp = null;
-    
-    if (estatusData.length > 0) {
-      // Encontrar la fecha más reciente
-      const fechaMasReciente = Math.max(...estatusData.map(es => new Date(es.fechaCheck).getTime()));
-      fechaUltimoCheck = new Date(fechaMasReciente).toISOString().split("T")[0];
-      lastCheckTimestamp = fechaMasReciente;
+      const equipos = await equiposResponse.json();
+      const estatusData = await estatusResponse.json();
+      const empresas = await clientesResponse.json();
+      const clientes = empresas.filter(emp => ["CLIENTE", "EN_PROCESO"].includes(emp.estatus));
+
+      // Obtener la fecha más reciente correctamente
+      let fechaUltimoCheck = new Date().toISOString().split("T")[0];
+      let lastCheckTimestamp = null;
+
+      if (estatusData.length > 0) {
+        // Encontrar la fecha más reciente
+        const fechaMasReciente = Math.max(...estatusData.map(es => new Date(es.fechaCheck).getTime()));
+        fechaUltimoCheck = new Date(fechaMasReciente).toISOString().split("T")[0];
+        lastCheckTimestamp = fechaMasReciente;
+      }
+
+      setLastCheckTime(lastCheckTimestamp);
+
+      const equiposParaCheck = equipos.filter(e => ["VENDIDO", "DEMO"].includes(e.tipo));
+
+      setEquiposData({
+        estatusPorCliente: processEstatusPorCliente(equipos, estatusData, clientes),
+        equiposPorPlataforma: processEquiposPorPlataforma(equipos),
+        equiposOffline: processEquiposOffline(equipos, estatusData, clientes), 
+        equiposParaCheck,
+        fechaUltimoCheck,
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudieron cargar los datos",
+      });
+    } finally {
+      setIsLoading(false);
     }
-    
-    setLastCheckTime(lastCheckTimestamp);
-    
-    const equiposParaCheck = equipos.filter(e => ["VENDIDO", "DEMO"].includes(e.tipo));
-
-    setEquiposData({
-      estatusPorCliente: processEstatusPorCliente(equipos, estatusData, clientes),
-      equiposPorPlataforma: processEquiposPorPlataforma(equipos),
-      equiposOffline: processEquiposOffline(equipos, estatusData),
-      equiposParaCheck,
-      fechaUltimoCheck,
-    });
-  } catch (error) {
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "No se pudieron cargar los datos",
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
     fetchData();
