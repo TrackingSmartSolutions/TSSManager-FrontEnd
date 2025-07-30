@@ -64,10 +64,24 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
 
 const processEstatusPorCliente = (equipos, estatusData, clientes) => {
   const clienteIds = [...new Set(equipos.map(e => e.clienteId || e.clienteDefault || null))].filter(id => id !== null);
+  
+  // Obtener la fecha más reciente de los datos de estatus
+  const fechaUltimoCheck = estatusData.length > 0 
+    ? Math.max(...estatusData.map(es => new Date(es.fechaCheck).getTime()))
+    : null;
+  
+  const fechaUltimoCheckStr = fechaUltimoCheck 
+    ? new Date(fechaUltimoCheck).toISOString().split('T')[0] 
+    : null;
+
   return clienteIds.map(clienteId => {
     const equiposCliente = equipos.filter(e => e.clienteId === clienteId || e.clienteDefault === clienteId);
-    const fechaUltimoCheck = estatusData[0]?.fechaCheck;
-    const estatus = estatusData.filter(es => equiposCliente.some(e => e.id === es.equipoId) && es.fechaCheck === fechaUltimoCheck);
+    
+    // Filtrar solo los estatus de la fecha más reciente
+    const estatus = estatusData.filter(es => 
+      equiposCliente.some(e => e.id === es.equipoId) && 
+      es.fechaCheck === fechaUltimoCheckStr
+    );
 
     const enLinea = estatus.filter(es => es.estatus === "REPORTANDO").length;
     const fueraLinea = estatus.filter(es => es.estatus === "NO_REPORTANDO").length;
@@ -94,8 +108,18 @@ const processEquiposPorPlataforma = (equipos) => {
 };
 
 const processEquiposOffline = (equipos, estatusData) => {
-  const fechaUltimo = estatusData[0]?.fechaCheck;
-  const offline = estatusData.filter(es => es.estatus === "NO_REPORTANDO" && es.fechaCheck === fechaUltimo);
+  if (!estatusData.length) return [];
+  
+  // Obtener la fecha más reciente
+  const fechaUltimo = Math.max(...estatusData.map(es => new Date(es.fechaCheck).getTime()));
+  const fechaUltimoStr = new Date(fechaUltimo).toISOString().split('T')[0];
+  
+  // Filtrar solo los equipos offline de la fecha más reciente
+  const offline = estatusData.filter(es => 
+    es.estatus === "NO_REPORTANDO" && 
+    es.fechaCheck === fechaUltimoStr
+  );
+  
   return offline.map(es => {
     const equipo = equipos.find(e => e.id === es.equipoId);
     return {
@@ -258,7 +282,7 @@ const CheckEquiposSidePanel = ({
 };
 
 
-  const canCheck = !lastCheckTime || (Date.now() - lastCheckTime >= 24 * 60 * 60 * 1000);
+  const canCheck = !lastCheckTime || (Date.now() - lastCheckTime >= 16 * 60 * 60 * 1000);
 
   return (
     <>
@@ -476,40 +500,51 @@ const EquiposEstatusPlataforma = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = async () => {
-    try {
-      setIsLoading(true);
-      const [equiposResponse, estatusResponse, clientesResponse] = await Promise.all([
-        fetchWithToken(`${API_BASE_URL}/equipos`),
-        fetchWithToken(`${API_BASE_URL}/equipos/estatus`),
-        fetchWithToken(`${API_BASE_URL}/empresas`),
-      ]);
-      const equipos = await equiposResponse.json();
-      const estatusData = await estatusResponse.json();
-      const empresas = await clientesResponse.json();
-      const clientes = empresas.filter(emp => ["CLIENTE", "EN_PROCESO"].includes(emp.estatus));
+  try {
+    setIsLoading(true);
+    const [equiposResponse, estatusResponse, clientesResponse] = await Promise.all([
+      fetchWithToken(`${API_BASE_URL}/equipos`),
+      fetchWithToken(`${API_BASE_URL}/equipos/estatus`),
+      fetchWithToken(`${API_BASE_URL}/empresas`),
+    ]);
+    
+    const equipos = await equiposResponse.json();
+    const estatusData = await estatusResponse.json();
+    const empresas = await clientesResponse.json();
+    const clientes = empresas.filter(emp => ["CLIENTE", "EN_PROCESO"].includes(emp.estatus));
 
-      const fechaUltimoCheck = estatusData.length > 0 ? estatusData[0].fechaCheck : new Date().toISOString().split("T")[0];
-      const lastCheckTimestamp = estatusData.length > 0 ? new Date(estatusData[0].fechaCheck).getTime() : null;
-      setLastCheckTime(lastCheckTimestamp);
-      const equiposParaCheck = equipos.filter(e => ["VENDIDO", "DEMO"].includes(e.tipo));
-
-      setEquiposData({
-        estatusPorCliente: processEstatusPorCliente(equipos, estatusData, clientes),
-        equiposPorPlataforma: processEquiposPorPlataforma(equipos),
-        equiposOffline: processEquiposOffline(equipos, estatusData),
-        equiposParaCheck,
-        fechaUltimoCheck,
-      });
-    } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "No se pudieron cargar los datos",
-      });
-    } finally {
-      setIsLoading(false);
+    // Obtener la fecha más reciente correctamente
+    let fechaUltimoCheck = new Date().toISOString().split("T")[0];
+    let lastCheckTimestamp = null;
+    
+    if (estatusData.length > 0) {
+      // Encontrar la fecha más reciente
+      const fechaMasReciente = Math.max(...estatusData.map(es => new Date(es.fechaCheck).getTime()));
+      fechaUltimoCheck = new Date(fechaMasReciente).toISOString().split("T")[0];
+      lastCheckTimestamp = fechaMasReciente;
     }
-  };
+    
+    setLastCheckTime(lastCheckTimestamp);
+    
+    const equiposParaCheck = equipos.filter(e => ["VENDIDO", "DEMO"].includes(e.tipo));
+
+    setEquiposData({
+      estatusPorCliente: processEstatusPorCliente(equipos, estatusData, clientes),
+      equiposPorPlataforma: processEquiposPorPlataforma(equipos),
+      equiposOffline: processEquiposOffline(equipos, estatusData),
+      equiposParaCheck,
+      fechaUltimoCheck,
+    });
+  } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "No se pudieron cargar los datos",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchData();

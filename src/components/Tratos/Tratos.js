@@ -1378,9 +1378,9 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
       );
     }
 
-    // Caso 2: Sin actividades abiertas
-    const openActivities = trato.actividades?.filter((activity) => activity.estatus === "ABIERTA") || [];
-    if (openActivities.length === 0) {
+    // Caso 2: Sin actividades abiertas (usando los nuevos campos optimizados)
+    const openActivitiesCount = trato.actividadesAbiertasCount || 0;
+    if (openActivitiesCount === 0) {
       return (
         <img
           src={addActivity || "/placeholder.svg"}
@@ -1394,16 +1394,11 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
       );
     }
 
-    // Caso 3: Actividad más cercana (solo entre actividades abiertas)
-    const nearestActivity = openActivities.reduce((closest, current) => {
-      const closestDate = closest.fechaLimite ? new Date(closest.fechaLimite) : null;
-      const currentDate = current.fechaLimite ? new Date(current.fechaLimite) : null;
-      if (!closestDate) return current;
-      if (!currentDate) return closest;
-      return currentDate < closestDate ? current : closest;
-    }, { fechaLimite: null });
+    // Caso 3: Hay actividades abiertas, mostrar la más cercana
+    const proximaActividadTipo = trato.proximaActividadTipo;
+    const proximaActividadFecha = trato.proximaActividadFecha;
 
-    if (!nearestActivity || !nearestActivity.tipo || !nearestActivity.fechaLimite) {
+    if (!proximaActividadTipo || !proximaActividadFecha) {
       return (
         <img
           src={addActivity || "/placeholder.svg"}
@@ -1417,26 +1412,31 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
       );
     }
 
-    const activityDate = new Date(nearestActivity.fechaLimite);
+    const activityDate = new Date(proximaActividadFecha);
     activityDate.setHours(0, 0, 0, 0);
-    const timeDiff = (activityDate - currentDate) / (1000 * 60 * 60 * 24);
     let iconClass = "activity-icon";
 
-    if (activityDate > tomorrow) iconClass += " activity-future"; // Mañana en adelante
-    else if (activityDate.toDateString() === currentDate.toDateString()) iconClass += " activity-today"; // Hoy
-    else if (activityDate < currentDate) iconClass += " activity-overdue"; // Vencida
+    // Determinar el estado temporal de la actividad
+    if (activityDate > tomorrow) {
+      iconClass += " activity-future"; // Mañana en adelante
+    } else if (activityDate.toDateString() === currentDate.toDateString()) {
+      iconClass += " activity-today"; // Hoy
+    } else if (activityDate < currentDate) {
+      iconClass += " activity-overdue"; // Vencida
+    }
 
+    // Mapear el tipo de actividad al icono correspondiente
     const iconMap = {
       LLAMADA: activityCall,
       REUNION: activityMeeting,
       TAREA: activityTask,
     };
-    const iconSrc = iconMap[nearestActivity.tipo] || addActivity;
+    const iconSrc = iconMap[proximaActividadTipo] || addActivity;
 
     return (
       <img
         src={iconSrc || "/placeholder.svg"}
-        alt={`${nearestActivity.tipo} Programada`}
+        alt={`${proximaActividadTipo} Programada`}
         className={iconClass}
         onClick={(e) => {
           e.stopPropagation();
@@ -1472,6 +1472,8 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
           <strong>Ingresos esperados $</strong> {trato.ingresoEsperado}
         </div>
       )}
+
+
     </div>
   );
 };
@@ -1709,17 +1711,8 @@ const Tratos = () => {
     fetchData();
   };
 
-  const handleSaveActividad = (actividad, tipo) => {
-    const tratoId = modals.seleccionarActividad.tratoId;
-    setColumnas((prev) =>
-      prev.map((columna) => ({
-        ...columna,
-        tratos: columna.tratos.map((trato) =>
-          trato.id === tratoId ? { ...trato, hasActivities: true, lastActivityType: tipo, isNeglected: false, fechaUltimaActividad: new Date().toISOString() } : trato
-        ),
-      }))
-    );
-    fetchData();
+  const handleSaveActividad = async (actividad, tipo) => {
+    await fetchData();
   };
 
   const handleDragStart = (trato) => {
