@@ -543,7 +543,7 @@ const EquiposEstatusPlataforma = () => {
       setEquiposData({
         estatusPorCliente: processEstatusPorCliente(equipos, estatusData, clientes),
         equiposPorPlataforma: processEquiposPorPlataforma(equipos),
-        equiposOffline: processEquiposOffline(equipos, estatusData, clientes), 
+        equiposOffline: processEquiposOffline(equipos, estatusData, clientes),
         equiposParaCheck,
         fechaUltimoCheck,
       });
@@ -681,7 +681,11 @@ const EquiposEstatusPlataforma = () => {
   };
 
   const estatusClienteChartData = {
-    labels: equiposData.estatusPorCliente.map((item) => item.cliente),
+    labels: equiposData.estatusPorCliente.map((item) => {
+      return item.cliente.length > 18 ?
+        item.cliente.substring(0, 18) + '...' :
+        item.cliente;
+    }),
     datasets: [
       {
         label: "En Línea",
@@ -728,6 +732,15 @@ const EquiposEstatusPlataforma = () => {
           },
         },
       },
+      tooltip: {
+        callbacks: {
+          title: function (context) {
+            const index = context[0].dataIndex;
+            const fullName = equiposData.estatusPorCliente[index]?.cliente;
+            return fullName || context[0].label;
+          }
+        }
+      }
     },
     scales: {
       y: {
@@ -742,9 +755,22 @@ const EquiposEstatusPlataforma = () => {
       x: {
         ticks: {
           font: {
-            size: 12,
+            size: 10,
           },
+          maxRotation: 45,
+          minRotation: 45,
+          padding: 5,
+          autoSkip: false,
+          maxTicksLimit: false,
+          callback: function (value, index, values) {
+            const label = this.getLabelForValue(value);
+            if (typeof label === 'string') {
+              return label.length > 18 ? label.substring(0, 18) + '...' : label;
+            }
+            return label;
+          }
         },
+        display: true,
       },
     },
     animation: {
@@ -755,6 +781,14 @@ const EquiposEstatusPlataforma = () => {
         }
       }
     },
+    layout: {
+      padding: {
+        bottom: 60,
+        left: 10,
+        right: 10,
+        top: 10
+      }
+    }
   };
 
   const handleMenuNavigation = (menuItem) => {
@@ -835,7 +869,15 @@ const EquiposEstatusPlataforma = () => {
             <div className="estatusplataforma-charts-grid">
               <div className="estatusplataforma-chart-card">
                 <h4 className="estatusplataforma-chart-title">Estatus de equipos por cliente</h4>
-                <div id="estatusClienteChart" className="estatusplataforma-chart-container">
+                <div
+                  id="estatusClienteChart"
+                  className="estatusplataforma-chart-container"
+                  style={{
+                    height: '450px',
+                    minHeight: '450px',
+                    width: '100%'
+                  }}
+                >
                   <Bar data={estatusClienteChartData} options={chartOptions} />
                 </div>
               </div>

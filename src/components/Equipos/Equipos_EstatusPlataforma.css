@@ -957,6 +957,23 @@
   }
 }
 
+.estatusplataforma-chart-container {
+  height: 450px !important;
+  min-height: 450px !important;
+  width: 100% !important;
+  position: relative;
+  overflow: visible;
+}
+
+.estatusplataforma-chart-card {
+  min-height: 520px;
+  padding-bottom: 20px;
+}
+
+.estatusplataforma-chart-container canvas {
+  max-height: 100% !important;
+}
+
 .estatusplataforma-progress-info {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   border: 2px solid #dee2e6;

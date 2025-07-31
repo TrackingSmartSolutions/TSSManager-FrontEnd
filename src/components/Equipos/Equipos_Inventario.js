@@ -468,14 +468,14 @@ const EquiposInventario = () => {
   ];
 
   const clienteFilterOptions = [
-    { value: "", label: "Todos los clientes" },
-    { value: "AG", label: "AG" },
-    { value: "BN", label: "BN" },
-    { value: "PERDIDO", label: "PERDIDO" },
-    ...clientes
-      .map(cliente => ({ value: cliente.id, label: cliente.nombre }))
-      .sort((a, b) => a.label.localeCompare(b.label))
-  ];
+  { value: "", label: "Todos los clientes" },
+  { value: "AG", label: "AG" },
+  { value: "BN", label: "BN" },
+  { value: "PERDIDO", label: "PERDIDO" },
+  ...clientes
+    .map(cliente => ({ value: cliente.id, label: cliente.nombre }))
+    .sort((a, b) => a.label.localeCompare(b.label))
+];
 
   useEffect(() => {
     fetchData();
@@ -494,12 +494,13 @@ const EquiposInventario = () => {
       const equiposData = await equiposResponse.json();
       const modelosData = await modelosResponse.json();
       setEquipos(equiposData);
-      setModelos(modelosData);
+      setModelos(modelosData); // Asegúrate de que modelos se actualice
       setProveedores(await proveedoresResponse.json());
       const empresas = await empresasResponse.json();
       const filteredClientes = empresas.filter(emp => ["CLIENTE", "EN_PROCESO"].includes(emp.estatus));
       setClientes(filteredClientes);
       setSims(await simsResponse.json());
+      // No llames a generateChartData aquí, lo manejaremos en useEffect
     } catch (error) {
       Swal.fire({
         icon: "error",
@@ -513,77 +514,44 @@ const EquiposInventario = () => {
 
   // Generar la gráfica cuando cambien equipos o modelos
   useEffect(() => {
-    if (equipos.length > 0 && clientes.length > 0) {
+    if (equipos.length > 0 && modelos.length > 0) {
       generateChartData();
     }
-  }, [equipos, clientes]);
+  }, [equipos, modelos]);
 
   const generateChartData = () => {
-    const clientesConEquipos = {};
+    const usos = [...new Set(equipos.map(e => {
+      const modelo = modelos.find(m => m.id === e.modeloId);
+      return modelo ? modelo.uso : "Desconocido";
+    }))].filter(uso => uso !== "Desconocido");
 
-    // Contar equipos por cliente y estatus
+    const tipos = ["ALMACEN", "DEMO", "VENDIDO"];
+
+    // Inicializar datos para cada tipo
+    const datasets = tipos.map(tipo => ({
+      label: tipo,
+      data: usos.map(() => 0),
+      backgroundColor: tipo === "ALMACEN" ? "#2563eb" : tipo === "DEMO" ? "#f59e0b" : "#10b981",
+    }));
+
+    // Contar equipos por uso y tipo
     equipos.forEach(equipo => {
-      let clienteNombre;
-      let clienteId;
-
-      if (equipo.clienteId) {
-        const cliente = clientes.find(c => c.id === equipo.clienteId);
-        clienteNombre = cliente?.nombre || `Cliente ${equipo.clienteId}`;
-        clienteId = equipo.clienteId;
-      } else if (equipo.clienteDefault) {
-        clienteNombre = equipo.clienteDefault;
-        clienteId = equipo.clienteDefault;
-      } else {
-        clienteNombre = "Sin Cliente";
-        clienteId = "sin_cliente";
+      const modelo = modelos.find(m => m.id === equipo.modeloId);
+      const uso = modelo ? modelo.uso : "Desconocido";
+      const tipo = equipo.tipo;
+      const usoIndex = usos.indexOf(uso);
+      const tipoIndex = tipos.indexOf(tipo);
+      if (usoIndex !== -1 && tipoIndex !== -1) {
+        datasets[tipoIndex].data[usoIndex]++;
       }
-
-      if (!clientesConEquipos[clienteId]) {
-        clientesConEquipos[clienteId] = {
-          nombre: clienteNombre,
-          'En Línea': 0,
-          'Fuera de Línea': 0
-        };
-      }
-
-      // Determinar estatus
-      const estatus = equipo.estatus === 'ACTIVO' ? 'En Línea' : 'Fuera de Línea';
-      clientesConEquipos[clienteId][estatus]++;
     });
 
-    const clienteIds = Object.keys(clientesConEquipos);
-
-    // Función para truncar nombres largos
-    const truncateLabel = (label, maxLength = 12) => {
-      if (label.length <= maxLength) return label;
-      return label.substring(0, maxLength) + '...';
-    };
-
-    const labels = clienteIds.map(id => truncateLabel(clientesConEquipos[id].nombre));
-
-    const datasets = [
-      {
-        label: 'En Línea',
-        data: clienteIds.map(id => clientesConEquipos[id]['En Línea']),
-        backgroundColor: '#22c55e',
-        borderColor: '#16a34a',
-        borderWidth: 1
-      },
-      {
-        label: 'Fuera de Línea',
-        data: clienteIds.map(id => clientesConEquipos[id]['Fuera de Línea']),
-        backgroundColor: '#ef4444',
-        borderColor: '#dc2626',
-        borderWidth: 1
-      }
-    ];
-
+    // Filtrar datasets vacíos y actualizar chartData
+    const filteredDatasets = datasets.filter(dataset => dataset.data.some(value => value > 0));
     const newChartData = {
-      labels,
-      datasets,
-      originalClientNames: clienteIds.map(id => clientesConEquipos[id].nombre)
+      labels: usos,
+      datasets: filteredDatasets,
     };
-
     setChartData(newChartData);
   };
 
@@ -697,70 +665,10 @@ const EquiposInventario = () => {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        position: "top",
-        labels: {
-          usePointStyle: true,
-          padding: 20,
-          font: { size: 12 },
-          boxWidth: 12
-        }
-      },
-      title: {
-        display: true,
-        text: "Estatus de equipos por cliente",
-        font: { size: 16, weight: "bold" },
-        padding: { bottom: 20 }
-      },
-      tooltip: {
-        callbacks: {
-          title: function (context) {
-            const chartData = context[0].chart.data;
-            return chartData.originalClientNames
-              ? chartData.originalClientNames[context[0].dataIndex]
-              : context[0].label;
-          },
-          label: function (context) {
-            return `${context.dataset.label}: ${context.parsed.y} equipos`;
-          }
-        }
-      }
+      legend: { position: "top", labels: { usePointStyle: true, padding: 20, font: { size: 12 } } },
+      title: { display: true, text: "Equipos por Tipo y Uso", font: { size: 16, weight: "bold" }, padding: { bottom: 20 } },
     },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          stepSize: 1,
-          font: { size: 11 }
-        },
-        grid: {
-          color: '#f3f4f6'
-        }
-      },
-      x: {
-        ticks: {
-          maxRotation: 45,
-          minRotation: 45,
-          font: { size: 10 },
-          color: '#374151'
-        },
-        grid: {
-          display: false
-        }
-      }
-    },
-    layout: {
-      padding: {
-        bottom: 60,
-        left: 10,
-        right: 10,
-        top: 10
-      }
-    },
-    interaction: {
-      intersect: false,
-      mode: 'index'
-    }
+    scales: { y: { beginAtZero: true, ticks: { stepSize: 10 } } },
   };
 
   return (
@@ -795,26 +703,7 @@ const EquiposInventario = () => {
 
             <div className="inventario-chart-card">
               <div className="inventario-chart-container">
-                {chartData.labels && chartData.labels.length > 0 ? (
-                  <Bar
-                    data={{
-                      labels: chartData.labels,
-                      datasets: chartData.datasets,
-                      originalClientNames: chartData.originalClientNames
-                    }}
-                    options={chartOptions}
-                  />
-                ) : (
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    height: '300px',
-                    color: '#6b7280'
-                  }}>
-                    No hay datos para mostrar
-                  </div>
-                )}
+                <Bar data={chartData} options={chartOptions} />
               </div>
             </div>
 
