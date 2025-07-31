@@ -854,6 +854,34 @@
     contrast(88%);
 }
 
+.inventario-chart-container {
+  height: 500px !important;
+  min-height: 400px;
+  width: 100%;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.inventario-chart-card {
+  margin-bottom: 30px;
+  overflow: visible;
+}
+
+@media (max-width: 768px) {
+  .inventario-chart-container {
+    height: 400px;
+    padding: 10px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .inventario-chart-container {
+    height: 600px;
+  }
+}
+
 .inventario-loading {
   position: fixed;
   top: 0;
