@@ -605,22 +605,22 @@ const EquiposEstatusPlataforma = () => {
   // Crear el contenido HTML con un solo salto de página
   const element = document.createElement("div");
   element.innerHTML = `
-    <div>
-      <h1 style="text-align: center; margin-bottom: 20px; font-size: 22px;">
+    <div style="page-break-after: always; height: 100vh; display: flex; flex-direction: column;">
+      <h1 style="text-align: center; margin-bottom: 15px; font-size: 20px;">
         Reporte de Estatus Plataforma - ${new Date().toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' })}
       </h1>
       
-      <div style="margin-bottom: 30px;">
-        <h2 style="text-align: center; margin-bottom: 15px; font-size: 16px;">Gráfica de Estatus por Cliente</h2>
-        <div style="text-align: center; margin-bottom: 25px;">
-          <img src="${chartImages[0]}" style="width: 100%; height: auto; min-height: 400px;" />
+      <div style="flex: 1; margin-bottom: 15px;">
+        <h2 style="text-align: center; margin-bottom: 10px; font-size: 14px;">Gráfica de Estatus por Cliente</h2>
+        <div style="text-align: center; height: 45%;">
+          <img src="${chartImages[0]}" style="width: 100%; height: 100%; object-fit: contain;" />
         </div>
       </div>
       
-      <div style="page-break-after: always;">
-        <h2 style="text-align: center; margin-bottom: 15px; font-size: 16px;">Gráfica de Equipos por Plataforma</h2>
-        <div style="text-align: center;">
-          <img src="${chartImages[1]}" style="width: 100%; height: auto; min-height: 400px;" />
+      <div style="flex: 1;">
+        <h2 style="text-align: center; margin-bottom: 10px; font-size: 14px;">Gráfica de Equipos por Plataforma</h2>
+        <div style="text-align: center; height: 45%;">
+          <img src="${chartImages[1]}" style="width: 100%; height: 100%; object-fit: contain;" />
         </div>
       </div>
     </div>
