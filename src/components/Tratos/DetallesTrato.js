@@ -255,7 +255,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             >
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.nombre || user.nombreUsuario} {user.apellidos || ""}
+                  {user.nombreReal}
                 </option>
               ))}
             </select>
@@ -318,6 +318,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
               <option value="">Ninguna seleccionada</option>
               <option value="CLASIFICACION">Clasificación</option>
               <option value="PRIMER_CONTACTO">Primer Contacto</option>
+              <option value="SEGUIMIENTO">Seguimiento</option>
               <option value="REUNION">Reunión</option>
               <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
               <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
@@ -525,7 +526,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             >
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.nombre || user.nombreUsuario} {user.apellidos || ""}
+                  {user.nombreReal}
                 </option>
               ))}
             </select>
@@ -846,7 +847,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
             >
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.nombre || user.nombreUsuario} {user.apellidos || ""}
+                  {user.nombreReal}
                 </option>
               ))}
             </select>
@@ -957,7 +958,7 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
         try {
           const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
           const usersData = await usersResponse.json();
-          setUsers(usersData.map((user) => ({ id: user.id, nombre: user.nombreUsuario })));
+          setUsers(usersData.map((user) => ({ id: user.id, nombre: user.nombre })));
 
           const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${actividad.tratoId}`);
           const trato = await tratoResponse.json();
@@ -1150,6 +1151,7 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
               <option value="">Seleccionar finalidad</option>
               <option value="CLASIFICACION">Clasificación</option>
               <option value="PRIMER_CONTACTO">Primer Contacto</option>
+              <option value="SEGUIMIENTO">Seguimiento</option>
               <option value="REUNION">Reunión</option>
               <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
               <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
@@ -1202,7 +1204,7 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
           setLoading(true);
           const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
           const usersData = await usersResponse.json();
-          setUsers(usersData.map((user) => ({ id: user.id, nombre: user.nombreUsuario })));
+          setUsers(usersData.map((user) => ({ id: user.id, nombre: user.nombre })));
 
           const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${actividad.tratoId}`);
           const trato = await tratoResponse.json();
@@ -1572,7 +1574,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
         try {
           const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
           const usersData = await usersResponse.json();
-          setUsers(usersData.map((user) => ({ id: user.id, nombre: user.nombreUsuario })));
+          setUsers(usersData.map((user) => ({ id: user.id, nombre: user.nombre })));
 
           const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${actividad.tratoId}`);
           const trato = await tratoResponse.json();
@@ -2188,7 +2190,7 @@ const EditarTratoModal = ({ isOpen, onClose, onSave, trato, users, companies }) 
     if (validateForm()) {
       const company = companies.find(c => c.nombre === formData.nombreEmpresa);
       const empresaId = company ? company.id : null;
-      const propietario = users.find(u => u.nombre === formData.propietario);
+      const propietario = users.find(u => u.nombreReal === formData.propietario);
       const propietarioId = propietario ? propietario.id : null;
       const contacto = contacts.find(c => c.nombre === formData.nombreContacto);
       const contactoId = contacto ? contacto.id : null;
@@ -2238,7 +2240,7 @@ const EditarTratoModal = ({ isOpen, onClose, onSave, trato, users, companies }) 
             >
               {users.map((user) => (
                 <option key={user.id} value={user.nombre}>
-                  {user.nombre}
+                  {user.nombreReal}
                 </option>
               ))}
             </select>
@@ -2984,13 +2986,13 @@ const DetallesTrato = () => {
   // Estados para modales
   const [modals, setModals] = useState({
     seleccionarActividad: { isOpen: false },
-    programarLlamada: { isOpen: false },
-    programarReunion: { isOpen: false },
-    programarTarea: { isOpen: false },
-    reprogramarLlamada: { isOpen: false, actividad: null },
-    reprogramarReunion: { isOpen: false, actividad: null },
-    reprogramarTarea: { isOpen: false, actividad: null },
-    completarActividad: { isOpen: false, actividad: null },
+    programarLlamada: { isOpen: false, loading: false },
+    programarReunion: { isOpen: false, loading: false },
+    programarTarea: { isOpen: false, loading: false },
+    reprogramarLlamada: { isOpen: false, actividad: null, loading: false },
+    reprogramarReunion: { isOpen: false, actividad: null, loading: false },
+    reprogramarTarea: { isOpen: false, actividad: null, loading: false },
+    completarActividad: { isOpen: false, actividad: null, loading: false },
     editarTrato: { isOpen: false },
     crearNuevaActividad: { isOpen: false },
     crearCorreo: { isOpen: false },
@@ -2999,7 +3001,10 @@ const DetallesTrato = () => {
 
   // Funciones para manejar modales
   const openModal = async (modalType, data = {}) => {
-    const updatedModal = { isOpen: true, tratoId: params.id, ...data };
+    setModals((prev) => ({
+      ...prev,
+      [modalType]: { isOpen: true, loading: true, tratoId: params.id, ...data },
+    }));
 
     if (
       [
@@ -3016,32 +3021,51 @@ const DetallesTrato = () => {
         const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}`);
         const trato = await tratoResponse.json();
 
+        let contactos = [];
         if (trato.empresaId) {
           const contactosResponse = await fetchWithToken(
             `${API_BASE_URL}/empresas/${trato.empresaId}/contactos`
           );
           const contactosData = await contactosResponse.json();
-          updatedModal.contactos = contactosData || [];
-        } else {
-          updatedModal.contactos = [];
+          contactos = contactosData || [];
         }
+
+        // Actualizar el modal con los datos cargados y loading false
+        setModals((prev) => ({
+          ...prev,
+          [modalType]: {
+            ...prev[modalType],
+            contactos,
+            loading: false
+          },
+        }));
+
       } catch (error) {
         console.error('Error fetching contactos for modal:', error);
-        updatedModal.contactos = [];
+
+        setModals((prev) => ({
+          ...prev,
+          [modalType]: {
+            ...prev[modalType],
+            contactos: [],
+            loading: false
+          },
+        }));
+
         Swal.fire({
           icon: 'warning',
           title: 'Advertencia',
           text: 'No se pudieron cargar los contactos. Continúa sin contactos.',
         });
       }
+    } else {
+      // Para modales que no necesitan cargar datos, quitar loading inmediatamente
+      setModals((prev) => ({
+        ...prev,
+        [modalType]: { ...prev[modalType], loading: false },
+      }));
     }
-
-    setModals((prev) => ({
-      ...prev,
-      [modalType]: updatedModal,
-    }));
   };
-
   const closeModal = (modalType) => {
     setModals((prev) => ({
       ...prev,
@@ -3158,7 +3182,7 @@ const DetallesTrato = () => {
       fecha: data.fechaLimite || "Sin fecha",
       hora: data.horaInicio || "Sin hora",
       nombreContacto: nombreContacto,
-      asignadoA: users.find((user) => user.id === data.asignadoAId)?.nombre || "Sin asignado",
+      asignadoA: users.find((user) => user.id === data.asignadoAId)?.nombreReal || "Sin asignado",
       modalidad: data.modalidad,
       lugarReunion: data.lugarReunion || null,
       enlaceReunion: data.enlaceReunion || null,
@@ -3195,7 +3219,7 @@ const DetallesTrato = () => {
       tipo: tipo.toUpperCase(),
       estado: "Reprogramada",
       nombreContacto: contactos.find((c) => c.id === data.contactoId)?.nombre || "Sin contacto",
-      asignadoA: users.find((u) => u.id === data.asignadoAId)?.nombre || "Sin asignado",
+      asignadoA: users.find((u) => u.id === data.asignadoAId)?.nombreReal || "Sin asignado",
       fecha: data.fechaLimite || "Sin fecha",
       hora: data.horaInicio || "Sin hora",
       subtipoTarea: data.subtipoTarea || null,
@@ -3331,7 +3355,7 @@ const DetallesTrato = () => {
           return {
             ...actividad,
             nombreContacto: nombreContacto,
-            asignadoA: users.find((user) => user.id === actividad.asignadoAId)?.nombre || "Sin asignado",
+            asignadoA: users.find((user) => user.id === actividad.asignadoAId)?.nombreReal || "Sin asignado",
             fecha: actividad.fechaLimite || "Sin fecha",
             hora: actividad.horaInicio || "Sin hora",
             modalidad: actividad.modalidad,
@@ -3407,15 +3431,15 @@ const DetallesTrato = () => {
           fetchWithToken(`${API_BASE_URL}/auth/users`).then(res => res.json())
         ]);
 
-        const users = usersData.map((user) => ({ 
-          id: user.id, 
-          nombre: user.nombreUsuario, 
-          nombreReal: user.nombre 
+        const users = usersData.map((user) => ({
+          id: user.id,
+          nombre: user.nombreUsuario,
+          nombreReal: user.nombre
         }));
         setUsers(users);
 
         const propietarioUser = users.find((user) => user.id === tratoData.propietarioId);
-        const propietarioNombre = propietarioUser ? propietarioUser.nombre : tratoData.propietarioNombre || "";
+        const propietarioNombre = propietarioUser ? propietarioUser.nombreReal : tratoData.propietarioNombre || "";
 
         setTrato({
           id: tratoData.id || "",
@@ -3439,7 +3463,7 @@ const DetallesTrato = () => {
           notas: [],
         });
 
-        setLoading(false); 
+        setLoading(false);
 
         // Cargar datos secundarios de forma asíncrona
         loadSecondaryData(tratoData, users);
@@ -3457,41 +3481,51 @@ const DetallesTrato = () => {
 
     const loadSecondaryData = async (tratoData, users) => {
       try {
-        const [companiesData, emailData] = await Promise.all([
-          fetchWithToken(`${API_BASE_URL}/empresas`).then(res => res.json()),
-          fetchWithToken(`${API_BASE_URL}/correos/trato/${params.id}`)
-            .then(res => res.status === 204 ? [] : res.json())
-            .catch(() => [])
-        ]);
+        // Solo cargar emails del trato
+        const emailData = await fetchWithToken(`${API_BASE_URL}/correos/trato/${params.id}`)
+          .then(res => res.status === 204 ? [] : res.json())
+          .catch(() => []);
 
-        // Cargar contactos de empresas solo si es necesario
-        const companiesWithContacts = await Promise.all(
-          companiesData.map(async (company) => {
-            try {
-              const contactosResponse = await fetchWithToken(`${API_BASE_URL}/empresas/${company.id}/contactos`);
-              const contactosData = await contactosResponse.json();
-              return { id: company.id, nombre: company.nombre, contactos: contactosData };
-            } catch (error) {
-              return { id: company.id, nombre: company.nombre, contactos: [] };
-            }
-          })
-        );
-
-        setCompanies(companiesWithContacts);
         setEmailRecords(Array.isArray(emailData) ? emailData : []);
 
-        // Procesar actividades e historial
+        // Solo cargar contactos si hay actividades que los necesiten
+        const allActividades = [
+          ...(tratoData.actividadesAbiertas?.tareas || []),
+          ...(tratoData.actividadesAbiertas?.llamadas || []),
+          ...(tratoData.actividadesAbiertas?.reuniones || [])
+        ];
+
+        // Obtener IDs únicos de contactos necesarios
+        const contactosNeeded = new Set();
+        allActividades.forEach(actividad => {
+          if (actividad.contactoId) {
+            contactosNeeded.add(actividad.contactoId);
+          }
+        });
+
+        // Solo cargar los contactos específicos que necesitamos
+        const contactosMap = new Map();
+        if (contactosNeeded.size > 0) {
+          for (const contactoId of contactosNeeded) {
+            try {
+              const contactoResponse = await fetchWithToken(`${API_BASE_URL}/contactos/${contactoId}`);
+              const contactoData = await contactoResponse.json();
+              contactosMap.set(contactoId, contactoData);
+            } catch (error) {
+              console.warn(`No se pudo cargar contacto ${contactoId}`);
+            }
+          }
+        }
+
+        // Función optimizada para mapear actividades
         const mapActividad = (actividad) => {
           let nombreContacto = "Sin contacto";
-          if (actividad.contactoId) {
-            const contacto = companiesWithContacts
-              .flatMap((c) => c.contactos || [])
-              .find((c) => c.id === actividad.contactoId);
-            nombreContacto = contacto ? contacto.nombre : "Sin contacto";
+          if (actividad.contactoId && contactosMap.has(actividad.contactoId)) {
+            nombreContacto = contactosMap.get(actividad.contactoId).nombre;
           } else if (tratoData.contacto?.nombre) {
             nombreContacto = tratoData.contacto.nombre;
           }
-          
+
           return {
             ...actividad,
             nombreContacto: nombreContacto,
@@ -4357,8 +4391,19 @@ const DetallesTrato = () => {
         creatorId={modals.programarLlamada.creatorId}
       />
 
+      <ProgramarLlamadaModal
+        isOpen={modals.programarLlamada.isOpen}
+        loading={modals.programarLlamada.loading}
+        onClose={() => closeModal("programarLlamada")}
+        onSave={(data) => handleSaveActividad(data, "llamada")}
+        tratoId={modals.programarLlamada.tratoId}
+        users={users}
+        creatorId={modals.programarLlamada.creatorId}
+      />
+
       <ProgramarReunionModal
         isOpen={modals.programarReunion.isOpen}
+        loading={modals.programarReunion.loading}
         onClose={() => closeModal("programarReunion")}
         onSave={(data) => handleSaveActividad(data, "reunion")}
         tratoId={modals.programarReunion.tratoId}
@@ -4368,6 +4413,7 @@ const DetallesTrato = () => {
 
       <ProgramarTareaModal
         isOpen={modals.programarTarea.isOpen}
+        loading={modals.programarTarea.loading}
         onClose={() => closeModal("programarTarea")}
         onSave={(data) => handleSaveActividad(data, "tarea")}
         tratoId={modals.programarTarea.tratoId}
@@ -4398,6 +4444,7 @@ const DetallesTrato = () => {
 
       <CompletarActividadModal
         isOpen={modals.completarActividad.isOpen}
+        loading={modals.completarActividad.loading}
         onClose={() => closeModal("completarActividad")}
         onSave={(data, tipo) => handleSaveCompletarActividad(data, tipo)}
         actividad={modals.completarActividad.actividad}

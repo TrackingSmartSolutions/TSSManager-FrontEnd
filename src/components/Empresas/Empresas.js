@@ -1815,13 +1815,10 @@ const Empresas = () => {
     }
   }
 
-  const fetchCompanies = async () => {
+  const fetchAllCompanies = async () => {
     try {
-      const params = new URLSearchParams();
-      if (searchTerm) params.append("nombre", searchTerm);
-      if (filterStatus) params.append("estatus", filterStatus);
-
-      const response = await fetchWithToken(`${API_BASE_URL}/empresas?${params.toString()}`);
+      // Hacer fetch SIN parámetros de filtro
+      const response = await fetchWithToken(`${API_BASE_URL}/empresas`);
       if (!response.ok) throw new Error("Error al cargar las empresas");
       const data = await response.json();
 
@@ -1834,6 +1831,7 @@ const Empresas = () => {
             : `${company.domicilioFisico}, México`)
           : null,
       }));
+
       setCompanies(companiesWithColors);
 
       if (companiesWithColors.length > 0 && !selectedCompany) {
@@ -1849,19 +1847,26 @@ const Empresas = () => {
     }
   };
 
+  const filteredCompanies = companies.filter((company) => {
+    const matchesName = !searchTerm ||
+      company.nombre?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = !filterStatus || company.estatus === filterStatus;
+    return matchesName && matchesStatus;
+  });
+
   const cargarDatosIniciales = async () => {
-    setIsLoading(true)
-    try {
-      await Promise.all([
-        fetchUsers(),
-        fetchCompanies()
-      ])
-    } catch (error) {
-      console.error('Error al cargar datos iniciales:', error)
-    } finally {
-      setIsLoading(false)
-    }
+  setIsLoading(true)
+  try {
+    await Promise.all([
+      fetchUsers(),
+      fetchAllCompanies()
+    ])
+  } catch (error) {
+    console.error('Error al cargar datos iniciales:', error)
+  } finally {
+    setIsLoading(false)
   }
+}
 
   useEffect(() => {
     cargarDatosIniciales()
@@ -1873,9 +1878,9 @@ const Empresas = () => {
 
   useEffect(() => {
     if (!isLoading) {
-      fetchCompanies()
+      fetchAllCompanies()
     }
-  }, [searchTerm, filterStatus])
+  }, [])
 
 
   useEffect(() => {
@@ -1919,6 +1924,10 @@ const Empresas = () => {
   const handleCompanySelect = (company) => {
     setSelectedCompany(company)
   }
+
+  const handleTratoClick = (tratoId) => {
+    navigate(`/detallestrato/${tratoId}`);
+  };
 
   const openModal = (modalType, mode = "add", data = null, extra = {}) => {
     setModals((prev) => ({
@@ -2026,8 +2035,6 @@ const Empresas = () => {
     }
 
     if (modals.empresa.mode === "add") {
-      setCompanies((prev) => [...prev, updatedEmpresa])
-      setSelectedCompany(updatedEmpresa)
       closeModal("empresa")
     } else {
       setCompanies((prev) => prev.map((company) => (company.id === empresaData.id ? updatedEmpresa : company)))
@@ -2035,7 +2042,6 @@ const Empresas = () => {
       closeModal("empresa")
     }
   }
-
   const handleCompanyCreated = (empresaData) => {
     const formattedDomicilioFisico = empresaData.domicilioFisico
       ? (empresaData.domicilioFisico.endsWith(", México")
@@ -2208,7 +2214,7 @@ const Empresas = () => {
             </div>
 
             <div className="companies-list">
-              {companies.map((company) => (
+              {filteredCompanies.map((company) => (
                 <div
                   key={company.id}
                   className={`company-item ${selectedCompany?.id === company.id ? "selected" : ""}`}
@@ -2405,7 +2411,12 @@ const Empresas = () => {
                       <tbody>
                         {tratos.length > 0 ? (
                           tratos.map((trato, index) => (
-                            <tr key={trato.id}>
+                            <tr
+                              key={trato.id}
+                              onClick={() => handleTratoClick(trato.id)}
+                              style={{ cursor: 'pointer' }}
+                              className="trato-row-clickable"
+                            >
                               <td>{trato.noTrato || index + 1}</td>
                               <td>{trato.nombre || "N/A"}</td>
                               <td>{trato.contacto?.nombre || "N/A"}</td>

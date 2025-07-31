@@ -98,7 +98,7 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
         try {
           const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
           const usersData = await usersResponse.json();
-          setUsers(usersData.map((user) => ({ id: user.id, nombre: user.nombreUsuario })));
+          setUsers(usersData.map((user) => ({ id: user.id, nombre: user.nombre })));
 
           const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${actividad.tratoId}`);
           const trato = await tratoResponse.json();
@@ -291,6 +291,7 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
               <option value="">Seleccionar finalidad</option>
               <option value="CLASIFICACION">Clasificación</option>
               <option value="PRIMER_CONTACTO">Primer Contacto</option>
+              <option value="SEGUIMIENTO">Seguimiento</option>
               <option value="REUNION">Reunión</option>
               <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
               <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
@@ -341,7 +342,7 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
           setLoading(true);
           const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
           const usersData = await usersResponse.json();
-          setUsers(usersData.map((user) => ({ id: user.id, nombre: user.nombreUsuario })));
+          setUsers(usersData.map((user) => ({ id: user.id, nombre: user.nombre })));
 
           const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${actividad.tratoId}`);
           const trato = await tratoResponse.json();
@@ -700,7 +701,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
         try {
           const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
           const usersData = await usersResponse.json();
-          setUsers(usersData.map((user) => ({ id: user.id, nombre: user.nombreUsuario })));
+          setUsers(usersData.map((user) => ({ id: user.id, nombre: user.nombre })));
 
           const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${actividad.tratoId}`);
           const trato = await tratoResponse.json();

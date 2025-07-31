@@ -452,7 +452,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             >
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.nombreUsuario}
+                  {user.nombre}
                 </option>
               ))}
             </select>
@@ -516,6 +516,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
               <option value="">Ninguna seleccionada</option>
               <option value="CLASIFICACION">Clasificación</option>
               <option value="PRIMER_CONTACTO">Primer Contacto</option>
+              <option value="SEGUIMIENTO">Seguimiento</option>
               <option value="REUNION">Reunión</option>
               <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
               <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
@@ -725,7 +726,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             >
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.nombreUsuario}
+                  {user.nombre}
                 </option>
               ))}
             </select>
@@ -1043,7 +1044,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
             >
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.nombreUsuario}
+                  {user.nombre}
                 </option>
               ))}
             </select>
@@ -1500,130 +1501,131 @@ const Tratos = () => {
 
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
 
   const fetchData = async () => {
-  try {
-    setIsLoading(true);
-    // Limpiar datos anteriores
-    setColumnas([]);
-    
-    const params = new URLSearchParams();
-    const userId = localStorage.getItem("userId");
+    try {
+      setIsLoading(true);
+      // Limpiar datos anteriores
+      setColumnas([]);
 
-    if (userRol === "EMPLEADO" && userId) {
-      params.append("propietarioId", userId);
-    } else if (selectedUser !== "Todos los usuarios") {
-      params.append("propietarioId", selectedUser);
-    }
-    if (startDate) {
-      params.append("startDate", startDate.toISOString());
-    }
-    if (endDate) {
-      params.append("endDate", endDate.toISOString());
-    }
+      const params = new URLSearchParams();
+      const userId = localStorage.getItem("userId");
 
-    let usersData = [];
-    if (userRol === "ADMINISTRADOR") {
-      try {
-        const usersResponse = await fetchWithRetry(`${API_BASE_URL}/auth/users`);
-        usersData = await usersResponse.json();
-        setUsers(usersData);
-      } catch (error) {
-        console.error("Error al cargar usuarios:", error);
-        setUsers([]); 
+      if (userRol === "EMPLEADO" && userId) {
+        params.append("propietarioId", userId);
+      } else if (selectedUser !== "Todos los usuarios") {
+        params.append("propietarioId", selectedUser);
       }
-    }
-
-    const tratosResponse = await fetchWithRetry(`${API_BASE_URL}/tratos/filtrar/basico?${params.toString()}`);
-    const tratosBasicos = await tratosResponse.json();
-
-    if (!Array.isArray(tratosBasicos)) {
-      throw new Error('Los datos de tratos no son válidos');
-    }
-
-    const columnasData = [
-      { id: 1, nombre: "Clasificación", color: "#E180F4", className: "clasificacion", tratos: [], count: 0 },
-      { id: 2, nombre: "Primer contacto", color: "#C680F4", className: "primer-contacto", tratos: [], count: 0 },
-      { id: 3, nombre: "Envío de información", color: "#AB80F4", className: "envio-de-informacion", tratos: [], count: 0 },
-      { id: 4, nombre: "Reunión", color: "#9280F4", className: "reunion", tratos: [], count: 0 },
-      { id: 5, nombre: "Cotización Propuesta", color: "#8098F4", className: "cotizacion-propuesta-practica", tratos: [], count: 0 },
-      { id: 6, nombre: "Negociación/Revisión", color: "#80C0F4", className: "negociacion-revision", tratos: [], count: 0 },
-      { id: 7, nombre: "Cerrado ganado", color: "#69ED95", className: "cerrado-ganado", tratos: [], count: 0 },
-      { id: 8, nombre: "Respuesta por correo", color: "#EFD47B", className: "respuesta-por-correo", tratos: [], count: 0 },
-      { id: 9, nombre: "Interés futuro", color: "#FFBC79", className: "interes-futuro", tratos: [], count: 0 },
-      { id: 10, nombre: "Cerrado perdido", color: "#FA8585", className: "cerrado-perdido", tratos: [], count: 0 },
-    ];
-
-    tratosBasicos.forEach((tratoBasico) => {
-      const columnaClass = tratoBasico.fase.toLowerCase().replace(/[_ ]/g, "-");
-      const columna = columnasData.find((c) => c.className === columnaClass);
-
-      if (columna) {
-        const tratoFormatted = {
-          id: tratoBasico.id,
-          nombre: tratoBasico.nombre,
-          propietario: tratoBasico.propietarioNombre || "Usuario",
-          fechaCierre: new Date(tratoBasico.fechaCierre).toLocaleDateString(),
-          empresa: tratoBasico.empresaNombre || "Empresa Asociada",
-          numero: tratoBasico.noTrato || "Sin número",
-          ingresoEsperado: tratoBasico.ingresoEsperado,
-          isNeglected: tratoBasico.isNeglected,
-          hasActivities: tratoBasico.hasActivities,
-          actividades: [],
-          lastActivityType: tratoBasico.proximaActividadTipo || null,
-          creatorId: tratoBasico.propietarioId,
-          fechaUltimaActividad: tratoBasico.fechaUltimaActividad,
-          contactoId: tratoBasico.contactoId,
-          proximaActividadTipo: tratoBasico.proximaActividadTipo,
-          proximaActividadFecha: tratoBasico.proximaActividadFecha,
-          actividadesAbiertasCount: tratoBasico.actividadesAbiertasCount
-        };
-
-        columna.tratos.push(tratoFormatted);
-        columna.count++;
+      if (startDate) {
+        params.append("startDate", startDate.toISOString());
       }
-    });
-    
-    setColumnas(columnasData);
-
-  } catch (error) {
-    console.error("Error al cargar datos:", error);
-    
-
-    setColumnas([]);
-    setUsers([]);
-
-    let errorMessage = "No se pudieron cargar los datos";
-    let errorTitle = "Error de conexión";
-
-    if (error.message.includes('timeout') || error.message.includes('tardó demasiado')) {
-      errorTitle = "Timeout del servidor";
-      errorMessage = "La consulta tardó demasiado tiempo. El servidor puede estar sobrecargado. Intenta de nuevo en unos minutos.";
-    } else if (error.message.includes('Failed to fetch')) {
-      errorTitle = "Sin conexión";
-      errorMessage = "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
-    } else if (error.message.includes('524')) {
-      errorTitle = "Servidor sobrecargado";
-      errorMessage = "El servidor está experimentando alta carga. Los datos se cargarán automáticamente cuando esté disponible.";
-    }
-    Swal.fire({
-      icon: "error",
-      title: errorTitle,
-      text: errorMessage,
-      showCancelButton: true,
-      confirmButtonText: "Reintentar",
-      cancelButtonText: "Cancelar",
-      footer: "Si el problema persiste, contacta al administrador"
-    }).then((result) => {
-      if (result.isConfirmed) {
-        setTimeout(() => fetchData(), 2000);
+      if (endDate) {
+        params.append("endDate", endDate.toISOString());
       }
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
+
+      let usersData = [];
+      if (userRol === "ADMINISTRADOR") {
+        try {
+          const usersResponse = await fetchWithRetry(`${API_BASE_URL}/auth/users`);
+          usersData = await usersResponse.json();
+          setUsers(usersData);
+        } catch (error) {
+          console.error("Error al cargar usuarios:", error);
+          setUsers([]);
+        }
+      }
+
+      const tratosResponse = await fetchWithRetry(`${API_BASE_URL}/tratos/filtrar/basico?${params.toString()}`);
+      const tratosBasicos = await tratosResponse.json();
+
+      if (!Array.isArray(tratosBasicos)) {
+        throw new Error('Los datos de tratos no son válidos');
+      }
+
+      const columnasData = [
+        { id: 1, nombre: "Clasificación", color: "#E180F4", className: "clasificacion", tratos: [], count: 0 },
+        { id: 2, nombre: "Primer contacto", color: "#C680F4", className: "primer-contacto", tratos: [], count: 0 },
+        { id: 3, nombre: "Envío de información", color: "#AB80F4", className: "envio-de-informacion", tratos: [], count: 0 },
+        { id: 4, nombre: "Reunión", color: "#9280F4", className: "reunion", tratos: [], count: 0 },
+        { id: 5, nombre: "Cotización Propuesta", color: "#8098F4", className: "cotizacion-propuesta-practica", tratos: [], count: 0 },
+        { id: 6, nombre: "Negociación/Revisión", color: "#80C0F4", className: "negociacion-revision", tratos: [], count: 0 },
+        { id: 7, nombre: "Cerrado ganado", color: "#69ED95", className: "cerrado-ganado", tratos: [], count: 0 },
+        { id: 8, nombre: "Respuesta por correo", color: "#EFD47B", className: "respuesta-por-correo", tratos: [], count: 0 },
+        { id: 9, nombre: "Interés futuro", color: "#FFBC79", className: "interes-futuro", tratos: [], count: 0 },
+        { id: 10, nombre: "Cerrado perdido", color: "#FA8585", className: "cerrado-perdido", tratos: [], count: 0 },
+      ];
+
+      tratosBasicos.forEach((tratoBasico) => {
+        const columnaClass = tratoBasico.fase.toLowerCase().replace(/[_ ]/g, "-");
+        const columna = columnasData.find((c) => c.className === columnaClass);
+
+        if (columna) {
+          const tratoFormatted = {
+            id: tratoBasico.id,
+            nombre: tratoBasico.nombre,
+            propietario: tratoBasico.propietarioNombre || "Usuario",
+            fechaCierre: new Date(tratoBasico.fechaCierre).toLocaleDateString(),
+            empresa: tratoBasico.empresaNombre || "Empresa Asociada",
+            numero: tratoBasico.noTrato || "Sin número",
+            ingresoEsperado: tratoBasico.ingresoEsperado,
+            isNeglected: tratoBasico.isNeglected,
+            hasActivities: tratoBasico.hasActivities,
+            actividades: [],
+            lastActivityType: tratoBasico.proximaActividadTipo || null,
+            creatorId: tratoBasico.propietarioId,
+            fechaUltimaActividad: tratoBasico.fechaUltimaActividad,
+            contactoId: tratoBasico.contactoId,
+            proximaActividadTipo: tratoBasico.proximaActividadTipo,
+            proximaActividadFecha: tratoBasico.proximaActividadFecha,
+            actividadesAbiertasCount: tratoBasico.actividadesAbiertasCount
+          };
+
+          columna.tratos.push(tratoFormatted);
+          columna.count++;
+        }
+      });
+
+      setColumnas(columnasData);
+
+    } catch (error) {
+      console.error("Error al cargar datos:", error);
+
+
+      setColumnas([]);
+      setUsers([]);
+
+      let errorMessage = "No se pudieron cargar los datos";
+      let errorTitle = "Error de conexión";
+
+      if (error.message.includes('timeout') || error.message.includes('tardó demasiado')) {
+        errorTitle = "Timeout del servidor";
+        errorMessage = "La consulta tardó demasiado tiempo. El servidor puede estar sobrecargado. Intenta de nuevo en unos minutos.";
+      } else if (error.message.includes('Failed to fetch')) {
+        errorTitle = "Sin conexión";
+        errorMessage = "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
+      } else if (error.message.includes('524')) {
+        errorTitle = "Servidor sobrecargado";
+        errorMessage = "El servidor está experimentando alta carga. Los datos se cargarán automáticamente cuando esté disponible.";
+      }
+      Swal.fire({
+        icon: "error",
+        title: errorTitle,
+        text: errorMessage,
+        showCancelButton: true,
+        confirmButtonText: "Reintentar",
+        cancelButtonText: "Cancelar",
+        footer: "Si el problema persiste, contacta al administrador"
+      }).then((result) => {
+        if (result.isConfirmed) {
+          setTimeout(() => fetchData(), 2000);
+        }
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 
   const loadTratoDetalles = async (tratoId) => {
@@ -1641,6 +1643,13 @@ const Tratos = () => {
       console.error("Error cargando detalles del trato:", error);
       return null;
     }
+  };
+
+  const filtrarTratosPorNombre = (tratos) => {
+    if (!searchTerm.trim()) return tratos;
+    return tratos.filter(trato =>
+      trato.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   };
 
   useEffect(() => {
@@ -1823,27 +1832,27 @@ const Tratos = () => {
   };
 
   const handleTratoClick = async (trato) => {
-  try {
-    const detalles = await loadTratoDetalles(trato.id);
-    if (detalles) {
-      navigate(`/detallestrato/${trato.id}`, { 
-        state: { trato: detalles },
-        replace: false
-      });
-    } else {
-      navigate(`/detallestrato/${trato.id}`, { 
+    try {
+      const detalles = await loadTratoDetalles(trato.id);
+      if (detalles) {
+        navigate(`/detallestrato/${trato.id}`, {
+          state: { trato: detalles },
+          replace: false
+        });
+      } else {
+        navigate(`/detallestrato/${trato.id}`, {
+          state: { trato },
+          replace: false
+        });
+      }
+    } catch (error) {
+      console.error("Error al navegar a detalles:", error);
+      navigate(`/detallestrato/${trato.id}`, {
         state: { trato },
         replace: false
       });
     }
-  } catch (error) {
-    console.error("Error al navegar a detalles:", error);
-    navigate(`/detallestrato/${trato.id}`, { 
-      state: { trato },
-      replace: false
-    });
-  }
-};
+  };
 
   const allExpanded = expandedColumns.length === columnas.length;
   const handleToggleAllColumns = () => {
@@ -1933,13 +1942,24 @@ const Tratos = () => {
                   <div className="column-count">{columna.count}</div>
                 </div>
 
+                {expandedColumns.includes(columna.id) && (
+                  <div className="column-search">
+                    <input
+                      type="text"
+                      placeholder="Buscar en esta fase..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="column-search-input"
+                    />
+                  </div>
+                )}
                 <div
                   className="column-content"
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, columna.id)}
                 >
                   {columna.tratos.length > 0 ? (
-                    columna.tratos.map((trato) => (
+                    filtrarTratosPorNombre(columna.tratos).map((trato) => (
                       <TratoCard
                         key={trato.id}
                         trato={trato}

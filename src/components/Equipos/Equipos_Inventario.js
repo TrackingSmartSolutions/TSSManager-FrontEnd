@@ -468,12 +468,14 @@ const EquiposInventario = () => {
   ];
 
   const clienteFilterOptions = [
-    { value: "", label: "Todos los clientes" },
-    { value: "AG", label: "AG" },
-    { value: "BN", label: "BN" },
-    { value: "PERDIDO", label: "PERDIDO" },
-    ...clientes.map(cliente => ({ value: cliente.id, label: cliente.nombre }))
-  ];
+  { value: "", label: "Todos los clientes" },
+  { value: "AG", label: "AG" },
+  { value: "BN", label: "BN" },
+  { value: "PERDIDO", label: "PERDIDO" },
+  ...clientes
+    .map(cliente => ({ value: cliente.id, label: cliente.nombre }))
+    .sort((a, b) => a.label.localeCompare(b.label))
+];
 
   useEffect(() => {
     fetchData();
