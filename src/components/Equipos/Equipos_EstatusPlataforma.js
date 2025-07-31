@@ -597,58 +597,84 @@ const EquiposEstatusPlataforma = () => {
   };
 
   const handleGeneratePDF = async () => {
-    const element = document.createElement("div");
-    const chartImages = await Promise.all([
-      getChartImage("estatusClienteChart"),
-      getChartImage("plataformaChart"),
-    ]);
+  const chartImages = await Promise.all([
+    getChartImage("estatusClienteChart"),
+    getChartImage("plataformaChart"),
+  ]);
 
-    element.innerHTML = `
-    <h1>Reporte de Estatus Plataforma - ${new Date().toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' })}</h1>
-    <h2>Gráfica de Estatus por Cliente</h2>
-    <img src="${chartImages[0]}" style="width: 100%; height: auto; max-width: 800px;" />
-    <h2>Gráfica de Equipos por Plataforma</h2>
-    <img src="${chartImages[1]}" style="width: 100%; height: auto; max-width: 800px;" />
-    <h2>Tabla de Equipos Offline</h2>
-    <table style="width: 90%; max-width: 1000px; border-collapse: collapse; margin: 0 auto; font-size: 10px;">
-      <thead>
-        <tr style="background-color: #d3d3d3;">
-          <th style="border: 1px solid black; padding: 6px; width: 20%;">Cliente</th>
-          <th style="border: 1px solid black; padding: 6px; width: 25%;">Nombre</th>
-          <th style="border: 1px solid black; padding: 6px; width: 20%;">Plataforma</th>
-          <th style="border: 1px solid black; padding: 6px; width: 15%;">Reportando</th>
-          <th style="border: 1px solid black; padding: 6px; width: 20%;">Motivo</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${equiposData.equiposOffline.map(e => `
-          <tr>
-            <td style="border: 1px solid black; padding: 4px; word-wrap: break-word;">${e.cliente}</td>
-            <td style="border: 1px solid black; padding: 4px; word-wrap: break-word;">${e.nombre}</td>
-            <td style="border: 1px solid black; padding: 4px;">${e.plataforma}</td>
-            <td style="border: 1px solid black; padding: 4px; text-align: center;">✗</td>
-            <td style="border: 1px solid black; padding: 4px; word-wrap: break-word;">${e.motivo}</td>
+  // Crear el contenido HTML con un solo salto de página
+  const element = document.createElement("div");
+  element.innerHTML = `
+    <div>
+      <h1 style="text-align: center; margin-bottom: 20px; font-size: 22px;">
+        Reporte de Estatus Plataforma - ${new Date().toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' })}
+      </h1>
+      
+      <div style="margin-bottom: 30px;">
+        <h2 style="text-align: center; margin-bottom: 15px; font-size: 16px;">Gráfica de Estatus por Cliente</h2>
+        <div style="text-align: center; margin-bottom: 25px;">
+          <img src="${chartImages[0]}" style="width: 100%; height: auto; min-height: 400px;" />
+        </div>
+      </div>
+      
+      <div style="page-break-after: always;">
+        <h2 style="text-align: center; margin-bottom: 15px; font-size: 16px;">Gráfica de Equipos por Plataforma</h2>
+        <div style="text-align: center;">
+          <img src="${chartImages[1]}" style="width: 100%; height: auto; min-height: 400px;" />
+        </div>
+      </div>
+    </div>
+    
+    <div>
+      <h2 style="text-align: center; margin-bottom: 20px; font-size: 18px;">Tabla de Equipos Offline</h2>
+      <table style="width: 100%; border-collapse: collapse; margin: 0 auto; font-size: 12px;">
+        <thead>
+          <tr style="background-color: #d3d3d3;">
+            <th style="border: 1px solid black; padding: 8px; width: 20%;">Cliente</th>
+            <th style="border: 1px solid black; padding: 8px; width: 25%;">Nombre</th>
+            <th style="border: 1px solid black; padding: 8px; width: 20%;">Plataforma</th>
+            <th style="border: 1px solid black; padding: 8px; width: 15%;">Reportando</th>
+            <th style="border: 1px solid black; padding: 8px; width: 20%;">Motivo</th>
           </tr>
-        `).join('')}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          ${equiposData.equiposOffline.map(e => `
+            <tr>
+              <td style="border: 1px solid black; padding: 6px; word-wrap: break-word; vertical-align: top;">${e.cliente}</td>
+              <td style="border: 1px solid black; padding: 6px; word-wrap: break-word; vertical-align: top;">${e.nombre}</td>
+              <td style="border: 1px solid black; padding: 6px; vertical-align: top;">${e.plataforma}</td>
+              <td style="border: 1px solid black; padding: 6px; text-align: center; vertical-align: top;">✗</td>
+              <td style="border: 1px solid black; padding: 6px; word-wrap: break-word; vertical-align: top;">${e.motivo}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
   `;
 
-    const opt = {
-      margin: 0.5,
-      filename: `reporte_estatus_${new Date().toISOString().split('T')[0]}.pdf`,
-      image: { type: 'jpeg', quality: 1.0 },
-      html2canvas: {
-        scale: 3,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-    };
-
-    html2pdf().set(opt).from(element).save();
+  const opt = {
+    margin: [0.5, 0.5, 0.5, 0.5],
+    filename: `reporte_estatus_${new Date().toISOString().split('T')[0]}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      letterRendering: true,
+      logging: false
+    },
+    jsPDF: { 
+      unit: 'in', 
+      format: 'a4', 
+      orientation: 'portrait',
+      compress: true
+    },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
   };
+
+  html2pdf().set(opt).from(element).save();
+};
 
 
   const getChartImage = (chartId) => {
