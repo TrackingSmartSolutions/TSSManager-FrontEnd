@@ -783,7 +783,7 @@ const EquiposEstatusPlataforma = () => {
     },
     layout: {
       padding: {
-        bottom: 60,
+        bottom: 30,
         left: 10,
         right: 10,
         top: 10
