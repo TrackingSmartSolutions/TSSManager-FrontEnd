@@ -1531,7 +1531,6 @@ const Tratos = () => {
 
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
   const [globalSearchTerm, setGlobalSearchTerm] = useState("");
 
 
@@ -1679,12 +1678,7 @@ const Tratos = () => {
   const filtrarTratosPorNombre = (tratos) => {
     let filteredTratos = tratos;
 
-    if (searchTerm.trim()) {
-      filteredTratos = filteredTratos.filter(trato =>
-        trato.nombre.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    if (globalSearchTerm.trim()) {
+    if (globalSearchTerm.trim() && globalSearchTerm.trim().length >= 3) {
       filteredTratos = filteredTratos.filter(trato =>
         trato.nombre.toLowerCase().includes(globalSearchTerm.toLowerCase())
       );
@@ -1694,9 +1688,9 @@ const Tratos = () => {
   };
 
   const handleGlobalSearch = () => {
-    if (!globalSearchTerm.trim()) {
-      return;
-    }
+    if (!globalSearchTerm.trim() || globalSearchTerm.trim().length < 3) {
+    return;
+  }
 
     const foundColumns = [];
     columnas.forEach(columna => {
@@ -2029,17 +2023,6 @@ const Tratos = () => {
                   <div className="column-count">{columna.count}</div>
                 </div>
 
-                {expandedColumns.includes(columna.id) && (
-                  <div className="column-search">
-                    <input
-                      type="text"
-                      placeholder="Buscar en esta fase..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="column-search-input"
-                    />
-                  </div>
-                )}
                 <div
                   className="column-content"
                   onDragOver={handleDragOver}

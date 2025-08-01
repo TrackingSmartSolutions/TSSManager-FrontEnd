@@ -1214,6 +1214,7 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
     width: 100%;
   }
 
+  /* Responsive para el filtro de búsqueda */
 @media (max-width: 768px) {
   .search-container {
     width: 100%;

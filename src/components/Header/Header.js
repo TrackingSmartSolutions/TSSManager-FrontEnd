@@ -639,12 +639,6 @@ const Header = ({ logoUrl }) => {
                 <div className="ts-header-notification-footer">
                   <button
                     className="ts-header-notification-btn"
-                    onClick={() => setIsNotificationModalOpen(false)}
-                  >
-                    Ver todas
-                  </button>
-                  <button
-                    className="ts-header-notification-btn"
                     onClick={marcarTodasComoLeidas}
                   >
                     Marcar como leídas

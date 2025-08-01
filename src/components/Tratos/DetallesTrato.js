@@ -35,7 +35,6 @@ const fetchWithToken = async (url, options = {}) => {
   return response;
 };
 
-
 const fetchTrato = async (id) => {
   try {
     const response = await fetchWithToken(`${API_BASE_URL}/tratos/${id}`);
@@ -2050,8 +2049,8 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
   );
 };
 
-// Modal para completar actividad 
-const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, openModal }) => {
+// Modal para completar actividad/ editar interaccion
+const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, openModal, esEdicion }) => {
   const [formData, setFormData] = useState({
     respuesta: '',
     interes: '',
@@ -2065,11 +2064,11 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
   useEffect(() => {
     if (isOpen && actividad) {
       setFormData({
-        respuesta: '',
-        interes: '',
-        informacion: '',
-        siguienteAccion: '',
-        notas: '',
+        respuesta: actividad.respuesta || '',
+        interes: actividad.interes || '',
+        informacion: actividad.informacion || '',
+        siguienteAccion: actividad.siguienteAccion || '',
+        notas: actividad.notas || '',
         medio: actividad.medio || '',
       });
       setErrors({});
@@ -2084,8 +2083,7 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
       });
       setErrors({});
     }
-  }, [isOpen, actividad]);
-
+  }, [isOpen, actividad, esEdicion]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -2135,7 +2133,7 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
         enlaceReunion: actividad.enlaceReunion || null,
         subtipoTarea: actividad.subtipoTarea || null,
         finalidad: actividad.finalidad || null,
-        estatus: 'CERRADA',
+        estatus: esEdicion ? actividad.estatus : 'CERRADA', // Mantener estatus en edición
         respuesta: formData.respuesta.toUpperCase(),
         interes: formData.interes.toUpperCase(),
         informacion: formData.informacion.toUpperCase(),
@@ -2143,36 +2141,51 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
         notas: formData.notas,
       };
 
-      const response = await fetchWithToken(
-        `${API_BASE_URL}/tratos/actividades/${actividad.id}/completar`,
-        {
-          method: 'PUT',
-          body: JSON.stringify(actividadDTO),
-        }
-      );
+      // CORRECCIÓN PRINCIPAL: Usar el endpoint correcto según si es edición o no
+      const endpoint = esEdicion ?
+        `${API_BASE_URL}/tratos/actividades/${actividad.id}/editar` :
+        `${API_BASE_URL}/tratos/actividades/${actividad.id}/completar`;
+
+      const response = await fetchWithToken(endpoint, {
+        method: 'PUT',
+        body: JSON.stringify(actividadDTO),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
       const updatedActividad = await response.json();
       onSave(updatedActividad, actividad.tipo);
+
+      const tituloMensaje = esEdicion ? '¡Interacción editada!' : '¡Actividad completada!';
+      const textoMensaje = esEdicion ?
+        'Los cambios se han guardado exitosamente' :
+        'El reporte de actividad se ha guardado exitosamente';
+
       Swal.fire({
-        title: '¡Actividad completada!',
-        text: 'El reporte de actividad se ha guardado exitosamente',
+        title: tituloMensaje,
+        text: textoMensaje,
         icon: 'success',
-        showCancelButton: true,
-        confirmButtonText: 'Crear nueva actividad',
+        showCancelButton: !esEdicion,
+        confirmButtonText: esEdicion ? 'Cerrar' : 'Crear nueva actividad',
         cancelButtonText: 'Cerrar',
       }).then((result) => {
-        if (result.isConfirmed) {
+        if (result.isConfirmed && !esEdicion) {
           openModal('seleccionarActividad', { tratoId });
         }
       });
       onClose();
     } catch (error) {
-      console.error('Error al completar la actividad:', error);
+      console.error('Error al procesar la actividad:', error);
       Swal.fire({
         icon: 'error',
         title: 'Error',
         text: error.message.includes('no encontrada')
           ? 'La actividad no fue encontrada'
-          : 'No se pudo completar la actividad',
+          : esEdicion
+            ? 'No se pudieron guardar los cambios'
+            : 'No se pudo completar la actividad',
       });
     }
   };
@@ -2181,7 +2194,7 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
     <DetallesTratoModal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Completar ${actividad?.tipo?.toLowerCase() || 'actividad'}`}
+      title={esEdicion ? 'Editar interacción' : `Completar ${actividad?.tipo?.toLowerCase() || 'actividad'}`}
       size="md"
     >
       <form onSubmit={handleSubmit} className="modal-form">
@@ -2358,7 +2371,316 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
             Cancelar
           </button>
           <button type="submit" className="btn btn-primary">
-            Completar actividad
+            {esEdicion ? 'Guardar cambios' : 'Completar actividad'}
+          </button>
+        </div>
+      </form>
+    </DetallesTratoModal>
+  );
+};
+
+// Modal para crear interaccion
+const AgregarInteraccionModal = ({ isOpen, onClose, onSave, tratoId }) => {
+  const [formData, setFormData] = useState({
+    tipo: '',
+    medio: '',
+    respuesta: '',
+    interes: '',
+    informacion: '',
+    notas: '',
+  });
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        tipo: '',
+        medio: '',
+        respuesta: '',
+        interes: '',
+        informacion: '',
+        notas: '',
+      });
+      setErrors({});
+    }
+  }, [isOpen]);
+
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => {
+      const newData = { ...prev, [field]: value };
+      if (field === 'tipo') {
+        newData.medio = '';
+      }
+      return newData;
+    });
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.tipo) newErrors.tipo = 'Este campo es obligatorio';
+    if (!formData.respuesta) newErrors.respuesta = 'Este campo es obligatorio';
+    if (!formData.interes) newErrors.interes = 'Este campo es obligatorio';
+    if (!formData.informacion) newErrors.informacion = 'Este campo es obligatorio';
+    if (['LLAMADA', 'TAREA'].includes(formData.tipo) && !formData.medio) {
+      newErrors.medio = 'Este campo es obligatorio';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    try {
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/tratos/${tratoId}/interacciones`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            ...formData,
+            tipo: formData.tipo.toUpperCase(),
+            respuesta: formData.respuesta.toUpperCase(),
+            interes: formData.interes.toUpperCase(),
+            informacion: formData.informacion.toUpperCase(),
+            medio: formData.medio || (formData.tipo === 'REUNION' ? 'PRESENCIAL' : null),
+          }),
+        }
+      );
+
+      await response.json();
+      onSave();
+      Swal.fire({
+        title: '¡Interacción registrada!',
+        text: 'La interacción se ha guardado exitosamente',
+        icon: 'success',
+      });
+      onClose();
+    } catch (error) {
+      console.error('Error al registrar interacción:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo registrar la interacción',
+      });
+    }
+  };
+
+  const getMedioOptions = () => {
+    switch (formData.tipo) {
+      case 'LLAMADA':
+        return [
+          { value: 'TELEFONO', label: 'Teléfono' },
+          { value: 'WHATSAPP', label: 'WhatsApp' }
+        ];
+      case 'TAREA':
+        return [
+          { value: 'WHATSAPP', label: 'WhatsApp' },
+          { value: 'OUTLOOK', label: 'Outlook' },
+          { value: 'GMAIL', label: 'Gmail' }
+        ];
+      case 'REUNION':
+        return [
+          { value: 'PRESENCIAL', label: 'Presencial' },
+          { value: 'VIRTUAL', label: 'Virtual' }
+        ];
+      default:
+        return [];
+    }
+  };
+
+  return (
+    <DetallesTratoModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Agregar interacción"
+      size="md"
+    >
+      <form onSubmit={handleSubmit} className="modal-form">
+        <div className="modal-form-group">
+          <label>Tipo de interacción: <span className="required">*</span></label>
+          <div className="modal-select-wrapper">
+            <select
+              value={formData.tipo}
+              onChange={(e) => handleInputChange('tipo', e.target.value)}
+              className={`modal-form-control ${errors.tipo ? 'error' : ''}`}
+            >
+              <option value="">Seleccionar tipo</option>
+              <option value="LLAMADA">Llamada</option>
+              <option value="REUNION">Reunión</option>
+              <option value="TAREA">Tarea</option>
+            </select>
+            <img src={deploy || '/placeholder.svg'} alt="Desplegar" className="deploy-icon" />
+          </div>
+          {errors.tipo && <span className="error-message">{errors.tipo}</span>}
+        </div>
+
+        {formData.tipo && (
+          <div className="modal-form-group">
+            <label>Medio: <span className="required">*</span></label>
+            <div className="modal-select-wrapper">
+              <select
+                value={formData.medio}
+                onChange={(e) => handleInputChange('medio', e.target.value)}
+                className={`modal-form-control ${errors.medio ? 'error' : ''}`}
+              >
+                <option value="">Seleccionar medio</option>
+                {getMedioOptions().map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <img src={deploy || '/placeholder.svg'} alt="Desplegar" className="deploy-icon" />
+            </div>
+            {errors.medio && <span className="error-message">{errors.medio}</span>}
+          </div>
+        )}
+
+        <div className="modal-form-group">
+          <label>
+            Respuesta: <span className="required">*</span>
+          </label>
+          <div className="response-buttons">
+            <button
+              type="button"
+              className={`btn-response ${formData.respuesta === 'NO' ? 'active negative' : ''}`}
+              onClick={() => handleInputChange('respuesta', 'NO')}
+            >
+              ✕
+            </button>
+            <button
+              type="button"
+              className={`btn-response ${formData.respuesta === 'SI' ? 'active positive' : ''}`}
+              onClick={() => handleInputChange('respuesta', 'SI')}
+            >
+              ✓
+            </button>
+          </div>
+          {errors.respuesta && <span className="error-message">{errors.respuesta}</span>}
+        </div>
+
+        <div className="modal-form-group">
+          <label>
+            Interés: <span className="required">*</span>
+          </label>
+          <div className="interest-container">
+            <div className="interest-options">
+              <div className="interest-option">
+                <button
+                  type="button"
+                  className={`btn-interest ${formData.interes === 'BAJO' ? 'active low' : ''}`}
+                  onClick={() => handleInputChange('interes', 'BAJO')}
+                >
+                  ●
+                </button>
+                <span>Bajo</span>
+              </div>
+              <div className="interest-option">
+                <button
+                  type="button"
+                  className={`btn-interest ${formData.interes === 'MEDIO' ? 'active medium' : ''}`}
+                  onClick={() => handleInputChange('interes', 'MEDIO')}
+                >
+                  ●
+                </button>
+                <span>Medio</span>
+              </div>
+              <div className="interest-option">
+                <button
+                  type="button"
+                  className={`btn-interest ${formData.interes === 'ALTO' ? 'active high' : ''}`}
+                  onClick={() => handleInputChange('interes', 'ALTO')}
+                >
+                  ●
+                </button>
+                <span>Alto</span>
+              </div>
+            </div>
+          </div>
+          {errors.interes && <span className="error-message">{errors.interes}</span>}
+        </div>
+
+        <div className="modal-form-group">
+          <label>
+            Información: <span className="required">*</span>
+          </label>
+          <div className="response-buttons">
+            <button
+              type="button"
+              className={`btn-response ${formData.informacion === 'NO' ? 'active negative' : ''}`}
+              onClick={() => handleInputChange('informacion', 'NO')}
+            >
+              ✕
+            </button>
+            <button
+              type="button"
+              className={`btn-response ${formData.informacion === 'SI' ? 'active positive' : ''}`}
+              onClick={() => handleInputChange('informacion', 'SI')}
+            >
+              ✓
+            </button>
+          </div>
+          {errors.informacion && <span className="error-message">{errors.informacion}</span>}
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="siguienteAccion">
+            Siguiente acción: <span className="required">*</span>
+          </label>
+          <div className="modal-select-wrapper">
+            <select
+              id="siguienteAccion"
+              value={formData.siguienteAccion}
+              onChange={(e) => handleInputChange('siguienteAccion', e.target.value)}
+              className={`modal-form-control ${errors.siguienteAccion ? 'error' : ''}`}
+            >
+              <option value="">Seleccionar acción</option>
+              <option value="REGRESAR_LLAMADA">Regresar llamada</option>
+              <option value="MANDAR_MENSAJE">Mandar mensaje</option>
+              <option value="MANDAR_INFORMACION">Mandar información</option>
+              <option value="_1ER_SEGUIMIENTO">Primer seguimiento</option>
+              <option value="_2DO_SEGUIMIENTO">Segundo seguimiento</option>
+              <option value="_3ER_SEGUIMIENTO">Tercer seguimiento</option>
+              <option value="REUNION">Programar reunión</option>
+              <option value="MANDAR_COTIZACION">Mandar cotización</option>
+              <option value="POSIBLE_PERDIDO">Posible perdido</option>
+              <option value="PERDIDO">Perdido</option>
+              <option value="BUSCAR_OTRO_CONTACTO">Buscar otro contacto</option>
+              <option value="REALIZAR_DEMO">Realizar demo</option>
+              <option value="VENTA">Venta</option>
+              <option value="COBRANZA">Cobranza</option>
+              <option value="INSTALACION">Instalación</option>
+              <option value="REVISION_TECNICA">Revisión tecnica</option>
+              <option value="VISITAR_EN_FISICO">Visitar en fisico</option>
+              <option value="CONTACTAR_DESPUES">Contactar despues</option>
+            </select>
+            <img src={deploy || '/placeholder.svg'} alt="Desplegar" className="deploy-icon" />
+          </div>
+          {errors.siguienteAccion && <span className="error-message">{errors.siguienteAccion}</span>}
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="notas">Notas:</label>
+          <textarea
+            id="notas"
+            value={formData.notas}
+            onChange={(e) => handleInputChange('notas', e.target.value)}
+            className="modal-form-control textarea"
+            placeholder="Agregar notas adicionales..."
+            rows="4"
+          />
+        </div>
+
+        <div className="modal-form-actions">
+          <button type="button" onClick={onClose} className="btn btn-secondary">
+            Cancelar
+          </button>
+          <button type="submit" className="btn btn-primary">
+            Registrar interacción
           </button>
         </div>
       </form>
@@ -2816,7 +3138,6 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
 
   const handleUsarPlantilla = () => {
     if (loadingPlantillas || plantillas.length === 0) {
-      console.log("Plantillas no cargadas aún o vacías", { loadingPlantillas, plantillas });
       return;
     }
     openModal("seleccionarPlantilla", {
@@ -3228,6 +3549,7 @@ const DetallesTrato = () => {
     propietario: "",
     numeroTrato: "",
     nombreEmpresa: "",
+    empresaId: "",
     descripcion: "",
     domicilio: "",
     ingresosEsperados: "",
@@ -3265,9 +3587,9 @@ const DetallesTrato = () => {
     crearNuevaActividad: { isOpen: false },
     crearCorreo: { isOpen: false },
     seleccionarPlantilla: { isOpen: false },
+    agregarInteraccion: { isOpen: false, props: {} },
   })
 
-  // Funciones para manejar modales
   const openModal = async (modalType, data = {}) => {
     setModals((prev) => ({
       ...prev,
@@ -3337,7 +3659,12 @@ const DetallesTrato = () => {
   const closeModal = (modalType) => {
     setModals((prev) => ({
       ...prev,
-      [modalType]: { isOpen: false },
+      [modalType]: {
+        isOpen: false,
+        loading: false,
+        actividad: null,
+        esEdicion: false
+      },
     }))
   }
 
@@ -3557,6 +3884,7 @@ const DetallesTrato = () => {
           resultado: updatedActividad.respuesta === 'SI' ? 'POSITIVO' : updatedActividad.respuesta === 'NO' ? 'NEGATIVO' : 'Sin resultado',
           interes: updatedActividad.interes || 'Sin interés',
           notas: updatedActividad.notas || '',
+           siguienteAccion: updatedActividad.siguienteAccion || '', 
         };
         return {
           ...prev,
@@ -3565,7 +3893,11 @@ const DetallesTrato = () => {
             [normalizedTipo === 'llamada' ? 'llamadas' : normalizedTipo === 'reunion' ? 'reuniones' : 'tareas']:
               updatedActividades,
           },
-          historialInteracciones: [...prev.historialInteracciones, newInteraccion],
+          historialInteracciones: modals.completarActividad.esEdicion
+            ? prev.historialInteracciones.map(interaccion =>
+              interaccion.id === updatedActividad.id ? newInteraccion : interaccion
+            )
+            : [...prev.historialInteracciones, newInteraccion],
         };
       });
 
@@ -3719,6 +4051,7 @@ const DetallesTrato = () => {
           propietario: propietarioNombre,
           numeroTrato: tratoData.noTrato || "",
           nombreEmpresa: tratoData.empresaNombre || "",
+          empresaId: tratoData.empresaId || "",
           descripcion: tratoData.descripcion || "",
           domicilio: tratoData.domicilio || "",
           ingresosEsperados: tratoData.ingresosEsperados ? `$${tratoData.ingresosEsperados.toFixed(2)}` : "",
@@ -3836,6 +4169,7 @@ const DetallesTrato = () => {
             resultado: interaccion.respuesta ? (interaccion.respuesta === "SI" ? "POSITIVO" : "NEGATIVO") : "Sin resultado",
             interes: interaccion.interes || "Sin interés",
             notas: interaccion.notas || "",
+            siguienteAccion: interaccion.siguienteAccion || "",
           })),
           notas: (tratoData.notas || []).map((n) => ({
             id: n.id,
@@ -3859,6 +4193,17 @@ const DetallesTrato = () => {
     navigate("/tratos")
   }
 
+  const handleVerEmpresa = () => {
+    if (trato.empresaId) {
+      navigate(`/empresas/${trato.empresaId}`);
+    } else {
+      Swal.fire({
+        title: 'Sin empresa asociada',
+        text: 'Este trato no tiene una empresa asociada',
+        icon: 'info',
+      });
+    }
+  };
 
   const handleEditarTrato = () => {
     openModal("editarTrato");
@@ -4106,6 +4451,33 @@ const DetallesTrato = () => {
     openModal("completarActividad", { actividad, tratoId: actividad.tratoId });
   };
 
+  const handleEditarInteraccion = (interaccion) => {
+    closeModal('completarActividad');
+    setModals(prev => ({
+      ...prev,
+      completarActividad: {
+        isOpen: true,
+        loading: false,
+        actividad: {
+          ...interaccion,
+          id: interaccion.id,
+          tipo: interaccion.tipo,
+          tratoId: trato.id,
+          medio: interaccion.medio,
+          respuesta: interaccion.resultado === 'POSITIVO' ? 'SI' : interaccion.resultado === 'NEGATIVO' ? 'NO' : '',
+          interes: interaccion.interes !== 'Sin interés' ? interaccion.interes : '',
+          informacion: 'SI',
+          siguienteAccion: interaccion.siguienteAccion || '',
+          notas: interaccion.notas || '',
+          siguienteAccion: interaccion.siguienteAccion || '',
+        },
+        tratoId: trato.id,
+        esEdicion: true,
+        contactos: []
+      }
+    }));
+  };
+
   const handleReprogramarActividad = (actividadId, tipo) => {
     const actividad = trato.actividadesAbiertas[
       tipo === "llamada" ? "llamadas" : tipo === "reunion" ? "reuniones" : "tareas"
@@ -4128,6 +4500,39 @@ const DetallesTrato = () => {
     }
   };
 
+  const handleSaveAgregarInteraccion = async () => {
+    try {
+      const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}`);
+      const tratoActualizado = await tratoResponse.json();
+
+      setTrato(prev => ({
+        ...prev,
+        fechaCreacion: tratoActualizado.fechaCreacion ? new Date(tratoActualizado.fechaCreacion).toLocaleDateString() : prev.fechaCreacion,
+        fechaCierre: tratoActualizado.fechaCierre ? new Date(tratoActualizado.fechaCierre).toLocaleDateString() : prev.fechaCierre,
+        historialInteracciones: (tratoActualizado.historialInteracciones || []).map(interaccion => ({
+          id: interaccion.id,
+          fecha: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toISOString().split('T')[0] : "Sin fecha",
+          hora: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : "Sin hora",
+          responsable: users.find(u => u.id === interaccion.usuarioCompletadoId)?.nombreReal || "Sin asignado",
+          tipo: interaccion.tipo,
+          medio: interaccion.medio || (interaccion.modalidad === "PRESENCIAL" ? "PRESENCIAL" : interaccion.medio),
+          resultado: interaccion.respuesta ? (interaccion.respuesta === "SI" ? "POSITIVO" : "NEGATIVO") : "Sin resultado",
+          interes: interaccion.interes || "Sin interés",
+          notas: interaccion.notas || "",
+          siguienteAccion: interaccion.siguienteAccion || "",
+        }))
+      }));
+
+      closeModal('agregarInteraccion');
+    } catch (error) {
+      console.error('Error al recargar historial:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo actualizar el historial de interacciones'
+      });
+    }
+  };
   if (loading) {
     return (
       <>
@@ -4278,7 +4683,13 @@ const DetallesTrato = () => {
               </div>
               <div className="detalle-item">
                 <label>Nombre Empresa</label>
-                <span>{trato.nombreEmpresa}</span>
+                <button
+                  onClick={handleVerEmpresa}
+                  className="empresa-link"
+                  disabled={!trato.empresaId}
+                >
+                  {trato.nombreEmpresa}
+                </button>
               </div>
               <div className="detalle-item">
                 <label>Descripción</label>
@@ -4507,7 +4918,12 @@ const DetallesTrato = () => {
 
           {/* Historial de interacciones */}
           <div className="seccion historial-interacciones">
-            <h2>Historial de interacciones</h2>
+            <div className="seccion-header">
+              <h2>Historial de interacciones</h2>
+              <button onClick={() => openModal('agregarInteraccion', { tratoId: trato.id })} className="btn-agregar">
+                <img src={addIcon || "/placeholder.svg"} alt="Agregar" />
+              </button>
+            </div>
             <div className="historial-tabla">
               <div className="tabla-header">
                 <div className="header-cell">Fecha</div>
@@ -4517,6 +4933,7 @@ const DetallesTrato = () => {
                 <div className="header-cell">Resultado</div>
                 <div className="header-cell">Interés</div>
                 <div className="header-cell">Notas</div>
+                <div className="header-cell">Acciones</div>
               </div>
               <div className="tabla-body">
                 {trato.historialInteracciones && trato.historialInteracciones.length > 0 ? (
@@ -4562,6 +4979,15 @@ const DetallesTrato = () => {
                           </span>
                         </div>
                         <div className="cell notas-cell">{interaccion.notas}</div>
+                        <div className="cell">
+                          <button
+                            onClick={() => handleEditarInteraccion(interaccion)}
+                            className="btn-editar-interaccion"
+                            title="Editar interacción"
+                          >
+                            <img src={editIcon} alt="Editar" />
+                          </button>
+                        </div>
                       </div>
                     );
                   })
@@ -4722,6 +5148,15 @@ const DetallesTrato = () => {
         tratoId={params.id}
         contactos={modals.completarActividad.contactos || []}
         openModal={openModal}
+        esEdicion={modals.completarActividad.esEdicion}
+      />
+
+      <AgregarInteraccionModal
+        {...modals.agregarInteraccion.props}
+        isOpen={modals.agregarInteraccion.isOpen}
+        onClose={() => closeModal('agregarInteraccion')}
+        onSave={handleSaveAgregarInteraccion}
+        tratoId={params.id}
       />
 
       <CrearCorreoModal

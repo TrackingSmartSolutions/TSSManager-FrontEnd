@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import { useParams } from 'react-router-dom';
 import "./Empresas.css"
 import Header from "../Header/Header"
 import editIcon from "../../assets/icons/editar.png"
@@ -1550,7 +1551,9 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, contacto, isLas
 
 // Componente Principal
 const Empresas = () => {
+  const params = useParams();
   const [selectedCompany, setSelectedCompany] = useState(null)
+  const [contacts, setContacts] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState("")
   const [contactSearch, setContactSearch] = useState("")
@@ -1569,30 +1572,6 @@ const Empresas = () => {
   })
 
   const [tratos, setTratos] = useState([]);
-
-  useEffect(() => {
-    const fetchTratos = async () => {
-      if (!selectedCompany?.id) return;
-
-      try {
-        const response = await fetchWithToken(
-          `${API_BASE_URL}/tratos/filtrar?empresaId=${selectedCompany.id}`
-        );
-        if (!response.ok) throw new Error("Error al cargar los tratos");
-        const data = await response.json();
-        setTratos(data);
-      } catch (error) {
-        console.error("Error al cargar tratos:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: error.message,
-        });
-      }
-    };
-
-    fetchTratos();
-  }, [selectedCompany?.id]);
 
   const statusMap = {
     POR_CONTACTAR: "Por Contactar",
@@ -1817,7 +1796,6 @@ const Empresas = () => {
 
   const fetchAllCompanies = async () => {
     try {
-      // Hacer fetch SIN parámetros de filtro
       const response = await fetchWithToken(`${API_BASE_URL}/empresas`);
       if (!response.ok) throw new Error("Error al cargar las empresas");
       const data = await response.json();
@@ -1855,55 +1833,63 @@ const Empresas = () => {
   });
 
   const cargarDatosIniciales = async () => {
-  setIsLoading(true)
-  try {
-    await Promise.all([
-      fetchUsers(),
-      fetchAllCompanies()
-    ])
-  } catch (error) {
-    console.error('Error al cargar datos iniciales:', error)
-  } finally {
-    setIsLoading(false)
+    setIsLoading(true)
+    try {
+      await Promise.all([
+        fetchUsers(),
+        fetchAllCompanies()
+      ])
+    } catch (error) {
+      console.error('Error al cargar datos iniciales:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
-}
 
   useEffect(() => {
     cargarDatosIniciales()
   }, [])
 
   useEffect(() => {
-    fetchUsers()
-  }, [])
-
-  useEffect(() => {
-    if (!isLoading) {
-      fetchAllCompanies()
+    if (params.empresaId && companies.length > 0) {
+      const empresaFromUrl = companies.find(company => company.id === parseInt(params.empresaId));
+      if (empresaFromUrl) {
+        setSelectedCompany(empresaFromUrl);
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Empresa no encontrada',
+          text: 'La empresa solicitada no existe o no tienes permisos para verla',
+        });
+        navigate('/empresas', { replace: true });
+      }
+    } else if (!params.empresaId && companies.length > 0 && !selectedCompany) {
+      setSelectedCompany(companies[0]);
     }
-  }, [])
-
+  }, [params.empresaId, companies, navigate]);
 
   useEffect(() => {
     const fetchContacts = async () => {
-      if (!selectedCompany?.id) return
+      if (!selectedCompany?.id) {
+        setContacts([])
+        return
+      }
 
       try {
         const response = await fetchWithToken(`${API_BASE_URL}/empresas/${selectedCompany.id}/contactos`)
         if (!response.ok) throw new Error("Error al cargar los contactos")
-        const contacts = await response.json()
+        const contactsData = await response.json()
 
-        const normalizedContacts = contacts.map((contact) => ({
+        const normalizedContacts = contactsData.map((contact) => ({
           ...contact,
           correos: contact.correos || [],
           telefonos: contact.telefonos || [],
         }))
 
-        setSelectedCompany((prev) => ({
-          ...prev,
-          contacts: normalizedContacts,
-        }))
+        setContacts(normalizedContacts)
       } catch (error) {
         console.error("Error al cargar contactos:", error)
+        setContacts([])
         Swal.fire({
           icon: "error",
           title: "Error",
@@ -1915,15 +1901,43 @@ const Empresas = () => {
     fetchContacts()
   }, [selectedCompany?.id])
 
-  const filteredContacts = (selectedCompany?.contacts || []).filter((contact) => {
+
+  useEffect(() => {
+    const fetchTratos = async () => {
+      if (!selectedCompany?.id) return;
+
+      try {
+        const response = await fetchWithToken(
+          `${API_BASE_URL}/tratos/filtrar?empresaId=${selectedCompany.id}`
+        );
+        if (!response.ok) throw new Error("Error al cargar los tratos");
+        const data = await response.json();
+        setTratos(data);
+      } catch (error) {
+        console.error("Error al cargar tratos:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.message,
+        });
+      }
+    };
+
+    fetchTratos();
+  }, [selectedCompany?.id]);
+
+
+  const filteredContacts = contacts.filter((contact) => {
     const matchesSearch = contact.nombre?.toLowerCase().includes(contactSearch.toLowerCase())
     const matchesRole = !contactRole || contact.rol === contactRole
     return matchesSearch && matchesRole
   })
 
   const handleCompanySelect = (company) => {
-    setSelectedCompany(company)
-  }
+    setSelectedCompany(company);
+    navigate(`/empresas/${company.id}`, { replace: true });
+  };
+
 
   const handleTratoClick = (tratoId) => {
     navigate(`/detallestrato/${tratoId}`);
@@ -2090,6 +2104,7 @@ const Empresas = () => {
         contacts: [...(prev.contacts || []), normalizedContacto],
         fechaUltimaActividad: new Date().toISOString(),
       }))
+      setContacts(prev => [...prev, normalizedContacto])
     } else {
       setCompanies((prev) =>
         prev.map((company) =>
@@ -2111,7 +2126,11 @@ const Empresas = () => {
         ),
         fechaUltimaActividad: new Date().toISOString(),
       }))
+      setContacts(prev => prev.map(contact =>
+        contact.id === normalizedContacto.id ? normalizedContacto : contact
+      ))
     }
+
     closeModal("contacto")
   }
 
@@ -2147,6 +2166,8 @@ const Empresas = () => {
         contacts: (prev.contacts || []).filter((contact) => contact.id !== contactId),
         fechaUltimaActividad: new Date().toISOString(),
       }))
+
+      setContacts(prev => prev.filter(contact => contact.id !== contactId))
 
       closeModal("confirmarEliminacion")
     } catch (error) {
