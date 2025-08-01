@@ -690,6 +690,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
     nuevaFechaLimite: "",
     tipo: "",
     finalidad: "",
+    notas: ""
   });
   const [errors, setErrors] = useState({});
   const [contactos, setContactos] = useState([]);
@@ -735,6 +736,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
               actividad.subtipoTarea.slice(1).toLowerCase()
               : "",
             finalidad: actividad.finalidad || "",
+            notas: actividad.notas || ""
           });
         } catch (error) {
           Swal.fire({
@@ -778,6 +780,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
       subtipoTarea: formData.tipo.toUpperCase(),
       finalidad: formData.finalidad,
       estado: "Reprogramada",
+      notas: formData.notas 
     };
 
     try {
@@ -873,6 +876,13 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
             >
               Mensaje
             </button>
+            <button
+              type="button"
+              className={`btn-tipo ${formData.tipo === "Actividad" ? "active" : ""}`}
+              onClick={() => handleInputChange("tipo", "Actividad")}
+            >
+              Actividad
+            </button>
           </div>
           {errors.tipo && <span className="error-message">{errors.tipo}</span>}
         </div>
@@ -900,6 +910,19 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
           </div>
           {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
         </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="notas">Notas:</label>
+          <textarea
+            id="notas"
+            value={formData.notas}
+            onChange={(e) => handleInputChange("notas", e.target.value)}
+            className="modal-form-control"
+            rows="3"
+            placeholder="Notas adicionales (opcional)"
+          />
+        </div>
+
         <div className="modal-form-actions">
           <button type="button" onClick={onClose} className="btn btn-secondary">Cancelar</button>
           <button type="submit" className="btn btn-primary">Confirmar cambios</button>

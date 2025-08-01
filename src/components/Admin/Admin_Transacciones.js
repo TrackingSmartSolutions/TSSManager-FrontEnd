@@ -145,13 +145,14 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
   useEffect(() => {
     if (isOpen) {
       const today = getTodayDate();
+      const defaultPagos = getDefaultPagos("UNICA");
       setFormData({
         fecha: today,
         tipo: "",
         categoria: "",
         cuenta: "",
         esquema: "UNICA",
-        numeroPagos: "",
+        numeroPagos: defaultPagos.toString(),
         fechaPago: today,
         monto: "",
         formaPago: "01",
@@ -161,10 +162,8 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
       setDynamicCuentas([]);
     }
   }, [isOpen]);
-
   useEffect(() => {
     if (formData.esquema) {
-
       const defaultPagos = getDefaultPagos(formData.esquema);
       setFormData((prev) => ({
         ...prev,
@@ -386,6 +385,8 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
               className="transacciones-form-control"
               min="1"
               placeholder="Número de pagos"
+              disabled={formData.esquema === "UNICA"}
+              readOnly={formData.esquema === "UNICA"}
             />
           </div>
         </div>
@@ -845,22 +846,13 @@ const AdminTransacciones = () => {
 
   const formasPago = [
     { value: "01", label: "Efectivo" },
-    { value: "02", label: "Cheque nominativo" },
     { value: "03", label: "Transferencia electrónica de fondos" },
     { value: "04", label: "Tarjeta de crédito" },
-    { value: "05", label: "Monedero electrónico" },
     { value: "06", label: "Dinero electrónico" },
+    { value: "07", label: "Con Saldo Acumulado" },
     { value: "08", label: "Vales de despensa" },
-    { value: "12", label: "Dación en pago" },
-    { value: "13", label: "Pago por subrogación" },
-    { value: "14", label: "Pago por consignación" },
     { value: "15", label: "Condonación" },
     { value: "17", label: "Compensación" },
-    { value: "23", label: "Novación" },
-    { value: "24", label: "Confusión" },
-    { value: "25", label: "Remisión de deuda" },
-    { value: "26", label: "Prescripción o caducidad" },
-    { value: "27", label: "A satisfacción del acreedor" },
     { value: "28", label: "Tarjeta de débito" },
     { value: "29", label: "Tarjeta de servicios" },
     { value: "30", label: "Aplicación de anticipos" },

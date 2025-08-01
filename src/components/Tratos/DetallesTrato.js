@@ -207,9 +207,68 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     return Object.keys(newErrors).length === 0;
   };
 
+  const [conflictoHorario, setConflictoHorario] = useState("");
+
+  const verificarConflictoHorario = async (fecha, hora, duracion = null) => {
+    if (!fecha || !hora || !formData.asignadoAId) {
+      setConflictoHorario("");
+      return false;
+    }
+
+    try {
+      const params = new URLSearchParams({
+        asignadoAId: formData.asignadoAId,
+        fecha: fecha,
+        hora: hora + ":00"
+      });
+
+      if (duracion) {
+        params.append('duracion', duracion);
+      }
+
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/tratos/verificar-conflicto-horario?${params}`
+      );
+
+      const data = await response.json();
+
+      if (data.hayConflicto) {
+        setConflictoHorario("Ya existe una actividad programada en este horario para el usuario asignado.");
+        return true;
+      } else {
+        setConflictoHorario("");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error verificando conflicto:", error);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    if (formData.fecha && formData.horaInicio && formData.asignadoAId) {
+      const timeoutId = setTimeout(() => {
+        verificarConflictoHorario(formData.fecha, formData.horaInicio, formData.duracion);
+      }, 500);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [formData.fecha, formData.horaInicio, formData.asignadoAId, formData.duracion]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
+
+    // Verificar conflicto antes de enviar
+    const hayConflicto = await verificarConflictoHorario(
+      formData.fecha,
+      formData.horaInicio,
+      formData.duracion
+    );
+
+    if (hayConflicto) {
+      return;
+    }
 
     const horaInicio = formData.horaInicio ? `${formData.horaInicio}:00` : '';
     const actividadDTO = {
@@ -306,6 +365,13 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
           />
           {errors.horaInicio && <span className="error-message">{errors.horaInicio}</span>}
         </div>
+
+        {conflictoHorario && (
+          <div className="conflict-warning">
+            <span className="error-message">{conflictoHorario}</span>
+          </div>
+        )}
+
         <div className="modal-form-group">
           <label htmlFor="finalidad">Finalidad: <span className="required">*</span></label>
           <div className="modal-select-wrapper">
@@ -339,7 +405,6 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     </DetallesTratoModal>
   );
 };
-
 
 // Modal para programar reunión
 const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId }) => {
@@ -469,9 +534,68 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     return Object.keys(newErrors).length === 0;
   };
 
+  const [conflictoHorario, setConflictoHorario] = useState("");
+
+  const verificarConflictoHorario = async (fecha, hora, duracion = null) => {
+    if (!fecha || !hora || !formData.asignadoAId) {
+      setConflictoHorario("");
+      return false;
+    }
+
+    try {
+      const params = new URLSearchParams({
+        asignadoAId: formData.asignadoAId,
+        fecha: fecha,
+        hora: hora + ":00"
+      });
+
+      if (duracion) {
+        params.append('duracion', duracion);
+      }
+
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/tratos/verificar-conflicto-horario?${params}`
+      );
+
+      const data = await response.json();
+
+      if (data.hayConflicto) {
+        setConflictoHorario("Ya existe una actividad programada en este horario para el usuario asignado.");
+        return true;
+      } else {
+        setConflictoHorario("");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error verificando conflicto:", error);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    if (formData.fecha && formData.horaInicio && formData.asignadoAId) {
+      const timeoutId = setTimeout(() => {
+        verificarConflictoHorario(formData.fecha, formData.horaInicio, formData.duracion);
+      }, 500);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [formData.fecha, formData.horaInicio, formData.asignadoAId, formData.duracion]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
+
+    // Verificar conflicto antes de enviar
+    const hayConflicto = await verificarConflictoHorario(
+      formData.fecha,
+      formData.horaInicio,
+      formData.duracion
+    );
+
+    if (hayConflicto) {
+      return;
+    }
 
     setIsLoading(true);
 
@@ -578,6 +702,8 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             />
             {errors.horaInicio && <span className="error-message">{errors.horaInicio}</span>}
           </div>
+
+
           <div className="modal-form-group">
             <label>Duración: <span className="required">*</span></label>
             <div className="modal-select-wrapper">
@@ -599,6 +725,13 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             {errors.duracion && <span className="error-message">{errors.duracion}</span>}
           </div>
         </div>
+
+        {conflictoHorario && (
+          <div className="conflict-warning">
+            <span className="error-message">{conflictoHorario}</span>
+          </div>
+        )}
+
         <div className="modal-form-group">
           <label htmlFor="modalidad">Modalidad: <span className="required">*</span></label>
           <div className="modal-select-wrapper">
@@ -732,6 +865,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
     fechaLimite: "",
     tipo: "",
     finalidad: "",
+    notas: ""
   });
   const [errors, setErrors] = useState({});
   const [contactos, setContactos] = useState([]);
@@ -749,6 +883,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
             fechaLimite: "",
             tipo: "",
             finalidad: "",
+            notas: ""
           });
           setErrors({});
           if (trato.empresaId) fetchContactos(trato.empresaId);
@@ -811,7 +946,8 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
       contactoId: formData.nombreContacto,
       fechaLimite: formData.fechaLimite,
       subtipoTarea: formData.tipo.toUpperCase(),
-      finalidad: formData.finalidad
+      finalidad: formData.finalidad,
+      notas: formData.notas
     };
 
     try {
@@ -903,6 +1039,13 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
             >
               Mensaje
             </button>
+            <button
+              type="button"
+              className={`btn-tipo ${formData.tipo === "Actividad" ? "active" : ""}`}
+              onClick={() => handleInputChange("tipo", "Actividad")}
+            >
+              Actividad
+            </button>
           </div>
           {errors.tipo && <span className="error-message">{errors.tipo}</span>}
         </div>
@@ -918,6 +1061,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
               <option value="">Ninguna seleccionada</option>
               <option value="CLASIFICACION">Clasificación</option>
               <option value="PRIMER_CONTACTO">Primer Contacto</option>
+              <option value="SEGUIMIENTO">Seguimiento</option>
               <option value="REUNION">Reunión</option>
               <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
               <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
@@ -929,6 +1073,18 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
             <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
           </div>
           {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="notas">Notas:</label>
+          <textarea
+            id="notas"
+            value={formData.notas}
+            onChange={(e) => handleInputChange("notas", e.target.value)}
+            className="modal-form-control"
+            rows="3"
+            placeholder="Notas adicionales (opcional)"
+          />
         </div>
         <div className="modal-form-actions">
           <button type="button" onClick={onClose} className="btn btn-secondary">Cancelar</button>
@@ -1018,6 +1174,13 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
+
+    if (field === "nuevaFecha" || field === "nuevaHora" || field === "asignadoAId") {
+      const updatedData = { ...formData, [field]: value };
+      if (updatedData.asignadoAId && updatedData.nuevaFecha && updatedData.nuevaHora) {
+        verificarConflictoHorario(updatedData.asignadoAId, updatedData.nuevaFecha, updatedData.nuevaHora);
+      }
+    }
   };
 
   const validateForm = () => {
@@ -1032,9 +1195,33 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
     if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     if (!formData.asignadoAId) newErrors.asignadoAId = "Este campo es obligatorio";
     if (!formData.nombreContactoId) newErrors.nombreContactoId = "Este campo es obligatorio";
+    if (conflictoHorario) {
+      newErrors.conflicto = "Ya existe una actividad programada en este horario";
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  const [conflictoHorario, setConflictoHorario] = useState(false);
+
+  const verificarConflictoHorario = async (asignadoAId, fecha, hora) => {
+    if (!asignadoAId || !fecha || !hora) {
+      setConflictoHorario(false);
+      return;
+    }
+
+    try {
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/tratos/verificar-conflicto-horario?asignadoAId=${asignadoAId}&fecha=${fecha}&hora=${hora}:00&actividadIdExcluir=${actividad.id}`
+      );
+      const data = await response.json();
+      setConflictoHorario(data.hayConflicto);
+    } catch (error) {
+      console.error("Error verificando conflicto:", error);
+      setConflictoHorario(false);
+    }
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1139,6 +1326,13 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
           />
           {errors.nuevaHora && <span className="error-message">{errors.nuevaHora}</span>}
         </div>
+
+        {conflictoHorario && (
+          <div className="conflict-warning">
+            <span className="error-message">Ya hay una actividad asignada en este horario</span>
+          </div>
+        )}
+
         <div className="modal-form-group">
           <label htmlFor="finalidad">Finalidad: <span className="required">*</span></label>
           <div className="modal-select-wrapper">
@@ -1263,6 +1457,12 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
           newData.enlaceReunion = "";
         }
       }
+
+      if (field === "nuevaFecha" || field === "nuevaHoraInicio" || field === "asignadoAId" || field === "duracion") {
+        if (newData.asignadoAId && newData.nuevaFecha && newData.nuevaHoraInicio) {
+          verificarConflictoHorario(newData.asignadoAId, newData.nuevaFecha, newData.nuevaHoraInicio, newData.duracion);
+        }
+      }
       return newData;
     });
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
@@ -1286,6 +1486,27 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
     if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const [conflictoHorario, setConflictoHorario] = useState(false);
+
+  const verificarConflictoHorario = async (asignadoAId, fecha, hora, duracion) => {
+    if (!asignadoAId || !fecha || !hora) {
+      setConflictoHorario(false);
+      return;
+    }
+
+    try {
+      const duracionParam = duracion ? `&duracion=${duracion}` : '';
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/tratos/verificar-conflicto-horario?asignadoAId=${asignadoAId}&fecha=${fecha}&hora=${hora}:00&actividadIdExcluir=${actividad.id}`
+      );
+      const data = await response.json();
+      setConflictoHorario(data.hayConflicto);
+    } catch (error) {
+      console.error("Error verificando conflicto:", error);
+      setConflictoHorario(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -1431,6 +1652,13 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
             {errors.duracion && <span className="error-message">{errors.duracion}</span>}
           </div>
         </div>
+
+        {conflictoHorario && (
+          <div className="conflict-warning">
+            <span className="error-message">Ya hay una actividad asignada en este horario</span>
+          </div>
+        )}
+
         <div className="modal-form-group">
           <label htmlFor="modalidad">Modalidad: <span className="required">*</span></label>
           <div className="modal-select-wrapper">
@@ -1563,6 +1791,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
     nuevaFechaLimite: "",
     tipo: "",
     finalidad: "",
+    notas: ""
   });
   const [errors, setErrors] = useState({});
   const [contactos, setContactos] = useState([]);
@@ -1608,6 +1837,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
               actividad.subtipoTarea.slice(1).toLowerCase()
               : "",
             finalidad: actividad.finalidad || "",
+            notas: actividad.notas || ""
           });
         } catch (error) {
           Swal.fire({
@@ -1651,6 +1881,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
       subtipoTarea: formData.tipo.toUpperCase(),
       finalidad: formData.finalidad,
       estado: "Reprogramada",
+       notas: formData.notas  
     };
 
     try {
@@ -1746,6 +1977,13 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
             >
               Mensaje
             </button>
+            <button
+              type="button"
+              className={`btn-tipo ${formData.tipo === "Actividad" ? "active" : ""}`}
+              onClick={() => handleInputChange("tipo", "Actividad")}
+            >
+              Actividad
+            </button>
           </div>
           {errors.tipo && <span className="error-message">{errors.tipo}</span>}
         </div>
@@ -1761,6 +1999,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
               <option value="">Seleccionar finalidad</option>
               <option value="CLASIFICACION">Clasificación</option>
               <option value="PRIMER_CONTACTO">Primer Contacto</option>
+              <option value="SEGUIMIENTO">Seguimiento</option>
               <option value="REUNION">Reunión</option>
               <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
               <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
@@ -1772,6 +2011,18 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
             <img src={deploy} alt="Desplegar" className="deploy-icon" />
           </div>
           {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="notas">Notas:</label>
+          <textarea
+            id="notas"
+            value={formData.notas}
+            onChange={(e) => handleInputChange("notas", e.target.value)}
+            className="modal-form-control"
+            rows="3"
+            placeholder="Notas adicionales (opcional)"
+          />
         </div>
         <div className="modal-form-actions">
           <button type="button" onClick={onClose} className="btn btn-secondary">Cancelar</button>
@@ -1924,17 +2175,17 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
           <div className="response-buttons">
             <button
               type="button"
-              className={`btn-response ${formData.respuesta === 'SI' ? 'active positive' : ''}`}
-              onClick={() => handleInputChange('respuesta', 'SI')}
-            >
-              ✓
-            </button>
-            <button
-              type="button"
               className={`btn-response ${formData.respuesta === 'NO' ? 'active negative' : ''}`}
               onClick={() => handleInputChange('respuesta', 'NO')}
             >
               ✕
+            </button>
+            <button
+              type="button"
+              className={`btn-response ${formData.respuesta === 'SI' ? 'active positive' : ''}`}
+              onClick={() => handleInputChange('respuesta', 'SI')}
+            >
+              ✓
             </button>
           </div>
           {errors.respuesta && <span className="error-message">{errors.respuesta}</span>}
@@ -1988,21 +2239,54 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
           <div className="response-buttons">
             <button
               type="button"
-              className={`btn-response ${formData.informacion === 'SI' ? 'active positive' : ''}`}
-              onClick={() => handleInputChange('informacion', 'SI')}
-            >
-              ✓
-            </button>
-            <button
-              type="button"
               className={`btn-response ${formData.informacion === 'NO' ? 'active negative' : ''}`}
               onClick={() => handleInputChange('informacion', 'NO')}
             >
               ✕
             </button>
+            <button
+              type="button"
+              className={`btn-response ${formData.informacion === 'SI' ? 'active positive' : ''}`}
+              onClick={() => handleInputChange('informacion', 'SI')}
+            >
+              ✓
+            </button>
           </div>
           {errors.informacion && <span className="error-message">{errors.informacion}</span>}
         </div>
+
+        {(actividad?.tipo?.toUpperCase() === 'LLAMADA' || actividad?.tipo?.toUpperCase() === 'TAREA') && (
+          <div className="modal-form-group">
+            <label htmlFor="medio">
+              Medio: <span className="required">*</span>
+            </label>
+            <div className="modal-select-wrapper">
+              <select
+                id="medio"
+                value={formData.medio}
+                onChange={(e) => handleInputChange('medio', e.target.value)}
+                className={`modal-form-control ${errors.medio ? 'error' : ''}`}
+              >
+                <option value="">Seleccionar medio</option>
+                {actividad?.tipo?.toUpperCase() === 'LLAMADA' && (
+                  <>
+                    <option value="TELEFONO">Teléfono</option>
+                    <option value="WHATSAPP">WhatsApp</option>
+                  </>
+                )}
+                {actividad?.tipo?.toUpperCase() === 'TAREA' && (
+                  <>
+                    <option value="WHATSAPP">WhatsApp</option>
+                    <option value="OUTLOOK">Outlook</option>
+                    <option value="GMAIL">Gmail</option>
+                  </>
+                )}
+              </select>
+              <img src={deploy || '/placeholder.svg'} alt="Desplegar" className="deploy-icon" />
+            </div>
+            {errors.medio && <span className="error-message">{errors.medio}</span>}
+          </div>
+        )}
 
         <div className="modal-form-group">
           <label htmlFor="siguienteAccion">
@@ -2039,39 +2323,6 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
           </div>
           {errors.siguienteAccion && <span className="error-message">{errors.siguienteAccion}</span>}
         </div>
-
-        {(actividad?.tipo?.toUpperCase() === 'LLAMADA' || actividad?.tipo?.toUpperCase() === 'TAREA') && (
-          <div className="modal-form-group">
-            <label htmlFor="medio">
-              Medio: <span className="required">*</span>
-            </label>
-            <div className="modal-select-wrapper">
-              <select
-                id="medio"
-                value={formData.medio}
-                onChange={(e) => handleInputChange('medio', e.target.value)}
-                className={`modal-form-control ${errors.medio ? 'error' : ''}`}
-              >
-                <option value="">Seleccionar medio</option>
-                {actividad?.tipo?.toUpperCase() === 'LLAMADA' && (
-                  <>
-                    <option value="TELEFONO">Teléfono</option>
-                    <option value="WHATSAPP">WhatsApp</option>
-                  </>
-                )}
-                {actividad?.tipo?.toUpperCase() === 'TAREA' && (
-                  <>
-                    <option value="WHATSAPP">WhatsApp</option>
-                    <option value="OUTLOOK">Outlook</option>
-                    <option value="GMAIL">Gmail</option>
-                  </>
-                )}
-              </select>
-              <img src={deploy || '/placeholder.svg'} alt="Desplegar" className="deploy-icon" />
-            </div>
-            {errors.medio && <span className="error-message">{errors.medio}</span>}
-          </div>
-        )}
 
         <div className="modal-form-group">
           <label htmlFor="notas">Notas:</label>
@@ -2113,7 +2364,7 @@ const EditarTratoModal = ({ isOpen, onClose, onSave, trato, users, companies }) 
   const [contacts, setContacts] = useState([]);
 
   useEffect(() => {
-    if (trato && isOpen && trato.id) {
+    if (trato && isOpen && trato.id && companies.length > 0) {
       setFormData({
         propietario: trato.propietario || "",
         nombreTrato: trato.nombre || "",
@@ -2126,7 +2377,7 @@ const EditarTratoModal = ({ isOpen, onClose, onSave, trato, users, companies }) 
       loadContacts(trato.nombreEmpresa);
     }
     setErrors({});
-  }, [trato, isOpen]);
+  }, [trato, isOpen, companies]);
 
   const loadContacts = async (empresaNombre) => {
     try {
@@ -3426,10 +3677,12 @@ const DetallesTrato = () => {
       setLoading(true);
       try {
         // Cargar datos básicos primero
-        const [tratoData, usersData] = await Promise.all([
-          fetchTrato(params.id),
-          fetchWithToken(`${API_BASE_URL}/auth/users`).then(res => res.json())
-        ]);
+        const tratoData = await fetchTrato(params.id);
+        const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+        const usersData = await usersResponse.json();
+        const companiesResponse = await fetchWithToken(`${API_BASE_URL}/empresas`);
+        const companiesData = await companiesResponse.json();
+
 
         const users = usersData.map((user) => ({
           id: user.id,
@@ -3437,6 +3690,7 @@ const DetallesTrato = () => {
           nombreReal: user.nombre
         }));
         setUsers(users);
+        setCompanies(companiesData || []);
 
         const propietarioUser = users.find((user) => user.id === tratoData.propietarioId);
         const propietarioNombre = propietarioUser ? propietarioUser.nombreReal : tratoData.propietarioNombre || "";

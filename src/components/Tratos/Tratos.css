@@ -166,6 +166,37 @@ body {
   align-items: center;
 }
 
+.search-container {
+  position: relative;
+  width: 250px;
+}
+
+.global-search-input {
+  appearance: none;
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  width: 100%;
+  box-shadow: var(--box-shadow);
+  transition: border-color 0.3s, box-shadow 0.3s;
+  box-sizing: border-box;
+}
+
+.global-search-input:focus {
+  outline: none;
+  border-color: var(--secondary-color);
+  box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
+.global-search-input::placeholder {
+  color: var(--text-light);
+  font-style: italic;
+}
+
+
+
 .btn-crear-trato {
   background-color: var(--accent-color);
   color: white;
@@ -1182,6 +1213,16 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
   .date-range-container {
     width: 100%;
   }
+
+@media (max-width: 768px) {
+  .search-container {
+    width: 100%;
+  }
+  
+  .global-search-input {
+    width: 100%;
+  }
+}
 
   /* Los elementos de selección de usuario y botones de filtro de fecha ocupan todo el ancho */
   .user-select,

@@ -401,6 +401,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     return Object.keys(newErrors).length === 0;
   };
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -938,6 +939,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
     fechaLimite: "",
     tipo: "",
     finalidad: "",
+    notas: ""
   });
   const [errors, setErrors] = useState({});
   const [contactos, setContactos] = useState([]);
@@ -951,6 +953,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
         fechaLimite: "",
         tipo: "",
         finalidad: "",
+        notas: ""
       }));
       setErrors({});
     }
@@ -1008,6 +1011,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
       fechaLimite: formData.fechaLimite,
       subtipoTarea: formData.tipo.toUpperCase(),
       finalidad: formData.finalidad,
+      notas: formData.notas
     };
 
 
@@ -1101,6 +1105,13 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
             >
               Mensaje
             </button>
+            <button
+              type="button"
+              className={`btn-tipo ${formData.tipo === "Actividad" ? "active" : ""}`}
+              onClick={() => handleInputChange("tipo", "Actividad")}
+            >
+              Actividad
+            </button>
           </div>
           {errors.tipo && <span className="error-message">{errors.tipo}</span>}
         </div>
@@ -1117,6 +1128,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
               <option value="">Ninguna seleccionada</option>
               <option value="CLASIFICACION">Clasificación</option>
               <option value="PRIMER_CONTACTO">Primer Contacto</option>
+              <option value="SEGUIMIENTO">Seguimiento</option>
               <option value="REUNION">Reunión</option>
               <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
               <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
@@ -1128,6 +1140,18 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
             <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
           </div>
           {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
+        </div>
+
+        <div className="modal-form-group">
+          <label htmlFor="notas">Notas:</label>
+          <textarea
+            id="notas"
+            value={formData.notas}
+            onChange={(e) => handleInputChange("notas", e.target.value)}
+            className="modal-form-control"
+            rows="3"
+            placeholder="Notas adicionales (opcional)"
+          />
         </div>
 
         <div className="modal-form-actions">
@@ -1502,6 +1526,7 @@ const Tratos = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [globalSearchTerm, setGlobalSearchTerm] = useState("");
 
 
   const fetchData = async () => {
@@ -1646,10 +1671,47 @@ const Tratos = () => {
   };
 
   const filtrarTratosPorNombre = (tratos) => {
-    if (!searchTerm.trim()) return tratos;
-    return tratos.filter(trato =>
-      trato.nombre.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    let filteredTratos = tratos;
+
+    if (searchTerm.trim()) {
+      filteredTratos = filteredTratos.filter(trato =>
+        trato.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    if (globalSearchTerm.trim()) {
+      filteredTratos = filteredTratos.filter(trato =>
+        trato.nombre.toLowerCase().includes(globalSearchTerm.toLowerCase())
+      );
+    }
+
+    return filteredTratos;
+  };
+
+  const handleGlobalSearch = () => {
+    if (!globalSearchTerm.trim()) {
+      return;
+    }
+
+    const foundColumns = [];
+    columnas.forEach(columna => {
+      const foundTratos = columna.tratos.filter(trato =>
+        trato.nombre.toLowerCase().includes(globalSearchTerm.toLowerCase())
+      );
+      if (foundTratos.length > 0) {
+        foundColumns.push(columna.id);
+      }
+    });
+
+    // Expandir columnas que tienen resultados
+    setExpandedColumns(prevExpanded => {
+      const newExpanded = [...prevExpanded];
+      foundColumns.forEach(columnId => {
+        if (!newExpanded.includes(columnId)) {
+          newExpanded.push(columnId);
+        }
+      });
+      return newExpanded;
+    });
   };
 
   useEffect(() => {
@@ -1677,6 +1739,12 @@ const Tratos = () => {
       setDateRangeText("Rango de fecha del trato");
     }
   }, [startDate, endDate]);
+
+  useEffect(() => {
+    if (globalSearchTerm.trim()) {
+      handleGlobalSearch();
+    }
+  }, [globalSearchTerm, columnas]);
 
   const openModal = (modalType, data = {}) => {
     setModals((prev) => ({ ...prev, [modalType]: { isOpen: true, ...data } }));
@@ -1915,6 +1983,19 @@ const Tratos = () => {
                   />
                 </div>
                 <span className="filter-legend">Filtro por un rango de tiempo</span>
+              </div>
+
+              <div className="filter-group">
+                <div className="search-container">
+                  <input
+                    type="text"
+                    placeholder="Buscar trato por nombre..."
+                    value={globalSearchTerm}
+                    onChange={(e) => setGlobalSearchTerm(e.target.value)}
+                    className="global-search-input"
+                  />
+                </div>
+                <span className="filter-legend">Búsqueda por nombre de trato</span>
               </div>
             </div>
 

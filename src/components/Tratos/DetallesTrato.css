@@ -1526,6 +1526,25 @@
   padding: var(--spacing-sm);
 }
 
+/* Estilos para el mensaje de conflicto horario */
+.conflict-warning {
+  padding: 8px 12px;
+  margin: 12px auto;
+  max-width: 80%;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #ef4444;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.conflict-warning .error-message {
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0;
+}
+
 .detalles-trato-modal-overlay {
   position: fixed;
   top: 0;

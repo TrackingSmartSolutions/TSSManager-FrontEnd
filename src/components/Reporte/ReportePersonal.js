@@ -516,7 +516,7 @@ const ReportePersonal = () => {
                           {nota.interes}
                         </span>
                       </td>
-                      <td className="reporte-notas-cell">{nota.notas}</td> {/* Mover "Notas" al final */}
+                      <td className="reporte-notas-cell">{nota.notas}</td> 
                     </tr>
                   ))}
                 </tbody>
