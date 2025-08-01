@@ -54,7 +54,6 @@ const fetchWithToken = async (url, options = {}) => {
   }
 };
 
-
 const fetchWithRetry = async (url, options = {}, maxRetries = 3) => {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -389,7 +388,8 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
   const validateForm = () => {
     const newErrors = {};
     const currentDate = new Date().toISOString().split('T')[0];
-    const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const now = new Date();
+    const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fecha.trim()) newErrors.fecha = "Este campo es obligatorio";
     else if (formData.fecha < currentDate) newErrors.fecha = "La fecha no puede ser en el pasado";
@@ -500,7 +500,10 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             value={formData.horaInicio}
             onChange={(e) => handleInputChange("horaInicio", e.target.value)}
             className={`modal-form-control ${errors.horaInicio ? "error" : ""}`}
-            min={formData.fecha === new Date().toISOString().split('T')[0] ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : undefined}
+            min={formData.fecha === new Date().toISOString().split('T')[0] ? (() => {
+              const now = new Date();
+              return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            })() : undefined}
           />
           {errors.horaInicio && <span className="error-message">{errors.horaInicio}</span>}
         </div>
@@ -539,7 +542,6 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     </Modal>
   );
 };
-
 
 // Modal para programar reunión
 const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId }) => {
@@ -653,7 +655,8 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
   const validateForm = () => {
     const newErrors = {};
     const currentDate = new Date().toISOString().split('T')[0];
-    const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const now = new Date();
+    const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fecha.trim()) newErrors.fecha = "Este campo es obligatorio";
     else if (formData.fecha < currentDate) newErrors.fecha = "La fecha no puede ser en el pasado";
@@ -775,7 +778,10 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
               value={formData.horaInicio}
               onChange={(e) => handleInputChange("horaInicio", e.target.value)}
               className={`modal-form-control ${errors.horaInicio ? "error" : ""}`}
-              min={formData.fecha === new Date().toISOString().split('T')[0] ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : undefined}
+              min={formData.fecha === new Date().toISOString().split('T')[0] ? (() => {
+                const now = new Date();
+                return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+              })() : undefined}
             />
             {errors.horaInicio && <span className="error-message">{errors.horaInicio}</span>}
           </div>

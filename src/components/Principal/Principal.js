@@ -64,7 +64,6 @@ const PrincipalModal = ({ isOpen, onClose, title, children, size = "md", canClos
   );
 };
 
-
 const generateMeetingLink = (medio) => {
   switch (medio) {
     case "MEET":
@@ -77,7 +76,6 @@ const generateMeetingLink = (medio) => {
       return "";
   }
 };
-
 
 // Modal para reprogramar llamada
 const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
@@ -163,7 +161,8 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
   const validateForm = () => {
     const newErrors = {};
     const currentDate = new Date().toISOString().split('T')[0];
-    const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const now = new Date();
+    const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     if (!formData.nuevaFecha.trim()) newErrors.nuevaFecha = "Este campo es obligatorio";
     else if (formData.nuevaFecha < currentDate) newErrors.nuevaFecha = "La fecha no puede ser en el pasado";
     else if (formData.nuevaFecha === currentDate && formData.nuevaHora && formData.nuevaHora < currentTime)
@@ -275,7 +274,10 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
             value={formData.nuevaHora}
             onChange={(e) => handleInputChange("nuevaHora", e.target.value)}
             className={`modal-form-control ${errors.nuevaHora ? "error" : ""}`}
-            min={formData.nuevaFecha === new Date().toISOString().split('T')[0] ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : undefined}
+            min={formData.nuevaFecha === new Date().toISOString().split('T')[0] ? (() => {
+              const now = new Date();
+              return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            })() : undefined}
           />
           {errors.nuevaHora && <span className="error-message">{errors.nuevaHora}</span>}
         </div>
@@ -410,7 +412,8 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
   const validateForm = () => {
     const newErrors = {};
     const currentDate = new Date().toISOString().split('T')[0];
-    const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const now = new Date();
+    const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     if (!formData.nuevaFecha.trim()) newErrors.nuevaFecha = "Este campo es obligatorio";
     else if (formData.nuevaFecha < currentDate) newErrors.nuevaFecha = "La fecha no puede ser en el pasado";
     else if (formData.nuevaFecha === currentDate && formData.nuevaHoraInicio && formData.nuevaHoraInicio < currentTime)
@@ -532,7 +535,10 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
               value={formData.nuevaHoraInicio}
               onChange={(e) => handleInputChange("nuevaHoraInicio", e.target.value)}
               className={`modal-form-control ${errors.nuevaHoraInicio ? "error" : ""}`}
-              min={formData.nuevaFecha === new Date().toISOString().split('T')[0] ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : undefined}
+              min={formData.nuevaFecha === new Date().toISOString().split('T')[0] ? (() => {
+                const now = new Date();
+                return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+              })() : undefined}
             />
             {errors.nuevaHoraInicio && <span className="error-message">{errors.nuevaHoraInicio}</span>}
           </div>
@@ -780,7 +786,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
       subtipoTarea: formData.tipo.toUpperCase(),
       finalidad: formData.finalidad,
       estado: "Reprogramada",
-      notas: formData.notas 
+      notas: formData.notas
     };
 
     try {
@@ -1554,7 +1560,8 @@ const Principal = () => {
   const fetchTareasPendientes = async () => {
     try {
       const userId = localStorage.getItem("userId");
-      const response = await fetchWithToken(`${API_BASE_URL}/tratos/actividades/pendientes?asignadoAId=${userId}`);
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const response = await fetchWithToken(`${API_BASE_URL}/tratos/actividades/pendientes?asignadoAId=${userId}&timezone=${timezone}`);
       const data = await response.json();
       setTareasPendientes(data);
 
