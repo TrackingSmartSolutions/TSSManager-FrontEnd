@@ -577,7 +577,7 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
                     onChange={handleInputChange}
                     className={`sim-side-panel-form-control ${errors.saldoActual ? "sim-form-control-error" : ""}`}
                     placeholder="0.00"
-                    step="0.01"
+                    step="any"
                     min="0"
                   />
                 </div>
@@ -597,6 +597,8 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
                     className={`sim-side-panel-form-control ${errors.datos ? "sim-form-control-error" : ""}`}
                     placeholder="0"
                     min="0"
+                    step="any" 
+
                   />
                   <span className="sim-input-suffix">MB</span>
                 </div>

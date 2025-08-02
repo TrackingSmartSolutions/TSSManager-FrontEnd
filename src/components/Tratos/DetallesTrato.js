@@ -3348,7 +3348,7 @@ const ConfirmacionEnvioModal = ({ isOpen, onClose, onConfirm, tratoId, actividad
   const [step, setStep] = useState(1);
   const [datosContacto, setDatosContacto] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [loadingMethod, setLoadingMethod] = useState(null); // 'correo' o 'whatsapp'
+  const [loadingMethod, setLoadingMethod] = useState(null);
 
   useEffect(() => {
     if (isOpen && tratoId) {
@@ -3884,7 +3884,7 @@ const DetallesTrato = () => {
           resultado: updatedActividad.respuesta === 'SI' ? 'POSITIVO' : updatedActividad.respuesta === 'NO' ? 'NEGATIVO' : 'Sin resultado',
           interes: updatedActividad.interes || 'Sin interés',
           notas: updatedActividad.notas || '',
-           siguienteAccion: updatedActividad.siguienteAccion || '', 
+          siguienteAccion: updatedActividad.siguienteAccion || '',
         };
         return {
           ...prev,
@@ -4451,6 +4451,87 @@ const DetallesTrato = () => {
     openModal("completarActividad", { actividad, tratoId: actividad.tratoId });
   };
 
+  const handleEliminarActividad = async (actividadId, tipo) => {
+    const actividad = trato.actividadesAbiertas[
+      tipo === "llamada" ? "llamadas" : tipo === "reunion" ? "reuniones" : "tareas"
+    ].find((a) => a.id === actividadId);
+
+    if (!actividad || !actividad.tratoId) {
+      Swal.fire({
+        title: 'Error',
+        text: 'No se encontró la actividad o el trato asociado.',
+        icon: 'error',
+      });
+      return;
+    }
+
+    // Mostrar confirmación con SweetAlert
+    const result = await Swal.fire({
+      title: '¿Está seguro?',
+      text: `¿Desea eliminar esta ${tipo}? Esta acción no se puede deshacer.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      Swal.fire({
+        title: 'Eliminando...',
+        text: 'Por favor espere',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        willOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      const response = await fetchWithToken(`${API_BASE_URL}/tratos/actividades/${actividadId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Eliminar la actividad del estado local
+        const normalizedTipo = tipo.toLowerCase().replace(/ñ/g, 'n');
+        const actividadKey = normalizedTipo === "llamada" ? "llamadas" : normalizedTipo === "reunion" ? "reuniones" : "tareas";
+
+        setTrato((prev) => ({
+          ...prev,
+          actividadesAbiertas: {
+            ...prev.actividadesAbiertas,
+            [actividadKey]: prev.actividadesAbiertas[actividadKey].filter(a => a.id !== actividadId)
+          }
+        }));
+
+        await Swal.fire({
+          title: 'Eliminado',
+          text: 'La actividad ha sido eliminada exitosamente.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+
+      } else {
+        throw new Error(data.error || 'Error desconocido');
+      }
+    } catch (error) {
+      console.error('Error al eliminar actividad:', error);
+      Swal.fire({
+        title: 'Error',
+        text: `No se pudo eliminar la actividad: ${error.message}`,
+        icon: 'error'
+      });
+    }
+  };
+
   const handleEditarInteraccion = (interaccion) => {
     closeModal('completarActividad');
     setModals(prev => ({
@@ -4469,7 +4550,6 @@ const DetallesTrato = () => {
           informacion: 'SI',
           siguienteAccion: interaccion.siguienteAccion || '',
           notas: interaccion.notas || '',
-          siguienteAccion: interaccion.siguienteAccion || '',
         },
         tratoId: trato.id,
         esEdicion: true,
@@ -4830,6 +4910,14 @@ const DetallesTrato = () => {
                           >
                             Reprogramar
                           </button>
+                          <button
+                            className="badge eliminar clickeable"
+                            onClick={() => handleEliminarActividad(tarea.id, "tarea")}
+                            title="Eliminar tarea"
+                          >
+                            <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
+                            Eliminar
+                          </button>
                         </div>
                       </div>
                     ))
@@ -4865,6 +4953,14 @@ const DetallesTrato = () => {
                             onClick={() => handleReprogramarActividad(llamada.id, "llamada")}
                           >
                             Reprogramar
+                          </button>
+                          <button
+                            className="badge eliminar clickeable"
+                            onClick={() => handleEliminarActividad(llamada.id, "llamada")}
+                            title="Eliminar llamada"
+                          >
+                            <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
+                            Eliminar
                           </button>
                         </div>
                       </div>
@@ -4906,6 +5002,14 @@ const DetallesTrato = () => {
                             onClick={() => handleReprogramarActividad(reunion.id, "reunion")}
                           >
                             Reprogramar
+                          </button>
+                          <button
+                            className="badge eliminar clickeable"
+                            onClick={() => handleEliminarActividad(reunion.id, "reunion")}
+                            title="Eliminar reunión"
+                          >
+                            <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
+                            Eliminar
                           </button>
                         </div>
                       </div>

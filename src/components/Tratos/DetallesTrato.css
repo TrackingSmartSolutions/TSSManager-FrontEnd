@@ -414,6 +414,24 @@
   background-color: #e68900;
 }
 
+.badge.eliminar {
+  background-color: #dc3545;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.badge.eliminar.clickeable:hover {
+  background-color: #c82333;
+}
+
+.badge.eliminar img {
+  width: 12px;
+  height: 12px;
+  filter: brightness(0) invert(1);
+}
+
 /* Efectos adicionales para interactividad */
 .fase-item:focus {
   outline: 2px solid var(--secondary-color);

@@ -1534,13 +1534,11 @@ const Principal = () => {
       } else {
         // Para administradores, permitir filtro por usuario
         if (selectedUser !== "Todos") {
-          // Obtener el ID del usuario seleccionado
           const usuarioSeleccionado = await obtenerIdUsuarioPorNombre(selectedUser);
           if (usuarioSeleccionado) {
             url += `?propietarioId=${usuarioSeleccionado}`;
           }
         }
-        // Si selectedUser es "Todos", no agregamos filtro
       }
 
       const response = await fetchWithToken(url);
