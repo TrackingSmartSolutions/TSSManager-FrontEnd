@@ -196,7 +196,6 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
       contrasena: formData.responsable === "TSS" ? formData.contrasena : null,
     };
 
-    console.log("Datos enviados al backend:", simData);
 
     try {
       const url = sim ? `${API_BASE_URL}/sims/${sim.id}` : `${API_BASE_URL}/sims`;
@@ -215,7 +214,6 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
         try {
           // Intentar parsear la respuesta como JSON para obtener más detalles
           const errorData = await response.json();
-          console.log("Error del backend:", errorData);
 
           if (errorData.message) {
             errorMessage = errorData.message;
@@ -238,7 +236,6 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
       }
 
       const savedSim = await response.json();
-      console.log("Respuesta recibida del backend:", savedSim);
       onSave(savedSim);
       Swal.fire({
         icon: "success",
@@ -835,7 +832,6 @@ const EquiposSim = () => {
       });
       if (!response.ok) throw new Error("Error al guardar el saldo");
       const data = await response.json();
-      console.log("Datos recibidos del backend:", data);
 
       // Recargar el historial específico del SIM
       const historialResponse = await fetchWithToken(`${API_BASE_URL}/sims/${simId}/historial`);
@@ -860,6 +856,7 @@ const EquiposSim = () => {
         title: "Éxito",
         text: data.message || "Saldo registrado correctamente",
       });
+      closeModal("saldos");
     } catch (error) {
       Swal.fire({
         icon: "error",

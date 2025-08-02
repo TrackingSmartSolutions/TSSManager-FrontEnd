@@ -150,31 +150,88 @@ const ReportePersonal = () => {
     if (activitiesCtx) {
       if (actividadesData.length > 0) {
         try {
-          // Procesar datos para el gráfico
-          const labels = actividadesData.map((item) => {
-            return item.name || item.tipo || item.actividad || "Sin nombre";
+          // Agrupar datos por tipo principal
+          const groupedData = actividadesData.reduce((acc, item) => {
+            const tipo = item.tipo || "OTROS";
+            if (!acc[tipo]) {
+              acc[tipo] = [];
+            }
+            acc[tipo].push(item);
+            return acc;
+          }, {});
+
+          // Crear datasets para cada tipo
+          const datasets = [];
+          const allLabels = new Set();
+
+          // Colores por tipo
+          const typeColors = {
+            'TAREAS': ['#45b7d1', '#5bc0de', '#17a2b8'],
+            'LLAMADAS': ['#4ecdc4', '#26d0ce'],
+            'REUNIONES': ['#ff6b6b', '#fd79a8']
+          };
+
+          Object.entries(groupedData).forEach(([tipo, items], typeIndex) => {
+            const labels = items.map(item => item.name);
+            const values = items.map(item => item.value);
+            const colors = typeColors[tipo];
+
+            labels.forEach(label => allLabels.add(label));
+
+            datasets.push({
+              label: tipo,
+              data: Array.from(allLabels).map(label => {
+                const item = items.find(i => i.name === label);
+                return item ? item.value : 0;
+              }),
+              backgroundColor: colors,
+              borderColor: colors,
+              borderWidth: 1,
+              categoryPercentage: 0.8,
+              barPercentage: 0.9
+            });
           });
-          const values = actividadesData.map((item) => {
-            const value = item.value || item.cantidad || item.count || 0;
-            return value;
-          });
-          const colors = actividadesData.map((item) => item.color || "#45b7d1");
 
           activitiesChartRef.current = new Chart(activitiesCtx, {
             type: "bar",
             data: {
-              labels: labels,
-              datasets: [{
-                label: "Actividades",
-                data: values,
-                backgroundColor: colors,
-              }],
+              labels: Array.from(allLabels),
+              datasets: datasets
             },
             options: {
               responsive: true,
               maintainAspectRatio: false,
-              scales: { y: { beginAtZero: true } }
-            },
+              plugins: {
+                legend: {
+                  display: true,
+                  position: 'top'
+                },
+                tooltip: {
+                  callbacks: {
+                    title: function (tooltipItems) {
+                      const datasetLabel = tooltipItems[0].dataset.label;
+                      const label = tooltipItems[0].label;
+                      return `${datasetLabel} - ${label}`;
+                    }
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: 'Medio de Comunicación'
+                  }
+                },
+                y: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: 'Cantidad'
+                  }
+                }
+              }
+            }
           });
         } catch (error) {
           console.error("Error creando gráfico de actividades:", error);
@@ -516,7 +573,7 @@ const ReportePersonal = () => {
                           {nota.interes}
                         </span>
                       </td>
-                      <td className="reporte-notas-cell">{nota.notas}</td> 
+                      <td className="reporte-notas-cell">{nota.notas}</td>
                     </tr>
                   ))}
                 </tbody>

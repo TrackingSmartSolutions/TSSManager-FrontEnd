@@ -3,6 +3,8 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import { MarcarPagadaModal } from "../Admin/Admin_CuentasPagar";
+import Swal from "sweetalert2";
 import "./Calendario.css";
 import Header from "../Header/Header";
 import { API_BASE_URL } from "../Config/Config";
@@ -40,6 +42,26 @@ const Calendario = () => {
   const [users, setUsers] = useState(
     userRol === "ADMINISTRADOR" ? ["Todos los usuarios"] : []
   );
+
+  const [modalMarcarPagada, setModalMarcarPagada] = useState({
+    isOpen: false,
+    cuenta: null
+  });
+
+  const [formasPago] = useState({
+    "01": "Efectivo",
+    "03": "Transferencia electrónica de fondos",
+    "04": "Tarjeta de crédito",
+    "06": "Dinero electrónico",
+    "07": "Con Saldo Acumulado",
+    "08": "Vales de despensa",
+    "15": "Condonación",
+    "17": "Compensación",
+    "28": "Tarjeta de débito",
+    "29": "Tarjeta de servicios",
+    "30": "Aplicación de anticipos",
+    "99": "Por definir",
+  });
 
   useEffect(() => {
     const loadCurrentUser = async () => {
@@ -131,6 +153,7 @@ const Calendario = () => {
         const data = await response.json();
 
         const processedEvents = data.map(event => {
+
           const eventConfig = {
             title: event.titulo,
             start: new Date(event.inicio),
@@ -138,6 +161,7 @@ const Calendario = () => {
             allDay: event.allDay || false,
             className: getEventClassName(event.tipo),
             extendedProps: {
+              id: event.id, // VERIFICAR QUE ESTE CAMPO EXISTA
               tipo: event.tipo,
               asignadoA: event.asignadoA,
               trato: event.trato,
@@ -204,6 +228,131 @@ const Calendario = () => {
   const handleUserChange = (e) => {
     const newUser = e.target.value;
     setSelectedUser(newUser);
+  };
+
+  const handleMarcarComoPagadaDesdeCalendario = (evento) => {
+    // Verificar que tengamos el ID
+    if (!evento.id) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo identificar la cuenta por pagar",
+      });
+      return;
+    }
+
+    const cuenta = {
+      id: parseInt(evento.id),
+      folio: evento.numeroCuenta,
+      fechaPago: new Date(evento.start).toISOString().split('T')[0],
+      monto: evento.monto,
+      formaPago: "01",
+      estatus: evento.estado,
+      cuenta: {
+        nombre: evento.cliente
+      },
+      sim: evento.numeroSim ? { numero: evento.numeroSim } : null
+    };
+
+    setModalMarcarPagada({
+      isOpen: true,
+      cuenta: cuenta
+    });
+    setIsEventModalOpen(false);
+    setSelectedEvent(null);
+  };
+
+  const handleSaveMarcarPagada = async (cuentaActualizada) => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/marcar-como-pagada-calendario`, {
+        method: "POST",
+        body: JSON.stringify({
+          id: cuentaActualizada.id,
+          fechaPago: cuentaActualizada.fechaPago,
+          monto: cuentaActualizada.monto,
+          formaPago: cuentaActualizada.formaPago,
+          usuarioId: 1,
+        }),
+      });
+
+      if (response.status === 204) {
+        await reloadCalendarEvents();
+
+        Swal.fire({
+          icon: "success",
+          title: "Éxito",
+          text: "Cuenta marcada como pagada y nuevas cuentas generadas automáticamente",
+        });
+      }
+    } catch (error) {
+      console.error("Error al marcar como pagada:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Error al marcar la cuenta como pagada",
+      });
+    }
+
+    setModalMarcarPagada({ isOpen: false, cuenta: null });
+  };
+
+  const reloadCalendarEvents = async () => {
+    if (!selectedUser) return;
+
+    const start = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1).toISOString();
+    const end = new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 0).toISOString();
+
+    let url;
+    if (userRol === "ADMINISTRADOR") {
+      url = `${API_BASE_URL}/calendario/eventos?startDate=${start}&endDate=${end}&usuario=${selectedUser}`;
+    } else {
+      url = `${API_BASE_URL}/calendario/eventos?startDate=${start}&endDate=${end}`;
+    }
+
+    try {
+      const response = await fetchWithToken(url);
+      const data = await response.json();
+
+      const processedEvents = data.map(event => {
+        const eventConfig = {
+          title: event.titulo,
+          start: new Date(event.inicio),
+          color: event.color,
+          allDay: event.allDay || false,
+          className: getEventClassName(event.tipo),
+          extendedProps: {
+            id: event.id,
+            tipo: event.tipo,
+            asignadoA: event.asignadoA,
+            trato: event.trato,
+            modalidad: event.modalidad,
+            medio: event.medio,
+            numeroSim: event.numeroSim,
+            imei: event.imei,
+            numeroCuenta: event.numeroCuenta,
+            cliente: event.cliente,
+            estado: event.estado,
+            esquema: event.esquema,
+            monto: event.monto,
+            nota: event.nota
+          }
+        };
+
+        if (!event.allDay && event.fin) {
+          eventConfig.end = new Date(event.fin);
+        }
+
+        return eventConfig;
+      });
+
+      setEvents(processedEvents);
+    } catch (error) {
+      console.error("ERROR al recargar eventos:", error);
+    }
+  };
+
+  const closeModalMarcarPagada = () => {
+    setModalMarcarPagada({ isOpen: false, cuenta: null });
   };
 
   return (
@@ -396,9 +545,43 @@ const Calendario = () => {
                     <div className="ts-calendar-modal-field">
                       <strong>Cuenta:</strong> {selectedEvent.cliente}
                     </div>
-                    {selectedEvent.nota && selectedEvent.nota.trim() !== '' && (
+                    {/* Campo de número de SIM */}
+                    {selectedEvent.numeroSim && (
                       <div className="ts-calendar-modal-field">
-                        <strong>Nota:</strong> {selectedEvent.nota}
+                        <strong>Número SIM:</strong> {selectedEvent.numeroSim}
+                      </div>
+                    )}
+                    {/* Botón para marcar como pagada */}
+                    {selectedEvent.estado !== "Pagado" && (
+                      <div className="ts-calendar-modal-actions" style={{
+                        marginTop: '15px',
+                        textAlign: 'center',
+                        borderTop: '1px solid #e5e7eb',
+                        paddingTop: '15px'
+                      }}>
+                        <button
+                          className="ts-calendar-btn-pagar"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleMarcarComoPagadaDesdeCalendario(selectedEvent);
+                          }}
+                          style={{
+                            backgroundColor: '#10b981',
+                            color: 'white',
+                            border: 'none',
+                            padding: '10px 20px',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            transition: 'background-color 0.2s'
+                          }}
+                          onMouseOver={(e) => e.target.style.backgroundColor = '#059669'}
+                          onMouseOut={(e) => e.target.style.backgroundColor = '#10b981'}
+                        >
+                          Marcar como Pagada
+                        </button>
                       </div>
                     )}
                   </>
@@ -408,6 +591,13 @@ const Calendario = () => {
           </div>
         )}
       </div>
+      <MarcarPagadaModal
+        isOpen={modalMarcarPagada.isOpen}
+        onClose={closeModalMarcarPagada}
+        onSave={handleSaveMarcarPagada}
+        cuenta={modalMarcarPagada.cuenta}
+        formasPago={formasPago}
+      />
     </>
   );
 };

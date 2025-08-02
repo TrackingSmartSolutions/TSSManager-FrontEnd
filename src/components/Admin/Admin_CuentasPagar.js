@@ -644,4 +644,5 @@ const AdminCuentasPagar = () => {
   );
 };
 
-export default AdminCuentasPagar
+export default AdminCuentasPagar;
+export { MarcarPagadaModal };
