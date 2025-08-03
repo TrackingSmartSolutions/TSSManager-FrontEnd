@@ -6,6 +6,7 @@ import Header from "../Header/Header"
 import editIcon from "../../assets/icons/editar.png"
 import deleteIcon from "../../assets/icons/eliminar.png"
 import detailsIcon from "../../assets/icons/lupa.png"
+import { NuevoTratoModal } from '../Tratos/Tratos';
 import { API_BASE_URL } from "../Config/Config"
 import Swal from "sweetalert2"
 import stringSimilarity from "string-similarity";
@@ -1569,6 +1570,7 @@ const Empresas = () => {
     detallesEmpresa: { isOpen: false, data: null },
     detallesContacto: { isOpen: false, data: null },
     confirmarEliminacion: { isOpen: false, data: null, isLastContact: false },
+    nuevoTrato: { isOpen: false, empresaPreseleccionada: null },
   })
 
   const [tratos, setTratos] = useState([]);
@@ -1946,14 +1948,27 @@ const Empresas = () => {
   const openModal = (modalType, mode = "add", data = null, extra = {}) => {
     setModals((prev) => ({
       ...prev,
-      [modalType]: { isOpen: true, mode, data, ...extra, existingCompanies: companies || [] },
+      [modalType]: {
+        isOpen: true,
+        mode,
+        data,
+        ...extra,
+        existingCompanies: companies || []
+      },
     }));
   };
 
   const closeModal = (modalType) => {
     setModals((prev) => ({
       ...prev,
-      [modalType]: { isOpen: false, mode: "add", data: null, isInitialContact: false, isLastContact: false },
+      [modalType]: {
+        isOpen: false,
+        mode: "add",
+        data: null,
+        isInitialContact: false,
+        isLastContact: false,
+        empresaPreseleccionada: null
+      },
     }))
   }
 
@@ -2178,6 +2193,45 @@ const Empresas = () => {
       })
     }
   }
+
+  const handleCrearTratoDesdeEmpresa = () => {
+    if (selectedCompany) {
+      openModal("nuevoTrato", "add", null, { empresaPreseleccionada: selectedCompany });
+    }
+  }
+
+  const handleSaveNuevoTrato = async (newTrato) => {
+  try {
+    const contactoEncontrado = contacts.find(contacto => contacto.id === newTrato.contactoId);
+    
+    setTratos(prev => [...prev, {
+      id: newTrato.id,
+      nombre: newTrato.nombre,
+      contacto: { 
+        nombre: contactoEncontrado?.nombre || "N/A" 
+      },
+      propietarioNombre: newTrato.propietarioNombre,
+      fase: newTrato.fase,
+      fechaCierre: newTrato.fechaCierre,
+      noTrato: newTrato.noTrato
+    }]);
+    
+    closeModal("nuevoTrato");
+    
+    Swal.fire({
+      title: "¡Trato creado!",
+      text: "El trato se ha creado exitosamente",
+      icon: "success",
+    });
+  } catch (error) {
+    console.error("Error al crear el trato:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "No se pudo crear el trato. Intenta de nuevo.",
+    });
+  }
+};
 
   const getStatusColor = (status) => {
     const statusColors = {
@@ -2415,8 +2469,14 @@ const Empresas = () => {
                 <div className="tratos-section">
                   <div className="tratos-header">
                     <h3>Tratos de la Empresa</h3>
+                    <button
+                      className="btn btn-add"
+                      onClick={handleCrearTratoDesdeEmpresa}
+                      disabled={!selectedCompany}
+                    >
+                      Crear Trato
+                    </button>
                   </div>
-
                   <div className="tratos-table-container">
                     <table className="tratos-table">
                       <thead>
@@ -2512,6 +2572,13 @@ const Empresas = () => {
           onConfirm={handleConfirmDeleteContact}
           contacto={modals.confirmarEliminacion.data}
           isLastContact={modals.confirmarEliminacion.isLastContact}
+        />
+
+        <NuevoTratoModal
+          isOpen={modals.nuevoTrato.isOpen}
+          onClose={() => closeModal("nuevoTrato")}
+          onSave={handleSaveNuevoTrato}
+          empresaPreseleccionada={modals.nuevoTrato.empresaPreseleccionada}
         />
       </main>
     </>

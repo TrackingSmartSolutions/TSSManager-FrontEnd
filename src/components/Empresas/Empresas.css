@@ -1110,7 +1110,19 @@ body {
   color: var(--text-color);
 }
 
-/* Responsive Design */
+.tratos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.tratos-header .btn-add {
+  width: auto;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 /* Ajustes para pantallas grandes */
 @media (max-width: 1200px) {
   .empresas-container {

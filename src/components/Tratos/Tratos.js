@@ -121,7 +121,7 @@ const SeleccionarActividadModal = ({ isOpen, onClose, onSelectActivity, tratoId 
 };
 
 // Modal para crear nuevo trato
-const NuevoTratoModal = ({ isOpen, onClose, onSave }) => {
+const NuevoTratoModal = ({ isOpen, onClose, onSave, empresaPreseleccionada }) => {
   const [formData, setFormData] = useState({
     nombreTrato: "",
     nombreEmpresa: "",
@@ -135,19 +135,25 @@ const NuevoTratoModal = ({ isOpen, onClose, onSave }) => {
   const [contactos, setContactos] = useState([]);
 
   useEffect(() => {
-    if (isOpen) {
-      setFormData({
-        nombreTrato: "",
-        nombreEmpresa: "",
-        nombreContacto: "",
-        ingresosEsperados: "",
-        numeroUnidades: "",
-        descripcion: "",
-      });
-      setErrors({});
-      fetchEmpresas();
+  if (isOpen) {
+    const empresaIdPreseleccionada = empresaPreseleccionada?.id || "";
+    
+    setFormData({
+      nombreTrato: "",
+      nombreEmpresa: empresaIdPreseleccionada, 
+      nombreContacto: "",
+      ingresosEsperados: "",
+      numeroUnidades: "",
+      descripcion: "",
+    });
+    setErrors({});
+    fetchEmpresas();
+    
+    if (empresaIdPreseleccionada) {
+      fetchContactos(empresaIdPreseleccionada);
     }
-  }, [isOpen]);
+  }
+}, [isOpen, empresaPreseleccionada]); 
 
   const fetchEmpresas = async () => {
     try {
@@ -1689,8 +1695,8 @@ const Tratos = () => {
 
   const handleGlobalSearch = () => {
     if (!globalSearchTerm.trim() || globalSearchTerm.trim().length < 3) {
-    return;
-  }
+      return;
+    }
 
     const foundColumns = [];
     columnas.forEach(columna => {
@@ -2106,3 +2112,4 @@ const Tratos = () => {
 };
 
 export default Tratos
+export { NuevoTratoModal };
