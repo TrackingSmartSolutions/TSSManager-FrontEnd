@@ -4,6 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { MarcarPagadaModal } from "../Admin/Admin_CuentasPagar";
+import { SimDetailsModal } from "../Equipos/Equipos_Sim";
 import Swal from "sweetalert2";
 import "./Calendario.css";
 import Header from "../Header/Header";
@@ -47,6 +48,13 @@ const Calendario = () => {
     isOpen: false,
     cuenta: null
   });
+
+  const [simDetailsModal, setSimDetailsModal] = useState({
+    isOpen: false,
+    sim: null
+  });
+
+  const [equipos, setEquipos] = useState([]);
 
   const [formasPago] = useState({
     "01": "Efectivo",
@@ -161,7 +169,7 @@ const Calendario = () => {
             allDay: event.allDay || false,
             className: getEventClassName(event.tipo),
             extendedProps: {
-              id: event.id, // VERIFICAR QUE ESTE CAMPO EXISTA
+              id: event.id,
               tipo: event.tipo,
               asignadoA: event.asignadoA,
               trato: event.trato,
@@ -355,6 +363,67 @@ const Calendario = () => {
     setModalMarcarPagada({ isOpen: false, cuenta: null });
   };
 
+  const fetchSimDetails = async (numeroSim) => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/sims`);
+      const sims = await response.json();
+      return sims.find(sim => sim.numero === numeroSim);
+    } catch (error) {
+      console.error("Error fetching SIM details:", error);
+      return null;
+    }
+  };
+
+  const fetchEquipos = async () => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/equipos`);
+      return await response.json();
+    } catch (error) {
+      console.error("Error fetching equipos:", error);
+      return [];
+    }
+  };
+
+  const handleSimNumberClick = async (numeroSim) => {
+    try {
+      const [simData, equiposData] = await Promise.all([
+        fetchSimDetails(numeroSim),
+        fetchEquipos()
+      ]);
+
+      if (simData) {
+        setEquipos(equiposData);
+        setSimDetailsModal({
+          isOpen: true,
+          sim: simData
+        });
+        // Cerrar el modal del evento
+        setIsEventModalOpen(false);
+        setSelectedEvent(null);
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudo encontrar la SIM"
+        });
+      }
+    } catch (error) {
+      console.error("Error loading SIM details:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Error al cargar los detalles de la SIM"
+      });
+    }
+  };
+
+  const closeSimDetailsModal = () => {
+    setSimDetailsModal({
+      isOpen: false,
+      sim: null
+    });
+  };
+
   return (
     <>
       <Header />
@@ -545,10 +614,22 @@ const Calendario = () => {
                     <div className="ts-calendar-modal-field">
                       <strong>Cuenta:</strong> {selectedEvent.cliente}
                     </div>
-                    {/* Campo de número de SIM */}
                     {selectedEvent.numeroSim && (
                       <div className="ts-calendar-modal-field">
-                        <strong>Número SIM:</strong> {selectedEvent.numeroSim}
+                        <strong>Número SIM:</strong>
+                        <span
+                          onClick={() => handleSimNumberClick(selectedEvent.numeroSim)}
+                          style={{
+                            color: '#3b82f6',
+                            cursor: 'pointer',
+                            textDecoration: 'underline',
+                            marginLeft: '5px'
+                          }}
+                          onMouseOver={(e) => e.target.style.color = '#1d4ed8'}
+                          onMouseOut={(e) => e.target.style.color = '#3b82f6'}
+                        >
+                          {selectedEvent.numeroSim}
+                        </span>
                       </div>
                     )}
                     {/* Botón para marcar como pagada */}
@@ -597,6 +678,12 @@ const Calendario = () => {
         onSave={handleSaveMarcarPagada}
         cuenta={modalMarcarPagada.cuenta}
         formasPago={formasPago}
+      />
+      <SimDetailsModal
+        isOpen={simDetailsModal.isOpen}
+        onClose={closeSimDetailsModal}
+        sim={simDetailsModal.sim}
+        equipos={equipos}
       />
     </>
   );

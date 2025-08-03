@@ -5,6 +5,7 @@ import Header from "../Header/Header";
 import Swal from "sweetalert2";
 import editIcon from "../../assets/icons/editar.png";
 import deleteIcon from "../../assets/icons/eliminar.png";
+import detailsIcon from "../../assets/icons/lupa.png";
 import balancesIcon from "../../assets/icons/check-saldos.png";
 import { API_BASE_URL } from "../Config/Config";
 
@@ -477,6 +478,129 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
   );
 };
 
+const SimDetailsModal = ({ isOpen, onClose, sim = null, equipos }) => {
+  if (!sim) return null;
+
+  const equipo = equipos.find(eq => eq.imei === sim.equipoImei);
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Detalles de SIM" size="md">
+      <div className="sim-form">
+        <div className="sim-form-group">
+          <label className="sim-form-label">Número</label>
+          <input
+            type="text"
+            value={sim.numero || ""}
+            className="sim-form-control"
+            readOnly
+          />
+        </div>
+
+        <div className="sim-form-group">
+          <label className="sim-form-label">Tarifa</label>
+          <input
+            type="text"
+            value={sim.tarifa === "POR_SEGUNDO" ? "Por segundo" :
+              sim.tarifa === "SIN_LIMITE" ? "Sin límite" : "M2M Global 15"}
+            className="sim-form-control"
+            readOnly
+          />
+        </div>
+
+        <div className="sim-form-group">
+          <label className="sim-form-label">Compañía</label>
+          <input
+            type="text"
+            value={sim.tarifa === "M2M_GLOBAL_15" ? "M2M" : "Telcel"}
+            className="sim-form-control"
+            readOnly
+          />
+        </div>
+
+        <div className="sim-form-group">
+          <label className="sim-form-label">Responsable</label>
+          <input
+            type="text"
+            value={sim.responsable || ""}
+            className="sim-form-control"
+            readOnly
+          />
+        </div>
+
+        {sim.responsable === "TSS" && (
+          <>
+            <div className="sim-form-group">
+              <label className="sim-form-label">Vigencia</label>
+              <input
+                type="text"
+                value={sim.vigencia ? new Date(sim.vigencia + "T00:00:00-06:00").toLocaleDateString("es-MX", { timeZone: "America/Mexico_City" }) : "N/A"}
+                className="sim-form-control"
+                readOnly
+              />
+            </div>
+
+            <div className="sim-form-group">
+              <label className="sim-form-label">Recarga</label>
+              <input
+                type="text"
+                value={sim.recarga ? `$${sim.recarga}` : "N/A"}
+                className="sim-form-control"
+                readOnly
+              />
+            </div>
+
+            <div className="sim-form-group">
+              <label className="sim-form-label">Principal</label>
+              <input
+                type="text"
+                value={sim.principal || ""}
+                className="sim-form-control"
+                readOnly
+              />
+            </div>
+
+            <div className="sim-form-group">
+              <label className="sim-form-label">Grupo</label>
+              <input
+                type="text"
+                value={sim.grupo !== null && sim.grupo !== undefined ? `Grupo ${sim.grupo}` : "N/A"}
+                className="sim-form-control"
+                readOnly
+              />
+            </div>
+
+            <div className="sim-form-group">
+              <label className="sim-form-label">Contraseña</label>
+              <input
+                type="text"
+                value={sim.contrasena || "N/A"}
+                className="sim-form-control"
+                readOnly
+              />
+            </div>
+          </>
+        )}
+
+        <div className="sim-form-group">
+          <label className="sim-form-label">Equipo</label>
+          <input
+            type="text"
+            value={equipo ? `${equipo.nombre} (${equipo.tipo}) - IMEI: ${equipo.imei}` : "Sin equipo"}
+            className="sim-form-control"
+            readOnly
+          />
+        </div>
+
+        <div className="sim-form-actions">
+          <button type="button" onClick={onClose} className="sim-btn sim-btn-primary">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
 const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
   const [formData, setFormData] = useState({
     saldoActual: "",
@@ -594,7 +718,7 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
                     className={`sim-side-panel-form-control ${errors.datos ? "sim-form-control-error" : ""}`}
                     placeholder="0"
                     min="0"
-                    step="any" 
+                    step="any"
 
                   />
                   <span className="sim-input-suffix">MB</span>
@@ -712,6 +836,7 @@ const EquiposSim = () => {
     form: { isOpen: false, sim: null },
     saldos: { isOpen: false, sim: null },
     confirmDelete: { isOpen: false, sim: null, hasEquipoVinculado: false },
+    details: { isOpen: false, sim: null },
   });
 
   useEffect(() => {
@@ -942,7 +1067,6 @@ const EquiposSim = () => {
                   </button>
                 </div>
               </div>
-
               <div className="sim-table-container">
                 <table className="sim-table">
                   <thead>
@@ -999,6 +1123,13 @@ const EquiposSim = () => {
                                 title="Editar"
                               >
                                 <img src={editIcon} alt="Editar" />
+                              </button>
+                              <button
+                                className="sim-btn-action sim-details"
+                                onClick={() => openModal("details", { sim })}
+                                title="Ver detalles"
+                              >
+                                <img src={detailsIcon} alt="Ver detalles" />
                               </button>
                               {userRole === "ADMINISTRADOR" && (
                                 <button
@@ -1064,9 +1195,16 @@ const EquiposSim = () => {
           onConfirm={handleDeleteSim}
           hasEquipoVinculado={modals.confirmDelete.hasEquipoVinculado}
         />
+        <SimDetailsModal
+          isOpen={modals.details.isOpen}
+          onClose={() => closeModal("details")}
+          sim={modals.details.sim}
+          equipos={equipos}
+        />
       </main>
     </>
   );
 };
 
 export default EquiposSim
+export { SimDetailsModal };

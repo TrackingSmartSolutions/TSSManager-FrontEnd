@@ -225,6 +225,16 @@
   background-color: #0056b3;
 }
 
+.sim-btn-action {
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.sim-btn-action:hover {
+  background-color: rgba(128, 128, 128, 0.1);
+  border: 1px solid #666;
+}
+
 /* Tabla */
 .sim-table-card {
   background-color: white;
