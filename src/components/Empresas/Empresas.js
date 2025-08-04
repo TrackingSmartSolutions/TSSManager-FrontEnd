@@ -351,7 +351,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
     if (!formData.nombre.trim()) {
       newErrors.nombre = "Este campo es obligatorio";
     } else if (mode === "add") {
-      const similarityThreshold = 0.60;
+      const similarityThreshold = 0.80;
       const existingNames = existingCompanies
         ? existingCompanies.map((c) => c.nombre?.toLowerCase() || "")
         : [];

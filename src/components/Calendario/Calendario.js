@@ -544,7 +544,9 @@ const Calendario = () => {
                     </div>
                     {!selectedEvent.allDay && (
                       <div className="ts-calendar-modal-field">
-                        <strong>Hora:</strong> {selectedEvent.end ? new Date(selectedEvent.end).toLocaleTimeString('es-ES') : "Sin fin"}
+                        <strong>Hora:</strong>
+                        {selectedEvent.start ? new Date(selectedEvent.start).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : ''}
+                        {selectedEvent.end ? ` - ${new Date(selectedEvent.end).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}` : ''}
                       </div>
                     )}
                     <div className="ts-calendar-modal-field">
