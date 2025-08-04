@@ -85,6 +85,8 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
 
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
+  const [sectorSearch, setSectorSearch] = useState("")
+  const [showSectorDropdown, setShowSectorDropdown] = useState(false)
 
   // Reemplazar el sectorMap actual con:
   const sectorMap = {
@@ -316,6 +318,8 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
         regimenFiscal: empresa.regimenFiscal || "",
         propietarioId: empresa.propietario?.id || null,
       });
+      setSectorSearch(empresa?.sector ? sectorMap[empresa.sector] || "" : "");
+      setShowSectorDropdown(false);
     } else {
       setFormData({
         nombre: "",
@@ -329,6 +333,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
         regimenFiscal: "",
         propietarioId: null,
       });
+      setSectorSearch("");
     }
     setErrors({});
   }, [empresa, mode, isOpen]);
@@ -583,19 +588,80 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
 
           <div className="modal-form-group">
             <label htmlFor="sector">Sector</label>
-            <select
-              id="sector"
-              value={formData.sector}
-              onChange={(e) => handleInputChange("sector", e.target.value)}
-              className="modal-form-control"
-            >
-              <option value="">Seleccione un sector</option>
-              {sectores.map((sector) => (
-                <option key={sector.value} value={sector.value}>
-                  {sector.label}
-                </option>
-              ))}
-            </select>
+            <div className="autocomplete-container" style={{ position: 'relative' }}>
+              <input
+                type="text"
+                id="sector"
+                value={sectorSearch}
+                onChange={(e) => {
+                  setSectorSearch(e.target.value)
+                  setShowSectorDropdown(true)
+                  if (!e.target.value) {
+                    handleInputChange("sector", "")
+                  }
+                }}
+                onFocus={() => setShowSectorDropdown(true)}
+                onBlur={() => setTimeout(() => setShowSectorDropdown(false), 200)}
+                className="modal-form-control"
+                placeholder="Buscar o seleccionar sector..."
+                style={{ paddingRight: '30px' }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  right: '0',
+                  top: '0',
+                  bottom: '0',
+                  width: '30px',
+                  pointerEvents: 'none',
+                  background: 'url("data:image/svg+xml;charset=US-ASCII,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 4 5\'><path fill=\'%23666\' d=\'M2 0L0 2h4zm0 5L0 3h4z\'/></svg>") no-repeat center',
+                  backgroundSize: '12px'
+                }}
+              />
+              {showSectorDropdown && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: 'white',
+                  border: '1px solid #ccc',
+                  borderTop: 'none',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  zIndex: 1000
+                }}>
+                  {sectores
+                    .filter(sector => {
+                      if (!sectorSearch) return true;
+                      const isExactMatch = sectores.some(s => s.label === sectorSearch);
+                      if (isExactMatch) return true;
+                      return sector.label.toLowerCase().includes(sectorSearch.toLowerCase());
+                    })
+                    .slice(0, sectorSearch ? 10 : sectores.length)
+                    .map((sector) => (
+                      <div
+                        key={sector.value}
+                        onClick={() => {
+                          handleInputChange("sector", sector.value)
+                          setSectorSearch(sector.label)
+                          setShowSectorDropdown(false)
+                        }}
+                        style={{
+                          padding: '8px 12px',
+                          cursor: 'pointer',
+                          borderBottom: '1px solid #eee',
+                          fontSize: '12px'
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
+                      >
+                        {sector.label}
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -2201,37 +2267,37 @@ const Empresas = () => {
   }
 
   const handleSaveNuevoTrato = async (newTrato) => {
-  try {
-    const contactoEncontrado = contacts.find(contacto => contacto.id === newTrato.contactoId);
-    
-    setTratos(prev => [...prev, {
-      id: newTrato.id,
-      nombre: newTrato.nombre,
-      contacto: { 
-        nombre: contactoEncontrado?.nombre || "N/A" 
-      },
-      propietarioNombre: newTrato.propietarioNombre,
-      fase: newTrato.fase,
-      fechaCierre: newTrato.fechaCierre,
-      noTrato: newTrato.noTrato
-    }]);
-    
-    closeModal("nuevoTrato");
-    
-    Swal.fire({
-      title: "¡Trato creado!",
-      text: "El trato se ha creado exitosamente",
-      icon: "success",
-    });
-  } catch (error) {
-    console.error("Error al crear el trato:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "No se pudo crear el trato. Intenta de nuevo.",
-    });
-  }
-};
+    try {
+      const contactoEncontrado = contacts.find(contacto => contacto.id === newTrato.contactoId);
+
+      setTratos(prev => [...prev, {
+        id: newTrato.id,
+        nombre: newTrato.nombre,
+        contacto: {
+          nombre: contactoEncontrado?.nombre || "N/A"
+        },
+        propietarioNombre: newTrato.propietarioNombre,
+        fase: newTrato.fase,
+        fechaCierre: newTrato.fechaCierre,
+        noTrato: newTrato.noTrato
+      }]);
+
+      closeModal("nuevoTrato");
+
+      Swal.fire({
+        title: "¡Trato creado!",
+        text: "El trato se ha creado exitosamente",
+        icon: "success",
+      });
+    } catch (error) {
+      console.error("Error al crear el trato:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo crear el trato. Intenta de nuevo.",
+      });
+    }
+  };
 
   const getStatusColor = (status) => {
     const statusColors = {
