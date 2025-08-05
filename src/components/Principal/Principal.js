@@ -160,7 +160,7 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = new Date().toLocaleDateString('en-CA');
     const now = new Date();
     const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     if (!formData.nuevaFecha.trim()) newErrors.nuevaFecha = "Este campo es obligatorio";
@@ -262,7 +262,7 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
             value={formData.nuevaFecha}
             onChange={(e) => handleInputChange("nuevaFecha", e.target.value)}
             className={`modal-form-control ${errors.nuevaFecha ? "error" : ""}`}
-            min={new Date().toISOString().split('T')[0]}
+            min={new Date().toLocaleDateString('en-CA')}
           />
           {errors.nuevaFecha && <span className="error-message">{errors.nuevaFecha}</span>}
         </div>
@@ -411,7 +411,7 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = new Date().toLocaleDateString('en-CA');
     const now = new Date();
     const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     if (!formData.nuevaFecha.trim()) newErrors.nuevaFecha = "Este campo es obligatorio";
@@ -522,7 +522,7 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
             value={formData.nuevaFecha}
             onChange={(e) => handleInputChange("nuevaFecha", e.target.value)}
             className={`modal-form-control ${errors.nuevaFecha ? "error" : ""}`}
-            min={new Date().toISOString().split('T')[0]}
+            min={new Date().toLocaleDateString('en-CA')}
           />
           {errors.nuevaFecha && <span className="error-message">{errors.nuevaFecha}</span>}
         </div>
@@ -763,7 +763,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = new Date().toLocaleDateString('en-CA');
     if (!formData.nuevaFechaLimite.trim()) newErrors.nuevaFechaLimite = "Este campo es obligatorio";
     else if (formData.nuevaFechaLimite < currentDate) newErrors.nuevaFechaLimite = "La fecha no puede ser en el pasado";
     if (!formData.tipo.trim()) newErrors.tipo = "Este campo es obligatorio";
@@ -860,7 +860,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
             value={formData.nuevaFechaLimite}
             onChange={(e) => handleInputChange("nuevaFechaLimite", e.target.value)}
             className={`modal-form-control ${errors.nuevaFechaLimite ? "error" : ""}`}
-            min={new Date().toISOString().split('T')[0]}
+            min={new Date().toLocaleDateString('en-CA')}
           />
           {errors.nuevaFechaLimite && <span className="error-message">{errors.nuevaFechaLimite}</span>}
         </div>
@@ -1447,7 +1447,6 @@ const ConfirmacionEnvioModal = ({ isOpen, onClose, onConfirm, tratoId, actividad
   );
 };
 
-
 const Principal = () => {
   const navigate = useNavigate();
   const userName = localStorage.getItem("userName") || "Usuario";
@@ -1622,6 +1621,10 @@ const Principal = () => {
       prev.filter((task) => task.id !== data.id)
     );
     fetchTareasPendientes();
+  };
+
+  const handleEmpresaClick = (tratoId) => {
+    navigate(`/detallestrato/${tratoId}`);
   };
 
   useEffect(() => {
@@ -1847,7 +1850,11 @@ const Principal = () => {
                     <div className="task-info">
                       <div className="task-header">
                         {task.contactoId && contactos[task.contactoId] && contactos[task.contactoId].empresaId && empresas[contactos[task.contactoId].empresaId] && (
-                          <div className="task-empresa">
+                          <div
+                            className="task-empresa clickable"
+                            onClick={() => handleEmpresaClick(task.tratoId)}
+                            style={{ cursor: 'pointer' }}
+                          >
                             {empresas[contactos[task.contactoId].empresaId].nombre}
                           </div>
                         )}

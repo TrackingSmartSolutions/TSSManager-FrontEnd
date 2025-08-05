@@ -195,8 +195,6 @@ body {
   font-style: italic;
 }
 
-
-
 .btn-crear-trato {
   background-color: var(--accent-color);
   color: white;
@@ -513,23 +511,29 @@ body {
   border-radius: 50%;
 }
 
+/* Colors para iconos basados en los mismos colores de los bordes */
 .activity-future {
-  border: 2px solid #28a745; /* Verde para mañana en adelante */
+  border: 2px solid #28a745;
   background-color: rgba(40, 167, 69, 0.15);
   border-radius: 50%;
+  filter: brightness(0) saturate(100%) invert(58%) sepia(96%) saturate(1352%) hue-rotate(87deg) brightness(85%) contrast(119%);
 }
 
 .activity-today {
-  border: 2px solid #ffc107; /* Amarillo para hoy */
+  border: 2px solid #ffc107;
   background-color: rgba(255, 193, 7, 0.15);
   border-radius: 50%;
+  filter: brightness(0) saturate(100%) invert(70%) sepia(100%) saturate(1200%) hue-rotate(0deg) brightness(85%) contrast(110%);
 }
 
 .activity-overdue {
-  border: 2px solid #dc3545; /* Rojo para vencidas */
+  border: 2px solid #dc3545;
   background-color: rgba(220, 53, 69, 0.15);
   border-radius: 50%;
+  filter: brightness(0) saturate(100%) invert(24%) sepia(91%) saturate(2068%) hue-rotate(344deg) brightness(87%) contrast(96%);
 }
+
+
 
 .trato-details {
   font-size: var(--font-size-sm);

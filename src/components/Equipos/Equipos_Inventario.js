@@ -447,6 +447,7 @@ const EquiposInventario = () => {
   const [sims, setSims] = useState([]);
   const [filterTipo, setFilterTipo] = useState("");
   const [filterCliente, setFilterCliente] = useState("");
+  const [filterNombre, setFilterNombre] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [modals, setModals] = useState({
     form: { isOpen: false, equipo: null },
@@ -468,14 +469,14 @@ const EquiposInventario = () => {
   ];
 
   const clienteFilterOptions = [
-  { value: "", label: "Todos los clientes" },
-  { value: "AG", label: "AG" },
-  { value: "BN", label: "BN" },
-  { value: "PERDIDO", label: "PERDIDO" },
-  ...clientes
-    .map(cliente => ({ value: cliente.id, label: cliente.nombre }))
-    .sort((a, b) => a.label.localeCompare(b.label))
-];
+    { value: "", label: "Todos los clientes" },
+    { value: "AG", label: "AG" },
+    { value: "BN", label: "BN" },
+    { value: "PERDIDO", label: "PERDIDO" },
+    ...clientes
+      .map(cliente => ({ value: cliente.id, label: cliente.nombre }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  ];
 
   useEffect(() => {
     fetchData();
@@ -560,7 +561,10 @@ const EquiposInventario = () => {
     const matchesCliente = !filterCliente ||
       (equipo.clienteId && equipo.clienteId.toString() === filterCliente) ||
       (equipo.clienteDefault && equipo.clienteDefault === filterCliente);
-    return matchesTipo && matchesCliente;
+    const matchesNombre = !filterNombre ||
+      equipo.nombre?.toLowerCase().includes(filterNombre.toLowerCase()) ||
+      equipo.imei?.includes(filterNombre);
+    return matchesTipo && matchesCliente && matchesNombre;
   });
 
   const needsRenewal = (equipo) => {
@@ -716,6 +720,15 @@ const EquiposInventario = () => {
                       <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                   </select>
+
+                  <input
+                    type="text"
+                    value={filterNombre}
+                    onChange={(e) => setFilterNombre(e.target.value)}
+                    placeholder="Buscar por nombre o IMEI..."
+                    className="inventario-filter-input"
+                  />
+
                   <select value={filterCliente} onChange={(e) => setFilterCliente(e.target.value)} className="inventario-filter-select">
                     {clienteFilterOptions.map((option) => (
                       <option key={option.value} value={option.value}>{option.label}</option>

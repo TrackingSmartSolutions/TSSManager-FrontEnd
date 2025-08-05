@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Configuracion_Plantillas.css";
 import Header from "../Header/Header";
@@ -31,6 +31,7 @@ const ConfiguracionPlantillas = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const editorRef = useRef(null);
 
   const navigate = useNavigate();
 
@@ -72,6 +73,13 @@ const ConfiguracionPlantillas = () => {
     });
     setIsEditing(true);
     setEditingId(template.id);
+
+    // Cargar contenido HTML (con imágenes) en el editor
+    setTimeout(() => {
+      if (editorRef.current) {
+        editorRef.current.innerHTML = template.mensaje || "";
+      }
+    }, 100);
   };
 
   const handleNewTemplate = () => {
@@ -84,6 +92,11 @@ const ConfiguracionPlantillas = () => {
     });
     setIsEditing(false);
     setEditingId(null);
+
+    // Limpiar el editor
+    if (editorRef.current) {
+      editorRef.current.innerHTML = '';
+    }
   };
 
   const handleInputChange = (field, value) => {
@@ -150,7 +163,7 @@ const ConfiguracionPlantillas = () => {
 
         if (!response.ok) {
           const errorText = await response.text();
-          throw new Error(`Error: ${response.status} - ${errorText || "Tamaño de archivo excedido"}`);
+          throw new Error(errorText || `Error: ${response.status} - Tamaño de archivo excedido`);
         }
 
         const data = await response.json();
@@ -271,6 +284,100 @@ const ConfiguracionPlantillas = () => {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Archivo no válido',
+        text: 'Por favor selecciona solo archivos de imagen',
+        confirmButtonText: 'Entendido'
+      });
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Archivo muy grande',
+        text: 'La imagen es muy grande. Máximo 2MB para imágenes embebidas',
+        confirmButtonText: 'Entendido'
+      });
+      return;
+    }
+
+    try {
+      const editor = editorRef.current;
+      if (editor) {
+        const loadingTag = `<div class="image-loading">📷 Subiendo imagen...</div>`;
+        const currentContent = editor.innerHTML;
+        editor.innerHTML = currentContent + '<br>' + loadingTag + '<br>';
+        handleInputChange("contenido", editor.innerHTML);
+      }
+
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+
+      const response = await fetchWithToken(`${API_BASE_URL}/upload/image`, {
+        method: 'POST',
+        body: formDataUpload,
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al subir la imagen');
+      }
+
+      const data = await response.json();
+      const imageUrl = data.url;
+
+      if (editor) {
+        const imgTag = `<img src="${imageUrl}" style="max-width: 400px; width: auto; height: auto; display: block; margin: 10px 0; border-radius: 4px;" alt="Imagen insertada" />`;
+
+        const newContent = editor.innerHTML.replace(
+          '<div class="image-loading">📷 Subiendo imagen...</div>',
+          imgTag
+        );
+
+        editor.innerHTML = newContent;
+        handleInputChange("contenido", editor.innerHTML);
+        editor.scrollTop = editor.scrollHeight;
+      }
+
+      Swal.fire({
+        icon: 'success',
+        title: '¡Imagen insertada!',
+        text: 'La imagen se ha subido e insertado correctamente',
+        timer: 2000,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+      });
+
+    } catch (error) {
+      console.error("Error al procesar imagen:", error);
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al subir imagen',
+        text: `No se pudo subir la imagen: ${error.message}`,
+        confirmButtonText: 'Cerrar'
+      });
+
+      if (editorRef.current) {
+        const content = editorRef.current.innerHTML.replace(
+          '<div class="image-loading">📷 Subiendo imagen...</div>',
+          ''
+        );
+        editorRef.current.innerHTML = content;
+        handleInputChange("contenido", editorRef.current.innerHTML);
+      }
+    }
+
+    event.target.value = '';
   };
 
   return (
@@ -427,17 +534,54 @@ const ConfiguracionPlantillas = () => {
                   <label htmlFor="contenido">
                     Contenido <span className="correo-plantillas-required">*</span>
                   </label>
-                  <textarea
-                    id="contenido"
-                    value={formData.contenido}
-                    onChange={(e) => handleInputChange("contenido", e.target.value)}
-                    className="correo-plantillas-form-control correo-plantillas-textarea"
-                    rows="8"
-                    placeholder="Escriba el contenido del correo aquí..."
+                  <div
+                    ref={editorRef}
+                    contentEditable={true}
+                    className="correo-plantillas-form-control correo-plantillas-textarea gmail-message-editor"
+                    onInput={(e) => handleInputChange("contenido", e.target.innerHTML)}
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      const text = e.clipboardData.getData('text/plain');
+                      document.execCommand('insertText', false, text);
+                    }}
+                    style={{
+                      minHeight: '200px',
+                      maxHeight: '400px',
+                      border: '1px solid #ccc',
+                      padding: '10px',
+                      borderRadius: '4px',
+                      backgroundColor: 'white',
+                      overflow: 'auto',
+                      direction: 'ltr',
+                      textAlign: 'left',
+                      unicodeBidi: 'normal'
+                    }}
+                    suppressContentEditableWarning={true}
                   />
                   <small className="correo-plantillas-help-text">
                     Puede usar las mismas variables que en el asunto para personalizar el contenido.
                   </small>
+                </div>
+              </div>
+
+              <div className="correo-plantillas-form-row">
+                <div className="correo-plantillas-form-group correo-plantillas-full-width">
+                  <div className="correo-plantillas-content-toolbar">
+                    <button
+                      type="button"
+                      className="correo-plantillas-btn correo-plantillas-btn-secondary gmail-image-btn"
+                      onClick={() => document.getElementById('plantilla-image-upload').click()}
+                    >
+                      📷 Insertar imagen en contenido
+                    </button>
+                    <input
+                      id="plantilla-image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      style={{ display: 'none' }}
+                    />
+                  </div>
                 </div>
               </div>
 

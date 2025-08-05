@@ -252,6 +252,30 @@
   border-color: var(--inventario-secondary-color);
 }
 
+.inventario-filter-input {
+  appearance: none;
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  min-width: 200px;
+  box-shadow: var(--box-shadow);
+  transition: border-color 0.3s, box-shadow 0.3s;
+  box-sizing: border-box;
+}
+
+.inventario-filter-input:focus {
+  outline: none;
+  border-color: var(--secondary-color);
+  box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
+.inventario-filter-input::placeholder {
+  color: var(--text-light);
+  font-style: italic;
+}
+
 .inventario-table-container {
   overflow-x: auto;
   border: 1px solid var(--inventario-border-color);
@@ -853,7 +877,6 @@
   filter: brightness(0) saturate(100%) invert(44%) sepia(7%) saturate(1102%) hue-rotate(169deg) brightness(96%)
     contrast(88%);
 }
-
 
 .inventario-loading {
   position: fixed;

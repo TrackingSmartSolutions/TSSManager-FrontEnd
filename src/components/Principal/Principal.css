@@ -387,6 +387,7 @@ canvas#usersChart {
   padding: var(--spacing-sm);
 }
 
+
 /* Ajustes Responsivos */
 @media (max-width: 1400px) {
   .dashboard-container {

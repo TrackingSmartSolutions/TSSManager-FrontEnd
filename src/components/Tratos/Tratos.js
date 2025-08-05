@@ -135,25 +135,25 @@ const NuevoTratoModal = ({ isOpen, onClose, onSave, empresaPreseleccionada }) =>
   const [contactos, setContactos] = useState([]);
 
   useEffect(() => {
-  if (isOpen) {
-    const empresaIdPreseleccionada = empresaPreseleccionada?.id || "";
-    
-    setFormData({
-      nombreTrato: "",
-      nombreEmpresa: empresaIdPreseleccionada, 
-      nombreContacto: "",
-      ingresosEsperados: "",
-      numeroUnidades: "",
-      descripcion: "",
-    });
-    setErrors({});
-    fetchEmpresas();
-    
-    if (empresaIdPreseleccionada) {
-      fetchContactos(empresaIdPreseleccionada);
+    if (isOpen) {
+      const empresaIdPreseleccionada = empresaPreseleccionada?.id || "";
+
+      setFormData({
+        nombreTrato: "",
+        nombreEmpresa: empresaIdPreseleccionada,
+        nombreContacto: "",
+        ingresosEsperados: "",
+        numeroUnidades: "",
+        descripcion: "",
+      });
+      setErrors({});
+      fetchEmpresas();
+
+      if (empresaIdPreseleccionada) {
+        fetchContactos(empresaIdPreseleccionada);
+      }
     }
-  }
-}, [isOpen, empresaPreseleccionada]); 
+  }, [isOpen, empresaPreseleccionada]);
 
   const fetchEmpresas = async () => {
     try {
@@ -393,7 +393,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
 
   const validateForm = () => {
     const newErrors = {};
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = new Date().toLocaleDateString('en-CA');
     const now = new Date();
     const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
@@ -494,7 +494,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             value={formData.fecha}
             onChange={(e) => handleInputChange("fecha", e.target.value)}
             className={`modal-form-control ${errors.fecha ? "error" : ""}`}
-            min={new Date().toISOString().split('T')[0]}
+            min={new Date().toLocaleDateString('en-CA')}
           />
           {errors.fecha && <span className="error-message">{errors.fecha}</span>}
         </div>
@@ -660,7 +660,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
 
   const validateForm = () => {
     const newErrors = {};
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = new Date().toLocaleDateString('en-CA');
     const now = new Date();
     const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
@@ -771,7 +771,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             value={formData.fecha}
             onChange={(e) => handleInputChange("fecha", e.target.value)}
             className={`modal-form-control ${errors.fecha ? "error" : ""}`}
-            min={new Date().toISOString().split('T')[0]}
+            min={new Date().toLocaleDateString('en-CA')}
           />
           {errors.fecha && <span className="error-message">{errors.fecha}</span>}
         </div>
@@ -1001,7 +1001,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
 
   const validateForm = () => {
     const newErrors = {};
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = new Date().toLocaleDateString('en-CA');
     if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fechaLimite.trim()) newErrors.fechaLimite = "Este campo es obligatorio";
     else if (formData.fechaLimite < currentDate) newErrors.fechaLimite = "La fecha no puede ser en el pasado";
@@ -1095,7 +1095,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
             value={formData.fechaLimite}
             onChange={(e) => handleInputChange("fechaLimite", e.target.value)}
             className={`modal-form-control ${errors.fechaLimite ? "error" : ""}`}
-            min={new Date().toISOString().split('T')[0]}
+            min={new Date().toLocaleDateString('en-CA')}
           />
           {errors.fechaLimite && <span className="error-message">{errors.fechaLimite}</span>}
         </div>
@@ -1468,6 +1468,7 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
     };
     const iconSrc = iconMap[proximaActividadTipo] || addActivity;
 
+    
     return (
       <img
         src={iconSrc || "/placeholder.svg"}

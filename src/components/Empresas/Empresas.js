@@ -11,6 +11,9 @@ import { API_BASE_URL } from "../Config/Config"
 import Swal from "sweetalert2"
 import stringSimilarity from "string-similarity";
 
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token")
 
@@ -1628,6 +1631,8 @@ const Empresas = () => {
   const [users, setUsers] = useState([])
   const [companies, setCompanies] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [dateRange, setDateRange] = useState([null, null])
+  const [startDate, endDate] = dateRange
   const navigate = useNavigate()
 
   const [modals, setModals] = useState({
@@ -1844,7 +1849,6 @@ const Empresas = () => {
   ]
 
   const getStatusText = (status) => statusMap[status] || status
-  const getSectorText = (sector) => sectorMap[sector] || sector || "N/A"
 
   const fetchUsers = async () => {
     try {
@@ -1897,7 +1901,21 @@ const Empresas = () => {
     const matchesName = !searchTerm ||
       company.nombre?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = !filterStatus || company.estatus === filterStatus;
-    return matchesName && matchesStatus;
+
+    // Filtro por rango de fechas
+    let matchesDateRange = true;
+    if (startDate || endDate) {
+      const companyDate = new Date(company.fechaCreacion);
+      if (startDate && endDate) {
+        matchesDateRange = companyDate >= startDate && companyDate <= endDate;
+      } else if (startDate) {
+        matchesDateRange = companyDate >= startDate;
+      } else if (endDate) {
+        matchesDateRange = companyDate <= endDate;
+      }
+    }
+
+    return matchesName && matchesStatus && matchesDateRange;
   });
 
   const cargarDatosIniciales = async () => {
@@ -2351,6 +2369,22 @@ const Empresas = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="date-filter-row">
+                <div className="date-filter-container">
+                  <DatePicker
+                    selectsRange={true}
+                    startDate={startDate}
+                    endDate={endDate}
+                    onChange={(update) => {
+                      setDateRange(update);
+                    }}
+                    placeholderText="Seleccionar un rango de fechas de creación"
+                    className="date-picker-input"
+                    dateFormat="dd/MM/yyyy"
+                    isClearable={true}
+                  />
+                </div>
               </div>
             </div>
 

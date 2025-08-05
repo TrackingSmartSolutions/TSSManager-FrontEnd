@@ -193,7 +193,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
 
   const validateForm = () => {
     const newErrors = {};
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = new Date().toLocaleDateString('en-CA');
     const now = new Date();
     const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
@@ -349,8 +349,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             value={formData.fecha}
             onChange={(e) => handleInputChange("fecha", e.target.value)}
             className={`modal-form-control ${errors.fecha ? "error" : ""}`}
-            min={new Date().toISOString().split('T')[0]}
-          />
+            min={new Date().toLocaleDateString('en-CA')} />
           {errors.fecha && <span className="error-message">{errors.fecha}</span>}
         </div>
         <div className="modal-form-group">
@@ -519,7 +518,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
   };
   const validateForm = () => {
     const newErrors = {};
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = new Date().toLocaleDateString('en-CA');
     const now = new Date();
     const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
@@ -690,8 +689,8 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             value={formData.fecha}
             onChange={(e) => handleInputChange("fecha", e.target.value)}
             className={`modal-form-control ${errors.fecha ? "error" : ""}`}
-            min={new Date().toISOString().split('T')[0]}
-          />
+            min={new Date().toLocaleDateString('en-CA')} />
+
           {errors.fecha && <span className="error-message">{errors.fecha}</span>}
         </div>
         <div className="modal-form-row">
@@ -933,7 +932,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
 
   const validateForm = () => {
     const newErrors = {};
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = new Date().toLocaleDateString('en-CA');
     if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fechaLimite.trim()) newErrors.fechaLimite = "Este campo es obligatorio";
     else if (formData.fechaLimite < currentDate) newErrors.fechaLimite = "La fecha no puede ser en el pasado";
@@ -1026,8 +1025,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
             value={formData.fechaLimite}
             onChange={(e) => handleInputChange("fechaLimite", e.target.value)}
             className={`modal-form-control ${errors.fechaLimite ? "error" : ""}`}
-            min={new Date().toISOString().split('T')[0]}
-          />
+            min={new Date().toLocaleDateString('en-CA')} />
           {errors.fechaLimite && <span className="error-message">{errors.fechaLimite}</span>}
         </div>
         <div className="modal-form-group">
@@ -1193,7 +1191,7 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = new Date().toLocaleDateString('en-CA');
     const now = new Date();
     const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     if (!formData.nuevaFecha.trim()) newErrors.nuevaFecha = "Este campo es obligatorio";
@@ -1319,8 +1317,8 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
             value={formData.nuevaFecha}
             onChange={(e) => handleInputChange("nuevaFecha", e.target.value)}
             className={`modal-form-control ${errors.nuevaFecha ? "error" : ""}`}
-            min={new Date().toISOString().split('T')[0]}
-          />
+            min={new Date().toLocaleDateString('en-CA')} />
+
           {errors.nuevaFecha && <span className="error-message">{errors.nuevaFecha}</span>}
         </div>
         <div className="modal-form-group">
@@ -1482,7 +1480,7 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = new Date().toLocaleDateString('en-CA');
     const now = new Date();
     const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     if (!formData.nuevaFecha.trim()) newErrors.nuevaFecha = "Este campo es obligatorio";
@@ -1627,8 +1625,8 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
             value={formData.nuevaFecha}
             onChange={(e) => handleInputChange("nuevaFecha", e.target.value)}
             className={`modal-form-control ${errors.nuevaFecha ? "error" : ""}`}
-            min={new Date().toISOString().split('T')[0]}
-          />
+            min={new Date().toLocaleDateString('en-CA')} />
+
           {errors.nuevaFecha && <span className="error-message">{errors.nuevaFecha}</span>}
         </div>
         <div className="modal-form-row">
@@ -1874,7 +1872,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = new Date().toLocaleDateString('en-CA');
     if (!formData.nuevaFechaLimite.trim()) newErrors.nuevaFechaLimite = "Este campo es obligatorio";
     else if (formData.nuevaFechaLimite < currentDate) newErrors.nuevaFechaLimite = "La fecha no puede ser en el pasado";
     if (!formData.tipo.trim()) newErrors.tipo = "Este campo es obligatorio";
@@ -1971,8 +1969,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
             value={formData.nuevaFechaLimite}
             onChange={(e) => handleInputChange("nuevaFechaLimite", e.target.value)}
             className={`modal-form-control ${errors.nuevaFechaLimite ? "error" : ""}`}
-            min={new Date().toISOString().split('T')[0]}
-          />
+            min={new Date().toLocaleDateString('en-CA')} />
           {errors.nuevaFechaLimite && <span className="error-message">{errors.nuevaFechaLimite}</span>}
         </div>
 
@@ -2133,7 +2130,7 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
         enlaceReunion: actividad.enlaceReunion || null,
         subtipoTarea: actividad.subtipoTarea || null,
         finalidad: actividad.finalidad || null,
-        estatus: esEdicion ? actividad.estatus : 'CERRADA', // Mantener estatus en edición
+        estatus: esEdicion ? actividad.estatus : 'CERRADA',
         respuesta: formData.respuesta.toUpperCase(),
         interes: formData.interes.toUpperCase(),
         informacion: formData.informacion.toUpperCase(),
@@ -2141,7 +2138,6 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
         notas: formData.notas,
       };
 
-      // CORRECCIÓN PRINCIPAL: Usar el endpoint correcto según si es edición o no
       const endpoint = esEdicion ?
         `${API_BASE_URL}/tratos/actividades/${actividad.id}/editar` :
         `${API_BASE_URL}/tratos/actividades/${actividad.id}/completar`;
@@ -2380,7 +2376,7 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
 };
 
 // Modal para crear interaccion
-const AgregarInteraccionModal = ({ isOpen, onClose, onSave, tratoId }) => {
+const AgregarInteraccionModal = ({ isOpen, onClose, onSave, tratoId, onCreateActivity }) => {
   const [formData, setFormData] = useState({
     tipo: '',
     medio: '',
@@ -2457,6 +2453,16 @@ const AgregarInteraccionModal = ({ isOpen, onClose, onSave, tratoId }) => {
         title: '¡Interacción registrada!',
         text: 'La interacción se ha guardado exitosamente',
         icon: 'success',
+        showCancelButton: true,
+        confirmButtonText: 'Crear nueva actividad',
+        cancelButtonText: 'Cerrar',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Necesitamos acceso a openModal desde props
+          if (onCreateActivity) {
+            onCreateActivity();
+          }
+        }
       });
       onClose();
     } catch (error) {
@@ -2965,6 +2971,8 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [plantillaSeleccionada, setPlantillaSeleccionada] = useState(null);
+  const editorRef = useRef(null);
+
 
   useEffect(() => {
     if (isOpen) {
@@ -2997,6 +3005,26 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
       loadPlantillas();
     }
   }, [isOpen, tratoId]);
+
+  useEffect(() => {
+    if (isOpen && editorRef.current) {
+      const editor = editorRef.current;
+      if (!formData.mensaje) {
+        editor.innerHTML = '';
+      }
+      editor.style.direction = 'ltr';
+      editor.style.textAlign = 'left';
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+  if (editorRef.current && formData.mensaje) {
+    // Sincronizar el contenido HTML en el editor cuando cambie formData.mensaje
+    if (editorRef.current.innerHTML !== formData.mensaje) {
+      editorRef.current.innerHTML = formData.mensaje;
+    }
+  }
+}, [formData.mensaje]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -3042,6 +3070,12 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
       adjuntos: [],
       adjuntosPlantilla: [],
     });
+
+    // Limpiar el editor también
+    if (editorRef.current) {
+      editorRef.current.innerHTML = '';
+    }
+
     setPlantillaSeleccionada(null);
     setErrors({});
     setError(null);
@@ -3137,33 +3171,47 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
   };
 
   const handleUsarPlantilla = () => {
-    if (loadingPlantillas || plantillas.length === 0) {
-      return;
-    }
-    openModal("seleccionarPlantilla", {
-      onSelectTemplate: (template) => {
-        setPlantillaSeleccionada(template);
-        setFormData(prev => ({
-          ...prev,
-          asunto: template.asunto,
-          mensaje: template.mensaje,
-          adjuntosPlantilla: template.adjuntos || [],
-        }));
-        closeModal("seleccionarPlantilla");
-      },
-      plantillas: plantillas,
-    });
-  };
+  if (loadingPlantillas || plantillas.length === 0) {
+    return;
+  }
+  openModal("seleccionarPlantilla", {
+    onSelectTemplate: (template) => {
+      setPlantillaSeleccionada(template);
+      setFormData(prev => ({
+        ...prev,
+        asunto: template.asunto,
+        mensaje: template.mensaje,
+        adjuntosPlantilla: template.adjuntos || [],
+      }));
+      
+      setTimeout(() => {
+        if (editorRef.current) {
+          editorRef.current.innerHTML = template.mensaje || "";
+        }
+      }, 100);
+      
+      closeModal("seleccionarPlantilla");
+    },
+    plantillas: plantillas,
+  });
+};
 
   const handleLimpiarPlantilla = () => {
-    setPlantillaSeleccionada(null);
-    setFormData(prev => ({
-      ...prev,
-      asunto: "",
-      mensaje: "",
-      adjuntosPlantilla: [],
-    }));
-  };
+  setPlantillaSeleccionada(null);
+  setFormData(prev => ({
+    ...prev,
+    asunto: "",
+    mensaje: "",
+    adjuntosPlantilla: [],
+  }));
+  
+  // Limpiar el editor también
+  setTimeout(() => {
+    if (editorRef.current) {
+      editorRef.current.innerHTML = '';
+    }
+  }, 100);
+};
 
   // Función para obtener el nombre del archivo desde una URL
   const getFileNameFromUrl = (url) => {
@@ -3178,6 +3226,100 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
       return 'archivo_adjunto';
     }
   };
+
+  const handleImageUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Archivo no válido',
+      text: 'Por favor selecciona solo archivos de imagen',
+      confirmButtonText: 'Entendido'
+    });
+    return;
+  }
+
+  if (file.size > 2 * 1024 * 1024) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Archivo muy grande',
+      text: 'La imagen es muy grande. Máximo 2MB para imágenes embebidas',
+      confirmButtonText: 'Entendido'
+    });
+    return;
+  }
+
+  try {
+    const editor = editorRef.current;
+    if (editor) {
+      const loadingTag = `<div class="image-loading">📷 Subiendo imagen...</div>`;
+      const currentContent = editor.innerHTML;
+      editor.innerHTML = currentContent + '<br>' + loadingTag + '<br>';
+      handleInputChange("mensaje", editor.innerHTML);
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetchWithToken(`${API_BASE_URL}/upload/image`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al subir la imagen');
+    }
+
+    const data = await response.json();
+    const imageUrl = data.url; 
+
+    if (editor) {
+      const imgTag = `<img src="${imageUrl}" style="max-width: 400px; width: auto; height: auto; display: block; margin: 10px 0; border-radius: 4px;" alt="Imagen insertada" />`;
+      
+      const newContent = editor.innerHTML.replace(
+        '<div class="image-loading">📷 Subiendo imagen...</div>',
+        imgTag
+      );
+      
+      editor.innerHTML = newContent;
+      handleInputChange("mensaje", editor.innerHTML);
+      editor.scrollTop = editor.scrollHeight;
+    }
+
+    Swal.fire({
+      icon: 'success',
+      title: '¡Imagen insertada!',
+      text: 'La imagen se ha subido e insertado correctamente',
+      timer: 2000,
+      showConfirmButton: false,
+      toast: true,
+      position: 'top-end'
+    });
+
+  } catch (error) {
+    console.error("Error al procesar imagen:", error);
+    
+    Swal.fire({
+      icon: 'error',
+      title: 'Error al subir imagen',
+      text: `No se pudo subir la imagen: ${error.message}`,
+      confirmButtonText: 'Cerrar'
+    });
+    
+    if (editorRef.current) {
+      const content = editorRef.current.innerHTML.replace(
+        '<div class="image-loading">📷 Subiendo imagen...</div>',
+        ''
+      );
+      editorRef.current.innerHTML = content;
+      handleInputChange("mensaje", editorRef.current.innerHTML);
+    }
+  }
+
+  event.target.value = '';
+};
 
   return (
     <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Mensaje nuevo" size="lg" canClose={true}>
@@ -3224,12 +3366,28 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
           </div>
 
           <div className="gmail-message-area">
-            <textarea
-              value={formData.mensaje}
-              onChange={(e) => handleInputChange("mensaje", e.target.value)}
-              className={`gmail-message-input ${errors.mensaje ? "error" : ""}`}
-              placeholder="Redactar mensaje"
-              rows="12"
+            <div
+              ref={editorRef}
+              contentEditable={true}
+              className={`gmail-message-editor ${errors.mensaje ? "error" : ""}`}
+              onInput={(e) => handleInputChange("mensaje", e.target.innerHTML)}
+              onPaste={(e) => {
+                // Prevenir pegado con formato, solo texto plano
+                e.preventDefault();
+                const text = e.clipboardData.getData('text/plain');
+                document.execCommand('insertText', false, text);
+              }}
+              style={{
+                minHeight: '200px',
+                border: '1px solid #ccc',
+                padding: '10px',
+                borderRadius: '4px',
+                backgroundColor: 'white',
+                direction: 'ltr',
+                textAlign: 'left',
+                unicodeBidi: 'normal'
+              }}
+              suppressContentEditableWarning={true}
             />
             {errors.mensaje && <span className="error-message">{errors.mensaje}</span>}
           </div>
@@ -3296,6 +3454,16 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
                 type="file"
                 multiple
                 onChange={handleFileUpload}
+                style={{ display: 'none' }}
+              />
+            </label>
+
+            <label className="gmail-image-btn">
+              📷
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
                 style={{ display: 'none' }}
               />
             </label>
@@ -3572,6 +3740,10 @@ const DetallesTrato = () => {
   const [correosSeguimientoActivo, setCorreosSeguimientoActivo] = useState(false);
   const [cargandoCorreos, setCargandoCorreos] = useState(false);
 
+  const getCurrentUserId = () => {
+    const userId = localStorage.getItem('userId');
+    return userId ? parseInt(userId) : null;
+  };
 
   // Estados para modales
   const [modals, setModals] = useState({
@@ -3874,7 +4046,7 @@ const DetallesTrato = () => {
 
         const newInteraccion = {
           id: updatedActividad.id,
-          fecha: updatedActividad.fechaCompletado ? new Date(updatedActividad.fechaCompletado).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          fecha: updatedActividad.fechaCompletado ? new Date(updatedActividad.fechaCompletado).toLocaleDateString('en-CA') : new Date().toLocaleDateString('en-CA'),
           hora: updatedActividad.horaCompletado || new Date().toLocaleTimeString(),
           responsable: users.find((u) => u.id === updatedActividad.asignadoAId)?.nombreReal || 'Sin asignado',
           tipo: updatedActividad.tipo,
@@ -3886,6 +4058,48 @@ const DetallesTrato = () => {
           notas: updatedActividad.notas || '',
           siguienteAccion: updatedActividad.siguienteAccion || '',
         };
+
+        // Crear nueva nota si hay contenido en las notas
+        let updatedNotas = prev.notas;
+        if (updatedActividad.notas && updatedActividad.notas.trim()) {
+          if (modals.completarActividad.esEdicion) {
+            // En modo edición, buscar si ya existe una nota para esta interacción
+            const interaccionId = updatedActividad.id;
+            const notaExistente = prev.notas.find(n =>
+              n.id === interaccionId || // Si la nota tiene el mismo ID que la interacción
+              (n.autor === (users.find(u => u.id === getCurrentUserId())?.nombreReal || 'Usuario actual') &&
+                prev.historialInteracciones.some(h => h.id === interaccionId && h.notas === n.texto))
+            );
+
+            if (notaExistente) {
+              updatedNotas = prev.notas.map(n =>
+                n.id === notaExistente.id
+                  ? { ...n, texto: updatedActividad.notas.trim(), fechaEdicion: new Date().toLocaleDateString() }
+                  : n
+              );
+            } else {
+              const nuevaNota = {
+                id: interaccionId,
+                texto: updatedActividad.notas.trim(),
+                autor: users.find(u => u.id === getCurrentUserId())?.nombreReal || 'Usuario actual',
+                fecha: new Date().toLocaleDateString(),
+                editadoPor: null,
+                fechaEdicion: null,
+              };
+              updatedNotas = [nuevaNota, ...prev.notas];
+            }
+          } else {
+            const nuevaNota = {
+              id: Date.now(),
+              texto: updatedActividad.notas.trim(),
+              autor: users.find(u => u.id === getCurrentUserId())?.nombreReal || 'Usuario actual',
+              fecha: new Date().toLocaleDateString(),
+              editadoPor: null,
+              fechaEdicion: null,
+            };
+            updatedNotas = [nuevaNota, ...prev.notas];
+          }
+        }
         return {
           ...prev,
           actividadesAbiertas: {
@@ -3898,6 +4112,7 @@ const DetallesTrato = () => {
               interaccion.id === updatedActividad.id ? newInteraccion : interaccion
             )
             : [...prev.historialInteracciones, newInteraccion],
+          notas: updatedNotas
         };
       });
 
@@ -4161,7 +4376,7 @@ const DetallesTrato = () => {
           },
           historialInteracciones: (tratoData.historialInteracciones || []).map(interaccion => ({
             id: interaccion.id,
-            fecha: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toISOString().split('T')[0] : "Sin fecha",
+            fecha: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toLocaleDateString('en-CA') : "Sin fecha",
             hora: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : "Sin hora",
             responsable: users.find(u => u.id === interaccion.usuarioCompletadoId)?.nombreReal || "Sin asignado",
             tipo: interaccion.tipo,
@@ -4589,9 +4804,17 @@ const DetallesTrato = () => {
         ...prev,
         fechaCreacion: tratoActualizado.fechaCreacion ? new Date(tratoActualizado.fechaCreacion).toLocaleDateString() : prev.fechaCreacion,
         fechaCierre: tratoActualizado.fechaCierre ? new Date(tratoActualizado.fechaCierre).toLocaleDateString() : prev.fechaCierre,
+        notas: (tratoActualizado.notas || []).map((n) => ({
+          id: n.id,
+          texto: n.nota.replace(/\\"/g, '"').replace(/^"|"$/g, ''),
+          autor: n.autorNombre,
+          fecha: n.fechaCreacion ? new Date(n.fechaCreacion).toLocaleDateString() : "",
+          editadoPor: n.editadoPorName || null,
+          fechaEdicion: n.fechaEdicion ? new Date(n.fechaEdicion).toLocaleDateString() : null,
+        })),
         historialInteracciones: (tratoActualizado.historialInteracciones || []).map(interaccion => ({
           id: interaccion.id,
-          fecha: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toISOString().split('T')[0] : "Sin fecha",
+          fecha: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toLocaleDateString('en-CA') : "Sin fecha",
           hora: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : "Sin hora",
           responsable: users.find(u => u.id === interaccion.usuarioCompletadoId)?.nombreReal || "Sin asignado",
           tipo: interaccion.tipo,
@@ -4810,19 +5033,35 @@ const DetallesTrato = () => {
                   <div className="nota-contenido">
                     {editingNoteId === nota.id ? (
                       <div className="edit-nota-container">
-                        <input
-                          type="text"
+                        <textarea
                           value={editingNoteText}
                           onChange={(e) => setEditingNoteText(e.target.value)}
                           className="input-nota-edit"
-                          onKeyPress={(e) => {
-                            if (e.key === "Enter") {
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && e.altKey) {
+                              // Alt + Enter: insertar salto de línea
+                              const textarea = e.target;
+                              const start = textarea.selectionStart;
+                              const end = textarea.selectionEnd;
+                              const newValue = editingNoteText.substring(0, start) + '\n' + editingNoteText.substring(end);
+                              setEditingNoteText(newValue);
+
+                              // Mantener la posición del cursor después del salto de línea
+                              setTimeout(() => {
+                                textarea.selectionStart = textarea.selectionEnd = start + 1;
+                              }, 0);
+
+                              e.preventDefault();
+                            } else if (e.key === "Enter" && !e.altKey) {
+                              // Solo Enter: guardar nota
+                              e.preventDefault();
                               handleSaveEditNota(nota.id);
                             } else if (e.key === "Escape") {
                               handleCancelEditNota();
                             }
                           }}
                           autoFocus
+                          rows={3}
                         />
                         <div className="edit-nota-actions">
                           <button onClick={() => handleSaveEditNota(nota.id)} className="btn-save-nota">
@@ -4835,7 +5074,16 @@ const DetallesTrato = () => {
                       </div>
                     ) : (
                       <>
-                        <p>{nota.texto}</p>
+                        <div>
+                          {(nota.texto || '')
+                            .replace(/\\n/g, '\n')
+                            .split('\n')
+                            .map((linea, index) => (
+                              <p key={index} style={{ margin: '0', lineHeight: '1.4' }}>
+                                {linea || '\u00A0'}
+                              </p>
+                            ))}
+                        </div>
                         <span className="nota-fecha">Creado por {nota.autor} el {nota.fecha}</span>
                         {nota.editadoPor && (
                           <span className="nota-editado">
@@ -4859,13 +5107,33 @@ const DetallesTrato = () => {
               ))}
             </div>
             <div className="agregar-nota">
-              <input
-                type="text"
-                placeholder="Agregar una nota"
+              <textarea
+                placeholder="Agregar una nota (Alt + Enter para nueva línea, Enter para guardar)"
                 value={nuevaNota}
                 onChange={(e) => setNuevaNota(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleAgregarNota()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && e.altKey) {
+                    // Alt + Enter: insertar salto de línea
+                    const textarea = e.target;
+                    const start = textarea.selectionStart;
+                    const end = textarea.selectionEnd;
+                    const newValue = nuevaNota.substring(0, start) + '\n' + nuevaNota.substring(end);
+                    setNuevaNota(newValue);
+
+                    // Mantener la posición del cursor después del salto de línea
+                    setTimeout(() => {
+                      textarea.selectionStart = textarea.selectionEnd = start + 1;
+                    }, 0);
+
+                    e.preventDefault();
+                  } else if (e.key === "Enter" && !e.altKey) {
+                    // Solo Enter: guardar nota
+                    e.preventDefault();
+                    handleAgregarNota();
+                  }
+                }}
                 className="input-nota"
+                rows={3}
               />
             </div>
           </div>
@@ -5105,6 +5373,7 @@ const DetallesTrato = () => {
               </div>
             </div>
           </div>
+
           {/* Correos electrónicos */}
           <div className="seccion correos-electronicos">
             <div className="seccion-header">
@@ -5261,6 +5530,10 @@ const DetallesTrato = () => {
         onClose={() => closeModal('agregarInteraccion')}
         onSave={handleSaveAgregarInteraccion}
         tratoId={params.id}
+        onCreateActivity={() => {
+          closeModal('agregarInteraccion');
+          openModal('seleccionarActividad', { tratoId: params.id });
+        }}
       />
 
       <CrearCorreoModal
