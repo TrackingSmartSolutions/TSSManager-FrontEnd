@@ -17,6 +17,8 @@ import closeIcon from "../../assets/icons/perdido.png"
 import attachIcon from "../../assets/icons/adjunto-archivo.png";
 import deploy from "../../assets/icons/desplegar.png"
 import { API_BASE_URL } from "../Config/Config";
+import EditorToolbar from '../EditorToolbar/EditorToolbar';
+import '../EditorToolbar/EditorToolbar.css';
 
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token");
@@ -2295,16 +2297,13 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
               >
                 <option value="">Seleccionar medio</option>
                 {actividad?.tipo?.toUpperCase() === 'LLAMADA' && (
-                  <>
-                    <option value="TELEFONO">Teléfono</option>
-                    <option value="WHATSAPP">WhatsApp</option>
-                  </>
+                  <option value="TELEFONO">Teléfono</option>
                 )}
                 {actividad?.tipo?.toUpperCase() === 'TAREA' && (
                   <>
+                    <option value="CORREO">Correo</option>
                     <option value="WHATSAPP">WhatsApp</option>
-                    <option value="OUTLOOK">Outlook</option>
-                    <option value="GMAIL">Gmail</option>
+                    <option value="ACTIVIDAD">Actividad</option>
                   </>
                 )}
               </select>
@@ -2479,14 +2478,13 @@ const AgregarInteraccionModal = ({ isOpen, onClose, onSave, tratoId, onCreateAct
     switch (formData.tipo) {
       case 'LLAMADA':
         return [
-          { value: 'TELEFONO', label: 'Teléfono' },
-          { value: 'WHATSAPP', label: 'WhatsApp' }
+          { value: 'TELEFONO', label: 'Teléfono' }
         ];
       case 'TAREA':
         return [
+          { value: 'CORREO', label: 'Correo' },
           { value: 'WHATSAPP', label: 'WhatsApp' },
-          { value: 'OUTLOOK', label: 'Outlook' },
-          { value: 'GMAIL', label: 'Gmail' }
+          { value: 'ACTIVIDAD', label: 'Actividad' }
         ];
       case 'REUNION':
         return [
@@ -3018,13 +3016,15 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
   }, [isOpen]);
 
   useEffect(() => {
-  if (editorRef.current && formData.mensaje) {
-    // Sincronizar el contenido HTML en el editor cuando cambie formData.mensaje
-    if (editorRef.current.innerHTML !== formData.mensaje) {
-      editorRef.current.innerHTML = formData.mensaje;
+    if (editorRef.current && formData.mensaje) {
+      // Sincronizar el contenido HTML en el editor cuando cambie formData.mensaje
+      if (editorRef.current.innerHTML !== formData.mensaje) {
+        editorRef.current.innerHTML = formData.mensaje;
+      }
     }
-  }
-}, [formData.mensaje]);
+  }, [formData.mensaje]);
+
+  
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -3171,47 +3171,46 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
   };
 
   const handleUsarPlantilla = () => {
-  if (loadingPlantillas || plantillas.length === 0) {
-    return;
-  }
-  openModal("seleccionarPlantilla", {
-    onSelectTemplate: (template) => {
-      setPlantillaSeleccionada(template);
-      setFormData(prev => ({
-        ...prev,
-        asunto: template.asunto,
-        mensaje: template.mensaje,
-        adjuntosPlantilla: template.adjuntos || [],
-      }));
-      
-      setTimeout(() => {
-        if (editorRef.current) {
-          editorRef.current.innerHTML = template.mensaje || "";
-        }
-      }, 100);
-      
-      closeModal("seleccionarPlantilla");
-    },
-    plantillas: plantillas,
-  });
-};
+    if (loadingPlantillas || plantillas.length === 0) {
+      return;
+    }
+    openModal("seleccionarPlantilla", {
+      onSelectTemplate: (template) => {
+        setPlantillaSeleccionada(template);
+        setFormData(prev => ({
+          ...prev,
+          asunto: template.asunto,
+          mensaje: template.mensaje,
+          adjuntosPlantilla: template.adjuntos || [],
+        }));
+
+        setTimeout(() => {
+          if (editorRef.current) {
+            editorRef.current.innerHTML = template.mensaje || "";
+          }
+        }, 100);
+
+        closeModal("seleccionarPlantilla");
+      },
+      plantillas: plantillas,
+    });
+  };
 
   const handleLimpiarPlantilla = () => {
-  setPlantillaSeleccionada(null);
-  setFormData(prev => ({
-    ...prev,
-    asunto: "",
-    mensaje: "",
-    adjuntosPlantilla: [],
-  }));
-  
-  // Limpiar el editor también
-  setTimeout(() => {
-    if (editorRef.current) {
-      editorRef.current.innerHTML = '';
-    }
-  }, 100);
-};
+    setPlantillaSeleccionada(null);
+    setFormData(prev => ({
+      ...prev,
+      asunto: "",
+      mensaje: "",
+      adjuntosPlantilla: [],
+    }));
+
+    setTimeout(() => {
+      if (editorRef.current) {
+        editorRef.current.innerHTML = '';
+      }
+    }, 100);
+  };
 
   // Función para obtener el nombre del archivo desde una URL
   const getFileNameFromUrl = (url) => {
@@ -3228,98 +3227,98 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
   };
 
   const handleImageUpload = async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
+    const file = event.target.files[0];
+    if (!file) return;
 
-  if (!file.type.startsWith('image/')) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Archivo no válido',
-      text: 'Por favor selecciona solo archivos de imagen',
-      confirmButtonText: 'Entendido'
-    });
-    return;
-  }
-
-  if (file.size > 2 * 1024 * 1024) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Archivo muy grande',
-      text: 'La imagen es muy grande. Máximo 2MB para imágenes embebidas',
-      confirmButtonText: 'Entendido'
-    });
-    return;
-  }
-
-  try {
-    const editor = editorRef.current;
-    if (editor) {
-      const loadingTag = `<div class="image-loading">📷 Subiendo imagen...</div>`;
-      const currentContent = editor.innerHTML;
-      editor.innerHTML = currentContent + '<br>' + loadingTag + '<br>';
-      handleInputChange("mensaje", editor.innerHTML);
+    if (!file.type.startsWith('image/')) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Archivo no válido',
+        text: 'Por favor selecciona solo archivos de imagen',
+        confirmButtonText: 'Entendido'
+      });
+      return;
     }
 
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const response = await fetchWithToken(`${API_BASE_URL}/upload/image`, {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error('Error al subir la imagen');
+    if (file.size > 2 * 1024 * 1024) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Archivo muy grande',
+        text: 'La imagen es muy grande. Máximo 2MB para imágenes embebidas',
+        confirmButtonText: 'Entendido'
+      });
+      return;
     }
 
-    const data = await response.json();
-    const imageUrl = data.url; 
+    try {
+      const editor = editorRef.current;
+      if (editor) {
+        const loadingTag = `<div class="image-loading">📷 Subiendo imagen...</div>`;
+        const currentContent = editor.innerHTML;
+        editor.innerHTML = currentContent + '<br>' + loadingTag + '<br>';
+        handleInputChange("mensaje", editor.innerHTML);
+      }
 
-    if (editor) {
-      const imgTag = `<img src="${imageUrl}" style="max-width: 400px; width: auto; height: auto; display: block; margin: 10px 0; border-radius: 4px;" alt="Imagen insertada" />`;
-      
-      const newContent = editor.innerHTML.replace(
-        '<div class="image-loading">📷 Subiendo imagen...</div>',
-        imgTag
-      );
-      
-      editor.innerHTML = newContent;
-      handleInputChange("mensaje", editor.innerHTML);
-      editor.scrollTop = editor.scrollHeight;
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetchWithToken(`${API_BASE_URL}/upload/image`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al subir la imagen');
+      }
+
+      const data = await response.json();
+      const imageUrl = data.url;
+
+      if (editor) {
+        const imgTag = `<img src="${imageUrl}" style="max-width: 400px; width: auto; height: auto; display: block; margin: 10px 0; border-radius: 4px;" alt="Imagen insertada" />`;
+
+        const newContent = editor.innerHTML.replace(
+          '<div class="image-loading">📷 Subiendo imagen...</div>',
+          imgTag
+        );
+
+        editor.innerHTML = newContent;
+        handleInputChange("mensaje", editor.innerHTML);
+        editor.scrollTop = editor.scrollHeight;
+      }
+
+      Swal.fire({
+        icon: 'success',
+        title: '¡Imagen insertada!',
+        text: 'La imagen se ha subido e insertado correctamente',
+        timer: 2000,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+      });
+
+    } catch (error) {
+      console.error("Error al procesar imagen:", error);
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al subir imagen',
+        text: `No se pudo subir la imagen: ${error.message}`,
+        confirmButtonText: 'Cerrar'
+      });
+
+      if (editorRef.current) {
+        const content = editorRef.current.innerHTML.replace(
+          '<div class="image-loading">📷 Subiendo imagen...</div>',
+          ''
+        );
+        editorRef.current.innerHTML = content;
+        handleInputChange("mensaje", editorRef.current.innerHTML);
+      }
     }
 
-    Swal.fire({
-      icon: 'success',
-      title: '¡Imagen insertada!',
-      text: 'La imagen se ha subido e insertado correctamente',
-      timer: 2000,
-      showConfirmButton: false,
-      toast: true,
-      position: 'top-end'
-    });
-
-  } catch (error) {
-    console.error("Error al procesar imagen:", error);
-    
-    Swal.fire({
-      icon: 'error',
-      title: 'Error al subir imagen',
-      text: `No se pudo subir la imagen: ${error.message}`,
-      confirmButtonText: 'Cerrar'
-    });
-    
-    if (editorRef.current) {
-      const content = editorRef.current.innerHTML.replace(
-        '<div class="image-loading">📷 Subiendo imagen...</div>',
-        ''
-      );
-      editorRef.current.innerHTML = content;
-      handleInputChange("mensaje", editorRef.current.innerHTML);
-    }
-  }
-
-  event.target.value = '';
-};
+    event.target.value = '';
+  };
 
   return (
     <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Mensaje nuevo" size="lg" canClose={true}>
@@ -3366,13 +3365,13 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
           </div>
 
           <div className="gmail-message-area">
+            <EditorToolbar editorRef={editorRef} />
             <div
               ref={editorRef}
               contentEditable={true}
               className={`gmail-message-editor ${errors.mensaje ? "error" : ""}`}
               onInput={(e) => handleInputChange("mensaje", e.target.innerHTML)}
               onPaste={(e) => {
-                // Prevenir pegado con formato, solo texto plano
                 e.preventDefault();
                 const text = e.clipboardData.getData('text/plain');
                 document.execCommand('insertText', false, text);
@@ -3380,8 +3379,9 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
               style={{
                 minHeight: '200px',
                 border: '1px solid #ccc',
+                borderTop: 'none', 
                 padding: '10px',
-                borderRadius: '4px',
+                borderRadius: '0 0 4px 4px',
                 backgroundColor: 'white',
                 direction: 'ltr',
                 textAlign: 'left',

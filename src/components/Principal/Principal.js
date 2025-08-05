@@ -1207,16 +1207,13 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
               >
                 <option value="">Seleccionar medio</option>
                 {actividad?.tipo?.toUpperCase() === 'LLAMADA' && (
-                  <>
-                    <option value="TELEFONO">Teléfono</option>
-                    <option value="WHATSAPP">WhatsApp</option>
-                  </>
+                  <option value="TELEFONO">Teléfono</option>
                 )}
                 {actividad?.tipo?.toUpperCase() === 'TAREA' && (
                   <>
+                    <option value="CORREO">Correo</option>
                     <option value="WHATSAPP">WhatsApp</option>
-                    <option value="OUTLOOK">Outlook</option>
-                    <option value="GMAIL">Gmail</option>
+                    <option value="ACTIVIDAD">Actividad</option>
                   </>
                 )}
               </select>

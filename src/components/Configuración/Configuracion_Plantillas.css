@@ -660,6 +660,7 @@
   font-size: 12px !important;
   line-height: 1.4 !important;
 }
+
 /* Diseño responsivo */
 @media (max-width: 1200px) {
   .correo-plantillas-container {

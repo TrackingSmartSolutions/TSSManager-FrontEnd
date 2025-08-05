@@ -2107,7 +2107,7 @@ const Empresas = () => {
   }
 
   const handleEditContact = (contactId) => {
-    const contact = selectedCompany?.contacts?.find((c) => c.id === contactId)
+    const contact = contacts.find((c) => c.id === contactId)    
     if (contact) {
       openModal("contacto", "edit", {
         ...contact,
@@ -2118,8 +2118,8 @@ const Empresas = () => {
   }
 
   const handleDeleteContact = (contactId) => {
-    const contact = selectedCompany?.contacts?.find((c) => c.id === contactId)
-    const isLastContact = selectedCompany?.contacts?.length === 1
+    const contact = contacts.find((c) => c.id === contactId)
+  const isLastContact = contacts.length === 1
 
     if (contact) {
       openModal("confirmarEliminacion", "delete", contact, { isLastContact })
@@ -2127,7 +2127,7 @@ const Empresas = () => {
   }
 
   const handleContactDetails = (contactId) => {
-    const contact = selectedCompany?.contacts?.find((c) => c.id === contactId)
+     const contact = contacts.find((c) => c.id === contactId)
     if (contact) {
       openModal("detallesContacto", "view", contact)
     }

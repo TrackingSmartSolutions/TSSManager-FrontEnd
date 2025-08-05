@@ -6,6 +6,8 @@ import deleteIcon from "../../assets/icons/eliminar.png";
 import uploadIcon from "../../assets/icons/subir.png";
 import { API_BASE_URL } from "../Config/Config";
 import Swal from "sweetalert2";
+import EditorToolbar from '../EditorToolbar/EditorToolbar';
+import '../EditorToolbar/EditorToolbar.css';
 
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token");
@@ -38,6 +40,7 @@ const ConfiguracionPlantillas = () => {
   useEffect(() => {
     fetchTemplates();
   }, []);
+  
 
   const fetchTemplates = async () => {
     setIsLoading(true)
@@ -118,7 +121,7 @@ const ConfiguracionPlantillas = () => {
 
     try {
       const result = await Swal.fire({
-        title: isEditing ? "¿Guardar cambios?" : "¿Crear plantilla?",
+        title: isEditing ? "¿Guardar cambios?" : "¿Guardar plantilla?",
         text: isEditing
           ? "Los cambios se guardarán en la plantilla."
           : "Se creará una nueva plantilla de correo.",
@@ -489,7 +492,7 @@ const ConfiguracionPlantillas = () => {
                     className="correo-plantillas-btn correo-plantillas-btn-primary"
                     onClick={handleSaveTemplate}
                   >
-                    {isEditing ? "Guardar cambios" : "Crear plantilla"}
+                    {isEditing ? "Guardar cambios" : "Guardar plantilla"}
                   </button>
                 </div>
               </div>
@@ -534,6 +537,7 @@ const ConfiguracionPlantillas = () => {
                   <label htmlFor="contenido">
                     Contenido <span className="correo-plantillas-required">*</span>
                   </label>
+                  <EditorToolbar editorRef={editorRef} />
                   <div
                     ref={editorRef}
                     contentEditable={true}
@@ -548,8 +552,9 @@ const ConfiguracionPlantillas = () => {
                       minHeight: '200px',
                       maxHeight: '400px',
                       border: '1px solid #ccc',
+                      borderTop: 'none', // NUEVO: para conectar con toolbar
                       padding: '10px',
-                      borderRadius: '4px',
+                      borderRadius: '0 0 4px 4px', // MODIFICADO: solo bordes inferiores redondeados
                       backgroundColor: 'white',
                       overflow: 'auto',
                       direction: 'ltr',
