@@ -20,7 +20,7 @@ const fetchWithToken = async (url, options = {}) => {
 }
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
+const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
   useEffect(() => {
     if (isOpen) document.body.style.overflow = "hidden"
     else document.body.style.overflow = "unset"
@@ -37,7 +37,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
   }
 
   return (
-    <div className="proveedores-modal-overlay" onClick={canClose ? onClose : () => { }}>
+    <div className="proveedores-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
       <div className={`proveedores-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="proveedores-modal-header">
           <h2 className="proveedores-modal-title">{title}</h2>
@@ -171,7 +171,7 @@ const ProveedorEquipoFormModal = ({ isOpen, onClose, proveedor = null, onSave })
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={proveedor ? "Editar proveedor" : "Nuevo proveedor"} size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title={proveedor ? "Editar proveedor" : "Nuevo proveedor"} size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="proveedores-form">
         <div className="proveedores-form-group">
           <label htmlFor="nombre" className="proveedores-form-label">Nombre Proveedor <span className="required"> *</span></label>
@@ -255,7 +255,7 @@ const ProveedorEquipoFormModal = ({ isOpen, onClose, proveedor = null, onSave })
 
 // Modal de Confirmación de Eliminación
 const ConfirmarEliminacionModal = ({ isOpen, onClose, proveedor, onConfirm }) => (
-  <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm">
+  <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm" closeOnOverlayClick={false}>
     <div className="proveedores-confirmar-eliminacion">
       <div className="proveedores-confirmation-content">
         <p className="proveedores-confirmation-message">¿Seguro que quieres eliminar el proveedor de forma permanente?</p>

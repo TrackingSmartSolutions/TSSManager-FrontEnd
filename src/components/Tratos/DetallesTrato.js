@@ -53,7 +53,7 @@ const fetchTrato = async (id) => {
 };
 
 // Modal Base para DetallesTrato
-const DetallesTratoModal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
+const DetallesTratoModal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden"
@@ -76,7 +76,7 @@ const DetallesTratoModal = ({ isOpen, onClose, title, children, size = "md", can
   }
 
   return (
-    <div className="detalles-trato-modal-overlay" onClick={canClose ? onClose : () => { }}>
+    <div className="detalles-trato-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
       <div className={`modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">{title}</h2>
@@ -100,7 +100,7 @@ const SeleccionarActividadModal = ({ isOpen, onClose, onSelectActivity }) => {
   }
 
   return (
-    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Selecciona el tipo de actividad" size="sm">
+    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Selecciona el tipo de actividad" size="sm" closeOnOverlayClick={false}>
       <div className="actividad-selector">
         <button className="btn-actividad-tipo" onClick={() => handleSelectActivity("llamada")}>
           Llamada
@@ -132,7 +132,7 @@ const generateMeetingLink = (medio) => {
 // Modal para programar llamada 
 const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId }) => {
   const [formData, setFormData] = useState({
-    asignadoAId: creatorId || (users.length > 0 ? users[0].id : ""),
+    asignadoAId: "",
     nombreContacto: "",
     fecha: "",
     horaInicio: "",
@@ -140,6 +140,14 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
   });
   const [errors, setErrors] = useState({});
   const [contactos, setContactos] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      setCurrentUser({ id: userId });
+    }
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -147,10 +155,9 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
         try {
           const response = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}`);
           const trato = await response.json();
-          const defaultContactName = trato.contacto?.nombre || "";
           setFormData({
-            asignadoAId: creatorId || (users.length > 0 ? users[0].id : ""),
-            nombreContacto: defaultContactName,
+            asignadoAId: localStorage.getItem('userId') || creatorId || (users.length > 0 ? users[0].id : ""),
+            nombreContacto: trato.contacto?.id || "",
             fecha: "",
             horaInicio: "",
             finalidad: "",
@@ -198,7 +205,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     const currentDate = new Date().toLocaleDateString('en-CA');
     const now = new Date();
     const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-    if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
+    if (!formData.nombreContacto) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fecha.trim()) newErrors.fecha = "Este campo es obligatorio";
     else if (formData.fecha < currentDate) newErrors.fecha = "La fecha no puede ser en el pasado";
     else if (formData.fecha === currentDate && formData.horaInicio && formData.horaInicio < currentTime)
@@ -303,7 +310,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
   };
 
   return (
-    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Programar llamada" size="md">
+    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Programar llamada" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-group">
           <label htmlFor="asignadoAId">Asignado a: <span className="required">*</span></label>
@@ -414,7 +421,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
 // Modal para programar reunión
 const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId }) => {
   const [formData, setFormData] = useState({
-    asignadoAId: creatorId || (users.length > 0 ? users[0].id : ""),
+    asignadoAId: "",
     nombreContacto: "",
     fecha: "",
     horaInicio: "",
@@ -431,6 +438,14 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
   const [isLoading, setIsLoading] = useState(false);
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
   const [actividadCreada, setActividadCreada] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      setCurrentUser({ id: userId });
+    }
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -440,8 +455,8 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
           const trato = await response.json();
           const defaultContactName = trato.contacto?.nombre || "";
           setFormData({
-            asignadoAId: creatorId || (users.length > 0 ? users[0].id : ""),
-            nombreContacto: defaultContactName,
+            asignadoAId: localStorage.getItem('userId') || creatorId || (users.length > 0 ? users[0].id : ""),
+            nombreContacto: trato.contacto?.id || "",
             fecha: "",
             horaInicio: "",
             duracion: "00:30",
@@ -523,7 +538,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     const currentDate = new Date().toLocaleDateString('en-CA');
     const now = new Date();
     const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-    if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
+    if (!formData.nombreContacto) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fecha.trim()) newErrors.fecha = "Este campo es obligatorio";
     else if (formData.fecha < currentDate) newErrors.fecha = "La fecha no puede ser en el pasado";
     else if (formData.fecha === currentDate && formData.horaInicio && formData.horaInicio < currentTime)
@@ -643,7 +658,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
   };
 
   return (
-    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Programar reunión" size="md">
+    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Programar reunión" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-group">
           <label htmlFor="asignadoAId">Asignado a: <span className="required">*</span></label>
@@ -869,7 +884,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
 // Modal para programar tarea
 const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId }) => {
   const [formData, setFormData] = useState({
-    asignadoAId: creatorId || (users.length > 0 ? users[0].id : ""),
+    aasignadoAId: "",
     nombreContacto: "",
     fechaLimite: "",
     tipo: "",
@@ -878,6 +893,14 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
   });
   const [errors, setErrors] = useState({});
   const [contactos, setContactos] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+  const userId = localStorage.getItem('userId');
+  if (userId) {
+    setCurrentUser({ id: userId });
+  }
+}, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -885,10 +908,9 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
         try {
           const response = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}`);
           const trato = await response.json();
-          const defaultContactName = trato.contacto?.nombre || "";
           setFormData({
-            asignadoAId: creatorId || (users.length > 0 ? users[0].id : ""),
-            nombreContacto: defaultContactName,
+            asignadoAId: localStorage.getItem('userId') || creatorId || (users.length > 0 ? users[0].id : ""),
+            nombreContacto: trato.contacto?.id || "",
             fechaLimite: "",
             tipo: "",
             finalidad: "",
@@ -935,7 +957,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
   const validateForm = () => {
     const newErrors = {};
     const currentDate = new Date().toLocaleDateString('en-CA');
-    if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
+    if (!formData.nombreContacto) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fechaLimite.trim()) newErrors.fechaLimite = "Este campo es obligatorio";
     else if (formData.fechaLimite < currentDate) newErrors.fechaLimite = "La fecha no puede ser en el pasado";
     if (!formData.tipo.trim()) newErrors.tipo = "Este campo es obligatorio";
@@ -979,7 +1001,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
   };
 
   return (
-    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Programar tarea" size="md">
+    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Programar tarea" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-group">
           <label htmlFor="asignadoAId">Asignado a: <span className="required">*</span></label>
@@ -1271,7 +1293,7 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
   };
 
   return (
-    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Reprogramar llamada" size="md">
+    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Reprogramar llamada" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-group">
           <label htmlFor="asignadoAId">Asignado a: <span className="required">*</span></label>
@@ -1579,7 +1601,7 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
   };
 
   return (
-    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Reprogramar reunión" size="md">
+    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Reprogramar reunión" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-group">
           <label htmlFor="asignadoAId">Asignado a: <span className="required">*</span></label>
@@ -1923,7 +1945,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
   };
 
   return (
-    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Reprogramar tarea" size="md">
+    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Reprogramar tarea" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-group">
           <label htmlFor="asignadoAId">Asignado a: <span className="required">*</span></label>
@@ -2194,6 +2216,7 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
       onClose={onClose}
       title={esEdicion ? 'Editar interacción' : `Completar ${actividad?.tipo?.toLowerCase() || 'actividad'}`}
       size="md"
+      closeOnOverlayClick={false}
     >
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-group">
@@ -2502,6 +2525,7 @@ const AgregarInteraccionModal = ({ isOpen, onClose, onSave, tratoId, onCreateAct
       onClose={onClose}
       title="Agregar interacción"
       size="md"
+      closeOnOverlayClick={false}
     >
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-group">
@@ -2761,22 +2785,43 @@ const EditarTratoModal = ({ isOpen, onClose, onSave, trato, users, companies }) 
     return Object.keys(newErrors).length === 0;
   };
 
-  const convertToISO = (dateStr) => {
-    if (!dateStr) return null;
-    const [day, month, year] = dateStr.split('/');
-    const parsedMonth = parseInt(month, 10) - 1;
-    if (isNaN(day) || isNaN(month) || isNaN(year) || parsedMonth < 0 || parsedMonth > 11) {
-      console.error("Formato de fecha inválido:", dateStr);
-      return null;
+  const convertToISO = (dateValue) => {
+    if (!dateValue) return null;
+
+    // Si ya es una fecha ISO válida, devolverla como está
+    if (typeof dateValue === 'string' && dateValue.includes('T') && dateValue.includes('Z')) {
+      return dateValue;
     }
 
-    const now = new Date();
-    const date = new Date(year, parsedMonth, day, now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
-    if (isNaN(date.getTime())) {
-      console.error("Fecha inválida después de parsing:", dateStr);
-      return null;
+    // Si es un string con formato DD/MM/YYYY
+    if (typeof dateValue === 'string' && dateValue.includes('/')) {
+      const [day, month, year] = dateValue.split('/');
+      const parsedMonth = parseInt(month, 10) - 1;
+
+      if (isNaN(day) || isNaN(month) || isNaN(year) || parsedMonth < 0 || parsedMonth > 11) {
+        console.error("Formato de fecha inválido:", dateValue);
+        return null;
+      }
+
+      const now = new Date();
+      const date = new Date(year, parsedMonth, day, now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+
+      if (isNaN(date.getTime())) {
+        console.error("Fecha inválida después de parsing:", dateValue);
+        return null;
+      }
+
+      return date.toISOString();
     }
-    return date.toISOString();
+
+    // Si es una fecha válida, convertirla
+    const date = new Date(dateValue);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString();
+    }
+
+    console.error("Formato de fecha no reconocido:", dateValue);
+    return null;
   };
 
   const handleSubmit = async (e) => {
@@ -2784,42 +2829,52 @@ const EditarTratoModal = ({ isOpen, onClose, onSave, trato, users, companies }) 
     if (validateForm()) {
       const company = companies.find(c => c.nombre === formData.nombreEmpresa);
       const empresaId = company ? company.id : null;
-      const propietario = users.find(u => u.nombreReal === formData.propietario);
+      const propietario = users.find(u => u.nombreReal === formData.propietario || u.nombre === formData.propietario);
       const propietarioId = propietario ? propietario.id : null;
       const contacto = contacts.find(c => c.nombre === formData.nombreContacto);
       const contactoId = contacto ? contacto.id : null;
 
       const updatedTrato = {
-        ...trato,
+        id: trato.id,
         nombre: formData.nombreTrato,
         empresaId: empresaId,
         propietarioId: propietarioId,
         contactoId: contactoId,
-        ingresosEsperados: parseFloat(formData.ingresosEsperados),
-        numeroUnidades: parseInt(formData.numeroUnidades, 10),
+        ingresosEsperados: parseFloat(formData.ingresosEsperados) || 0,
+        numeroUnidades: parseInt(formData.numeroUnidades, 10) || 0,
         descripcion: formData.descripcion,
+        // Solo enviar fechas si están disponibles y en formato correcto
         fechaCreacion: convertToISO(trato.fechaCreacion),
         fechaCierre: convertToISO(trato.fechaCierre),
       };
 
-      if (!updatedTrato.fechaCreacion || !updatedTrato.fechaCierre || !updatedTrato.empresaId) {
+
+      // Validar solo datos críticos
+      if (!updatedTrato.empresaId) {
         Swal.fire({
           title: "Error",
-          text: "Los datos de empresa o fechas no son válidos. Por favor, verifica los datos.",
+          text: "La empresa seleccionada no es válida.",
           icon: "error",
         });
         return;
       }
+
       try {
         await onSave(updatedTrato);
         onClose();
       } catch (error) {
         console.error("Error al guardar el trato:", error);
+        Swal.fire({
+          title: "Error",
+          text: "No se pudo actualizar el trato. Intente nuevamente.",
+          icon: "error",
+        });
       }
     }
   };
+
   return (
-    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Editar Trato" size="md">
+    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Editar Trato" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-group">
           <label htmlFor="propietario">
@@ -3024,7 +3079,7 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
     }
   }, [formData.mensaje]);
 
-  
+
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -3321,7 +3376,7 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
   };
 
   return (
-    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Mensaje nuevo" size="lg" canClose={true}>
+    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Mensaje nuevo" size="lg" canClose={true} closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="gmail-compose-form">
         <div className="gmail-compose-body">
           {/* Mostrar información de plantilla seleccionada */}
@@ -3379,7 +3434,7 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
               style={{
                 minHeight: '200px',
                 border: '1px solid #ccc',
-                borderTop: 'none', 
+                borderTop: 'none',
                 padding: '10px',
                 borderRadius: '0 0 4px 4px',
                 backgroundColor: 'white',
@@ -3485,7 +3540,7 @@ const SeleccionarPlantillaModal = ({ isOpen, onClose, onSelectTemplate, plantill
   };
 
   return (
-    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Seleccionar plantilla" size="md">
+    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Seleccionar plantilla" size="md" closeOnOverlayClick={false}>
       <div className="plantillas-list">
         {plantillas.map((plantilla) => (
           <div
@@ -3628,6 +3683,7 @@ const ConfirmacionEnvioModal = ({ isOpen, onClose, onConfirm, tratoId, actividad
         title="Confirmar envío"
         size="sm"
         className="confirmacion-envio-modal"
+        closeOnOverlayClick={false}
       >
         <div className="modal-form">
           <div className="confirmacion-envio-step1">
@@ -3739,6 +3795,7 @@ const DetallesTrato = () => {
   const [companies, setCompanies] = useState([]);
   const [correosSeguimientoActivo, setCorreosSeguimientoActivo] = useState(false);
   const [cargandoCorreos, setCargandoCorreos] = useState(false);
+  const [mostrarTodasLasNotas, setMostrarTodasLasNotas] = useState(false);
 
   const getCurrentUserId = () => {
     const userId = localStorage.getItem('userId');
@@ -4060,13 +4117,13 @@ const DetallesTrato = () => {
         };
 
         // Crear nueva nota si hay contenido en las notas
-        let updatedNotas = prev.notas;
+        let updatedNotas = [...prev.notas]; // Crear copia del array
         if (updatedActividad.notas && updatedActividad.notas.trim()) {
+          // ... resto de la lógica de notas permanece igual
           if (modals.completarActividad.esEdicion) {
-            // En modo edición, buscar si ya existe una nota para esta interacción
             const interaccionId = updatedActividad.id;
             const notaExistente = prev.notas.find(n =>
-              n.id === interaccionId || // Si la nota tiene el mismo ID que la interacción
+              n.id === interaccionId ||
               (n.autor === (users.find(u => u.id === getCurrentUserId())?.nombreReal || 'Usuario actual') &&
                 prev.historialInteracciones.some(h => h.id === interaccionId && h.notas === n.texto))
             );
@@ -4100,8 +4157,9 @@ const DetallesTrato = () => {
             updatedNotas = [nuevaNota, ...prev.notas];
           }
         }
+
         return {
-          ...prev,
+          ...prev, // Mantener toda la estructura existente
           actividadesAbiertas: {
             ...prev.actividadesAbiertas,
             [normalizedTipo === 'llamada' ? 'llamadas' : normalizedTipo === 'reunion' ? 'reuniones' : 'tareas']:
@@ -4112,7 +4170,9 @@ const DetallesTrato = () => {
               interaccion.id === updatedActividad.id ? newInteraccion : interaccion
             )
             : [...prev.historialInteracciones, newInteraccion],
-          notas: updatedNotas
+          notas: updatedNotas,
+          fechaCreacion: prev.fechaCreacion,
+          fechaCierre: prev.fechaCierre,
         };
       });
 
@@ -4148,54 +4208,33 @@ const DetallesTrato = () => {
         body: JSON.stringify(data),
       });
 
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      // Recargar completamente el trato desde el servidor
       const loadTrato = async () => {
         const updatedData = await fetchTrato(params.id);
         const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
         const usersData = await usersResponse.json();
-        const users = usersData.map((user) => ({ id: user.id, nombre: user.nombreUsuario, nombreReal: user.nombre }));
+        const users = usersData.map((user) => ({
+          id: user.id,
+          nombre: user.nombreUsuario,
+          nombreReal: user.nombre
+        }));
 
         const propietarioUser = users.find((user) => user.id === updatedData.propietarioId);
-        const propietarioNombre = propietarioUser ? propietarioUser.nombre : updatedData.propietarioNombre || "";
+        const propietarioNombre = propietarioUser ? propietarioUser.nombreReal : updatedData.propietarioNombre || "";
 
-        const mapActividad = (actividad) => {
-          let nombreContacto = "Sin contacto";
-          if (actividad.contactoId) {
-            const contacto = companies
-              .flatMap((c) => c.contactos || [])
-              .find((c) => c.id === actividad.contactoId);
-            nombreContacto = contacto ? contacto.nombre : "Sin contacto";
-          } else if (updatedData.contacto?.nombre) {
-            nombreContacto = updatedData.contacto.nombre;
-          }
-          return {
-            ...actividad,
-            nombreContacto: nombreContacto,
-            asignadoA: users.find((user) => user.id === actividad.asignadoAId)?.nombreReal || "Sin asignado",
-            fecha: actividad.fechaLimite || "Sin fecha",
-            hora: actividad.horaInicio || "Sin hora",
-            modalidad: actividad.modalidad,
-            lugarReunion: actividad.lugarReunion || null,
-            enlaceReunion: actividad.enlaceReunion || null,
-            tipo: actividad.tipo === "TAREA" ? "TAREA" : actividad.tipo || "Sin tipo",
-            subtipoTarea: actividad.subtipoTarea || null,
-            finalidad: actividad.finalidad || "Sin finalidad",
-          };
-        };
-
-        const mapActividadesAbiertas = (actividades) => ({
-          tareas: (actividades.tareas || []).filter(a => a.estatus !== "CERRADA").map(mapActividad),
-          llamadas: (actividades.llamadas || []).filter(a => a.estatus !== "CERRADA").map(mapActividad),
-          reuniones: (actividades.reuniones || []).filter(a => a.estatus !== "CERRADA").map(mapActividad),
-        });
-
-        setTrato({
+        // Mantener la estructura existente pero con datos frescos del servidor
+        setTrato(prev => ({
           ...updatedData,
           propietario: propietarioNombre,
           contacto: updatedData.contacto || { nombre: "", telefono: "", whatsapp: "", email: "" },
           ingresosEsperados: updatedData.ingresosEsperados ? `$${updatedData.ingresosEsperados.toFixed(2)}` : "",
           fechaCreacion: updatedData.fechaCreacion ? new Date(updatedData.fechaCreacion).toLocaleDateString() : "",
           fechaCierre: updatedData.fechaCierre ? new Date(updatedData.fechaCierre).toLocaleDateString() : "",
-          notas: updatedData.notas.map((n) => ({
+          notas: (updatedData.notas || []).map((n) => ({
             id: n.id,
             texto: n.nota.replace(/\\"/g, '"').replace(/^"|"$/g, ''),
             autor: n.autorNombre,
@@ -4205,20 +4244,12 @@ const DetallesTrato = () => {
           })),
           nombreEmpresa: updatedData.empresaNombre,
           numeroTrato: updatedData.noTrato,
-          actividadesAbiertas: mapActividadesAbiertas(updatedData.actividadesAbiertas),
-          historialInteracciones: (updatedData.historialInteracciones || []).map((interaccion) => ({
-            id: interaccion.id,
-            fecha: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toISOString().split('T')[0] : "Sin fecha",
-            hora: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : "Sin hora",
-            responsable: users.find((u) => u.id === interaccion.usuarioCompletadoId)?.nombre || "Sin asignado",
-            tipo: interaccion.tipo,
-            medio: interaccion.medio || (interaccion.modalidad === "PRESENCIAL" ? "PRESENCIAL" : interaccion.medio),
-            resultado: interaccion.respuesta ? (interaccion.respuesta === "SI" ? "POSITIVO" : "NEGATIVO") : "Sin resultado",
-            interes: interaccion.interes || "Sin interés",
-            notas: interaccion.notas || "",
-          })),
-        });
+          // Mantener las actividades y el historial existente si están disponibles
+          actividadesAbiertas: prev.actividadesAbiertas,
+          historialInteracciones: prev.historialInteracciones,
+        }));
       };
+
       await loadTrato();
 
       Swal.fire({
@@ -4227,12 +4258,12 @@ const DetallesTrato = () => {
         icon: "success",
       });
     } catch (error) {
+      console.error("Error al guardar el trato:", error);
       Swal.fire({
         title: 'Error',
-        text: 'No se pudo actualizar el trato',
+        text: 'No se pudo actualizar el trato. Verifique los datos e intente nuevamente.',
         icon: 'error',
       });
-      console.error("Error al guardar el trato:", error);
     }
   };
 
@@ -4348,7 +4379,7 @@ const DetallesTrato = () => {
           return {
             ...actividad,
             nombreContacto: nombreContacto,
-            asignadoA: users.find((user) => user.id === actividad.asignadoAId)?.nombre || "Sin asignado",
+            asignadoA: users.find((user) => user.id === actividad.asignadoAId)?.nombreReal || "Sin asignado",
             fecha: actividad.fechaLimite || "Sin fecha",
             hora: actividad.horaInicio || "Sin hora",
             modalidad: actividad.modalidad,
@@ -5024,88 +5055,6 @@ const DetallesTrato = () => {
             <div className="seccion-header">
               <h2>Notas</h2>
             </div>
-            <div className="notas-lista">
-              {trato.notas.map((nota) => (
-                <div key={nota.id} className="nota-item">
-                  <div className="nota-avatar">
-                    <span>{(nota.autor || "U").charAt(0)}</span>
-                  </div>
-                  <div className="nota-contenido">
-                    {editingNoteId === nota.id ? (
-                      <div className="edit-nota-container">
-                        <textarea
-                          value={editingNoteText}
-                          onChange={(e) => setEditingNoteText(e.target.value)}
-                          className="input-nota-edit"
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && e.altKey) {
-                              // Alt + Enter: insertar salto de línea
-                              const textarea = e.target;
-                              const start = textarea.selectionStart;
-                              const end = textarea.selectionEnd;
-                              const newValue = editingNoteText.substring(0, start) + '\n' + editingNoteText.substring(end);
-                              setEditingNoteText(newValue);
-
-                              // Mantener la posición del cursor después del salto de línea
-                              setTimeout(() => {
-                                textarea.selectionStart = textarea.selectionEnd = start + 1;
-                              }, 0);
-
-                              e.preventDefault();
-                            } else if (e.key === "Enter" && !e.altKey) {
-                              // Solo Enter: guardar nota
-                              e.preventDefault();
-                              handleSaveEditNota(nota.id);
-                            } else if (e.key === "Escape") {
-                              handleCancelEditNota();
-                            }
-                          }}
-                          autoFocus
-                          rows={3}
-                        />
-                        <div className="edit-nota-actions">
-                          <button onClick={() => handleSaveEditNota(nota.id)} className="btn-save-nota">
-                            Guardar
-                          </button>
-                          <button onClick={handleCancelEditNota} className="btn-cancel-nota">
-                            Cancelar
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div>
-                          {(nota.texto || '')
-                            .replace(/\\n/g, '\n')
-                            .split('\n')
-                            .map((linea, index) => (
-                              <p key={index} style={{ margin: '0', lineHeight: '1.4' }}>
-                                {linea || '\u00A0'}
-                              </p>
-                            ))}
-                        </div>
-                        <span className="nota-fecha">Creado por {nota.autor} el {nota.fecha}</span>
-                        {nota.editadoPor && (
-                          <span className="nota-editado">
-                            Editado por {nota.editadoPor} el {nota.fechaEdicion}
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </div>
-                  {editingNoteId !== nota.id && (
-                    <div className="nota-acciones">
-                      <button onClick={() => handleEditarNota(nota.id)} className="btn-editar-nota">
-                        <img src={editIcon || "/placeholder.svg"} alt="Editar" />
-                      </button>
-                      <button onClick={() => handleEliminarNota(nota.id)} className="btn-eliminar-nota">
-                        <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
             <div className="agregar-nota">
               <textarea
                 placeholder="Agregar una nota (Alt + Enter para nueva línea, Enter para guardar)"
@@ -5136,6 +5085,121 @@ const DetallesTrato = () => {
                 rows={3}
               />
             </div>
+            <div className="notas-lista">
+              {(() => {
+                const LIMITE_NOTAS = 5;
+                const notasAMostrar = mostrarTodasLasNotas
+                  ? trato.notas
+                  : trato.notas.slice(0, LIMITE_NOTAS);
+                const notasOcultas = trato.notas.length - LIMITE_NOTAS;
+
+                return (
+                  <>
+                    {notasAMostrar.map((nota) => (
+                      <div key={nota.id} className="nota-item">
+                        <div className="nota-avatar">
+                          <span>{(nota.autor || "U").charAt(0)}</span>
+                        </div>
+                        <div className="nota-contenido">
+                          {editingNoteId === nota.id ? (
+                            <div className="edit-nota-container">
+                              <textarea
+                                value={editingNoteText}
+                                onChange={(e) => setEditingNoteText(e.target.value)}
+                                className="input-nota-edit"
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" && e.altKey) {
+                                    // Alt + Enter: insertar salto de línea
+                                    const textarea = e.target;
+                                    const start = textarea.selectionStart;
+                                    const end = textarea.selectionEnd;
+                                    const newValue = editingNoteText.substring(0, start) + '\n' + editingNoteText.substring(end);
+                                    setEditingNoteText(newValue);
+
+                                    // Mantener la posición del cursor después del salto de línea
+                                    setTimeout(() => {
+                                      textarea.selectionStart = textarea.selectionEnd = start + 1;
+                                    }, 0);
+
+                                    e.preventDefault();
+                                  } else if (e.key === "Enter" && !e.altKey) {
+                                    // Solo Enter: guardar nota
+                                    e.preventDefault();
+                                    handleSaveEditNota(nota.id);
+                                  } else if (e.key === "Escape") {
+                                    handleCancelEditNota();
+                                  }
+                                }}
+                                autoFocus
+                                rows={3}
+                              />
+                              <div className="edit-nota-actions">
+                                <button onClick={() => handleSaveEditNota(nota.id)} className="btn-save-nota">
+                                  Guardar
+                                </button>
+                                <button onClick={handleCancelEditNota} className="btn-cancel-nota">
+                                  Cancelar
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div>
+                                {(nota.texto || '')
+                                  .replace(/\\n/g, '\n')
+                                  .split('\n')
+                                  .map((linea, index) => (
+                                    <p key={index} style={{ margin: '0', lineHeight: '1.4' }}>
+                                      {linea || '\u00A0'}
+                                    </p>
+                                  ))}
+                              </div>
+                              <span className="nota-fecha">Creado por {nota.autor} el {nota.fecha}</span>
+                              {nota.editadoPor && (
+                                <span className="nota-editado">
+                                  Editado por {nota.editadoPor} el {nota.fechaEdicion}
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </div>
+                        {editingNoteId !== nota.id && (
+                          <div className="nota-acciones">
+                            <button onClick={() => handleEditarNota(nota.id)} className="btn-editar-nota">
+                              <img src={editIcon || "/placeholder.svg"} alt="Editar" />
+                            </button>
+                            <button onClick={() => handleEliminarNota(nota.id)} className="btn-eliminar-nota">
+                              <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+
+                    {/* Botón para mostrar/ocultar notas adicionales */}
+                    {trato.notas.length > LIMITE_NOTAS && (
+                      <div className="ver-mas-notas-container">
+                        <button
+                          onClick={() => setMostrarTodasLasNotas(!mostrarTodasLasNotas)}
+                          className="btn-ver-mas-notas"
+                        >
+                          {mostrarTodasLasNotas
+                            ? "Mostrar menos notas"
+                            : `Ver todas las notas (${notasOcultas} más)`}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Mensaje cuando no hay notas */}
+                    {trato.notas.length === 0 && (
+                      <div className="no-notas">
+                        <p>No hay notas agregadas aún.</p>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
           </div>
 
           {/* Actividades abiertas */}
@@ -5163,6 +5227,7 @@ const DetallesTrato = () => {
                           <span>Tipo: {tarea.subtipoTarea || "Sin tipo"}</span>
                           <span>Fecha límite: {tarea.fecha || "Sin fecha"}</span>
                           <span>Finalidad: {tarea.finalidad || "Sin finalidad"}</span>
+                          <span>Notas: {tarea.notas || "Sin notas"}</span>
                           <span>Asignado a: {tarea.asignadoA || "Sin asignado"}</span>
                         </div>
                         <div className="actividad-badges">

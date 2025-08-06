@@ -22,7 +22,7 @@ const fetchWithToken = async (url, options = {}) => {
 };
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
+const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true  }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -44,7 +44,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
   };
 
   return (
-    <div className="facturacion-modal-overlay" onClick={canClose ? onClose : () => { }}>
+    <div className="facturacion-modal-overlay" onClick={closeOnOverlayClick ? onClose: () => { }}>
       <div className={`facturacion-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="facturacion-modal-header">
           <h2 className="facturacion-modal-title">{title}</h2>
@@ -199,7 +199,7 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? "Editar emisor" : "Nuevo emisor"} size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? "Editar emisor" : "Nuevo emisor"} size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="facturacion-form" encType="multipart/form-data">
         <div className="facturacion-form-group">
           <label htmlFor="nombre">Nombre <span className="required"> *</span></label>
@@ -563,6 +563,7 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
       onClose={onClose}
       title={isEditing ? "Editar Solicitud de Factura/Nota" : "Nueva Solicitud de Factura/Nota"}
       size="md"
+      closeOnOverlayClick={false}
     >
       <form onSubmit={handleSubmit} className="facturacion-form">
         <div className="facturacion-form-group">
@@ -838,7 +839,7 @@ const TimbrarModal = ({ isOpen, onClose, onSave, solicitud }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Timbrar Solicitud" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Timbrar Solicitud" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="facturacion-form" encType="multipart/form-data">
         <div className="facturacion-form-group">
           <label htmlFor="folioFiscal">Folio Fiscal <span className="required"> *</span></label>
@@ -912,7 +913,7 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, tipo, item }) =
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm" closeOnOverlayClick={false}>
       <div className="facturacion-confirmar-eliminacion">
         <div className="facturacion-confirmation-content">
           <p className="facturacion-confirmation-message">{getMessage()}</p>

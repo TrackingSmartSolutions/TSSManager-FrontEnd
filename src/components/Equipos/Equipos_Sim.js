@@ -21,7 +21,7 @@ const fetchWithToken = async (url, options = {}) => {
   return response;
 };
 
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
+const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
   useEffect(() => {
     if (isOpen) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "unset";
@@ -38,7 +38,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
   };
 
   return (
-    <div className="sim-modal-overlay" onClick={canClose ? onClose : () => { }}>
+    <div className="sim-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
       <div className={`sim-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="sim-modal-header">
           <h2 className="sim-modal-title">{title}</h2>
@@ -280,7 +280,7 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
   );
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={sim ? "Editar SIM" : "Nueva SIM"} size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title={sim ? "Editar SIM" : "Nueva SIM"} size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="sim-form">
         <div className="sim-form-group">
           <label htmlFor="numero" className="sim-form-label">
@@ -484,7 +484,7 @@ const SimDetailsModal = ({ isOpen, onClose, sim = null, equipos }) => {
   const equipo = equipos.find(eq => eq.imei === sim.equipoImei);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Detalles de SIM" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Detalles de SIM" size="md" closeOnOverlayClick={false}>
       <div className="sim-form">
         <div className="sim-form-group">
           <label className="sim-form-label">Número</label>
@@ -792,6 +792,7 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, sim, onConfirm, hasEquipoV
       onClose={onClose}
       title={hasEquipoVinculado ? "Error al eliminar el registro" : "Confirmar eliminación"}
       size="sm"
+      closeOnOverlayClick={false}
     >
       <div className="sim-confirmar-eliminacion">
         {hasEquipoVinculado ? (

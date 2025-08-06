@@ -22,7 +22,7 @@ const fetchWithToken = async (url, options = {}) => {
 };
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
+const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden"
@@ -45,7 +45,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
   }
 
   return (
-    <div className="modal-overlay" onClick={canClose ? onClose : () => { }}>
+    <div className="modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
       <div className={`modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">{title}</h2>
@@ -209,7 +209,7 @@ const UsuarioModal = ({ isOpen, onClose, onSave, usuario, mode }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={mode === "add" ? "Nuevo usuario" : "Editar usuario"} size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title={mode === "add" ? "Nuevo usuario" : "Editar usuario"} size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-row">
           <div className="modal-form-group">
@@ -475,7 +475,7 @@ const RestablecerContrasenaModal = ({ isOpen, onClose, onSave, usuario }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Restablecer contraseña" size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title="Restablecer contraseña" size="sm" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-row">
           <div className="modal-form-group">
@@ -572,7 +572,7 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, usuario }) => {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm" closeOnOverlayClick={false}>
       <div className="confirmar-eliminacion">
         <div className="confirmation-content">
           <p className="confirmation-message">¿Seguro que quieres eliminar al usuario de forma permanente?</p>

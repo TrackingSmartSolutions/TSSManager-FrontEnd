@@ -32,7 +32,7 @@ const fetchWithToken = async (url, options = {}) => {
 }
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
+const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden"
@@ -55,7 +55,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
   }
 
   return (
-    <div className="modal-overlay" onClick={canClose ? onClose : () => { }}>
+    <div className="modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
       <div className={`modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">{title}</h2>
@@ -509,7 +509,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
   const isCliente = formData.estatus === "CLIENTE"
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={mode === "add" ? "Nueva Empresa" : "Editar Empresa"} size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title={mode === "add" ? "Nueva Empresa" : "Editar Empresa"} size="lg" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="modal-form">
         {mode === "edit" && (
           <div className="modal-form-row">
@@ -1026,6 +1026,7 @@ const ContactoModal = ({
             : "Editar Contacto"
       }
       size="md"
+      closeOnOverlayClick={false}
       canClose={!isInitialContact}
     >
       <form onSubmit={handleSubmit} className="modal-form">
@@ -1390,7 +1391,7 @@ const DetallesEmpresaModal = ({ isOpen, onClose, empresa }) => {
   const getSectorText = (sector) => sectorMap[sector] || sector || "N/A"
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Detalles Empresa" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="Detalles Empresa" size="lg" closeOnOverlayClick={false}>
       <div className="detalles-content">
         <div className="detalles-grid">
           <div className="detalle-item">
@@ -1501,7 +1502,7 @@ const DetallesContactoModal = ({ isOpen, onClose, contacto }) => {
   const telefonos = contacto.telefonos?.map((item) => item.telefono) || []
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Detalles Contacto" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Detalles Contacto" size="md" closeOnOverlayClick={false}>
       <div className="detalles-content">
         <div className="detalles-grid">
           <div className="detalle-item">
@@ -1588,7 +1589,7 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, contacto, isLas
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm" closeOnOverlayClick={false}>
       <div className="confirmar-eliminacion">
         {isLastContact ? (
           <div className="warning-content">

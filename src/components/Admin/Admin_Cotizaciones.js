@@ -124,7 +124,7 @@ const numeroALetras = (numero) => {
 }
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
+const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden"
@@ -147,7 +147,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
   }
 
   return (
-    <div className="cotizaciones-modal-overlay" onClick={canClose ? onClose : () => { }}>
+    <div className="cotizaciones-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
       <div className={`cotizaciones-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="cotizaciones-modal-header">
           <h2 className="cotizaciones-modal-title">{title}</h2>
@@ -259,7 +259,7 @@ const NuevoConceptoModal = ({ isOpen, onClose, onSave, concepto }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Nuevo concepto" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Nuevo concepto" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="cotizaciones-form">
         <div className="cotizaciones-form-group">
           <label htmlFor="cantidad">Cantidad  <span className="required"> *</span></label>
@@ -377,7 +377,6 @@ const NuevoConceptoModal = ({ isOpen, onClose, onSave, concepto }) => {
     </Modal>
   );
 };
-
 
 // Modal para Nueva/Editar Cotización
 const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes, modals, setModals, users }) => {
@@ -540,6 +539,7 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
         onClose={onClose}
         title={isEditing ? "Editar cotización" : "Nueva cotización"}
         size="lg"
+        closeOnOverlayClick={false}
       >
         <form onSubmit={handleSubmit} className="cotizaciones-form">
           <div className="cotizaciones-form-group">
@@ -702,7 +702,7 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
 // Modal de Confirmación de Eliminación
 const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm" closeOnOverlayClick={false}>
       <div className="cotizaciones-confirmar-eliminacion">
         <div className="cotizaciones-confirmation-content">
           <p className="cotizaciones-confirmation-message">
@@ -816,7 +816,7 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Cuenta/s por Cobrar" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Cuenta/s por Cobrar" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="cuentascobrar-form">
         <div className="cuentascobrar-form-group">
           <label htmlFor="cliente">Cliente</label>
@@ -884,7 +884,6 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
     </Modal>
   );
 };
-
 
 // Componente Principal
 const AdminCotizaciones = () => {

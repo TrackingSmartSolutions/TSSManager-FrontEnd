@@ -42,7 +42,7 @@ const fetchFileWithToken = async (url, options = {}) => {
 };
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
+const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden"
@@ -65,7 +65,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
   }
 
   return (
-    <div className="cuentascobrar-modal-overlay" onClick={canClose ? onClose : () => { }}>
+    <div className="cuentascobrar-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
       <div className={`cuentascobrar-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="cuentascobrar-modal-header">
           <h2 className="cuentascobrar-modal-title">{title}</h2>
@@ -270,7 +270,7 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Agregar Comprobante de Cobro" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Agregar Comprobante de Cobro" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="cuentascobrar-form">
         <div className="cuentascobrar-form-group">
           <label htmlFor="fechaPago">Fecha Pago <span className="required"> *</span></label>
@@ -342,7 +342,7 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm" closeOnOverlayClick={false}>
       <div className="cuentascobrar-confirmar-eliminacion">
         <div className="cuentascobrar-confirmation-content">
           <p className="cuentascobrar-confirmation-message">
@@ -633,6 +633,7 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
       onClose={onClose}
       title={isEditing ? "Editar Solicitud de Factura/Nota" : "Nueva Solicitud de Factura/Nota"}
       size="md"
+      closeOnOverlayClick={false}
     >
       <form onSubmit={handleSubmit} className="facturacion-form">
         <div className="facturacion-form-group">

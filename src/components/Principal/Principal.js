@@ -28,7 +28,7 @@ const fetchWithToken = async (url, options = {}) => {
 };
 
 // Modal Base Component para Principal
-const PrincipalModal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
+const PrincipalModal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -50,7 +50,7 @@ const PrincipalModal = ({ isOpen, onClose, title, children, size = "md", canClos
   };
 
   return (
-    <div className="detalles-trato-modal-overlay" onClick={canClose ? onClose : () => { }}>
+    <div className="detalles-trato-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
       <div className={`modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">{title}</h2>
@@ -214,7 +214,7 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
   };
 
   return (
-    <PrincipalModal isOpen={isOpen} onClose={onClose} title="Reprogramar llamada" size="md">
+    <PrincipalModal isOpen={isOpen} onClose={onClose} title="Reprogramar llamada" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-group">
           <label htmlFor="asignadoAId">Asignado a: <span className="required">*</span></label>
@@ -474,7 +474,7 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
   };
 
   return (
-    <PrincipalModal isOpen={isOpen} onClose={onClose} title="Reprogramar reunión" size="md">
+    <PrincipalModal isOpen={isOpen} onClose={onClose} title="Reprogramar reunión" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-group">
           <label htmlFor="asignadoAId">Asignado a: <span className="required">*</span></label>
@@ -812,7 +812,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
   };
 
   return (
-    <PrincipalModal isOpen={isOpen} onClose={onClose} title="Reprogramar tarea" size="md">
+    <PrincipalModal isOpen={isOpen} onClose={onClose} title="Reprogramar tarea" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-group">
           <label htmlFor="asignadoAId">Asignado a: <span className="required">*</span></label>
@@ -1068,6 +1068,7 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
       onClose={onClose}
       title={`Completar ${actividad?.tipo?.toLowerCase() || 'actividad'}`}
       size="md"
+      closeOnOverlayClick={false}
     >
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-group">
@@ -1252,7 +1253,7 @@ const ConfirmacionEnvioModal = ({ isOpen, onClose, onConfirm, tratoId, actividad
   const [step, setStep] = useState(1);
   const [datosContacto, setDatosContacto] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [loadingMethod, setLoadingMethod] = useState(null); // 'correo' o 'whatsapp'
+  const [loadingMethod, setLoadingMethod] = useState(null); 
 
   useEffect(() => {
     if (isOpen && tratoId) {
@@ -1364,6 +1365,7 @@ const ConfirmacionEnvioModal = ({ isOpen, onClose, onConfirm, tratoId, actividad
         title="Confirmar envío"
         size="sm"
         className="confirmacion-envio-modal"
+        closeOnOverlayClick={false}
       >
         <div className="modal-form">
           <div className="confirmacion-envio-step1">

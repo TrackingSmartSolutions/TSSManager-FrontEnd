@@ -2434,6 +2434,84 @@
   background-color: #f1f3f4;
 }
 
+.ver-mas-notas-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+  padding: 10px 0;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Botón para mostrar/ocultar notas adicionales */
+.btn-ver-mas-notas {
+  background: transparent;
+  border: 2px solid #007bff;
+  color: #007bff;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-ver-mas-notas:hover {
+  background-color: #007bff;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+}
+
+.btn-ver-mas-notas:active {
+  transform: translateY(0);
+}
+
+.no-notas {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-style: italic;
+}
+
+.no-notas p {
+  margin: 0;
+  font-size: 16px;
+}
+
+.btn-ver-mas-notas::before {
+  content: '';
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 6px solid currentColor;
+  transition: transform 0.3s ease;
+}
+
+.btn-ver-mas-notas.expandido::before {
+  transform: rotate(180deg);
+}
+
+.btn-ver-mas-notas-sutil {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  color: #6c757d;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-ver-mas-notas-sutil:hover {
+  background-color: #e9ecef;
+  color: #495057;
+  border-color: #adb5bd;
+}
+
 /* Responsivo */
 @media (max-width: 480px) {
   .confirmacion-envio-step2 .method-buttons {

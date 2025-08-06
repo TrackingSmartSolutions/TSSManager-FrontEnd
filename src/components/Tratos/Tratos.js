@@ -73,7 +73,7 @@ const fetchWithRetry = async (url, options = {}, maxRetries = 3) => {
 };
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
+const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
   useEffect(() => {
     if (isOpen) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "unset";
@@ -85,7 +85,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
   const sizeClasses = { sm: "modal-sm", md: "modal-md", lg: "modal-lg", xl: "modal-xl" };
 
   return (
-    <div className="tratos-modal-overlay" onClick={canClose ? onClose : () => { }}>
+    <div className="tratos-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
       <div className={`modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">{title}</h2>
@@ -104,7 +104,7 @@ const SeleccionarActividadModal = ({ isOpen, onClose, onSelectActivity, tratoId 
     onClose();
   };
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Selecciona el tipo de actividad" size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title="Selecciona el tipo de actividad" size="sm" closeOnOverlayClick={false}>
       <div className="actividad-selector">
         <button className="btn-actividad-tipo" onClick={() => handleSelectActivity("llamada")}>
           Llamada
@@ -236,7 +236,7 @@ const NuevoTratoModal = ({ isOpen, onClose, onSave, empresaPreseleccionada }) =>
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Nuevo Trato" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Nuevo Trato" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-group">
           <label htmlFor="nombreTrato">Nombre trato: <span className="required">*</span></label>
@@ -413,7 +413,6 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     if (!validateForm()) return;
 
     const horaInicio = formData.horaInicio ? `${formData.horaInicio}:00` : '';
-
     const actividadDTO = {
       tratoId,
       tipo: "LLAMADA",
@@ -423,8 +422,6 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
       horaInicio: horaInicio,
       finalidad: formData.finalidad,
     };
-
-
 
     try {
       const response = await fetchWithToken(`${API_BASE_URL}/tratos/actividades`, {
@@ -446,7 +443,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Programar llamada" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Programar llamada" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-group">
           <label htmlFor="asignadoAId">Asignado a: <span className="required">*</span></label>
@@ -723,7 +720,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Programar reunión" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Programar reunión" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-group">
           <label htmlFor="asignadoAId">Asignado a: <span className="required">*</span></label>
@@ -1047,7 +1044,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Programar tarea" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Programar tarea" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="modal-form-group">
           <label htmlFor="asignadoAId">Asignado a: <span className="required">*</span></label>
@@ -1330,6 +1327,7 @@ const ConfirmacionEnvioModal = ({ isOpen, onClose, onConfirm, tratoId, actividad
       title="Método de envío"
       size="sm"
       className="confirmacion-envio-modal"
+      closeOnOverlayClick={false}
     >
       <div className="modal-form">
         <div className="confirmacion-envio-step2">
@@ -1468,7 +1466,7 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
     };
     const iconSrc = iconMap[proximaActividadTipo] || addActivity;
 
-    
+
     return (
       <img
         src={iconSrc || "/placeholder.svg"}
@@ -1563,7 +1561,6 @@ const Tratos = () => {
       }
 
       let usersData = [];
-      if (userRol === "ADMINISTRADOR") {
         try {
           const usersResponse = await fetchWithRetry(`${API_BASE_URL}/auth/users`);
           usersData = await usersResponse.json();
@@ -1572,8 +1569,7 @@ const Tratos = () => {
           console.error("Error al cargar usuarios:", error);
           setUsers([]);
         }
-      }
-
+      
       const tratosResponse = await fetchWithRetry(`${API_BASE_URL}/tratos/filtrar/basico?${params.toString()}`);
       const tratosBasicos = await tratosResponse.json();
 
@@ -1664,7 +1660,6 @@ const Tratos = () => {
     }
   };
 
-
   const loadTratoDetalles = async (tratoId) => {
     if (tratosDetalles.has(tratoId)) {
       return tratosDetalles.get(tratoId);
@@ -1696,27 +1691,39 @@ const Tratos = () => {
 
   const handleGlobalSearch = () => {
     if (!globalSearchTerm.trim() || globalSearchTerm.trim().length < 3) {
+      setExpandedColumns([]);
       return;
     }
 
     const foundColumns = [];
+    const columnsWithoutMatches = [];
+
     columnas.forEach(columna => {
       const foundTratos = columna.tratos.filter(trato =>
         trato.nombre.toLowerCase().includes(globalSearchTerm.toLowerCase())
       );
+
       if (foundTratos.length > 0) {
         foundColumns.push(columna.id);
+      } else {
+        columnsWithoutMatches.push(columna.id);
       }
     });
 
-    // Expandir columnas que tienen resultados
+    // Actualizar columnas expandidas: expandir las que tienen coincidencias y contraer las que no
     setExpandedColumns(prevExpanded => {
-      const newExpanded = [...prevExpanded];
+      let newExpanded = [...prevExpanded];
+
+      // Expandir columnas con coincidencias
       foundColumns.forEach(columnId => {
         if (!newExpanded.includes(columnId)) {
           newExpanded.push(columnId);
         }
       });
+
+      // Contraer columnas sin coincidencias
+      newExpanded = newExpanded.filter(columnId => !columnsWithoutMatches.includes(columnId));
+
       return newExpanded;
     });
   };
@@ -1748,8 +1755,10 @@ const Tratos = () => {
   }, [startDate, endDate]);
 
   useEffect(() => {
-    if (globalSearchTerm.trim()) {
+    if (globalSearchTerm.trim() && globalSearchTerm.trim().length >= 3) {
       handleGlobalSearch();
+    } else if (globalSearchTerm.trim().length === 0) {
+      setExpandedColumns([]);
     }
   }, [globalSearchTerm, columnas]);
 

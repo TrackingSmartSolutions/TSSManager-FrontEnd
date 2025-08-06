@@ -127,7 +127,7 @@ const AdminCajaChica = () => {
   const calcularSaldoAcumulado = () => {
     let saldoAcumulado = 0
     return transaccionesEfectivo
-      .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
+      .sort((a, b) => new Date(a.fecha + 'T00:00:00') - new Date(b.fecha + 'T00:00:00'))
       .map((transaccion) => {
         if (transaccion.tipo === "INGRESO") saldoAcumulado += transaccion.monto
         else saldoAcumulado -= transaccion.monto
@@ -167,7 +167,7 @@ const AdminCajaChica = () => {
 
       // Preparar datos formateados
       const transaccionesFormateadas = transaccionesConSaldo.map((transaccion) => ({
-        fecha: new Date(transaccion.fecha).toLocaleDateString("es-MX"),
+        fecha: new Date(transaccion.fecha + 'T00:00:00').toLocaleDateString("es-MX"),
         cuenta: transaccion.cuenta.nombre,
         nota: transaccion.notas || "-",
         gastos: transaccion.tipo === "GASTO" ? formatCurrency(transaccion.monto) : "-",
@@ -445,7 +445,7 @@ const AdminCajaChica = () => {
                 <p className="cajachica-resumen-monto">{formatCurrency(resumenCajaChica.totalGastos)}</p>
               </div>
               <div className="cajachica-resumen-card cajachica-utilidad">
-                <h4 className="cajachica-resumen-titulo">Utilidad o Pérdida</h4>
+                <h4 className="cajachica-resumen-titulo">Saldo</h4>
                 <p className="cajachica-resumen-monto">{formatCurrency(resumenCajaChica.utilidadPerdida)}</p>
               </div>
             </div>
@@ -467,8 +467,7 @@ const AdminCajaChica = () => {
                     {transaccionesConSaldo.length > 0 ? (
                       transaccionesConSaldo.map((transaccion) => (
                         <tr key={transaccion.id}>
-                          <td>{new Date(transaccion.fecha).toLocaleDateString("es-MX")}</td>
-                          <td>{transaccion.cuenta.nombre}</td>
+                          <td>{new Date(transaccion.fecha + 'T00:00:00').toLocaleDateString("es-MX")}</td>                          <td>{transaccion.cuenta.nombre}</td>
                           <td>{transaccion.notas || "-"}</td>
                           <td className="cajachica-gasto">
                             {transaccion.tipo === "GASTO" ? formatCurrency(transaccion.monto) : "-"}

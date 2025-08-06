@@ -64,7 +64,7 @@ const fetchUsuarios = async () => {
   }
 };
 
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
+const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden"
@@ -87,7 +87,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
   }
 
   return (
-    <div className="transacciones-modal-overlay" onClick={canClose ? onClose : () => { }}>
+    <div className="transacciones-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
       <div className={`transacciones-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="transacciones-modal-header">
           <h2 className="transacciones-modal-title">{title}</h2>
@@ -279,7 +279,7 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
   const cuentasFiltradas = dynamicCuentas;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Nueva transacción" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Nueva transacción" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="transacciones-form">
         <div className="transacciones-form-row">
           <div className="transacciones-form-group">
@@ -463,7 +463,6 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
   );
 };
 
-
 const GestionarCategoriasModal = ({ isOpen, onClose, categorias, onSaveCategoria, onDeleteCategoria }) => {
   const [showAddForm, setShowAddForm] = useState(false)
   const [formData, setFormData] = useState({ tipo: "INGRESO", descripcion: "" })
@@ -516,7 +515,7 @@ const GestionarCategoriasModal = ({ isOpen, onClose, categorias, onSaveCategoria
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Categorías" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="Categorías" size="lg" closeOnOverlayClick={false}>
       <div className="transacciones-categorias-content">
         {!showAddForm ? (
           <>
@@ -679,7 +678,7 @@ const GestionarCuentasModal = ({ isOpen, onClose, cuentas, categorias, onSaveCue
       : cuentas.filter((cuenta) => cuenta.categoria.descripcion === filtroCategoria);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Cuentas" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="Cuentas" size="lg" closeOnOverlayClick={false}>
       <div className="transacciones-cuentas-content">
         {!showAddForm ? (
           <>
@@ -811,7 +810,7 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, tipo, item }) =
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm" closeOnOverlayClick={false}>
       <div className="transacciones-confirmar-eliminacion">
         <div className="transacciones-confirmation-content">
           <p className="transacciones-confirmation-message">{getMessage()}</p>
@@ -828,7 +827,6 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, tipo, item }) =
     </Modal>
   )
 }
-
 
 const AdminTransacciones = () => {
   const navigate = useNavigate();

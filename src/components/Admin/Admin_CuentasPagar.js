@@ -20,7 +20,7 @@ const fetchWithToken = async (url, options = {}) => {
 }
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
+const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden"
@@ -43,7 +43,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
   }
 
   return (
-    <div className="cuentaspagar-modal-overlay" onClick={canClose ? onClose : () => { }}>
+    <div className="cuentaspagar-modal-overlay" onClick={closeOnOverlayClick ? onClose: () => { }}>
       <div className={`cuentaspagar-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="cuentaspagar-modal-header">
           <h2 className="cuentaspagar-modal-title">{title}</h2>
@@ -116,7 +116,7 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Agregar Fecha de Pago" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Agregar Fecha de Pago" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="cuentaspagar-form">
         <div className="cuentaspagar-form-group">
           <label htmlFor="fechaPago">Fecha Pago  <span className="required"> *</span></label>
@@ -177,7 +177,7 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
 // Modal de Confirmación de Eliminación
 const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm" closeOnOverlayClick={false}>
       <div className="cuentaspagar-confirmar-eliminacion">
         <div className="cuentaspagar-confirmation-content">
           <p className="cuentaspagar-confirmation-message">
@@ -200,7 +200,7 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
 // Modal de Confirmación de Regeneración
 const RegenerarModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Generar nueva/s cuenta por pagar" size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title="Generar nueva/s cuenta por pagar" size="sm" closeOnOverlayClick={false}>
       <div className="cuentaspagar-confirmar-regeneracion">
         <div className="cuentaspagar-confirmation-content">
           <p className="cuentaspagar-confirmation-message">
@@ -219,6 +219,7 @@ const RegenerarModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
     </Modal>
   );
 };
+
 // Componente Principal
 const AdminCuentasPagar = () => {
   const navigate = useNavigate();

@@ -23,7 +23,7 @@ const fetchWithToken = async (url, options = {}) => {
 };
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
+const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -46,7 +46,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
   };
 
   return (
-    <div className="estatusplataforma-modal-overlay" onClick={canClose ? onClose : () => { }}>
+    <div className="estatusplataforma-modal-overlay" onClick={closeOnOverlayClick ? onClose: () => { }}>
       <div className={`estatusplataforma-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="estatusplataforma-modal-header">
           <h2 className="estatusplataforma-modal-title">{title}</h2>
@@ -439,7 +439,7 @@ const ConfirmarCambioEstatusModal = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar cambio de estatus" size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar cambio de estatus" size="sm" closeOnOverlayClick={false}>
       <div className="estatusplataforma-confirmar-eliminacion">
         <div className="estatusplataforma-confirmation-content">
           <p className="estatusplataforma-confirmation-message">

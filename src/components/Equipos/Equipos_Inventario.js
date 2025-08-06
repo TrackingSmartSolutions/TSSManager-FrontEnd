@@ -27,7 +27,7 @@ const fetchWithToken = async (url, options = {}) => {
 };
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
+const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
   useEffect(() => {
     if (isOpen) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "unset";
@@ -44,7 +44,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
   };
 
   return (
-    <div className="inventario-modal-overlay" onClick={canClose ? onClose : () => { }}>
+    <div className="inventario-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
       <div className={`inventario-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="inventario-modal-header">
           <h2 className="inventario-modal-title">{title}</h2>
@@ -182,7 +182,7 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
   const isTipoActivacionDisabled = formData.estatus === "INACTIVO";
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={equipo ? "Editar equipo" : "Nuevo equipo"} size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title={equipo ? "Editar equipo" : "Nuevo equipo"} size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="inventario-form">
         <div className="inventario-form-group">
           <label htmlFor="imei" className="inventario-form-label">IMEI <span className="required"> *</span></label>
@@ -352,7 +352,7 @@ const DetallesEquipoModal = ({ isOpen, onClose, equipo, modelos, proveedores, cl
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Detalles equipo" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Detalles equipo" size="md" closeOnOverlayClick={false}>
       <div className="inventario-detalles-content">
         <div className="inventario-detalles-grid">
           <div className="inventario-detalle-item"><label>IMEI:</label><span>{equipo.imei || "N/A"}</span></div>
@@ -392,7 +392,7 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, equipo, hasSimV
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={hasSimVinculada ? "Error al eliminar registro" : "Confirmar eliminación"} size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title={hasSimVinculada ? "Error al eliminar registro" : "Confirmar eliminación"} size="sm" closeOnOverlayClick={false}>
       <div className="inventario-confirmar-eliminacion">
         {hasSimVinculada ? (
           <div className="inventario-warning-content">
@@ -423,7 +423,7 @@ const ConfirmarActivacionModal = ({ isOpen, onClose, onConfirm, equipo }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar activación" size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar activación" size="sm" closeOnOverlayClick={false}>
       <div className="inventario-confirmar-eliminacion">
         <div className="inventario-confirmation-content">
           <p className="inventario-confirmation-message">¿Seguro que quieres activar el equipo?</p>

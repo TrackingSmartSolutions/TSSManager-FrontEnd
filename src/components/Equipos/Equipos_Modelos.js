@@ -18,9 +18,8 @@ const fetchWithToken = async (url, options = {}) => {
   return response;
 };
 
-
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true }) => {
+const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden"
@@ -43,7 +42,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true 
   }
 
   return (
-    <div className="modelos-modal-overlay" onClick={canClose ? onClose : () => { }}>
+    <div className="modelos-modal-overlay" onClick={closeOnOverlayClick ? onClose: () => { }}>
       <div className={`modelos-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="modelos-modal-header">
           <h2 className="modelos-modal-title">{title}</h2>
@@ -210,7 +209,7 @@ const ModeloFormModal = ({ isOpen, onClose, modelo = null, onSave }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={modelo ? "Editar modelo" : "Nuevo modelo"} size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title={modelo ? "Editar modelo" : "Nuevo modelo"} size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="modelos-form">
         <div className="modelos-form-group">
           <label htmlFor="nombre" className="modelos-form-label">
@@ -305,10 +304,11 @@ const ModeloFormModal = ({ isOpen, onClose, modelo = null, onSave }) => {
     </Modal>
   );
 };
+
 // Modal de Confirmación de Eliminación
 const ConfirmarEliminacionModal = ({ isOpen, onClose, modelo, onConfirm }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm" closeOnOverlayClick={false}>
       <div className="modelos-confirmar-eliminacion">
         <div className="modelos-confirmation-content">
           <p className="modelos-confirmation-message">¿Seguro que quieres eliminar el modelo de forma permanente?</p>
