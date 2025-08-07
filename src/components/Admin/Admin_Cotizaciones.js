@@ -749,7 +749,7 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
       setFormData({
         cotizacionId: cotizacion.id || "",
         clienteNombre: cotizacion.clienteNombre || "",
-        noEquipos: cotizacion.cantidadTotal || 0,
+        noEquipos: cotizacion.unidades ? cotizacion.unidades.reduce((sum, u) => sum + u.cantidad, 0) : 0,
         esquema: "ANUAL",
         numeroPagos: "1",
         fechaInicial: new Date().toISOString().split('T')[0],
@@ -780,9 +780,6 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
   const validateForm = () => {
   const newErrors = {};
   if (!formData.clienteNombre) newErrors.clienteNombre = "El cliente es obligatorio";
-  if (!formData.noEquipos || Number.parseInt(formData.noEquipos) <= 0) {
-    newErrors.noEquipos = "El número de equipos debe ser mayor a 0";
-  }
   if (!formData.esquema) newErrors.esquema = "El esquema es obligatorio";
   if (!formData.numeroPagos || Number.parseInt(formData.numeroPagos) <= 0) {
     newErrors.numeroPagos = "El número de pagos debe ser mayor a 0";
