@@ -137,77 +137,74 @@ const Calendario = () => {
   };
 
   useEffect(() => {
-    const loadEvents = async () => {
-      if (!selectedUser) {
-        return;
-      }
+  const loadEvents = async () => {
+    if (!selectedUser) return;
 
-      if (isInitialLoad) {
-        setIsLoading(true);
-      }
-
-      const start = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1).toISOString();
-      const end = new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 0).toISOString();
-
-      let url;
-      if (userRol === "ADMINISTRADOR") {
-        url = `${API_BASE_URL}/calendario/eventos?startDate=${start}&endDate=${end}&usuario=${selectedUser}`;
-      } else {
-        url = `${API_BASE_URL}/calendario/eventos?startDate=${start}&endDate=${end}`;
-      }
-
-      try {
-        const response = await fetchWithToken(url);
-        const data = await response.json();
-
-        const processedEvents = data.map(event => {
-
-          const eventConfig = {
-            title: event.titulo,
-            start: new Date(event.inicio),
-            color: event.color,
-            allDay: event.allDay || false,
-            className: getEventClassName(event.tipo),
-            extendedProps: {
-              id: event.id,
-              tipo: event.tipo,
-              asignadoA: event.asignadoA,
-              trato: event.trato,
-              modalidad: event.modalidad,
-              medio: event.medio,
-              numeroSim: event.numeroSim,
-              imei: event.imei,
-              numeroCuenta: event.numeroCuenta,
-              cliente: event.cliente,
-              estado: event.estado,
-              esquema: event.esquema,
-              monto: event.monto,
-              nota: event.nota
-            }
-          };
-
-          if (!event.allDay && event.fin) {
-            eventConfig.end = new Date(event.fin);
-          }
-
-          return eventConfig;
-        });
-
-        setEvents(processedEvents);
-      } catch (error) {
-        console.error("ERROR al cargar eventos:", error);
-      } finally {
-        setIsLoading(false);
-        if (isInitialLoad) {
-          setIsInitialLoad(false);
-        }
-      }
-    };
-
-    if (selectedUser) {
-      loadEvents();
+    if (isInitialLoad) {
+      setIsLoading(true);
     }
-  }, [currentDate, selectedUser, userRol, isInitialLoad]);
+
+    const start = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1).toISOString();
+    const end = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString();
+
+    let url;
+    if (userRol === "ADMINISTRADOR") {
+      url = `${API_BASE_URL}/calendario/eventos?startDate=${start}&endDate=${end}&usuario=${selectedUser}`;
+    } else {
+      url = `${API_BASE_URL}/calendario/eventos?startDate=${start}&endDate=${end}`;
+    }
+
+    try {
+      const controller = new AbortController();
+      const response = await fetchWithToken(url, { signal: controller.signal });
+      const data = await response.json();
+
+      const processedEvents = data
+        .filter(event => event !== null) 
+        .map(event => ({
+          title: event.titulo,
+          start: new Date(event.inicio),
+          end: event.fin ? new Date(event.fin) : null,
+          color: event.color,
+          allDay: event.allDay || false,
+          className: getEventClassName(event.tipo),
+          extendedProps: {
+            id: event.id,
+            tipo: event.tipo,
+            asignadoA: event.asignadoA,
+            trato: event.trato,
+            modalidad: event.modalidad,
+            medio: event.medio,
+            numeroSim: event.numeroSim,
+            imei: event.imei,
+            numeroCuenta: event.numeroCuenta,
+            cliente: event.cliente,
+            estado: event.estado,
+            esquema: event.esquema,
+            monto: event.monto,
+            nota: event.nota
+          }
+        }));
+
+      setEvents(processedEvents);
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error("ERROR al cargar eventos:", error);
+      }
+    } finally {
+      setIsLoading(false);
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+      }
+    }
+  };
+
+  const timeoutId = setTimeout(() => {
+    loadEvents();
+  }); 
+
+  return () => clearTimeout(timeoutId);
+}, [currentDate, selectedUser, userRol, isInitialLoad]);
 
   const closeEventModal = () => {
     setSelectedEvent(null);
@@ -239,7 +236,6 @@ const Calendario = () => {
   };
 
   const handleMarcarComoPagadaDesdeCalendario = (evento) => {
-    // Verificar que tengamos el ID
     if (!evento.id) {
       Swal.fire({
         icon: "error",
@@ -276,7 +272,6 @@ const Calendario = () => {
         method: "POST",
         body: JSON.stringify({
           id: cuentaActualizada.id,
-          fechaPago: cuentaActualizada.fechaPago,
           monto: cuentaActualizada.monto,
           formaPago: cuentaActualizada.formaPago,
           usuarioId: 1,

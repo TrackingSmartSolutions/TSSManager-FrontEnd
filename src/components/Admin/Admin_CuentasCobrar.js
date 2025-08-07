@@ -5,6 +5,7 @@ import Header from "../Header/Header"
 import Swal from "sweetalert2"
 import deleteIcon from "../../assets/icons/eliminar.png"
 import downloadIcon from "../../assets/icons/descarga.png"
+import editIcon from "../../assets/icons/editar.png"
 import requestIcon from "../../assets/icons/cotizacion.png"
 import checkIcon from "../../assets/icons/check.png"
 import { API_BASE_URL } from "../Config/Config";
@@ -259,7 +260,7 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
           method: "POST",
           body: formDataToSend,
         });
-        onSave(updatedCuenta); 
+        onSave(updatedCuenta);
         onClose();
       } catch (error) {
         Swal.fire({ icon: "error", title: "Error", text: error.message });
@@ -416,10 +417,13 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
 
   const formasPago = [
     { value: "01", label: "01: Efectivo" },
-    { value: "02", label: "02: Cheque nominativo" },
+    { value: "07", label: "07: Con Saldo Acumulado" },
     { value: "03", label: "03: Transferencia electrónica de fondos" },
     { value: "04", label: "04: Tarjeta de crédito" },
     { value: "28", label: "28: Tarjeta de débito" },
+    { value: "30", label: "30: Aplicación de anticipos" },
+    { value: "99", label: "99: Por definir" },
+    { value: "02", label: "02: Tarjeta spin" },
   ];
 
   const tipos = [
@@ -798,6 +802,94 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
   );
 };
 
+// Modal para Editar Cuenta Por Cobrar
+const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta }) => {
+  const [formData, setFormData] = useState({
+    fechaPago: "",
+    cantidadCobrar: "",
+    conceptos: [],
+  });
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && cuenta) {
+      setFormData({
+        fechaPago: cuenta.fechaPago || "",
+        cantidadCobrar: cuenta.cantidadCobrar || "",
+        conceptos: cuenta.conceptos || [],
+      });
+      setErrors({});
+    }
+  }, [isOpen, cuenta]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const updatedCuenta = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          fechaPago: formData.fechaPago,
+          cantidadCobrar: parseFloat(formData.cantidadCobrar),
+          conceptos: formData.conceptos,
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+      onSave(updatedCuenta);
+      onClose();
+      Swal.fire({
+        icon: "success",
+        title: "Éxito",
+        text: "Cuenta por cobrar actualizada correctamente",
+      });
+    } catch (error) {
+      Swal.fire({ icon: "error", title: "Error", text: error.message });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Editar Cuenta por Cobrar" size="md">
+      <form onSubmit={handleSubmit} className="cuentascobrar-form">
+        <div className="cuentascobrar-form-group">
+          <label htmlFor="fechaPago">Fecha de Pago <span className="required"> *</span></label>
+          <input
+            type="date"
+            id="fechaPago"
+            value={formData.fechaPago}
+            onChange={(e) => setFormData(prev => ({ ...prev, fechaPago: e.target.value }))}
+            className="cuentascobrar-form-control"
+          />
+        </div>
+
+        <div className="cuentascobrar-form-group">
+          <label htmlFor="cantidadCobrar">Cantidad a Cobrar <span className="required"> *</span></label>
+          <input
+            type="number"
+            step="0.01"
+            id="cantidadCobrar"
+            value={formData.cantidadCobrar}
+            onChange={(e) => setFormData(prev => ({ ...prev, cantidadCobrar: e.target.value }))}
+            className="cuentascobrar-form-control"
+          />
+        </div>
+
+        <div className="cuentascobrar-form-actions">
+          <button type="button" onClick={onClose} className="cuentascobrar-btn cuentascobrar-btn-cancel">
+            Cancelar
+          </button>
+          <button type="submit" className="cuentascobrar-btn cuentascobrar-btn-primary" disabled={isLoading}>
+            {isLoading ? "Guardando..." : "Guardar Cambios"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
 // Componente Principal
 const AdminCuentasCobrar = () => {
   const navigate = useNavigate();
@@ -819,7 +911,7 @@ const AdminCuentasCobrar = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-       setIsLoading(true); 
+      setIsLoading(true);
       try {
         const [clientesData, cuentasData, cotizacionesData, emisoresData] = await Promise.all([
           fetchWithToken(`${API_BASE_URL}/empresas?estatus=CLIENTE`),
@@ -833,9 +925,9 @@ const AdminCuentasCobrar = () => {
         setEmisores(emisoresData);
       } catch (error) {
         Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos" });
-      }finally {
-      setIsLoading(false); 
-    }
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchData();
   }, []);
@@ -1088,11 +1180,11 @@ const AdminCuentasCobrar = () => {
     <>
       <Header />
       {isLoading && (
-      <div className="cuentascobrar-loading">
-        <div className="spinner"></div>
-        <p>Cargando datos de cuentas por cobrar...</p>
-      </div>
-    )}
+        <div className="cuentascobrar-loading">
+          <div className="spinner"></div>
+          <p>Cargando datos de cuentas por cobrar...</p>
+        </div>
+      )}
       <main className="cuentascobrar-main-content">
         <div className="cuentascobrar-container">
           <section className="cuentascobrar-sidebar">
@@ -1189,6 +1281,19 @@ const AdminCuentasCobrar = () => {
                               </button>
                               {cuenta.estatus !== "PAGADO" && (
                                 <button
+                                  className="cuentascobrar-action-btn cuentascobrar-edit-btn"
+                                  onClick={() => openModal("editarCuenta", { cuenta })}
+                                  title="Editar cuenta"
+                                >
+                                  <img
+                                    src={editIcon}
+                                    alt="Editar"
+                                    className="cuentascobrar-action-icon"
+                                  />
+                                </button>
+                              )}
+                              {cuenta.estatus !== "PAGADO" && (
+                                <button
                                   className="cuentascobrar-action-btn cuentascobrar-check-btn"
                                   onClick={() => handleCheckMarcarCompletada(cuenta)}
                                   title="Marcar como completado"
@@ -1279,6 +1384,18 @@ const AdminCuentasCobrar = () => {
           onClose={() => closeModal("comprobante")}
           onSave={handleMarcarPagada}
           cuenta={modals.comprobante.cuenta}
+        />
+
+        <EditarCuentaModal
+          isOpen={modals.editarCuenta.isOpen}
+          onClose={() => closeModal("editarCuenta")}
+          onSave={(updatedCuenta) => {
+            setCuentasPorCobrar(prev =>
+              prev.map(c => c.id === updatedCuenta.id ? updatedCuenta : c)
+            );
+            closeModal("editarCuenta");
+          }}
+          cuenta={modals.editarCuenta.cuenta}
         />
 
         <ConfirmarEliminacionModal

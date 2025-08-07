@@ -221,6 +221,9 @@
   box-shadow: var(--cajachica-box-shadow);
   border: 1px solid var(--cajachica-border-color);
   margin-bottom: var(--cajachica-spacing-xl);
+  max-height: 500px;
+  display: flex;
+  flex-direction: column;
 }
 
 .cajachica-table-title {
@@ -232,8 +235,18 @@
 
 .cajachica-table-container {
   overflow-x: auto;
+  overflow-y: auto;
   border: 1px solid var(--cajachica-border-color);
   border-radius: var(--cajachica-border-radius-sm);
+  flex: 1;
+  max-height: 400px;
+}
+
+.cajachica-table-header-fixed {
+  position: sticky;
+  top: 0;
+  background-color: #cdd6ee;
+  z-index: 10;
 }
 
 .cajachica-table {

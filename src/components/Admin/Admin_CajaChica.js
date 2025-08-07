@@ -453,7 +453,7 @@ const AdminCajaChica = () => {
               <h4 className="cajachica-table-title">Transacciones en Efectivo</h4>
               <div className="cajachica-table-container">
                 <table className="cajachica-table">
-                  <thead>
+                 <thead className="cajachica-table-header-fixed">
                     <tr>
                       <th>Fecha</th>
                       <th>Cuenta</th>

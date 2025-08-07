@@ -514,7 +514,9 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
         id: cotizacion?.id,
         cliente: formData.cliente,
         conceptos: formData.conceptos,
-        cantidadTotal: formData.conceptos.reduce((sum, concepto) => sum + concepto.cantidad, 0),
+        cantidadTotal: formData.conceptos
+          .filter(concepto => concepto.unidad === "Equipos")
+          .reduce((sum, concepto) => sum + concepto.cantidad, 0),
         conceptosCount: new Set(formData.conceptos.map((c) => c.concepto)).size,
         subtotal,
         iva,
@@ -730,6 +732,7 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
     noEquipos: "",
     esquema: "ANUAL",
     numeroPagos: "1",
+    fechaInicial: "",
     conceptos: [],
   });
   const [errors, setErrors] = useState({});
@@ -749,6 +752,7 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
         noEquipos: cotizacion.cantidadTotal || 0,
         esquema: "ANUAL",
         numeroPagos: "1",
+        fechaInicial: new Date().toISOString().split('T')[0],
         conceptos: cotizacion.unidades ? cotizacion.unidades.map(u => ({ text: u.concepto, selected: true })) : [],
       });
       setErrors({});
@@ -771,23 +775,25 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
+
   };
   const validateForm = () => {
-    const newErrors = {};
-    if (!formData.clienteNombre) newErrors.clienteNombre = "El cliente es obligatorio";
-    if (!formData.noEquipos || Number.parseInt(formData.noEquipos) <= 0) {
-      newErrors.noEquipos = "El número de equipos debe ser mayor a 0";
-    }
-    if (!formData.esquema) newErrors.esquema = "El esquema es obligatorio";
-    if (!formData.numeroPagos || Number.parseInt(formData.numeroPagos) <= 0) {
-      newErrors.numeroPagos = "El número de pagos debe ser mayor a 0";
-    }
-    if (formData.conceptos.filter(c => c.selected).length === 0) {
-      newErrors.conceptos = "Debe seleccionar al menos un concepto";
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const newErrors = {};
+  if (!formData.clienteNombre) newErrors.clienteNombre = "El cliente es obligatorio";
+  if (!formData.noEquipos || Number.parseInt(formData.noEquipos) <= 0) {
+    newErrors.noEquipos = "El número de equipos debe ser mayor a 0";
+  }
+  if (!formData.esquema) newErrors.esquema = "El esquema es obligatorio";
+  if (!formData.numeroPagos || Number.parseInt(formData.numeroPagos) <= 0) {
+    newErrors.numeroPagos = "El número de pagos debe ser mayor a 0";
+  }
+  if (!formData.fechaInicial) newErrors.fechaInicial = "La fecha inicial es obligatoria"; // AGREGAR ESTA LÍNEA
+  if (formData.conceptos.filter(c => c.selected).length === 0) {
+    newErrors.conceptos = "Debe seleccionar al menos un concepto";
+  }
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -801,7 +807,7 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
       const queryParams = new URLSearchParams();
       conceptosSeleccionados.forEach(concepto => queryParams.append('conceptosSeleccionados', concepto));
       queryParams.append('numeroPagos', formData.numeroPagos);
-      const url = `${API_BASE_URL}/cuentas-por-cobrar/from-cotizacion/${formData.cotizacionId}?esquema=${formData.esquema}&${queryParams.toString()}`;
+      const url = `${API_BASE_URL}/cuentas-por-cobrar/from-cotizacion/${formData.cotizacionId}?esquema=${formData.esquema}&fechaInicial=${formData.fechaInicial}&${queryParams.toString()}`;
 
       const response = await fetchWithToken(url, {
         method: "POST",
@@ -857,6 +863,18 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
             min="1"
           />
           {errors.numeroPagos && <span className="cuentascobrar-error-message">{errors.numeroPagos}</span>}
+        </div>
+        <div className="cuentascobrar-form-group">
+          <label htmlFor="fechaInicial">Fecha Inicial <span className="required"> *</span></label>
+          <input
+            type="date"
+            id="fechaInicial"
+            value={formData.fechaInicial}
+            onChange={(e) => handleInputChange("fechaInicial", e.target.value)}
+            className={`cuentascobrar-form-control ${errors.fechaInicial ? "error" : ""}`}
+            required
+          />
+          {errors.fechaInicial && <span className="cuentascobrar-error-message">{errors.fechaInicial}</span>}
         </div>
         <div className="cuentascobrar-form-group">
           <label>Concepto/s</label>

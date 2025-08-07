@@ -1,5 +1,4 @@
 /* Estilos específicos para Admin Cuentas por Pagar */
-
 :root {
   --cuentaspagar-primary-color: #00133b;
   --cuentaspagar-secondary-color: #037ce0;
@@ -510,7 +509,44 @@
   margin-top: var(--cuentaspagar-spacing-lg);
 }
 
-/* Responsive Design */
+.cuentaspagar-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding: 0.3rem 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.cuentaspagar-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cuentaspagar-filter-container label {
+  font-weight: 500;
+  color: #333;
+  font-size: 0.8rem;
+}
+
+.cuentaspagar-filter-select {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  color: #333;
+  font-size: 0.75rem;
+  min-width: 120px;
+}
+
+.cuentaspagar-filter-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* Diseño responsivo */
 @media (max-width: 1200px) {
   .cuentaspagar-container {
     gap: var(--cuentaspagar-spacing-md);

@@ -143,7 +143,7 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
       if (!formData.equipo) newErrors.equipo = "El equipo es obligatorio";
     }
 
-    if (formData.responsable === "TSS" && formData.principal === "NO" && !formData.grupo) {
+    if (!sim && formData.responsable === "TSS" && formData.principal === "NO" && !formData.grupo) {
       newErrors.grupo = "El grupo es obligatorio cuando no es principal";
     } else if (formData.tarifa === "M2M_GLOBAL_15" && formData.grupo !== "0") {
       newErrors.grupo = "Las SIMs M2M Global 15 deben ir en el Grupo 0";
@@ -164,10 +164,16 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
     // Determinar el grupo correcto
     let grupoFinal = null;
     if (formData.responsable === "TSS") {
-      if (formData.principal === "SI") {
-        grupoFinal = sim ? sim.grupo : null;
+      if (sim) {
+        // Al editar, mantener el grupo original
+        grupoFinal = sim.grupo;
       } else {
-        grupoFinal = parseInt(formData.grupo) || null;
+        // Al crear nueva SIM
+        if (formData.principal === "SI") {
+          grupoFinal = null;
+        } else {
+          grupoFinal = parseInt(formData.grupo) || null;
+        }
       }
     } else {
       grupoFinal = null;
@@ -381,40 +387,63 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
               </select>
             </div>
 
-            <div className="sim-form-group">
-              <label htmlFor="grupo" className="sim-form-label">
-                Grupo <span className="required"> *</span>
-              </label>
-              <select
-                id="grupo"
-                name="grupo"
-                value={formData.grupo}
-                onChange={handleInputChange}
-                className={`sim-form-control ${errors.grupo ? "sim-form-control-error" : ""}`}
-                disabled={isPrincipal}
-                required={!isPrincipal}
-              >
-                <option value="">Seleccionar grupo</option>
-                {!isPrincipal &&
-                  (formData.tarifa === "M2M_GLOBAL_15" ? (
-                    <option value="0">Grupo 0 (M2M)</option>
-                  ) : (
-                    gruposDisponibles.map((grupo) => {
-                      const simsInGroup = (sims || []).filter((s) => s.grupo === grupo);
-                      const principalCount = simsInGroup.filter((s) => s.principal === "SI").length;
-                      const nonPrincipalCount = simsInGroup.filter((s) => s.principal === "NO").length;
-                      const remaining = 6 - (principalCount + nonPrincipalCount);
-                      return (
-                        <option key={grupo} value={grupo}>
-                          Grupo {grupo} ({remaining}/6)
-                        </option>
-                      );
-                    })
-                  ))}
-              </select>
-              {!isPrincipal && <small className="sim-help-text">Seleccione un grupo disponible</small>}
-              {errors.grupo && <span className="sim-form-error">{errors.grupo}</span>}
-            </div>
+            {/* Solo mostrar campo de grupo al crear nuevas SIMs, no al editar */}
+            {!sim && (
+              <div className="sim-form-group">
+                <label htmlFor="grupo" className="sim-form-label">
+                  Grupo <span className="required"> *</span>
+                </label>
+                <select
+                  id="grupo"
+                  name="grupo"
+                  value={formData.grupo}
+                  onChange={handleInputChange}
+                  className={`sim-form-control ${errors.grupo ? "sim-form-control-error" : ""}`}
+                  disabled={isPrincipal}
+                  required={!isPrincipal}
+                >
+                  <option value="">Seleccionar grupo</option>
+                  {!isPrincipal &&
+                    (formData.tarifa === "M2M_GLOBAL_15" ? (
+                      <option value="0">Grupo 0 (M2M)</option>
+                    ) : (
+                      gruposDisponibles.map((grupo) => {
+                        const simsInGroup = (sims || []).filter((s) => s.grupo === grupo);
+                        const principalCount = simsInGroup.filter((s) => s.principal === "SI").length;
+                        const nonPrincipalCount = simsInGroup.filter((s) => s.principal === "NO").length;
+                        const remaining = 6 - (principalCount + nonPrincipalCount);
+                        return (
+                          <option key={grupo} value={grupo}>
+                            Grupo {grupo} ({remaining}/6)
+                          </option>
+                        );
+                      })
+                    ))}
+                </select>
+                {!isPrincipal && <small className="sim-help-text">Seleccione un grupo disponible</small>}
+                {errors.grupo && <span className="sim-form-error">{errors.grupo}</span>}
+              </div>
+            )}
+
+            {/* Mostrar grupo actual solo como información en modo edición */}
+            {sim && isTssResponsable && (
+              <div className="sim-form-group">
+                <label className="sim-form-label">Grupo actual</label>
+                <input
+                  type="text"
+                  value={sim.grupo !== null && sim.grupo !== undefined ? `Grupo ${sim.grupo}` : "N/A"}
+                  className="sim-form-control sim-form-control-disabled"
+                  readOnly
+                  style={{
+                    backgroundColor: '#f5f5f5',
+                    color: '#6b7280',
+                    border: '1px solid #d1d5db',
+                    opacity: 0.7
+                  }}
+                />
+                <small className="sim-help-text">El grupo se mantiene sin cambios al editar</small>
+              </div>
+            )}
 
             <div className="sim-form-group">
               <label htmlFor="contrasena" className="sim-form-label">

@@ -824,7 +824,8 @@
   background-color: rgba(3, 124, 224, 0.05);
 }
 
-/* Responsive Design */
+
+/* Diseño responsivo */
 @media (max-width: 1200px) {
   .sim-container {
     gap: var(--sim-spacing-md);

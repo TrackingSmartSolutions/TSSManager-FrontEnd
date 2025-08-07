@@ -843,18 +843,14 @@ const AdminTransacciones = () => {
   });
 
   const formasPago = [
-    { value: "01", label: "Efectivo" },
-    { value: "03", label: "Transferencia electrónica de fondos" },
-    { value: "04", label: "Tarjeta de crédito" },
-    { value: "06", label: "Dinero electrónico" },
-    { value: "07", label: "Con Saldo Acumulado" },
-    { value: "08", label: "Vales de despensa" },
-    { value: "15", label: "Condonación" },
-    { value: "17", label: "Compensación" },
-    { value: "28", label: "Tarjeta de débito" },
-    { value: "29", label: "Tarjeta de servicios" },
-    { value: "30", label: "Aplicación de anticipos" },
-    { value: "99", label: "Por definir" },
+    { value: "01", label: "01: Efectivo" },
+    { value: "07", label: "07: Con Saldo Acumulado" },
+    { value: "03", label: "03: Transferencia electrónica de fondos" },
+    { value: "04", label: "04: Tarjeta de crédito" },
+    { value: "28", label: "28: Tarjeta de débito" },
+    { value: "30", label: "30: Aplicación de anticipos" },
+    { value: "99", label: "99: Por definir" },
+    { value: "02", label: "02: Tarjeta spin" },
   ];
 
   useEffect(() => {

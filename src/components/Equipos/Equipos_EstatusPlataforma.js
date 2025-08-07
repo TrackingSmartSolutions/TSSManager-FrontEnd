@@ -597,58 +597,167 @@ const EquiposEstatusPlataforma = () => {
   };
 
   const handleGeneratePDF = async () => {
-    const element = document.createElement("div");
-    const chartImages = await Promise.all([
-      getChartImage("estatusClienteChart"),
-      getChartImage("plataformaChart"),
-    ]);
+  const element = document.createElement("div");
+  const chartImages = await Promise.all([
+    getChartImage("estatusClienteChart"),
+    getChartImage("plataformaChart"),
+  ]);
 
-    element.innerHTML = `
-    <h1>Reporte de Estatus Plataforma - ${new Date().toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' })}</h1>
-    <h2>Gráfica de Estatus por Cliente</h2>
-    <img src="${chartImages[0]}" style="width: 100%; height: auto; max-width: 800px;" />
-    <h2>Gráfica de Equipos por Plataforma</h2>
-    <img src="${chartImages[1]}" style="width: 100%; height: auto; max-width: 800px;" />
-    <h2>Tabla de Equipos Offline</h2>
-    <table style="width: 90%; max-width: 1000px; border-collapse: collapse; margin: 0 auto; font-size: 10px;">
-      <thead>
-        <tr style="background-color: #d3d3d3;">
-          <th style="border: 1px solid black; padding: 6px; width: 20%;">Cliente</th>
-          <th style="border: 1px solid black; padding: 6px; width: 25%;">Nombre</th>
-          <th style="border: 1px solid black; padding: 6px; width: 20%;">Plataforma</th>
-          <th style="border: 1px solid black; padding: 6px; width: 15%;">Reportando</th>
-          <th style="border: 1px solid black; padding: 6px; width: 20%;">Motivo</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${equiposData.equiposOffline.map(e => `
-          <tr>
-            <td style="border: 1px solid black; padding: 4px; word-wrap: break-word;">${e.cliente}</td>
-            <td style="border: 1px solid black; padding: 4px; word-wrap: break-word;">${e.nombre}</td>
-            <td style="border: 1px solid black; padding: 4px;">${e.plataforma}</td>
-            <td style="border: 1px solid black; padding: 4px; text-align: center;">✗</td>
-            <td style="border: 1px solid black; padding: 4px; word-wrap: break-word;">${e.motivo}</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
+  const currentDate = new Date().toLocaleDateString('es-MX', { 
+    timeZone: 'America/Mexico_City',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  element.innerHTML = `
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.4;">
+      <!-- PÁGINA 1: Encabezado y Gráficas -->
+      <div style="page-break-after: always; padding: 20px; min-height: 100vh; display: flex; flex-direction: column;">
+        <!-- Encabezado Principal -->
+        <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #2563eb; padding-bottom: 20px;">
+          <h1 style="margin: 0; font-size: 28px; color: #1e40af; font-weight: bold;">
+            Reporte de Estatus de Plataforma
+          </h1>
+          <p style="margin: 10px 0 0 0; font-size: 16px; color: #6b7280;">
+            Generado el ${currentDate}
+          </p>
+        </div>
+
+        <!-- Contenedor de Gráficas -->
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 25px;">
+          <!-- Gráfica 1 -->
+          <div style="flex: 1; display: flex; flex-direction: column;">
+            <h2 style="margin: 0 0 15px 0; font-size: 20px; color: #374151; text-align: center; 
+                       background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); 
+                       padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+              📊 Estatus por Cliente
+            </h2>
+            <div style="flex: 1; display: flex; justify-content: center; align-items: center; 
+                        background: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+                        padding: 15px;">
+              <img src="${chartImages[0]}" style="max-width: 100%; max-height: 300px; height: auto; object-fit: contain;" />
+            </div>
+          </div>
+
+          <!-- Gráfica 2 -->
+          <div style="flex: 1; display: flex; flex-direction: column;">
+            <h2 style="margin: 0 0 15px 0; font-size: 20px; color: #374151; text-align: center; 
+                       background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); 
+                       padding: 12px; border-radius: 8px; border-left: 4px solid #10b981;">
+              🖥️ Equipos por Plataforma
+            </h2>
+            <div style="flex: 1; display: flex; justify-content: center; align-items: center; 
+                        background: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+                        padding: 15px;">
+              <img src="${chartImages[1]}" style="max-width: 100%; max-height: 300px; height: auto; object-fit: contain;" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Pie de página 1 -->
+        <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #9ca3af; 
+                    border-top: 1px solid #e5e7eb; padding-top: 15px;">
+          Página 1 de 2 - Análisis Gráfico
+        </div>
+      </div>
+
+      <!-- PÁGINA 2: Tabla de Equipos Offline -->
+      <div style="padding: 20px; min-height: 100vh; display: flex; flex-direction: column;">
+        <!-- Encabezado de Página 2 -->
+        <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #ef4444; padding-bottom: 15px;">
+          <h2 style="margin: 0; font-size: 24px; color: #dc2626; font-weight: bold;">
+            ⚠️ Equipos Offline - Detalle
+          </h2>
+          <p style="margin: 8px 0 0 0; font-size: 14px; color: #6b7280;">
+            Total de equipos sin conexión: ${equiposData.equiposOffline.length}
+          </p>
+        </div>
+
+        <!-- Tabla -->
+        <div style="flex: 1; overflow: hidden;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px; 
+                        background: #ffffff; border-radius: 8px; overflow: hidden; 
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <thead>
+              <tr style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #991b1b;">
+                <th style="border: 1px solid #f87171; padding: 12px 8px; font-weight: bold; 
+                           text-align: left; width: 18%;">Cliente</th>
+                <th style="border: 1px solid #f87171; padding: 12px 8px; font-weight: bold; 
+                           text-align: left; width: 25%;">Nombre del Equipo</th>
+                <th style="border: 1px solid #f87171; padding: 12px 8px; font-weight: bold; 
+                           text-align: center; width: 15%;">Plataforma</th>
+                <th style="border: 1px solid #f87171; padding: 12px 8px; font-weight: bold; 
+                           text-align: center; width: 12%;">Estado</th>
+                <th style="border: 1px solid #f87171; padding: 12px 8px; font-weight: bold; 
+                           text-align: left; width: 30%;">Motivo</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${equiposData.equiposOffline.map((e, index) => `
+                <tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#fef2f2'}; 
+                           border-bottom: 1px solid #fee2e2;">
+                  <td style="border: 1px solid #fecaca; padding: 10px 8px; 
+                             word-wrap: break-word; vertical-align: top; font-weight: 500;">
+                    ${e.cliente}
+                  </td>
+                  <td style="border: 1px solid #fecaca; padding: 10px 8px; 
+                             word-wrap: break-word; vertical-align: top;">
+                    ${e.nombre}
+                  </td>
+                  <td style="border: 1px solid #fecaca; padding: 10px 8px; 
+                             text-align: center; vertical-align: top; font-weight: 500;">
+                    ${e.plataforma}
+                  </td>
+                  <td style="border: 1px solid #fecaca; padding: 10px 8px; 
+                             text-align: center; vertical-align: top;">
+                    <span style="color: #dc2626; font-size: 16px; font-weight: bold;">✗</span>
+                  </td>
+                  <td style="border: 1px solid #fecaca; padding: 10px 8px; 
+                             word-wrap: break-word; vertical-align: top; color: #7f1d1d;">
+                    ${e.motivo}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pie de página 2 -->
+        <div style="margin-top: 25px; text-align: center; font-size: 12px; color: #9ca3af; 
+                    border-top: 1px solid #e5e7eb; padding-top: 15px;">
+          <div>Página 2 de 2 - Detalle de Equipos Offline</div>
+          <div style="margin-top: 5px; font-size: 10px;">
+            Reporte generado automáticamente - ${new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })}
+          </div>
+        </div>
+      </div>
+    </div>
   `;
 
-    const opt = {
-      margin: 0.5,
-      filename: `reporte_estatus_${new Date().toISOString().split('T')[0]}.pdf`,
-      image: { type: 'jpeg', quality: 1.0 },
-      html2canvas: {
-        scale: 3,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-    };
-
-    html2pdf().set(opt).from(element).save();
+  const opt = {
+    margin: [0.3, 0.3, 0.3, 0.3], 
+    filename: `reporte_estatus_${new Date().toISOString().split('T')[0]}.pdf`,
+    image: { type: 'jpeg', quality: 0.95 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      letterRendering: true,
+      logging: false
+    },
+    jsPDF: { 
+      unit: 'in', 
+      format: 'a4', 
+      orientation: 'portrait',
+      compress: true
+    },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
   };
+
+  html2pdf().set(opt).from(element).save();
+};
 
 
   const getChartImage = (chartId) => {
