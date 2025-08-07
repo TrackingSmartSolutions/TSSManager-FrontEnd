@@ -900,6 +900,7 @@ const AdminCuentasCobrar = () => {
   const [cotizaciones, setCotizaciones] = useState([]);
   const [emisores, setEmisores] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [filtroEstatus, setFiltroEstatus] = useState("Todas");
 
   const [modals, setModals] = useState({
     crearCuentas: { isOpen: false },
@@ -1176,6 +1177,17 @@ const AdminCuentasCobrar = () => {
     }
   };
 
+  const cuentasFiltradas = cuentasPorCobrar.filter((cuenta) => {
+    if (filtroEstatus === "Todas") return true;
+    return cuenta.estatus === filtroEstatus;
+  });
+
+  const cuentasOrdenadas = cuentasFiltradas.sort((a, b) => {
+    const fechaA = new Date(a.fechaPago);
+    const fechaB = new Date(b.fechaPago);
+    return fechaA - fechaB;
+  });
+
   return (
     <>
       <Header />
@@ -1230,7 +1242,20 @@ const AdminCuentasCobrar = () => {
             <div className="cuentascobrar-table-card">
               <div className="cuentascobrar-table-header">
                 <h4 className="cuentascobrar-table-title">Cuentas por cobrar</h4>
-
+                <div className="cuentascobrar-filter-container">
+                  <label htmlFor="filtroEstatus">Filtrar por estatus:</label>
+                  <select
+                    id="filtroEstatus"
+                    value={filtroEstatus}
+                    onChange={(e) => setFiltroEstatus(e.target.value)}
+                    className="cuentascobrar-filter-select"
+                  >
+                    <option value="Todas">Todas</option>
+                    <option value="PENDIENTE">Pendiente</option>
+                    <option value="VENCIDA">Vencida</option>
+                    <option value="PAGADO">Pagado</option>
+                  </select>
+                </div>
               </div>
 
               <div className="cuentascobrar-table-container">
@@ -1248,8 +1273,8 @@ const AdminCuentasCobrar = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {cuentasPorCobrar.length > 0 ? (
-                      cuentasPorCobrar.map((cuenta) => (
+                    {cuentasOrdenadas.length > 0 ? (
+                      cuentasOrdenadas.map((cuenta) => (
                         <tr key={cuenta.id}>
                           <td>{cuenta.folio}</td>
                           <td>{cuenta.fechaPago}</td>
@@ -1349,7 +1374,9 @@ const AdminCuentasCobrar = () => {
                     ) : (
                       <tr>
                         <td colSpan="8" className="cuentascobrar-no-data">
-                          No hay cuentas por cobrar registradas
+                          {filtroEstatus === "Todas"
+                            ? "No hay cuentas por cobrar registradas"
+                            : `No hay cuentas por cobrar con estatus "${filtroEstatus}"`}
                         </td>
                       </tr>
                     )}

@@ -768,7 +768,44 @@
   margin-top: var(--cuentascobrar-spacing-lg);
 }
 
-/* Responsive Design */
+.cuentascobrar-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding: 0.3rem 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.cuentascobrar-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cuentascobrar-filter-container label {
+  font-weight: 500;
+  color: #333;
+  font-size: 0.8rem;
+}
+
+.cuentascobrar-filter-select {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  color: #333;
+  font-size: 0.75rem;
+  min-width: 120px;
+}
+
+.cuentascobrar-filter-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* Diseño responsivo */
 @media (max-width: 1200px) {
   .cuentascobrar-container {
     gap: var(--cuentascobrar-spacing-md);
