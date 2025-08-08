@@ -143,6 +143,19 @@ const processEquiposOffline = (equipos, estatusData, clientes) => {
   });
 };
 
+const processEquiposPorMotivo = (equiposOffline) => {
+  const motivoCount = {};
+  
+  equiposOffline.forEach(equipo => {
+    const motivo = equipo.motivo || 'Sin motivo especificado';
+    motivoCount[motivo] = (motivoCount[motivo] || 0) + 1;
+  });
+  
+  return Object.entries(motivoCount)
+    .map(([motivo, cantidad]) => ({ motivo, cantidad }))
+    .sort((a, b) => b.cantidad - a.cantidad); // Ordenar por cantidad descendente
+};
+
 const getTodayStart = () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -493,6 +506,7 @@ const EquiposEstatusPlataforma = () => {
     estatusPorCliente: [],
     equiposPorPlataforma: [],
     equiposOffline: [],
+    equiposPorMotivo: [],
     equiposParaCheck: [],
     fechaUltimoCheck: null,
   });
@@ -544,6 +558,7 @@ const EquiposEstatusPlataforma = () => {
         estatusPorCliente: processEstatusPorCliente(equipos, estatusData, clientes),
         equiposPorPlataforma: processEquiposPorPlataforma(equipos),
         equiposOffline: processEquiposOffline(equipos, estatusData, clientes),
+        equiposPorMotivo: processEquiposPorMotivo(processEquiposOffline(equipos, estatusData, clientes)),
         equiposParaCheck,
         fechaUltimoCheck,
       });
@@ -673,6 +688,59 @@ const EquiposEstatusPlataforma = () => {
             Total de equipos sin conexión: ${equiposData.equiposOffline.length}
           </p>
         </div>
+
+        <!-- Sección de Motivos de Desconexión -->
+<div style="margin-bottom: 25px;">
+  <h3 style="margin: 0 0 15px 0; font-size: 18px; color: #7c2d12; 
+             background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%); 
+             padding: 10px; border-radius: 6px; border-left: 4px solid #ea580c; text-align: center;">
+    📈 Distribución por Motivos de Desconexión
+  </h3>
+  
+  ${equiposData.equiposPorMotivo.length > 0 ? `
+    <table style="width: 100%; border-collapse: collapse; font-size: 12px; 
+                  background: #ffffff; border-radius: 8px; overflow: hidden; 
+                  box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+      <thead>
+        <tr style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #92400e;">
+          <th style="border: 1px solid #f59e0b; padding: 12px 8px; font-weight: bold; text-align: left;">
+            Motivo
+          </th>
+          <th style="border: 1px solid #f59e0b; padding: 12px 8px; font-weight: bold; text-align: center; width: 100px;">
+            Cantidad
+          </th>
+          <th style="border: 1px solid #f59e0b; padding: 12px 8px; font-weight: bold; text-align: center; width: 100px;">
+            Porcentaje
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        ${equiposData.equiposPorMotivo.map((item, index) => `
+          <tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#fffbeb'}; 
+                     border-bottom: 1px solid #fde68a;">
+            <td style="border: 1px solid #fde68a; padding: 10px 8px; 
+                       word-wrap: break-word; vertical-align: top;">
+              ${item.motivo}
+            </td>
+            <td style="border: 1px solid #fde68a; padding: 10px 8px; text-align: center; 
+                       font-weight: bold; color: #dc2626; vertical-align: top;">
+              ${item.cantidad}
+            </td>
+            <td style="border: 1px solid #fde68a; padding: 10px 8px; text-align: center; 
+                       color: #7c2d12; vertical-align: top;">
+              ${((item.cantidad / equiposData.equiposOffline.length) * 100).toFixed(1)}%
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  ` : `
+    <div style="text-align: center; color: #6b7280; font-style: italic; padding: 20px; 
+                background: #f9fafb; border-radius: 8px; border: 1px dashed #d1d5db;">
+      No hay datos de motivos disponibles
+    </div>
+  `}
+</div>
 
         <!-- Tabla -->
         <div style="flex: 1; overflow: hidden;">

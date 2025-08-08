@@ -401,30 +401,24 @@ const EquiposModelos = () => {
   }, []);
 
   const fetchData = async () => {
-    try {
-      setIsLoading(true);
-      const [modelosResponse, equiposCountResponse] = await Promise.all([
-        fetchWithToken(`${API_BASE_URL}/modelos`),
-        fetchWithToken(`${API_BASE_URL}/equipos/count-by-modelo`),
-      ]);
-      const modelosData = await modelosResponse.json();
-      const equiposCountData = await equiposCountResponse.json();
-
-      const modelosConConteo = modelosData.map(modelo => ({
-        ...modelo,
-        cantidad: equiposCountData[modelo.id] || 0,
-      }));
-      setModelos(modelosConConteo);
-    } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "No se pudieron cargar los modelos",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  try {
+    setIsLoading(true);
+    
+    // Usar el endpoint optimizado
+    const response = await fetchWithToken(`${API_BASE_URL}/modelos/summary`);
+    const data = await response.json();
+    
+    setModelos(data.modelos);
+  } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "No se pudieron cargar los modelos",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const openModal = (modalType, data = {}) => {
     setModals((prev) => ({
