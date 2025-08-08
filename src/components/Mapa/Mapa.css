@@ -47,7 +47,7 @@
 
 .mapa-filter-select:focus {
     outline: none;
-    border-color: #0057c9;
+    border-color: #bdbfc2;
     box-shadow: 0 0 5px rgba(0, 87, 201, 0.5);
 }
 
@@ -224,6 +224,41 @@
     padding: 8px;
     background: rgba(255, 255, 255, 0.9);
     border-radius: 4px;
+}
+
+.leaflet-tile {
+    image-rendering: auto;
+    will-change: transform;
+}
+
+.leaflet-map {
+    image-rendering: optimizeSpeed;
+}
+
+/* Más optimizaciones graduales */
+.leaflet-container {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+
+.leaflet-marker-icon {
+    transform: translate3d(0,0,0);
+    will-change: transform;
+}
+
+.leaflet-zoom-animated {
+    transition: transform 0.2s ease-out;
+}
+
+/* Optimizar para móviles */
+@media (max-width: 768px) {
+    .leaflet-map {
+        touch-action: pan-x pan-y;
+    }
+    
+    .leaflet-tile {
+        image-rendering: pixelated;
+    }
 }
 
 @media (max-width: 768px) {

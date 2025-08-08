@@ -17,6 +17,7 @@
     "jspdf": "^3.0.1",
     "jwt-decode": "^4.0.0",
     "leaflet": "^1.9.4",
+    "ol": "^10.6.1",
     "react": "^19.1.0",
     "react-chartjs-2": "^5.3.0",
     "react-datepicker": "^8.4.0",
@@ -33,7 +34,6 @@
     "build": "CI=false react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
-    
   },
   "eslintConfig": {
     "extends": [
@@ -63,8 +63,4 @@
     "jest-environment-jsdom": "^30.0.4",
     "jest-transform-stub": "^2.0.0"
   }
-
-  
 }
-
-

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import "./Mapa.css";
 import Header from "../Header/Header";
@@ -462,11 +462,21 @@ const Mapa = () => {
     const center = selectedMarker && coordinatesCache[selectedMarker?.id] ? coordinatesCache[selectedMarker.id] : defaultCenter;
 
     // Filtra empresas con coordenadas válidas y por sector seleccionado
-    const companiesWithCoords = companies?.filter(
-        (company) => coordinatesCache[company.id] &&
-            company.domicilioFisico &&
-            (selectedSector === "TODOS" || company.sector === selectedSector)
-    ) || [];
+    const companiesWithCoords = useMemo(() => {
+        return companies?.filter(
+            (company) => coordinatesCache[company.id] &&
+                company.domicilioFisico &&
+                (selectedSector === "TODOS" || company.sector === selectedSector)
+        ) || [];
+    }, [companies, coordinatesCache, selectedSector]);
+
+    const displayedCompanies = useMemo(() => {
+        // Si hay muchos marcadores, mostrar solo algunos en zoom bajo
+        if (companiesWithCoords.length > 100) {
+            return companiesWithCoords.filter((_, index) => index % 2 === 0);
+        }
+        return companiesWithCoords;
+    }, [companiesWithCoords]);
 
     // Mapas para traducir estados a texto legible
     const statusMap = {
@@ -726,11 +736,20 @@ const Mapa = () => {
                     </div>
                     <MapContainer center={center} zoom={13} className="leaflet-map" style={{ height: "calc(100% - 40px)", width: "100%" }}>
                         <TileLayer
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                            attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                            attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>'
+                            subdomains="abcd"
+                            tileSize={256}
+                            keepBuffer={2}
+                            preferCanvas={true}
+                            zoomSnap={0.5}
+                            zoomDelta={0.5}
+                            wheelPxPerZoomLevel={60}
+                            maxZoom={16}
+                            minZoom={9}
                         />
                         <MapCenter center={center} />
-                        {companiesWithCoords.map((company) => (
+                        {displayedCompanies.map((company) => (
                             <MarkerWithClick
                                 key={company.id}
                                 company={company}
