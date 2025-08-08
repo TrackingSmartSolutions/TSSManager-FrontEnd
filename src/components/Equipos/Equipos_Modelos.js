@@ -404,7 +404,6 @@ const EquiposModelos = () => {
   try {
     setIsLoading(true);
     
-    // Usar el endpoint optimizado
     const response = await fetchWithToken(`${API_BASE_URL}/modelos/summary`);
     const data = await response.json();
     

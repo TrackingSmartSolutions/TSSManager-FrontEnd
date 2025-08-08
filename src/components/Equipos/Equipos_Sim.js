@@ -868,41 +868,104 @@ const EquiposSim = () => {
     confirmDelete: { isOpen: false, sim: null, hasEquipoVinculado: false },
     details: { isOpen: false, sim: null },
   });
+  const [pagination, setPagination] = useState({
+    currentPage: 0,
+    totalPages: 0,
+    totalElements: 0,
+    pageSize: 50
+  });
+  
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     const userRoleFromStorage = localStorage.getItem("userRol");
     setUserRole(userRoleFromStorage === "ADMINISTRADOR" ? "ADMINISTRADOR" : userRoleFromStorage || "ADMINISTRADOR");
-    fetchData();
+    
+    fetchCriticalData();
   }, []);
 
-
-  const fetchData = async () => {
+  const fetchCriticalData = async () => {
     try {
       setIsLoading(true);
-      const [simsResponse, equiposResponse, gruposResponse] = await Promise.all([
-        fetchWithToken(`${API_BASE_URL}/sims`),
+      
+      const [equiposResponse, gruposResponse] = await Promise.all([
         fetchWithToken(`${API_BASE_URL}/equipos`),
         fetchWithToken(`${API_BASE_URL}/sims/grupos-disponibles`),
       ]);
-      const simsData = await simsResponse.json();
+      
       const equiposData = await equiposResponse.json();
       const gruposData = await gruposResponse.json();
+      
+      setEquipos(equiposData);
+      setGruposDisponibles(gruposData);
+      
+      await fetchSimsPaginadas(0);
+      
+    } catch (error) {
+      console.error("Error loading critical data:", error);
+      Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos críticos" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      const simsWithEquipo = simsData.map((sim) => {
-        const equipo = equiposData.find((e) => e.id === sim.equipoId);
+   const fetchSimsPaginadas = async (page = 0, append = false) => {
+    try {
+      if (page === 0) setIsLoading(true);
+      else setLoadingMore(true);
+      
+      const response = await fetchWithToken(`${API_BASE_URL}/sims/paged?page=${page}&size=${pagination.pageSize}`);
+      const data = await response.json();
+      
+      const simsWithEquipo = data.content.map((sim) => {
+        const equipo = equipos.find((e) => e.imei === sim.equipoImei);
         return {
           ...sim,
           equipo: equipo ? { id: equipo.id, nombre: equipo.nombre, tipo: equipo.tipo } : null,
         };
       });
-
-      setSims(simsWithEquipo);
-      setEquipos(equiposData);
-      setGruposDisponibles(gruposData);
+      
+      if (append) {
+        setSims(prev => [...prev, ...simsWithEquipo]);
+      } else {
+        setSims(simsWithEquipo);
+      }
+      
+      setPagination({
+        currentPage: data.number,
+        totalPages: data.totalPages,
+        totalElements: data.totalElements,
+        pageSize: data.size
+      });
+      
     } catch (error) {
-      Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos" });
+      console.error("Error loading SIMs:", error);
+      Swal.fire({ icon: "error", title: "Error", text: "Error al cargar SIMs" });
     } finally {
       setIsLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMoreSims = () => {
+    if (pagination.currentPage < pagination.totalPages - 1 && !loadingMore) {
+      fetchSimsPaginadas(pagination.currentPage + 1, true);
+    }
+  };
+
+  const fetchData = async () => {
+    await fetchCriticalData();
+  };
+
+  const validateNumeroAsync = async (numero, excludeId = null) => {
+    try {
+      const params = excludeId ? `?excludeId=${excludeId}` : '';
+      const response = await fetchWithToken(`${API_BASE_URL}/sims/validar-numero/${numero}${params}`);
+      const data = await response.json();
+      return data.disponible;
+    } catch (error) {
+      console.error("Error validating numero:", error);
+      return true;
     }
   };
 
@@ -947,7 +1010,6 @@ const EquiposSim = () => {
           }
           : sim
       );
-      // Remapear el equipo usando la lista completa de equipos
       return updatedSims.map((sim) => {
         const equipo = equipos.find((e) => e.id === sim.equipoId);
         return {
@@ -1197,6 +1259,17 @@ const EquiposSim = () => {
                       )}
                   </tbody>
                 </table>
+                 {pagination.currentPage < pagination.totalPages - 1 && (
+                  <div className="sim-load-more-container">
+                    <button 
+                      className="sim-btn sim-btn-secondary" 
+                      onClick={loadMoreSims}
+                      disabled={loadingMore}
+                    >
+                      {loadingMore ? 'Cargando...' : `Cargar más SIMs (${sims.length} de ${pagination.totalElements})`}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </section>

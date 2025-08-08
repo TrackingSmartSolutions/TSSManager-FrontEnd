@@ -46,7 +46,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true,
   };
 
   return (
-    <div className="estatusplataforma-modal-overlay" onClick={closeOnOverlayClick ? onClose: () => { }}>
+    <div className="estatusplataforma-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
       <div className={`estatusplataforma-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="estatusplataforma-modal-header">
           <h2 className="estatusplataforma-modal-title">{title}</h2>
@@ -145,12 +145,12 @@ const processEquiposOffline = (equipos, estatusData, clientes) => {
 
 const processEquiposPorMotivo = (equiposOffline) => {
   const motivoCount = {};
-  
+
   equiposOffline.forEach(equipo => {
     const motivo = equipo.motivo || 'Sin motivo especificado';
     motivoCount[motivo] = (motivoCount[motivo] || 0) + 1;
   });
-  
+
   return Object.entries(motivoCount)
     .map(([motivo, cantidad]) => ({ motivo, cantidad }))
     .sort((a, b) => b.cantidad - a.cantidad); // Ordenar por cantidad descendente
@@ -612,20 +612,24 @@ const EquiposEstatusPlataforma = () => {
   };
 
   const handleGeneratePDF = async () => {
-  const element = document.createElement("div");
-  const chartImages = await Promise.all([
-    getChartImage("estatusClienteChart"),
-    getChartImage("plataformaChart"),
-  ]);
+    const element = document.createElement("div");
+    const chartImages = await Promise.all([
+      getChartImage("estatusClienteChart"),
+      getChartImage("plataformaChart"),
+    ]);
 
-  const currentDate = new Date().toLocaleDateString('es-MX', { 
-    timeZone: 'America/Mexico_City',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+    const currentDate = new Date().toLocaleDateString('es-MX', {
+      timeZone: 'America/Mexico_City',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
 
-  element.innerHTML = `
+    const totalEquiposOffline = equiposData.equiposOffline.length;
+    const totalEquiposOnline = equiposData.estatusPorCliente.reduce((acc, cliente) => acc + cliente.enLinea, 0);
+    const totalEquipos = totalEquiposOnline + totalEquiposOffline;
+
+    element.innerHTML = `
     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.4;">
       <!-- PÁGINA 1: Encabezado y Gráficas -->
       <div style="page-break-after: always; padding: 20px; min-height: 100vh; display: flex; flex-direction: column;">
@@ -640,7 +644,7 @@ const EquiposEstatusPlataforma = () => {
         </div>
 
         <!-- Contenedor de Gráficas -->
-        <div style="flex: 1; display: flex; flex-direction: column; gap: 25px;">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 15px;">
           <!-- Gráfica 1 -->
           <div style="flex: 1; display: flex; flex-direction: column;">
             <h2 style="margin: 0 0 15px 0; font-size: 20px; color: #374151; text-align: center; 
@@ -651,7 +655,37 @@ const EquiposEstatusPlataforma = () => {
             <div style="flex: 1; display: flex; justify-content: center; align-items: center; 
                         background: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
                         padding: 15px;">
-              <img src="${chartImages[0]}" style="max-width: 100%; max-height: 300px; height: auto; object-fit: contain;" />
+              <img src="${chartImages[0]}" style="max-width: 100%; max-height: 260px; height: auto; object-fit: contain;" />
+            </div>
+          </div>
+
+          <!-- Resumen de Equipos -->
+           <div style="margin: 10px 0; padding: 10px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);                      border-radius: 10px; border-left: 4px solid #0ea5e9;">
+            <div style="display: flex; justify-content: center; gap: 40px; flex-wrap: wrap;">
+              <div style="text-align: center; min-width: 120px;">
+                <div style="font-size: 24px; font-weight: bold; color: #22c55e; margin-bottom: 5px;">
+                  ${totalEquiposOnline}
+                </div>
+                <div style="font-size: 12px; color: #374151; font-weight: 500;">
+                  Equipos Online
+                </div>
+              </div>
+              <div style="text-align: center; min-width: 120px;">
+                <div style="font-size: 24px; font-weight: bold; color: #ef4444; margin-bottom: 5px;">
+                  ${totalEquiposOffline}
+                </div>
+                <div style="font-size: 12px; color: #374151; font-weight: 500;">
+                  Equipos Offline
+                </div>
+              </div>
+              <div style="text-align: center; min-width: 120px;">
+                <div style="font-size: 24px; font-weight: bold; color: #3b82f6; margin-bottom: 5px;">
+                  ${totalEquipos}
+                </div>
+                <div style="font-size: 12px; color: #374151; font-weight: 500;">
+                  Total Equipos
+                </div>
+              </div>
             </div>
           </div>
 
@@ -665,7 +699,7 @@ const EquiposEstatusPlataforma = () => {
             <div style="flex: 1; display: flex; justify-content: center; align-items: center; 
                         background: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
                         padding: 15px;">
-              <img src="${chartImages[1]}" style="max-width: 100%; max-height: 300px; height: auto; object-fit: contain;" />
+              <img src="${chartImages[1]}" style="max-width: 100%; max-height: 260px; height: auto; object-fit: contain;" />
             </div>
           </div>
         </div>
@@ -803,29 +837,29 @@ const EquiposEstatusPlataforma = () => {
     </div>
   `;
 
-  const opt = {
-    margin: [0.3, 0.3, 0.3, 0.3], 
-    filename: `reporte_estatus_${new Date().toISOString().split('T')[0]}.pdf`,
-    image: { type: 'jpeg', quality: 0.95 },
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff',
-      letterRendering: true,
-      logging: false
-    },
-    jsPDF: { 
-      unit: 'in', 
-      format: 'a4', 
-      orientation: 'portrait',
-      compress: true
-    },
-    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-  };
+    const opt = {
+      margin: [0.3, 0.3, 0.3, 0.3],
+      filename: `reporte_estatus_${new Date().toISOString().split('T')[0]}.pdf`,
+      image: { type: 'jpeg', quality: 0.95 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        letterRendering: true,
+        logging: false
+      },
+      jsPDF: {
+        unit: 'in',
+        format: 'a4',
+        orientation: 'portrait',
+        compress: true
+      },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
 
-  html2pdf().set(opt).from(element).save();
-};
+    html2pdf().set(opt).from(element).save();
+  };
 
 
   const getChartImage = (chartId) => {
