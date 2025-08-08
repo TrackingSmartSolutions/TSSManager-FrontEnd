@@ -4,15 +4,37 @@ import "./Mapa.css";
 import Header from "../Header/Header";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
+import Swal from 'sweetalert2';
 import "leaflet/dist/leaflet.css";
 import carIcon from "../../assets/icons/car.png";
 import redMarker from "../../assets/icons/marcador-rojo.png";
 import blackMarker from "../../assets/icons/marcador.png";
-import AddressCleaner from '../Utils/AddressCleaner';
-
+import { API_BASE_URL } from "../Config/Config";
 const CACHE_KEY = 'geocoding_cache_v2';
 const CACHE_EXPIRY_DAYS = 30;
 
+const fetchWithToken = async (url, options = {}) => {
+    const token = localStorage.getItem("token");
+    const headers = {
+        ...options.headers,
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+
+    if (options.body && !(options.body instanceof FormData)) {
+        headers["Content-Type"] = "application/json";
+    }
+
+    const response = await fetch(url, {
+        ...options,
+        headers
+    });
+
+    if (!response.ok) {
+        throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`);
+    }
+
+    return response;
+};
 
 const loadCacheFromStorage = () => {
     try {
@@ -43,8 +65,6 @@ const saveCacheToStorage = (cache) => {
     }
 };
 
-
-// Define íconos personalizados para los marcadores
 const redIcon = new L.Icon({
     iconUrl: redMarker,
     iconSize: [38, 38],
@@ -59,19 +79,16 @@ const blackIcon = new L.Icon({
     popupAnchor: [0, -24],
 });
 
-// Componente para centrar el mapa en las coordenadas especificadas
 const MapCenter = ({ center }) => {
     const map = useMap();
     useEffect(() => {
         if (center && (center[0] !== 19.4326 || center[1] !== -99.1332)) {
-            console.log('MapCenter setting view to:', center); // Depuración
             map.setView(center, 13);
         }
     }, [center, map]);
     return null;
 };
 
-// Componente para manejar marcadores con interacción de clic
 const MarkerWithClick = ({ company, coordinatesCache, selectedMarker, setSelectedMarker }) => {
     const map = useMap();
     const isSelected = company.id === selectedMarker?.id;
@@ -101,9 +118,9 @@ const MarkerWithClick = ({ company, coordinatesCache, selectedMarker, setSelecte
 
 const Mapa = () => {
     const location = useLocation();
-    const { companies, selectedCompany } = location.state || {};
+    const { companies: initialCompanies, selectedCompany } = location.state || {};
+    const [companies, setCompanies] = useState(initialCompanies || []);
 
-    // Estados para manejar caché de coordenadas, marcador seleccionado, errores, carga y filtro de sector
     const [coordinatesCache, setCoordinatesCache] = useState(() => loadCacheFromStorage());
     const [selectedMarker, setSelectedMarker] = useState(null);
     const [error, setError] = useState(null);
@@ -111,9 +128,9 @@ const Mapa = () => {
     const [isCrmDropdownOpen, setIsCrmDropdownOpen] = useState(false);
     const [selectedSector, setSelectedSector] = useState("TODOS");
     const [geocodingProgress, setGeocodingProgress] = useState({ current: 0, total: 0 });
+    const [isControlsCollapsed, setIsControlsCollapsed] = useState(true);
+    const [isFilterCollapsed, setIsFilterCollapsed] = useState(true);
 
-
-    const addressCleaner = new AddressCleaner();
 
 
     // Mapa de sectores
@@ -295,206 +312,150 @@ const Mapa = () => {
         PARTICULAR: "(99) Particular"
     };
 
-    <div className="mapa-controls">
-        <button
-            onClick={() => {
-                setCoordinatesCache({});
-                setIsLoading(true);
-            }}
-            className="mapa-btn mapa-btn-primary"
-            disabled={isLoading}
-        >
-            {isLoading ? 'Cargando...' : 'Recargar Ubicaciones'}
-        </button>
-        <span style={{ marginLeft: '10px', fontSize: '14px', color: '#666' }}>
-            {Object.keys(coordinatesCache).length} ubicaciones cargadas
-        </span>
-    </div>
-
-    // Función para obtener coordenadas de una dirección usando Nominatim
-    const geocodeAddress = async (address) => {
-        if (coordinatesCache[address]) {
-            return coordinatesCache[address];
-        }
-
-        const cleanedAddress = addressCleaner.cleanAddress(address);
-
-        // Verificar si la dirección limpia es realmente válida
-        if (!addressCleaner.isValidAddress(cleanedAddress)) {
-            console.warn(`Dirección ignorada por inválida: ${address}`);
-            return null;
-        }
-
-        // Verificar caché con dirección limpia
-        if (coordinatesCache[cleanedAddress]) {
-            setCoordinatesCache(prev => ({ ...prev, [address]: coordinatesCache[cleanedAddress] }));
-            return coordinatesCache[cleanedAddress];
-        }
-
-        const queryParts = [cleanedAddress];
-        if (!cleanedAddress.toLowerCase().includes('méxico') && !cleanedAddress.toLowerCase().includes('mexico')) {
-            queryParts.push('México');
-        }
-
-        const query = queryParts.join(', ');
-
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 segundos timeout
-
-            const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?` +
-                `format=json&` +
-                `q=${encodeURIComponent(query)}&` +
-                `limit=1&` +
-                `countrycodes=mx&` +
-                `addressdetails=1&` +
-                `bounded=1&` +
-                `viewbox=-109.5,32.7,-86.7,14.5`, 
-                {
-                    signal: controller.signal,
-                    headers: {
-                        'User-Agent': 'MapApp/1.0'
-                    }
-                }
-            );
-
-            clearTimeout(timeoutId);
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (data.length > 0) {
-                const coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-
-                if (coords[0] >= 14.5 && coords[0] <= 32.7 && coords[1] >= -118.4 && coords[1] <= -86.7) {
-                    const newCache = {
-                        ...coordinatesCache,
-                        [address]: coords,
-                        [cleanedAddress]: coords
-                    };
-                    setCoordinatesCache(newCache);
-                    saveCacheToStorage(newCache); 
-                    return coords;
-                }
-            }
-
-            console.log(`Sin resultados válidos para: ${cleanedAddress}`);
-            return null;
-
-        } catch (err) {
-            if (err.name === 'AbortError') {
-                console.warn(`Timeout geocoding: ${cleanedAddress}`);
-            } else {
-                console.error(`Error geocoding ${cleanedAddress}:`, err.message);
-            }
-            return null;
-        }
-    };
-
-    // Obtiene coordenadas para todas las empresas al cargar el componente
     useEffect(() => {
-        const fetchCoordinates = async () => {
-            if (!companies) {
-                setIsLoading(false);
-                return;
-            }
+        const loadCompaniesWithCoordinates = async () => {
+            try {
+                setIsLoading(true);
 
-            const persistedCache = loadCacheFromStorage();
-            if (Object.keys(persistedCache).length > 0) {
-                setCoordinatesCache(persistedCache);
-            }
+                if (initialCompanies && initialCompanies.length > 0) {
+                    const finalCompanies = initialCompanies;
+                    setCompanies(finalCompanies);
 
-            setIsLoading(true);
+                    const coordsCache = {};
+                    let loadedCount = 0;
 
-            const validCompanies = companies.filter(company => {
-                const address = company.domicilioFisico?.trim();
-
-                if (!address || address === 'undefined') return false;
-                if (address.length < 15) return false;
-                if (persistedCache[company.id]) return false; 
-
-                return addressCleaner.isValidAddress(address);
-            });
-
-            console.log(`Procesando ${validCompanies.length} direcciones nuevas de ${companies.length} totales`);
-
-            if (validCompanies.length === 0) {
-                setIsLoading(false);
-                return;
-            }
-
-            setGeocodingProgress({ current: 0, total: validCompanies.length });
-
-            // Configuración optimizada
-            const batchSize = 3; // Reducir para evitar rate limiting
-            const delayBetweenRequests = 400; // Delay entre requests individuales
-            const delayBetweenBatches = 2000; // Delay entre lotes
-
-            for (let i = 0; i < validCompanies.length; i += batchSize) {
-                const batch = validCompanies.slice(i, i + batchSize);
-
-                // Procesar secuencialmente dentro del lote para evitar saturar
-                for (const company of batch) {
-                    try {
-                        const coords = await geocodeAddress(company.domicilioFisico);
-                        if (coords) {
-                            setCoordinatesCache(prev => ({
-                                ...prev,
-                                [company.id]: coords
-                            }));
+                    finalCompanies.forEach(company => {
+                        if (company.lat && company.lng) {
+                            coordsCache[company.id] = [parseFloat(company.lat), parseFloat(company.lng)];
+                            loadedCount++;
                         }
-                    } catch (error) {
-                        console.warn(`Error procesando ${company.nombre}:`, error);
+                    });
+
+                    setCoordinatesCache(coordsCache);
+                    saveCacheToStorage(coordsCache);
+
+
+                } else {
+                    const response = await fetchWithToken(`${API_BASE_URL}/coordenadas/empresas`);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
                     }
 
-                    setGeocodingProgress(prev => ({
-                        ...prev,
-                        current: prev.current + 1
-                    }));
+                    const companiesData = await response.json();
+                    setCompanies(companiesData);
 
-                    // Delay entre requests
-                    if (delayBetweenRequests > 0) {
-                        await new Promise(resolve => setTimeout(resolve, delayBetweenRequests));
+                    // Construir caché de coordenadas
+                    const coordsCache = {};
+                    let loadedCount = 0;
+                    let pendingCount = 0;
+
+                    companiesData.forEach(company => {
+                        if (company.lat && company.lng) {
+                            coordsCache[company.id] = [parseFloat(company.lat), parseFloat(company.lng)];
+                            loadedCount++;
+                        } else {
+                            pendingCount++;
+                        }
+                    });
+
+                    setCoordinatesCache(coordsCache);
+                    saveCacheToStorage(coordsCache);
+
+
+                    if (pendingCount > 0) {
+                        try {
+                            const preprocessResponse = await fetchWithToken(`${API_BASE_URL}/coordenadas/preprocess`, {
+                                method: 'POST'
+                            });
+                            if (preprocessResponse.ok) {
+
+                                const reloadInterval = setInterval(async () => {
+                                    try {
+                                        const updateResponse = await fetchWithToken(`${API_BASE_URL}/coordenadas/empresas`);
+                                        const updatedData = await updateResponse.json();
+
+                                        const newCoordsCache = {};
+                                        let newLoadedCount = 0;
+
+                                        updatedData.forEach(company => {
+                                            if (company.lat && company.lng) {
+                                                newCoordsCache[company.id] = [parseFloat(company.lat), parseFloat(company.lng)];
+                                                newLoadedCount++;
+                                            }
+                                        });
+
+                                        if (newLoadedCount > loadedCount) {
+                                            setCoordinatesCache(newCoordsCache);
+                                            saveCacheToStorage(newCoordsCache);
+                                            setCompanies(updatedData);
+
+                                            // Si se completaron todas, limpiar interval
+                                            if (newLoadedCount === updatedData.length) {
+                                                clearInterval(reloadInterval);
+                                            }
+                                        }
+                                    } catch (err) {
+                                        console.warn('Error actualizando coordenadas:', err);
+                                    }
+                                }, 30000);
+
+                                setTimeout(() => {
+                                    clearInterval(reloadInterval);
+                                }, 600000);
+                            }
+                        } catch (err) {
+                            console.warn('Error iniciando preprocesamiento:', err);
+                        }
                     }
                 }
 
-                // Delay entre lotes
-                if (i + batchSize < validCompanies.length) {
-                    await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
-                }
+                setIsLoading(false);
+
+            } catch (error) {
+                console.error('Error loading companies with coordinates:', error);
+                setError('Error cargando ubicaciones: ' + error.message);
+                setIsLoading(false);
             }
-
-            setIsLoading(false);
         };
 
-        fetchCoordinates();
-    }, [companies]);
+        loadCompaniesWithCoordinates();
+    }, []);
 
-    // Actualiza el marcador seleccionado cuando cambia la empresa seleccionada
     useEffect(() => {
-        if (selectedCompany && !coordinatesCache[selectedCompany.id] && !isLoading) {
-            geocodeAddress(selectedCompany.domicilioFisico).then((coords) => {
-                if (coords) {
-                    setCoordinatesCache((prev) => ({ ...prev, [selectedCompany.id]: coords }));
-                    setSelectedMarker(selectedCompany);
-                }
-            });
-        } else if (selectedCompany && coordinatesCache[selectedCompany.id]) {
-            setSelectedMarker(selectedCompany);
+        if (selectedCompany) {
+            if (coordinatesCache[selectedCompany.id]) {
+                setSelectedMarker(selectedCompany);
+            } else {
+                console.log(`Empresa ${selectedCompany.nombre} no tiene coordenadas aún. Se geocodificará en background.`);
+            }
         }
-    }, [selectedCompany, coordinatesCache, isLoading]);
+    }, [selectedCompany, coordinatesCache]);
 
-    // Controla la interacción del mapa cuando el menú desplegable está abierto
     useEffect(() => {
         const mapElement = document.querySelector('.leaflet-map');
         if (mapElement) {
             mapElement.style.pointerEvents = isCrmDropdownOpen ? 'none' : 'auto';
         }
     }, [isCrmDropdownOpen]);
+
+    // Detectar dispositivo móvil y ajustar estado inicial
+    useEffect(() => {
+        const isMobile = window.innerWidth <= 768;
+        setIsControlsCollapsed(isMobile);
+        setIsFilterCollapsed(isMobile);
+
+        const handleResize = () => {
+            const isMobile = window.innerWidth <= 768;
+            if (!isMobile) {
+                setIsControlsCollapsed(false);
+                setIsFilterCollapsed(false);
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Centro por defecto del mapa (Ciudad de México)
     const defaultCenter = [19.4326, -99.1332];
@@ -519,7 +480,6 @@ const Mapa = () => {
     const getStatusText = (status) => statusMap[status] || status;
     const getSectorText = (sector) => sectorMap[sector] || sector || "N/A";
 
-    // Abre Google Maps para obtener direcciones al marcador seleccionado
     const handleGetDirections = () => {
         if (selectedMarker?.domicilioFisico && navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
@@ -585,20 +545,184 @@ const Mapa = () => {
                 {error && <div className="mapa-error">{error}</div>}
                 <div className="mapa-container">
                     <div className="mapa-filter">
-                        <label htmlFor="sectorFilter">Filtrar por Sector: </label>
-                        <select
-                            id="sectorFilter"
-                            value={selectedSector}
-                            onChange={(e) => setSelectedSector(e.target.value)}
-                            className="mapa-filter-select"
-                        >
-                            <option value="TODOS">Todos</option>
-                            {Object.keys(sectorMap).map((sector) => (
-                                <option key={sector} value={sector}>
-                                    {sectorMap[sector]}
-                                </option>
-                            ))}
-                        </select>
+                        {/* Header principal del filtro */}
+                        <div className="mapa-filter-header">
+                            <button
+                                className="mapa-collapse-btn mapa-main-collapse"
+                                onClick={() => setIsFilterCollapsed(!isFilterCollapsed)}
+                            >
+                                <span className="collapse-icon">{isFilterCollapsed ? '📍' : '✕'}</span>
+                                <span className="collapse-text">Filtros y Controles</span>
+                            </button>
+                        </div>
+
+                        {/* Contenido colapsable principal */}
+                        <div className={`mapa-filter-content ${isFilterCollapsed ? 'collapsed' : 'expanded'}`}>
+
+                            {/* Sección de controles */}
+                            <div className="mapa-controls-section">
+                                <div className="mapa-controls-header">
+                                    <button
+                                        className="mapa-collapse-btn mapa-sub-collapse"
+                                        onClick={() => setIsControlsCollapsed(!isControlsCollapsed)}
+                                    >
+                                        <span className="collapse-icon">{isControlsCollapsed ? '⚙️' : '▼'}</span>
+                                        <span className="collapse-text">Controles del Mapa</span>
+                                    </button>
+                                </div>
+
+                                <div className={`mapa-controls ${isControlsCollapsed ? 'collapsed' : 'expanded'}`}>
+                                    <div className="mapa-info">
+                                        <span style={{ fontSize: '14px', color: '#666' }}>
+                                            {Object.keys(coordinatesCache).length} ubicaciones cargadas
+                                            {companies.length > 0 && ` de ${companies.length} empresas`}
+                                        </span>
+                                    </div>
+                                    <div className="mapa-actions">
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    setIsLoading(true);
+                                                    setCoordinatesCache({});
+
+                                                    const response = await fetchWithToken(`${API_BASE_URL}/coordenadas/empresas`);
+                                                    const freshData = await response.json();
+                                                    setCompanies(freshData);
+
+                                                    const coordsCache = {};
+                                                    freshData.forEach(company => {
+                                                        if (company.lat && company.lng) {
+                                                            coordsCache[company.id] = [parseFloat(company.lat), parseFloat(company.lng)];
+                                                        }
+                                                    });
+
+                                                    setCoordinatesCache(coordsCache);
+                                                    saveCacheToStorage(coordsCache);
+                                                    setIsLoading(false);
+
+                                                } catch (error) {
+                                                    console.error('Error recargando:', error);
+                                                    setError('Error recargando datos');
+                                                    setIsLoading(false);
+                                                }
+                                            }}
+                                            className="mapa-btn mapa-btn-primary"
+                                            disabled={isLoading}
+                                        >
+                                            <span className="btn-text">{isLoading ? 'Cargando...' : 'Recargar'}</span>
+                                        </button>
+
+                                        <button
+                                            onClick={async () => {
+                                                Swal.fire({
+                                                    title: 'Iniciando geocodificación...',
+                                                    html: 'Por favor espera mientras procesamos las direcciones',
+                                                    icon: 'info',
+                                                    allowOutsideClick: false,
+                                                    showConfirmButton: false,
+                                                    willOpen: () => {
+                                                        Swal.showLoading();
+                                                    }
+                                                });
+
+                                                try {
+                                                    const response = await fetchWithToken(`${API_BASE_URL}/coordenadas/preprocess`, {
+                                                        method: 'POST'
+                                                    });
+
+                                                    if (response.ok) {
+                                                        Swal.fire({
+                                                            title: '¡Geocodificación iniciada!',
+                                                            html: `
+                                                            <div style="text-align: left; margin: 15px 0;">
+                                                            <p>📍 El proceso de geocodificación se ha iniciado en segundo plano.</p>
+                                                            <p>🕐 Las nuevas ubicaciones aparecerán en unos minutos.</p>
+                                                            <p>🔄 Puedes usar el botón "Recargar" para ver el progreso.</p>
+                                                             </div>
+                                                            `,
+                                                            icon: 'success',
+                                                            confirmButtonText: 'Entendido',
+                                                            confirmButtonColor: '#28a745',
+                                                            timer: 5000,
+                                                            timerProgressBar: true,
+                                                            showCloseButton: true
+                                                        });
+                                                    } else {
+                                                        Swal.fire({
+                                                            title: 'Error en la geocodificación',
+                                                            text: 'No se pudo iniciar el proceso de geocodificación. Por favor intenta nuevamente.',
+                                                            icon: 'error',
+                                                            confirmButtonText: 'Reintentar',
+                                                            confirmButtonColor: '#dc3545'
+                                                        });
+                                                    }
+                                                } catch (error) {
+                                                    console.error('Error:', error);
+                                                    Swal.fire({
+                                                        title: 'Error de conexión',
+                                                        html: `
+                                                        <div style="text-align: left;">
+                                                        <p>❌ No se pudo conectar con el servidor.</p>
+                                                        <p>🔗 Verifica tu conexión a internet e intenta nuevamente.</p>
+                                                        <p><small style="color: #6c757d;">Error técnico: ${error.message}</small></p>
+                                                        </div>
+                                                        `,
+                                                        icon: 'error',
+                                                        confirmButtonText: 'Reintentar',
+                                                        confirmButtonColor: '#dc3545',
+                                                        showCloseButton: true
+                                                    });
+                                                }
+                                            }}
+                                            className="mapa-btn mapa-btn-secondary"
+                                        >
+                                            <span className="btn-text">Geocodificar</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Sección del filtro de sector */}
+                            <div className="mapa-sector-section">
+                                <div className="mapa-sector-header">
+                                    <label htmlFor="sectorFilter" className="sector-label">
+                                        <span className="label-icon">🏢</span>
+                                        Filtrar por Sector:
+                                    </label>
+                                </div>
+                                <select
+                                    id="sectorFilter"
+                                    value={selectedSector}
+                                    onChange={(e) => setSelectedSector(e.target.value)}
+                                    className="mapa-filter-select"
+                                >
+                                    <option value="TODOS">📋 Todos los Sectores</option>
+                                    {Object.keys(sectorMap).map((sector) => (
+                                        <option key={sector} value={sector}>
+                                            {sectorMap[sector]}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Información adicional */}
+                            <div className="mapa-stats">
+                                <div className="stat-item">
+                                    <span className="stat-icon">📍</span>
+                                    <span className="stat-text">
+                                        {companiesWithCoords.length} empresas visibles
+                                    </span>
+                                </div>
+                                {selectedSector !== "TODOS" && (
+                                    <div className="stat-item">
+                                        <span className="stat-icon">🏷️</span>
+                                        <span className="stat-text">
+                                            Sector: {sectorMap[selectedSector]?.split(')')[1]?.trim() || selectedSector}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                     <MapContainer center={center} zoom={13} className="leaflet-map" style={{ height: "calc(100% - 40px)", width: "100%" }}>
                         <TileLayer

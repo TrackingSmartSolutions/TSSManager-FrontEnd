@@ -208,8 +208,10 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     if (!formData.nombreContacto) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fecha.trim()) newErrors.fecha = "Este campo es obligatorio";
     else if (formData.fecha < currentDate) newErrors.fecha = "La fecha no puede ser en el pasado";
-    else if (formData.fecha === currentDate && formData.horaInicio && formData.horaInicio < currentTime)
+    if (!formData.horaInicio.trim()) newErrors.horaInicio = "Este campo es obligatorio";
+    else if (formData.fecha === currentDate && formData.horaInicio < currentTime) {
       newErrors.horaInicio = "La hora no puede ser en el pasado";
+    }
     if (!formData.horaInicio.trim()) newErrors.horaInicio = "Este campo es obligatorio";
     if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     setErrors(newErrors);
@@ -369,7 +371,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             value={formData.horaInicio}
             onChange={(e) => handleInputChange("horaInicio", e.target.value)}
             className={`modal-form-control ${errors.horaInicio ? "error" : ""}`}
-            min={formData.fecha === new Date().toISOString().split('T')[0] ? (() => {
+            min={formData.fecha === new Date().toLocaleDateString('en-CA') ? (() => {
               const now = new Date();
               return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
             })() : undefined}
@@ -541,9 +543,10 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     if (!formData.nombreContacto) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fecha.trim()) newErrors.fecha = "Este campo es obligatorio";
     else if (formData.fecha < currentDate) newErrors.fecha = "La fecha no puede ser en el pasado";
-    else if (formData.fecha === currentDate && formData.horaInicio && formData.horaInicio < currentTime)
-      newErrors.horaInicio = "La hora no puede ser en el pasado";
     if (!formData.horaInicio.trim()) newErrors.horaInicio = "Este campo es obligatorio";
+    else if (formData.fecha === currentDate && formData.horaInicio < currentTime) {
+      newErrors.horaInicio = "La hora no puede ser en el pasado";
+    }
     if (!formData.duracion || formData.duracion.trim() === "") newErrors.duracion = "Este campo es obligatorio";
     if (!formData.modalidad.trim()) newErrors.modalidad = "Este campo es obligatorio";
     if (formData.modalidad === "PRESENCIAL" && !formData.lugarReunion.trim())
@@ -719,7 +722,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
               value={formData.horaInicio}
               onChange={(e) => handleInputChange("horaInicio", e.target.value)}
               className={`modal-form-control ${errors.horaInicio ? "error" : ""}`}
-              min={formData.fecha === new Date().toISOString().split('T')[0] ? (() => {
+              min={formData.fecha === new Date().toLocaleDateString('en-CA') ? (() => {
                 const now = new Date();
                 return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
               })() : undefined}
@@ -896,11 +899,11 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-  const userId = localStorage.getItem('userId');
-  if (userId) {
-    setCurrentUser({ id: userId });
-  }
-}, []);
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      setCurrentUser({ id: userId });
+    }
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -1220,9 +1223,10 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
     const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     if (!formData.nuevaFecha.trim()) newErrors.nuevaFecha = "Este campo es obligatorio";
     else if (formData.nuevaFecha < currentDate) newErrors.nuevaFecha = "La fecha no puede ser en el pasado";
-    else if (formData.nuevaFecha === currentDate && formData.nuevaHora && formData.nuevaHora < currentTime)
-      newErrors.nuevaHora = "La hora no puede ser en el pasado";
     if (!formData.nuevaHora.trim()) newErrors.nuevaHora = "Este campo es obligatorio";
+    else if (formData.nuevaFecha === currentDate && formData.nuevaHora < currentTime) {
+      newErrors.nuevaHora = "La hora no puede ser en el pasado";
+    }
     if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     if (!formData.asignadoAId) newErrors.asignadoAId = "Este campo es obligatorio";
     if (!formData.nombreContactoId) newErrors.nombreContactoId = "Este campo es obligatorio";
@@ -1353,7 +1357,7 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
             value={formData.nuevaHora}
             onChange={(e) => handleInputChange("nuevaHora", e.target.value)}
             className={`modal-form-control ${errors.nuevaHora ? "error" : ""}`}
-            min={formData.nuevaFecha === new Date().toISOString().split('T')[0] ? (() => {
+            min={formData.nuevaFecha === new Date().toLocaleDateString('en-CA') ? (() => {
               const now = new Date();
               return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
             })() : undefined}
@@ -1509,9 +1513,10 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
     const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     if (!formData.nuevaFecha.trim()) newErrors.nuevaFecha = "Este campo es obligatorio";
     else if (formData.nuevaFecha < currentDate) newErrors.nuevaFecha = "La fecha no puede ser en el pasado";
-    else if (formData.nuevaFecha === currentDate && formData.nuevaHoraInicio && formData.nuevaHoraInicio < currentTime)
-      newErrors.nuevaHoraInicio = "La hora no puede ser en el pasado";
     if (!formData.nuevaHoraInicio.trim()) newErrors.nuevaHoraInicio = "Este campo es obligatorio";
+    else if (formData.nuevaFecha === currentDate && formData.nuevaHoraInicio < currentTime) {
+      newErrors.nuevaHoraInicio = "La hora no puede ser en el pasado";
+    }
     if (!formData.duracion || formData.duracion.trim() === "") newErrors.duracion = "Este campo es obligatorio";
     if (!formData.modalidad.trim()) newErrors.modalidad = "Este campo es obligatorio";
     if (formData.modalidad === "PRESENCIAL" && !formData.lugarReunion.trim())
@@ -1662,7 +1667,7 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
               value={formData.nuevaHoraInicio}
               onChange={(e) => handleInputChange("nuevaHoraInicio", e.target.value)}
               className={`modal-form-control ${errors.nuevaHoraInicio ? "error" : ""}`}
-              min={formData.nuevaFecha === new Date().toISOString().split('T')[0] ? (() => {
+              min={formData.nuevaFecha === new Date().toLocaleDateString('en-CA') ? (() => {
                 const now = new Date();
                 return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
               })() : undefined}

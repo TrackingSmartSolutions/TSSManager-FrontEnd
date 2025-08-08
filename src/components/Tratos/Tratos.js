@@ -399,8 +399,10 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fecha.trim()) newErrors.fecha = "Este campo es obligatorio";
     else if (formData.fecha < currentDate) newErrors.fecha = "La fecha no puede ser en el pasado";
-    else if (formData.fecha === currentDate && formData.horaInicio && formData.horaInicio < currentTime)
+    if (!formData.horaInicio.trim()) newErrors.horaInicio = "Este campo es obligatorio";
+    else if (formData.fecha === currentDate && formData.horaInicio < currentTime) {
       newErrors.horaInicio = "La hora no puede ser en el pasado";
+    }
     if (!formData.horaInicio.trim()) newErrors.horaInicio = "Este campo es obligatorio";
     if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     setErrors(newErrors);
@@ -503,7 +505,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             value={formData.horaInicio}
             onChange={(e) => handleInputChange("horaInicio", e.target.value)}
             className={`modal-form-control ${errors.horaInicio ? "error" : ""}`}
-            min={formData.fecha === new Date().toISOString().split('T')[0] ? (() => {
+            min={formData.fecha === new Date().toLocaleDateString('en-CA') ? (() => {
               const now = new Date();
               return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
             })() : undefined}
@@ -781,7 +783,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
               value={formData.horaInicio}
               onChange={(e) => handleInputChange("horaInicio", e.target.value)}
               className={`modal-form-control ${errors.horaInicio ? "error" : ""}`}
-              min={formData.fecha === new Date().toISOString().split('T')[0] ? (() => {
+              min={formData.fecha === new Date().toLocaleDateString('en-CA') ? (() => {
                 const now = new Date();
                 return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
               })() : undefined}
@@ -1561,15 +1563,15 @@ const Tratos = () => {
       }
 
       let usersData = [];
-        try {
-          const usersResponse = await fetchWithRetry(`${API_BASE_URL}/auth/users`);
-          usersData = await usersResponse.json();
-          setUsers(usersData);
-        } catch (error) {
-          console.error("Error al cargar usuarios:", error);
-          setUsers([]);
-        }
-      
+      try {
+        const usersResponse = await fetchWithRetry(`${API_BASE_URL}/auth/users`);
+        usersData = await usersResponse.json();
+        setUsers(usersData);
+      } catch (error) {
+        console.error("Error al cargar usuarios:", error);
+        setUsers([]);
+      }
+
       const tratosResponse = await fetchWithRetry(`${API_BASE_URL}/tratos/filtrar/basico?${params.toString()}`);
       const tratosBasicos = await tratosResponse.json();
 
