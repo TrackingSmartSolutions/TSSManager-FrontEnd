@@ -126,23 +126,37 @@ class AddressCleaner {
      * @returns {boolean} - True si la dirección es válida
      */
     isValidAddress(address) {
-        if (!address || address.length < 10) {
-            return false;
-        }
-
-        // Direcciones demasiado vagas
-        const tooVague = [
-            /^(león|guanajuato|méxico|mexico)$/i,
-            /^(leon gto|león gto)$/i,
-            /^tlaxcala$/i,
-            /^guadalajara$/i,
-            /^querétaro$/i,
-            /^celaya$/i,
-            /^morelia$/i
-        ];
-
-        return !tooVague.some(pattern => pattern.test(address.trim()));
+    if (!address || typeof address !== 'string') {
+        return false;
     }
+
+    const trimmed = address.trim();
+    
+    // Rechazar direcciones muy cortas
+    if (trimmed.length < 15) {
+        return false;
+    }
+
+    // Solo rechazar direcciones OBVIAMENTE inválidas
+    const obviouslyInvalid = [
+        /^(n\/a|na|sin\s+direcci[óo]n|no\s+aplica|pendiente|tbd|por\s+definir)$/i,
+        /^[.\-_\s#,;:]+$/i, // Solo símbolos
+        /^\d+$/i, // Solo números
+        /^[a-z]\s*$/i, // Una sola letra
+        /^(león|mexico|guadalajara|querétaro)\.?\s*,?\s*(gto|mexico)?\.?\s*$/i, // Solo ciudades sin más info
+        /sin\s+número/i,
+        /domicilio\s+conocido/i,
+        /información\s+no\s+disponible/i,
+        /^qdefrgthy/i // Para tu caso específico de datos basura
+    ];
+
+    if (obviouslyInvalid.some(pattern => pattern.test(trimmed))) {
+        return false;
+    }
+
+    // Si llegó hasta aquí, es válida
+    return true;
+}
 
     /**
      * Obtiene sugerencias de direcciones mejoradas

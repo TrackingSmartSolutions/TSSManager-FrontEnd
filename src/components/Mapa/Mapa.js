@@ -10,6 +10,39 @@ import redMarker from "../../assets/icons/marcador-rojo.png";
 import blackMarker from "../../assets/icons/marcador.png";
 import AddressCleaner from '../Utils/AddressCleaner';
 
+const CACHE_KEY = 'geocoding_cache_v2';
+const CACHE_EXPIRY_DAYS = 30;
+
+
+const loadCacheFromStorage = () => {
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+            const { data, timestamp } = JSON.parse(cached);
+            const now = Date.now();
+            const expiry = CACHE_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+
+            if (now - timestamp < expiry) {
+                return data;
+            }
+        }
+    } catch (error) {
+        console.warn('Error loading geocoding cache:', error);
+    }
+    return {};
+};
+
+const saveCacheToStorage = (cache) => {
+    try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+            data: cache,
+            timestamp: Date.now()
+        }));
+    } catch (error) {
+        console.warn('Error saving geocoding cache:', error);
+    }
+};
+
 
 // Define íconos personalizados para los marcadores
 const redIcon = new L.Icon({
@@ -71,12 +104,14 @@ const Mapa = () => {
     const { companies, selectedCompany } = location.state || {};
 
     // Estados para manejar caché de coordenadas, marcador seleccionado, errores, carga y filtro de sector
-    const [coordinatesCache, setCoordinatesCache] = useState({});
+    const [coordinatesCache, setCoordinatesCache] = useState(() => loadCacheFromStorage());
     const [selectedMarker, setSelectedMarker] = useState(null);
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isCrmDropdownOpen, setIsCrmDropdownOpen] = useState(false);
     const [selectedSector, setSelectedSector] = useState("TODOS");
+    const [geocodingProgress, setGeocodingProgress] = useState({ current: 0, total: 0 });
+
 
     const addressCleaner = new AddressCleaner();
 
@@ -260,67 +295,102 @@ const Mapa = () => {
         PARTICULAR: "(99) Particular"
     };
 
+    <div className="mapa-controls">
+        <button
+            onClick={() => {
+                setCoordinatesCache({});
+                setIsLoading(true);
+            }}
+            className="mapa-btn mapa-btn-primary"
+            disabled={isLoading}
+        >
+            {isLoading ? 'Cargando...' : 'Recargar Ubicaciones'}
+        </button>
+        <span style={{ marginLeft: '10px', fontSize: '14px', color: '#666' }}>
+            {Object.keys(coordinatesCache).length} ubicaciones cargadas
+        </span>
+    </div>
+
     // Función para obtener coordenadas de una dirección usando Nominatim
     const geocodeAddress = async (address) => {
         if (coordinatesCache[address]) {
             return coordinatesCache[address];
         }
 
-        // Limpiar la dirección usando AddressCleaner
         const cleanedAddress = addressCleaner.cleanAddress(address);
-        console.log(`Dirección original: ${address}`);
-        console.log(`Dirección limpia: ${cleanedAddress}`);
 
-        // Verificar si ya tenemos la dirección limpia en caché
+        // Verificar si la dirección limpia es realmente válida
+        if (!addressCleaner.isValidAddress(cleanedAddress)) {
+            console.warn(`Dirección ignorada por inválida: ${address}`);
+            return null;
+        }
+
+        // Verificar caché con dirección limpia
         if (coordinatesCache[cleanedAddress]) {
-            // Guardar también la dirección original en caché
             setCoordinatesCache(prev => ({ ...prev, [address]: coordinatesCache[cleanedAddress] }));
             return coordinatesCache[cleanedAddress];
         }
 
-        const formattedAddress = cleanedAddress.endsWith(", México") ? cleanedAddress : `${cleanedAddress}, México`;
+        const queryParts = [cleanedAddress];
+        if (!cleanedAddress.toLowerCase().includes('méxico') && !cleanedAddress.toLowerCase().includes('mexico')) {
+            queryParts.push('México');
+        }
+
+        const query = queryParts.join(', ');
 
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 segundos timeout
+
             const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(formattedAddress)}&limit=1`
+                `https://nominatim.openstreetmap.org/search?` +
+                `format=json&` +
+                `q=${encodeURIComponent(query)}&` +
+                `limit=1&` +
+                `countrycodes=mx&` +
+                `addressdetails=1&` +
+                `bounded=1&` +
+                `viewbox=-109.5,32.7,-86.7,14.5`, 
+                {
+                    signal: controller.signal,
+                    headers: {
+                        'User-Agent': 'MapApp/1.0'
+                    }
+                }
             );
+
+            clearTimeout(timeoutId);
+
             if (!response.ok) {
-                throw new Error("Error fetching coordinates from Nominatim");
+                throw new Error(`HTTP ${response.status}`);
             }
+
             const data = await response.json();
 
             if (data.length > 0) {
                 const coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-                // Guardar en caché tanto la dirección original como la limpia
-                setCoordinatesCache((prev) => ({
-                    ...prev,
-                    [address]: coords,
-                    [cleanedAddress]: coords
-                }));
-                return coords;
-            } else {
-                // Si no se encuentra con la dirección limpia, intentar con la original
-                console.log(`No se encontraron coordenadas para dirección limpia: ${cleanedAddress}`);
-                console.log(`Intentando con dirección original: ${address}`);
 
-                const originalFormattedAddress = address.endsWith(", México") ? address : `${address}, México`;
-                const fallbackResponse = await fetch(
-                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(originalFormattedAddress)}&limit=1`
-                );
-
-                if (fallbackResponse.ok) {
-                    const fallbackData = await fallbackResponse.json();
-                    if (fallbackData.length > 0) {
-                        const coords = [parseFloat(fallbackData[0].lat), parseFloat(fallbackData[0].lon)];
-                        setCoordinatesCache((prev) => ({ ...prev, [address]: coords }));
-                        return coords;
-                    }
+                if (coords[0] >= 14.5 && coords[0] <= 32.7 && coords[1] >= -118.4 && coords[1] <= -86.7) {
+                    const newCache = {
+                        ...coordinatesCache,
+                        [address]: coords,
+                        [cleanedAddress]: coords
+                    };
+                    setCoordinatesCache(newCache);
+                    saveCacheToStorage(newCache); 
+                    return coords;
                 }
-
-                throw new Error(`No se encontraron coordenadas para: ${address}`);
             }
+
+            console.log(`Sin resultados válidos para: ${cleanedAddress}`);
+            return null;
+
         } catch (err) {
-            setError(`Error geocoding: ${err.message}`);
+            if (err.name === 'AbortError') {
+                console.warn(`Timeout geocoding: ${cleanedAddress}`);
+            } else {
+                console.error(`Error geocoding ${cleanedAddress}:`, err.message);
+            }
             return null;
         }
     };
@@ -332,24 +402,72 @@ const Mapa = () => {
                 setIsLoading(false);
                 return;
             }
+
+            const persistedCache = loadCacheFromStorage();
+            if (Object.keys(persistedCache).length > 0) {
+                setCoordinatesCache(persistedCache);
+            }
+
             setIsLoading(true);
-            const promises = companies.map(async (company) => {
-                if (company.domicilioFisico) {
-                    const coords = await geocodeAddress(company.domicilioFisico);
-                    return { id: company.id, coords };
-                }
-                return { id: company.id, coords: null };
+
+            const validCompanies = companies.filter(company => {
+                const address = company.domicilioFisico?.trim();
+
+                if (!address || address === 'undefined') return false;
+                if (address.length < 15) return false;
+                if (persistedCache[company.id]) return false; 
+
+                return addressCleaner.isValidAddress(address);
             });
 
-            const results = await Promise.all(promises);
-            const newCache = results.reduce((acc, { id, coords }) => {
-                if (coords) {
-                    acc[id] = coords;
-                }
-                return acc;
-            }, {});
+            console.log(`Procesando ${validCompanies.length} direcciones nuevas de ${companies.length} totales`);
 
-            setCoordinatesCache((prev) => ({ ...prev, ...newCache }));
+            if (validCompanies.length === 0) {
+                setIsLoading(false);
+                return;
+            }
+
+            setGeocodingProgress({ current: 0, total: validCompanies.length });
+
+            // Configuración optimizada
+            const batchSize = 3; // Reducir para evitar rate limiting
+            const delayBetweenRequests = 400; // Delay entre requests individuales
+            const delayBetweenBatches = 2000; // Delay entre lotes
+
+            for (let i = 0; i < validCompanies.length; i += batchSize) {
+                const batch = validCompanies.slice(i, i + batchSize);
+
+                // Procesar secuencialmente dentro del lote para evitar saturar
+                for (const company of batch) {
+                    try {
+                        const coords = await geocodeAddress(company.domicilioFisico);
+                        if (coords) {
+                            setCoordinatesCache(prev => ({
+                                ...prev,
+                                [company.id]: coords
+                            }));
+                        }
+                    } catch (error) {
+                        console.warn(`Error procesando ${company.nombre}:`, error);
+                    }
+
+                    setGeocodingProgress(prev => ({
+                        ...prev,
+                        current: prev.current + 1
+                    }));
+
+                    // Delay entre requests
+                    if (delayBetweenRequests > 0) {
+                        await new Promise(resolve => setTimeout(resolve, delayBetweenRequests));
+                    }
+                }
+
+                // Delay entre lotes
+                if (i + batchSize < validCompanies.length) {
+                    await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
+                }
+            }
+
             setIsLoading(false);
         };
 
@@ -384,7 +502,9 @@ const Mapa = () => {
 
     // Filtra empresas con coordenadas válidas y por sector seleccionado
     const companiesWithCoords = companies?.filter(
-        (company) => coordinatesCache[company.id] && company.domicilioFisico && (selectedSector === "TODOS" || company.sector === selectedSector)
+        (company) => coordinatesCache[company.id] &&
+            company.domicilioFisico &&
+            (selectedSector === "TODOS" || company.sector === selectedSector)
     ) || [];
 
     // Mapas para traducir estados a texto legible
@@ -430,12 +550,33 @@ const Mapa = () => {
             <div className="mapa-screen">
                 <Header isCrmDropdownOpen={isCrmDropdownOpen} setIsCrmDropdownOpen={setIsCrmDropdownOpen} />
                 <div className="mapa-content">
-                    <p>Cargando mapa...</p>
+                    <div style={{ textAlign: 'center', padding: '20px' }}>
+                        <p>Geocodificando direcciones...</p>
+                        {geocodingProgress.total > 0 && (
+                            <div>
+                                <p>{geocodingProgress.current} de {geocodingProgress.total} procesadas</p>
+                                <div style={{
+                                    width: '300px',
+                                    height: '20px',
+                                    backgroundColor: '#f0f0f0',
+                                    borderRadius: '10px',
+                                    margin: '10px auto'
+                                }}>
+                                    <div style={{
+                                        width: `${(geocodingProgress.current / geocodingProgress.total) * 100}%`,
+                                        height: '100%',
+                                        backgroundColor: '#007bff',
+                                        borderRadius: '10px',
+                                        transition: 'width 0.3s ease'
+                                    }}></div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         );
     }
-
     // Renderiza el mapa y la barra lateral con detalles del marcador seleccionado
     return (
         <div className="mapa-screen">

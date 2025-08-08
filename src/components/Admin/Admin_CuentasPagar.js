@@ -732,7 +732,10 @@ const AdminCuentasPagar = () => {
                     {cuentasOrdenadas.length > 0 ? (
                       cuentasOrdenadas.map((cuenta) => (
                         <tr key={cuenta.id}>
-                          <td>{cuenta.folio}</td>
+                          <td>
+                            {cuenta.folio}
+                            {cuenta.sim && <span className="cuentaspagar-sim-id"> -{cuenta.sim.id}</span>}
+                          </td>
                           <td>{cuenta.fechaPago}</td>
                           <td>{cuenta.cuenta.nombre}</td>
                           <td>{formatCurrency(cuenta.monto)}</td>

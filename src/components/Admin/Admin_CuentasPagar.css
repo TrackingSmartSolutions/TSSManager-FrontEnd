@@ -546,6 +546,32 @@
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
+.cuentaspagar-sim-id {
+  display: inline-block;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cuentaspagar-table th:nth-child(1), 
+.cuentaspagar-table td:nth-child(1) {
+  width: 180px;
+  min-width: 180px;
+}
+
+.cuentaspagar-table th:nth-child(2), 
+.cuentaspagar-table td:nth-child(2) {
+  width: 140px;
+  min-width: 140px;
+}
+
 /* Diseño responsivo */
 @media (max-width: 1200px) {
   .cuentaspagar-container {
