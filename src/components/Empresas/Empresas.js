@@ -400,12 +400,9 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
       } else if (formData.rfc.trim().length > 13) {
         newErrors.rfc = "El RFC no puede tener más de 13 caracteres";
       }
-
-      // Razón Social: Solo letras (mayúsculas, minúsculas, Ñ/ñ, acentos)
+      
       if (!formData.razonSocial?.trim()) {
         newErrors.razonSocial = "Este campo es obligatorio para estatus Cliente";
-      } else if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(formData.razonSocial.trim())) {
-        newErrors.razonSocial = "Este campo solo debe contener letras";
       }
 
       // Régimen Fiscal: Debe estar seleccionado
@@ -2108,7 +2105,7 @@ const Empresas = () => {
   }
 
   const handleEditContact = (contactId) => {
-    const contact = contacts.find((c) => c.id === contactId)    
+    const contact = contacts.find((c) => c.id === contactId)
     if (contact) {
       openModal("contacto", "edit", {
         ...contact,
@@ -2120,7 +2117,7 @@ const Empresas = () => {
 
   const handleDeleteContact = (contactId) => {
     const contact = contacts.find((c) => c.id === contactId)
-  const isLastContact = contacts.length === 1
+    const isLastContact = contacts.length === 1
 
     if (contact) {
       openModal("confirmarEliminacion", "delete", contact, { isLastContact })
@@ -2128,7 +2125,7 @@ const Empresas = () => {
   }
 
   const handleContactDetails = (contactId) => {
-     const contact = contacts.find((c) => c.id === contactId)
+    const contact = contacts.find((c) => c.id === contactId)
     if (contact) {
       openModal("detallesContacto", "view", contact)
     }

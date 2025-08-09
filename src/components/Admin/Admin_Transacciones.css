@@ -557,7 +557,54 @@
   margin: 0;
 }
 
-/* Responsive Design */
+.transacciones-filters-section {
+  display: flex;
+  gap: 20px;
+  align-items: end;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.transacciones-filtros-fecha {
+  display: flex;
+  gap: 15px;
+  align-items: end;
+}
+
+.transacciones-filtro-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.transacciones-filtro-grupo label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.transacciones-date-input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.transacciones-btn-filtro {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.transacciones-btn-filtro:hover {
+  background: #0056b3;
+}
+
+/* Diseño responsivo */
 @media (max-width: 1200px) {
   .transacciones-container {
     gap: var(--transacciones-spacing-md);

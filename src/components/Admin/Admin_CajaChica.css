@@ -342,7 +342,46 @@
   box-shadow: 0 4px 15px rgba(242, 113, 0, 0.3);
 }
 
-/* Responsive Design */
+.cajachica-filtros-fecha {
+  display: flex;
+  gap: 15px;
+  align-items: end;
+  margin: 20px 0;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.cajachica-filtro-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cajachica-filtro-grupo label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.cajachica-date-input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.cajachica-btn-filtro {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* Diseño responsivo */
 @media (max-width: 1200px) {
   .cajachica-container {
     gap: var(--cajachica-spacing-md);

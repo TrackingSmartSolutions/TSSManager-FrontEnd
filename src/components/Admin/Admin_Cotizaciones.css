@@ -1,5 +1,4 @@
 /* Estilos específicos para Admin Cotizaciones */
-
 :root {
   --cotizaciones-primary-color: #00133b;
   --cotizaciones-secondary-color: #037ce0;
@@ -669,7 +668,42 @@
   margin-top: var(--cotizaciones-spacing-lg);
 }
 
-/* Responsive Design */
+/* Estilos específicos para la columna de Total de equipos */
+.cotizaciones-equipos-column {
+  width: 150px;
+  min-width: 150px;
+  max-width: 150px;
+  text-align: center;
+}
+
+.cotizaciones-equipos-column-header {
+  width: 150px;
+  min-width: 150px;
+  max-width: 150px;
+  text-align: center;
+}
+
+/* Ajustes responsive para la columna de equipos */
+@media (max-width: 992px) {
+  .cotizaciones-equipos-column,
+  .cotizaciones-equipos-column-header {
+    width: 120px;
+    min-width: 120px;
+    max-width: 120px;
+  }
+}
+
+@media (max-width: 768px) {
+  .cotizaciones-equipos-column,
+  .cotizaciones-equipos-column-header {
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
+    font-size: var(--cotizaciones-font-size-xs);
+  }
+}
+
+/* Diseño responsivo */
 @media (max-width: 1200px) {
   .cotizaciones-container {
     gap: var(--cotizaciones-spacing-md);

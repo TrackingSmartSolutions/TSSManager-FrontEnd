@@ -31,6 +31,33 @@ const AdminCajaChica = () => {
   const [cuentas, setCuentas] = useState([])
   const formasPago = [{ value: "01", label: "Efectivo" }]
 
+  const [filtroFechas, setFiltroFechas] = useState({
+    fechaInicio: '',
+    fechaFin: ''
+  });
+
+  const obtenerRangoMesActual = () => {
+    const ahora = new Date();
+    const año = ahora.getFullYear();
+    const mes = ahora.getMonth();
+
+    const primerDia = new Date(año, mes, 1);
+    const ultimoDia = new Date(año, mes + 1, 0);
+
+    const formatearFecha = (fecha) => {
+      const año = fecha.getFullYear();
+      const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+      const dia = String(fecha.getDate()).padStart(2, '0');
+      return `${año}-${mes}-${dia}`;
+    };
+
+    return {
+      fechaInicio: formatearFecha(primerDia),
+      fechaFin: formatearFecha(ultimoDia)
+    };
+  };
+
+
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true)
@@ -51,6 +78,10 @@ const AdminCajaChica = () => {
         setTransaccionesEfectivo(transaccionesFiltradas)
         setCategorias(categoriasResp)
         setCuentas(cuentasResp)
+
+        const rangoMesActual = obtenerRangoMesActual();
+        setFiltroFechas(rangoMesActual);
+
       } catch (error) {
         Swal.fire({
           icon: "error",
@@ -85,16 +116,17 @@ const AdminCajaChica = () => {
 
   useEffect(() => {
     const calcularResumen = () => {
-      const totalIngresos = transaccionesEfectivo
+      const transaccionesFiltradas = filtrarTransaccionesPorFecha(transaccionesEfectivo)
+      const totalIngresos = transaccionesFiltradas
         .filter((t) => t.tipo === "INGRESO")
         .reduce((sum, t) => sum + t.monto, 0)
-      const totalGastos = transaccionesEfectivo.filter((t) => t.tipo === "GASTO").reduce((sum, t) => sum + t.monto, 0)
+      const totalGastos = transaccionesFiltradas.filter((t) => t.tipo === "GASTO").reduce((sum, t) => sum + t.monto, 0)
       const utilidadPerdida = totalIngresos - totalGastos
 
       setResumenCajaChica({ totalIngresos, totalGastos, utilidadPerdida })
     }
     calcularResumen()
-  }, [transaccionesEfectivo])
+  }, [transaccionesEfectivo, filtroFechas])
 
   const handleMenuNavigation = (menuItem) => {
     switch (menuItem) {
@@ -124,9 +156,9 @@ const AdminCajaChica = () => {
     }
   }
 
-  const calcularSaldoAcumulado = () => {
+  const calcularSaldoAcumulado = (transaccionesParaCalcular = transaccionesEfectivo) => {
     let saldoAcumulado = 0
-    return transaccionesEfectivo
+    return transaccionesParaCalcular
       .sort((a, b) => new Date(a.fecha + 'T00:00:00') - new Date(b.fecha + 'T00:00:00'))
       .map((transaccion) => {
         if (transaccion.tipo === "INGRESO") saldoAcumulado += transaccion.monto
@@ -135,7 +167,22 @@ const AdminCajaChica = () => {
       })
   }
 
-  const transaccionesConSaldo = calcularSaldoAcumulado()
+  const filtrarTransaccionesPorFecha = (transacciones) => {
+    if (!filtroFechas.fechaInicio || !filtroFechas.fechaFin) {
+      return transacciones;
+    }
+
+    return transacciones.filter(transaccion => {
+      const fechaTransaccion = new Date(transaccion.fecha + 'T00:00:00');
+      const fechaInicio = new Date(filtroFechas.fechaInicio + 'T00:00:00');
+      const fechaFin = new Date(filtroFechas.fechaFin + 'T23:59:59');
+
+      return fechaTransaccion >= fechaInicio && fechaTransaccion <= fechaFin;
+    });
+  };
+
+  const transaccionesFiltradas = filtrarTransaccionesPorFecha(transaccionesEfectivo);
+  const transaccionesConSaldo = calcularSaldoAcumulado(transaccionesFiltradas);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("es-MX", {
@@ -449,11 +496,37 @@ const AdminCajaChica = () => {
                 <p className="cajachica-resumen-monto">{formatCurrency(resumenCajaChica.utilidadPerdida)}</p>
               </div>
             </div>
+            <div className="cajachica-filtros-fecha">
+              <div className="cajachica-filtro-grupo">
+                <label>Fecha inicio:</label>
+                <input
+                  type="date"
+                  value={filtroFechas.fechaInicio}
+                  onChange={(e) => setFiltroFechas(prev => ({ ...prev, fechaInicio: e.target.value }))}
+                  className="cajachica-date-input"
+                />
+              </div>
+              <div className="cajachica-filtro-grupo">
+                <label>Fecha fin:</label>
+                <input
+                  type="date"
+                  value={filtroFechas.fechaFin}
+                  onChange={(e) => setFiltroFechas(prev => ({ ...prev, fechaFin: e.target.value }))}
+                  className="cajachica-date-input"
+                />
+              </div>
+              <button
+                className="cajachica-btn cajachica-btn-filtro"
+                onClick={() => setFiltroFechas(obtenerRangoMesActual())}
+              >
+                Mes actual
+              </button>
+            </div>
             <div className="cajachica-table-card">
               <h4 className="cajachica-table-title">Transacciones en Efectivo</h4>
               <div className="cajachica-table-container">
                 <table className="cajachica-table">
-                 <thead className="cajachica-table-header-fixed">
+                  <thead className="cajachica-table-header-fixed">
                     <tr>
                       <th>Fecha</th>
                       <th>Cuenta</th>

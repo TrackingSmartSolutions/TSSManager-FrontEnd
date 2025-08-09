@@ -339,18 +339,67 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
 
 // Modal de Confirmación de Regeneración
 const RegenerarModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
+  const [nuevoMonto, setNuevoMonto] = useState("");
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (isOpen && cuenta) {
+      setNuevoMonto(cuenta.monto.toString());
+      setErrors({});
+    }
+  }, [isOpen, cuenta]);
+
+  const handleMontoChange = (value) => {
+    setNuevoMonto(value);
+    if (errors.monto) {
+      setErrors(prev => ({ ...prev, monto: "" }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!nuevoMonto || Number.parseFloat(nuevoMonto) <= 0) {
+      newErrors.monto = "El monto debe ser mayor a 0";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleConfirm = () => {
+    if (validateForm()) {
+      onConfirm(true, cuenta, Number.parseFloat(nuevoMonto));
+    }
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Generar nueva/s cuenta por pagar" size="sm" closeOnOverlayClick={false}>
+    <Modal isOpen={isOpen} onClose={onClose} title="Generar nueva/s cuenta por pagar" size="md" closeOnOverlayClick={false}>
       <div className="cuentaspagar-confirmar-regeneracion">
         <div className="cuentaspagar-confirmation-content">
           <p className="cuentaspagar-confirmation-message">
             ¿Quiere volver a generar las cuentas por pagar para esta cuenta?
           </p>
-          <div className="cuentaspagar-modal-form-actions">
+          
+          <div className="cuentaspagar-form-group" style={{ marginTop: "20px" }}>
+            <label htmlFor="nuevoMonto">Monto para las nuevas cuentas <span className="required"> *</span></label>
+            <div className="cuentaspagar-input-with-prefix">
+              <span className="cuentaspagar-prefix">$</span>
+              <input
+                type="number"
+                id="nuevoMonto"
+                step="0.01"
+                value={nuevoMonto}
+                onChange={(e) => handleMontoChange(e.target.value)}
+                className={`cuentaspagar-form-control ${errors.monto ? "error" : ""}`}
+              />
+            </div>
+            {errors.monto && <span className="cuentaspagar-error-message">{errors.monto}</span>}
+          </div>
+
+          <div className="cuentaspagar-modal-form-actions" style={{ marginTop: "20px" }}>
             <button type="button" onClick={() => onConfirm(false)} className="cuentaspagar-btn cuentaspagar-btn-cancel">
               Cancelar
             </button>
-            <button type="button" onClick={() => onConfirm(true, cuenta)} className="cuentaspagar-btn cuentaspagar-btn-confirm">
+            <button type="button" onClick={handleConfirm} className="cuentaspagar-btn cuentaspagar-btn-confirm">
               Confirmar
             </button>
           </div>
@@ -542,48 +591,48 @@ const AdminCuentasPagar = () => {
     }
   };
 
-  const handleRegenerar = async (confirmar, cuenta) => {
-    closeModal("regenerar");
+  const handleRegenerar = async (confirmar, cuenta, nuevoMonto = null) => {
+  closeModal("regenerar");
 
-    if (confirmar) {
-      try {
-        const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/regenerar`, {
-          method: "POST",
-          body: JSON.stringify({
-            transaccionId: cuenta.transaccion.id,
-            fechaUltimoPago: cuenta.fechaPago
-          }),
-        });
+  if (confirmar) {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/regenerar`, {
+        method: "POST",
+        body: JSON.stringify({
+          transaccionId: cuenta.transaccion.id,
+          fechaUltimoPago: cuenta.fechaPago,
+          nuevoMonto: nuevoMonto 
+        }),
+      });
 
-        if (response.ok) {
-          // Actualizar la lista de cuentas por pagar
-          const cuentasResponse = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar`);
-          const updatedCuentas = await cuentasResponse.json();
-          setCuentasPagar(updatedCuentas);
+      if (response.ok) {
+        const cuentasResponse = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar`);
+        const updatedCuentas = await cuentasResponse.json();
+        setCuentasPagar(updatedCuentas);
 
-          Swal.fire({
-            icon: "success",
-            title: "Éxito",
-            text: "Nuevas cuentas por pagar generadas correctamente",
-          });
-        }
-      } catch (error) {
-        console.error("Error al regenerar cuentas:", error);
         Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "No se pudieron regenerar las cuentas por pagar",
+          icon: "success",
+          title: "Éxito",
+          text: "Nuevas cuentas por pagar generadas correctamente",
         });
       }
-    } else {
-      // Si cancela, solo mostrar mensaje de éxito del pago
+    } catch (error) {
+      console.error("Error al regenerar cuentas:", error);
       Swal.fire({
-        icon: "success",
-        title: "Éxito",
-        text: "Cuenta marcada como pagada",
+        icon: "error",
+        title: "Error",
+        text: "No se pudieron regenerar las cuentas por pagar",
       });
     }
-  };
+  } else {
+    // Si cancela, solo mostrar mensaje de éxito del pago
+    Swal.fire({
+      icon: "success",
+      title: "Éxito",
+      text: "Cuenta marcada como pagada",
+    });
+  }
+};
 
   const handleEditarCuenta = (updatedCuenta) => {
     setCuentasPagar((prev) =>

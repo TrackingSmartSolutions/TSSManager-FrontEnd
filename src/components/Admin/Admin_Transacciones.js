@@ -842,6 +842,11 @@ const AdminTransacciones = () => {
     confirmarEliminacion: { isOpen: false, tipo: "", item: null, onConfirm: null },
   });
 
+  const [filtroFechas, setFiltroFechas] = useState({
+    fechaInicio: '',
+    fechaFin: ''
+  });
+
   const formasPago = [
     { value: "01", label: "01: Efectivo" },
     { value: "07", label: "07: Con Saldo Acumulado" },
@@ -852,6 +857,27 @@ const AdminTransacciones = () => {
     { value: "99", label: "99: Por definir" },
     { value: "02", label: "02: Tarjeta spin" },
   ];
+
+  const obtenerRangoMesActual = () => {
+    const ahora = new Date();
+    const año = ahora.getFullYear();
+    const mes = ahora.getMonth();
+
+    const primerDia = new Date(año, mes, 1);
+    const ultimoDia = new Date(año, mes + 1, 0);
+
+    const formatearFecha = (fecha) => {
+      const año = fecha.getFullYear();
+      const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+      const dia = String(fecha.getDate()).padStart(2, '0');
+      return `${año}-${mes}-${dia}`;
+    };
+
+    return {
+      fechaInicio: formatearFecha(primerDia),
+      fechaFin: formatearFecha(ultimoDia)
+    };
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -865,6 +891,9 @@ const AdminTransacciones = () => {
         setTransacciones(transaccionesResp.data || []);
         setCategorias(categoriasResp.data || []);
         setCuentas(cuentasResp.data || []);
+
+        const rangoMesActual = obtenerRangoMesActual();
+        setFiltroFechas(rangoMesActual);
       } catch (error) {
         Swal.fire({
           icon: "error",
@@ -882,6 +911,21 @@ const AdminTransacciones = () => {
     const transaccion = transacciones.find((t) => t.id === transaccionId);
     return transaccion && transaccion.notas === "Transacción generada desde Cuentas por Pagar";
   };
+
+  const filtrarTransaccionesPorFecha = (transacciones) => {
+    if (!filtroFechas.fechaInicio || !filtroFechas.fechaFin) {
+      return transacciones;
+    }
+
+    return transacciones.filter(transaccion => {
+      const fechaTransaccion = new Date(transaccion.fecha + 'T00:00:00');
+      const fechaInicio = new Date(filtroFechas.fechaInicio + 'T00:00:00');
+      const fechaFin = new Date(filtroFechas.fechaFin + 'T23:59:59');
+
+      return fechaTransaccion >= fechaInicio && fechaTransaccion <= fechaFin;
+    });
+  };
+
   const openModal = (modalType, data = {}) => {
     setModals((prev) => ({
       ...prev,
@@ -1049,11 +1093,17 @@ const AdminTransacciones = () => {
     });
   };
 
-  const transaccionesFiltradas = filtrosCuenta === "Todas"
-    ? transacciones.filter((t) => t.tipo === "INGRESO" || (t.tipo === "GASTO" && isFullyPaid(t.id)))
-    : transacciones.filter(
-      (t) => t.cuenta && t.cuenta.nombre === filtrosCuenta && (t.tipo === "INGRESO" || (t.tipo === "GASTO" && isFullyPaid(t.id)))
-    );
+  const transaccionesBase = transacciones.filter((t) => t.tipo === "INGRESO" || (t.tipo === "GASTO" && isFullyPaid(t.id)));
+  const transaccionesPorFecha = filtrarTransaccionesPorFecha(transaccionesBase);
+  const transaccionesSinOrdenar = filtrosCuenta === "Todas"
+    ? transaccionesPorFecha
+    : transaccionesPorFecha.filter((t) => t.cuenta && t.cuenta.nombre === filtrosCuenta);
+
+  const transaccionesFiltradas = transaccionesSinOrdenar.sort((a, b) => {
+    const fechaA = new Date(a.fecha);
+    const fechaB = new Date(b.fecha);
+    return fechaB - fechaA;
+  });
 
   const cuentasUnicas = ["Todas", ...new Set(cuentas.filter(c => c && c.nombre).map((c) => c.nombre))];
 
@@ -1134,6 +1184,34 @@ const AdminTransacciones = () => {
                   ))}
                 </select>
               </div>
+
+              <div className="transacciones-filtros-fecha">
+                <div className="transacciones-filtro-grupo">
+                  <label>Fecha inicio:</label>
+                  <input
+                    type="date"
+                    value={filtroFechas.fechaInicio}
+                    onChange={(e) => setFiltroFechas(prev => ({ ...prev, fechaInicio: e.target.value }))}
+                    className="transacciones-date-input"
+                  />
+                </div>
+                <div className="transacciones-filtro-grupo">
+                  <label>Fecha fin:</label>
+                  <input
+                    type="date"
+                    value={filtroFechas.fechaFin}
+                    onChange={(e) => setFiltroFechas(prev => ({ ...prev, fechaFin: e.target.value }))}
+                    className="transacciones-date-input"
+                  />
+                </div>
+                <button
+                  className="transacciones-btn transacciones-btn-filtro"
+                  onClick={() => setFiltroFechas(obtenerRangoMesActual())}
+                >
+                  Mes actual
+                </button>
+              </div>
+
               <div className="transacciones-actions-group">
                 <button
                   className="transacciones-btn transacciones-btn-primary"

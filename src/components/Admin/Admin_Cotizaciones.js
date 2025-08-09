@@ -1231,7 +1231,7 @@ const AdminCotizaciones = () => {
                     <tr>
                       <th>No.</th>
                       <th>Receptor</th>
-                      <th>Cantidad total de equipos</th>
+                      <th className="cotizaciones-equipos-column-header">Total de equipos</th>
                       <th>Concepto</th>
                       <th>Subtotal</th>
                       <th>IVA</th>
@@ -1251,7 +1251,7 @@ const AdminCotizaciones = () => {
                           <tr key={cotizacion.id}>
                             <td>{index + 1}</td>
                             <td>{cotizacion.clienteNombre}</td>
-                            <td>{cotizacion.cantidadTotal || 0}</td>
+                            <td className="cotizaciones-equipos-column">{cotizacion.cantidadTotal || 0}</td>
                             <td>{cotizacion.conceptosCount === 1 ? "1 concepto" : cotizacion.conceptosCount > 0 ? `${cotizacion.conceptosCount} conceptos` : "0 conceptos"}</td>
                             <td>${cotizacion.subtotal?.toFixed(2) || '0.00'}</td>
                             <td>${cotizacion.iva?.toFixed(2) || '0.00'}</td>
