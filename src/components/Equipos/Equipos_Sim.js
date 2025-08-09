@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Equipos_Sim.css";
 import Header from "../Header/Header";
@@ -861,6 +861,7 @@ const EquiposSim = () => {
   const [gruposDisponibles, setGruposDisponibles] = useState([]);
   const [filterGrupo, setFilterGrupo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [equiposLoaded, setEquiposLoaded] = useState(false);
   const [filterNumero, setFilterNumero] = useState("");
   const [modals, setModals] = useState({
     form: { isOpen: false, sim: null },
@@ -874,33 +875,57 @@ const EquiposSim = () => {
     totalElements: 0,
     pageSize: 50
   });
-  
+
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // Cache simple para equipos
+  const equiposCache = useRef(null);
+  const equiposCacheTime = useRef(null);
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
+  const loadEquiposIfNeeded = async () => {
+    const now = Date.now();
+
+    if (equiposCache.current && equiposCacheTime.current &&
+      (now - equiposCacheTime.current) < CACHE_DURATION) {
+      setEquipos(equiposCache.current);
+      setEquiposLoaded(true);
+      return;
+    }
+
+    if (!equiposLoaded) {
+      try {
+        const equiposResponse = await fetchWithToken(`${API_BASE_URL}/sims/equipos-disponibles`);
+        const equiposData = await equiposResponse.json();
+
+        equiposCache.current = equiposData;
+        equiposCacheTime.current = now;
+
+        setEquipos(equiposData);
+        setEquiposLoaded(true);
+      } catch (error) {
+        console.error("Error loading equipos:", error);
+      }
+    }
+  };
 
   useEffect(() => {
     const userRoleFromStorage = localStorage.getItem("userRol");
     setUserRole(userRoleFromStorage === "ADMINISTRADOR" ? "ADMINISTRADOR" : userRoleFromStorage || "ADMINISTRADOR");
-    
+
     fetchCriticalData();
   }, []);
 
   const fetchCriticalData = async () => {
     try {
       setIsLoading(true);
-      
-      const [equiposResponse, gruposResponse] = await Promise.all([
-        fetchWithToken(`${API_BASE_URL}/equipos`),
-        fetchWithToken(`${API_BASE_URL}/sims/grupos-disponibles`),
-      ]);
-      
-      const equiposData = await equiposResponse.json();
+
+      const gruposResponse = await fetchWithToken(`${API_BASE_URL}/sims/grupos-disponibles`);
       const gruposData = await gruposResponse.json();
-      
-      setEquipos(equiposData);
       setGruposDisponibles(gruposData);
-      
+
       await fetchSimsPaginadas(0);
-      
+
     } catch (error) {
       console.error("Error loading critical data:", error);
       Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos críticos" });
@@ -909,35 +934,35 @@ const EquiposSim = () => {
     }
   };
 
-   const fetchSimsPaginadas = async (page = 0, append = false) => {
+  const fetchSimsPaginadas = async (page = 0, append = false) => {
     try {
       if (page === 0) setIsLoading(true);
       else setLoadingMore(true);
-      
+
       const response = await fetchWithToken(`${API_BASE_URL}/sims/paged?page=${page}&size=${pagination.pageSize}`);
       const data = await response.json();
-      
+
       const simsData = data.content.map((sim) => ({
         ...sim,
-        equipo: sim.equipoNombre ? { 
-          nombre: sim.equipoNombre, 
-          imei: sim.equipoImei 
+        equipo: sim.equipoNombre ? {
+          nombre: sim.equipoNombre,
+          imei: sim.equipoImei
         } : null,
       }));
-      
+
       if (append) {
         setSims(prev => [...prev, ...simsData]);
       } else {
         setSims(simsData);
       }
-      
+
       setPagination({
         currentPage: data.number,
         totalPages: data.totalPages,
         totalElements: data.totalElements,
         pageSize: data.size
       });
-      
+
     } catch (error) {
       console.error("Error loading SIMs:", error);
       Swal.fire({ icon: "error", title: "Error", text: "Error al cargar SIMs" });
@@ -969,7 +994,11 @@ const EquiposSim = () => {
     }
   };
 
-  const openModal = (modalType, data = {}) => {
+  const openModal = async (modalType, data = {}) => {
+    if (modalType === 'form') {
+      await loadEquiposIfNeeded();
+    }
+
     setModals((prev) => ({ ...prev, [modalType]: { isOpen: true, ...data } }));
   };
 
@@ -1005,16 +1034,16 @@ const EquiposSim = () => {
       const simWithEquipo = {
         ...simData,
         compañia: simData.tarifa === "M2M_GLOBAL_15" ? "M2M" : "Telcel",
-        equipo: simData.equipoNombre ? { 
-          nombre: simData.equipoNombre, 
-          imei: simData.equipoImei 
+        equipo: simData.equipoNombre ? {
+          nombre: simData.equipoNombre,
+          imei: simData.equipoImei
         } : null,
       };
-      
+
       if (isNew) {
         return [simWithEquipo, ...prev];
       } else {
-        return prev.map(sim => 
+        return prev.map(sim =>
           sim.id === simData.id ? simWithEquipo : sim
         );
       }
@@ -1065,7 +1094,7 @@ const EquiposSim = () => {
         }
         return prev;
       });
-      
+
       Swal.fire({
         icon: "success",
         title: "Éxito",
@@ -1257,10 +1286,10 @@ const EquiposSim = () => {
                       )}
                   </tbody>
                 </table>
-                 {pagination.currentPage < pagination.totalPages - 1 && (
+                {pagination.currentPage < pagination.totalPages - 1 && (
                   <div className="sim-load-more-container">
-                    <button 
-                      className="sim-btn sim-btn-secondary" 
+                    <button
+                      className="sim-btn sim-btn-secondary"
                       onClick={loadMoreSims}
                       disabled={loadingMore}
                     >
