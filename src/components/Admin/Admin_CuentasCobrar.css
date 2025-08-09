@@ -242,10 +242,18 @@
   font-weight: 600;
 }
 
+.cuentascobrar-table-header-fixed {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
 .cuentascobrar-table-container {
   overflow-x: auto;
   border: 1px solid var(--cuentascobrar-border-color);
   border-radius: var(--cuentascobrar-border-radius-sm);
+  max-height: 600px; 
+  overflow-y: auto;
 }
 
 .cuentascobrar-table {

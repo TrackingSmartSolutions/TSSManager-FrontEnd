@@ -256,6 +256,14 @@
   overflow-x: auto;
   border: 1px solid var(--transacciones-border-color);
   border-radius: var(--transacciones-border-radius-sm);
+  max-height: 600px; 
+  overflow-y: auto;  
+}
+
+.transacciones-table-header-fixed {
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .transacciones-table {

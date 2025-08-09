@@ -1,5 +1,4 @@
 /* Estilos específicos para Admin Facturación */
-
 :root {
   --facturacion-primary-color: #00133b;
   --facturacion-secondary-color: #037ce0;
@@ -331,10 +330,18 @@
   font-weight: 600;
 }
 
+.facturacion-table-header-fixed {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
 .facturacion-table-container {
   overflow-x: auto;
   border: 1px solid var(--facturacion-border-color);
   border-radius: var(--facturacion-border-radius-sm);
+  max-height: 600px; 
+  overflow-y: auto;
 }
 
 .facturacion-table {
@@ -697,7 +704,7 @@
   margin-top: var(--facturacion-spacing-lg);
 }
 
-/* Responsive Design */
+/* Diseño responsivo */
 @media (max-width: 1200px) {
   .facturacion-container {
     gap: var(--facturacion-spacing-md);

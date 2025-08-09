@@ -1227,7 +1227,7 @@ const AdminCotizaciones = () => {
 
               <div className="cotizaciones-table-container">
                 <table className="cotizaciones-table">
-                  <thead>
+                  <thead className="cotizaciones-table-header-fixed">
                     <tr>
                       <th>No.</th>
                       <th>Receptor</th>

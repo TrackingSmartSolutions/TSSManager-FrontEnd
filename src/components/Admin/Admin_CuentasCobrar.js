@@ -1260,7 +1260,7 @@ const AdminCuentasCobrar = () => {
 
               <div className="cuentascobrar-table-container">
                 <table className="cuentascobrar-table">
-                  <thead>
+                  <thead className="cuentascobrar-table-header-fixed">
                     <tr>
                       <th>Folio</th>
                       <th>Fecha de Pago</th>

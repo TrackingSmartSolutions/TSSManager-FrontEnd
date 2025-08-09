@@ -657,7 +657,7 @@
   margin-top: var(--modelos-spacing-lg);
 }
 
-/* Responsive Design */
+/* Diseño responsivo */
 @media (max-width: 1200px) {
   .modelos-container {
     gap: var(--modelos-spacing-md);

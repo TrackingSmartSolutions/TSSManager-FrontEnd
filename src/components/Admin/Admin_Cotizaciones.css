@@ -229,10 +229,18 @@
   font-weight: 600;
 }
 
+.cotizaciones-table-header-fixed {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
 .cotizaciones-table-container {
   overflow-x: auto;
   border: 1px solid var(--cotizaciones-border-color);
   border-radius: var(--cotizaciones-border-radius-sm);
+  max-height: 600px; 
+  overflow-y: auto;
 }
 
 .cotizaciones-table {

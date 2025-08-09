@@ -211,6 +211,8 @@
 
 .proveedores-table-container {
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 600px;
   border: 1px solid var(--proveedores-border-color);
   border-radius: var(--proveedores-border-radius-sm);
 }
@@ -520,7 +522,7 @@
   margin-top: var(--proveedores-spacing-lg);
 }
 
-/* Responsive Design */
+/* Diseño responsivo */
 @media (max-width: 1200px) {
   .proveedores-container {
     gap: var(--proveedores-spacing-md);

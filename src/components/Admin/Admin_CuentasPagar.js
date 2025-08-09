@@ -762,7 +762,7 @@ const AdminCuentasPagar = () => {
 
               <div className="cuentaspagar-table-container">
                 <table className="cuentaspagar-table">
-                  <thead>
+                  <thead className="cuentaspagar-table-header-fixed">
                     <tr>
                       <th>Folio</th>
                       <th>Fecha de Pago</th>

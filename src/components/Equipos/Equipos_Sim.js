@@ -917,18 +917,18 @@ const EquiposSim = () => {
       const response = await fetchWithToken(`${API_BASE_URL}/sims/paged?page=${page}&size=${pagination.pageSize}`);
       const data = await response.json();
       
-      const simsWithEquipo = data.content.map((sim) => {
-        const equipo = equipos.find((e) => e.imei === sim.equipoImei);
-        return {
-          ...sim,
-          equipo: equipo ? { id: equipo.id, nombre: equipo.nombre, tipo: equipo.tipo } : null,
-        };
-      });
+      const simsData = data.content.map((sim) => ({
+        ...sim,
+        equipo: sim.equipoNombre ? { 
+          nombre: sim.equipoNombre, 
+          imei: sim.equipoImei 
+        } : null,
+      }));
       
       if (append) {
-        setSims(prev => [...prev, ...simsWithEquipo]);
+        setSims(prev => [...prev, ...simsData]);
       } else {
-        setSims(simsWithEquipo);
+        setSims(simsData);
       }
       
       setPagination({
@@ -1001,24 +1001,24 @@ const EquiposSim = () => {
 
   const handleSaveSim = (simData) => {
     setSims((prev) => {
-      const updatedSims = prev.map((sim) =>
-        sim.id === simData.id
-          ? {
-            ...sim,
-            ...simData,
-            compañia: simData.tarifa === "M2M_GLOBAL_15" ? "M2M" : "Telcel",
-          }
-          : sim
-      );
-      return updatedSims.map((sim) => {
-        const equipo = equipos.find((e) => e.id === sim.equipoId);
-        return {
-          ...sim,
-          equipo: equipo ? { id: equipo.id, nombre: equipo.nombre, tipo: equipo.tipo } : null,
-        };
-      });
+      const isNew = !prev.find(s => s.id === simData.id);
+      const simWithEquipo = {
+        ...simData,
+        compañia: simData.tarifa === "M2M_GLOBAL_15" ? "M2M" : "Telcel",
+        equipo: simData.equipoNombre ? { 
+          nombre: simData.equipoNombre, 
+          imei: simData.equipoImei 
+        } : null,
+      };
+      
+      if (isNew) {
+        return [simWithEquipo, ...prev];
+      } else {
+        return prev.map(sim => 
+          sim.id === simData.id ? simWithEquipo : sim
+        );
+      }
     });
-    fetchData();
     Swal.fire({
       icon: "success",
       title: "Éxito",
@@ -1050,7 +1050,6 @@ const EquiposSim = () => {
       if (!response.ok) throw new Error("Error al guardar el saldo");
       const data = await response.json();
 
-      // Recargar el historial específico del SIM
       const historialResponse = await fetchWithToken(`${API_BASE_URL}/sims/${simId}/historial`);
       const historialData = await historialResponse.json();
       setModals((prev) => {
@@ -1066,8 +1065,7 @@ const EquiposSim = () => {
         }
         return prev;
       });
-
-      fetchData();
+      
       Swal.fire({
         icon: "success",
         title: "Éxito",

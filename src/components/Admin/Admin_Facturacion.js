@@ -22,7 +22,7 @@ const fetchWithToken = async (url, options = {}) => {
 };
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true  }) => {
+const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -44,7 +44,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true,
   };
 
   return (
-    <div className="facturacion-modal-overlay" onClick={closeOnOverlayClick ? onClose: () => { }}>
+    <div className="facturacion-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
       <div className={`facturacion-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="facturacion-modal-header">
           <h2 className="facturacion-modal-title">{title}</h2>
@@ -967,9 +967,9 @@ const AdminFacturacion = () => {
         setFacturas(await facturasResp.json());
       } catch (error) {
         Swal.fire({ icon: "error", title: "Error", text: error.message });
-      }finally {
-      setIsLoading(false); 
-    }
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchData();
   }, []);
@@ -1186,12 +1186,12 @@ const AdminFacturacion = () => {
   return (
     <>
       <Header />
-       {isLoading && (
-      <div className="facturacion-loading">
-        <div className="spinner"></div>
-        <p>Cargando datos de facturación...</p>
-      </div>
-    )}
+      {isLoading && (
+        <div className="facturacion-loading">
+          <div className="spinner"></div>
+          <p>Cargando datos de facturación...</p>
+        </div>
+      )}
       <main className="facturacion-main-content">
         <div className="facturacion-container">
           <section className="facturacion-sidebar">
@@ -1282,7 +1282,7 @@ const AdminFacturacion = () => {
               </div>
               <div className="facturacion-table-container">
                 <table className="facturacion-table">
-                  <thead>
+                  <thead className="facturacion-table-header-fixed">
                     <tr>
                       <th>Identificador</th>
                       <th>Fecha emisión</th>
@@ -1374,7 +1374,7 @@ const AdminFacturacion = () => {
               <h4 className="facturacion-table-title">Facturas</h4>
               <div className="facturacion-table-container">
                 <table className="facturacion-table">
-                  <thead>
+                  <thead className="facturacion-table-header-fixed">
                     <tr>
                       <th>Folio Fiscal</th>
                       <th>No. Solicitud</th>

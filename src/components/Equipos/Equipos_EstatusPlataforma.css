@@ -685,7 +685,7 @@
   margin-top: var(--estatusplataforma-spacing-lg);
 }
 
-/* Responsive Design */
+/* Diseño responsivo */
 @media (max-width: 1200px) {
   .estatusplataforma-container {
     gap: var(--estatusplataforma-spacing-md);

@@ -278,6 +278,8 @@
 
 .inventario-table-container {
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 400px;
   border: 1px solid var(--inventario-border-color);
   border-radius: var(--inventario-border-radius-sm);
 }
@@ -604,7 +606,7 @@
   margin: 0;
 }
 
-/* Responsive Design */
+/* Diseño responsivo */
 @media (max-width: 1200px) {
   .inventario-container {
     gap: var(--inventario-spacing-md);

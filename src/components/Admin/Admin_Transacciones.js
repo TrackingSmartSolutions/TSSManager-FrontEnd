@@ -1225,7 +1225,7 @@ const AdminTransacciones = () => {
               <h4 className="transacciones-table-title">Transacciones</h4>
               <div className="transacciones-table-container">
                 <table className="transacciones-table">
-                  <thead>
+                  <thead className="transacciones-table-header-fixed">
                     <tr>
                       <th>Fecha</th>
                       <th>Tipo</th>

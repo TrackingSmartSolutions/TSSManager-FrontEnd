@@ -207,10 +207,18 @@
   font-weight: 600;
 }
 
+.cuentaspagar-table-header-fixed {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
 .cuentaspagar-table-container {
   overflow-x: auto;
   border: 1px solid var(--cuentaspagar-border-color);
   border-radius: var(--cuentaspagar-border-radius-sm);
+  max-height: 600px; 
+  overflow-y: auto;
 }
 
 .cuentaspagar-table {
