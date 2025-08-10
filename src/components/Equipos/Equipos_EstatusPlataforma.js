@@ -501,6 +501,7 @@ const ConfirmarCambioEstatusModal = ({
 const EquiposEstatusPlataforma = () => {
   const navigate = useNavigate();
   const chartRefs = useRef({});
+  const [visibleRows, setVisibleRows] = useState(50);
 
   const [equiposData, setEquiposData] = useState({
     estatusPorCliente: [],
@@ -528,41 +529,27 @@ const EquiposEstatusPlataforma = () => {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const [equiposResponse, estatusResponse, clientesResponse] = await Promise.all([
-        fetchWithToken(`${API_BASE_URL}/equipos`),
-        fetchWithToken(`${API_BASE_URL}/equipos/estatus`),
-        fetchWithToken(`${API_BASE_URL}/empresas`),
-      ]);
 
-      const equipos = await equiposResponse.json();
-      const estatusData = await estatusResponse.json();
-      const empresas = await clientesResponse.json();
-      const clientes = empresas.filter(emp => ["CLIENTE", "EN_PROCESO"].includes(emp.estatus));
-
-      // Obtener la fecha más reciente correctamente
-      let fechaUltimoCheck = new Date().toISOString().split("T")[0];
-      let lastCheckTimestamp = null;
-
-      if (estatusData.length > 0) {
-        // Encontrar la fecha más reciente
-        const fechaMasReciente = Math.max(...estatusData.map(es => new Date(es.fechaCheck).getTime()));
-        fechaUltimoCheck = new Date(fechaMasReciente).toISOString().split("T")[0];
-        lastCheckTimestamp = fechaMasReciente;
-      }
-
-      setLastCheckTime(lastCheckTimestamp);
-
-      const equiposParaCheck = equipos.filter(e => ["VENDIDO", "DEMO"].includes(e.tipo));
+      const dashboardResponse = await fetchWithToken(
+        `${API_BASE_URL}/equipos/dashboard-estatus`
+      );
+      const dashboardData = await dashboardResponse.json();
 
       setEquiposData({
-        estatusPorCliente: processEstatusPorCliente(equipos, estatusData, clientes),
-        equiposPorPlataforma: processEquiposPorPlataforma(equipos),
-        equiposOffline: processEquiposOffline(equipos, estatusData, clientes),
-        equiposPorMotivo: processEquiposPorMotivo(processEquiposOffline(equipos, estatusData, clientes)),
-        equiposParaCheck,
-        fechaUltimoCheck,
+        estatusPorCliente: dashboardData.estatusPorCliente || [],
+        equiposPorPlataforma: dashboardData.equiposPorPlataforma || [],
+        equiposOffline: dashboardData.equiposOffline || [],
+        equiposPorMotivo: processEquiposPorMotivo(dashboardData.equiposOffline || []),
+        equiposParaCheck: dashboardData.equiposParaCheck || [],
+        fechaUltimoCheck: dashboardData.fechaUltimoCheck,
       });
+
+      setLastCheckTime(dashboardData.fechaUltimoCheck ?
+        new Date(dashboardData.fechaUltimoCheck).getTime() : null
+      );
+
     } catch (error) {
+      console.error("Error loading dashboard:", error);
       Swal.fire({
         icon: "error",
         title: "Error",
@@ -574,8 +561,27 @@ const EquiposEstatusPlataforma = () => {
   };
 
   useEffect(() => {
+    const preloadData = async () => {
+      try {
+        await fetchWithToken(`${API_BASE_URL}/equipos/dashboard-estatus`);
+      } catch (error) {
+        console.log("Precarga silenciosa falló");
+      }
+    };
+
+    const timer = setTimeout(preloadData, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     fetchData();
   }, []);
+
+  // Agregar este useEffect después de los otros useEffect
+useEffect(() => {
+  // Resetear las filas visibles cuando cambien los equipos offline
+  setVisibleRows(50);
+}, [equiposData.equiposOffline.length]);
 
   const openModal = (modalType, data = {}) => {
     setModals((prev) => ({
@@ -1116,7 +1122,7 @@ const EquiposEstatusPlataforma = () => {
                   </thead>
                   <tbody>
                     {equiposData.equiposOffline.length > 0 ? (
-                      equiposData.equiposOffline.map((equipo, index) => (
+                      equiposData.equiposOffline.slice(0, visibleRows).map((equipo, index) => (
                         <tr key={index}>
                           <td>{equipo.cliente}</td>
                           <td>{equipo.nombre}</td>
@@ -1137,6 +1143,35 @@ const EquiposEstatusPlataforma = () => {
                   </tbody>
                 </table>
               </div>
+
+              {/* Botón para cargar más registros */}
+              {equiposData.equiposOffline.length > visibleRows && (
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  padding: '20px',
+                  borderTop: '1px solid #e5e7eb'
+                }}>
+                  <button
+                    onClick={() => setVisibleRows(prev => prev + 50)}
+                    style={{
+                      padding: '10px 24px',
+                      backgroundColor: '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+                  >
+                    Cargar más ({equiposData.equiposOffline.length - visibleRows} registros restantes)
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="estatusplataforma-pdf-button-container">
