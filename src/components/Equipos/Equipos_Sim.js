@@ -935,44 +935,49 @@ const EquiposSim = () => {
   };
 
   const fetchSimsPaginadas = async (page = 0, append = false) => {
-    try {
-      if (page === 0) setIsLoading(true);
-      else setLoadingMore(true);
+  try {
+    if (page === 0) setIsLoading(true);
+    else setLoadingMore(true);
 
-      const response = await fetchWithToken(`${API_BASE_URL}/sims/paged?page=${page}&size=${pagination.pageSize}`);
-      const data = await response.json();
+    const response = await fetchWithToken(`${API_BASE_URL}/sims/paged?page=${page}&size=${pagination.pageSize}`);
+    const data = await response.json();
 
-      const simsData = data.content.map((sim) => ({
-        ...sim,
-        equipo: sim.equipoNombre ? {
-          nombre: sim.equipoNombre,
-          imei: sim.equipoImei
-        } : null,
-      }));
+    const simsData = data.content.map((sim) => ({
+      ...sim,
+      equipo: sim.equipoNombre ? {
+        nombre: sim.equipoNombre,
+        imei: sim.equipoImei
+      } : null,
+    }));
 
-      if (append) {
-        setSims(prev => [...prev, ...simsData]);
-      } else {
-        setSims(simsData);
-      }
-
-      setPagination({
-        currentPage: data.number,
-        totalPages: data.totalPages,
-        totalElements: data.totalElements,
-        pageSize: data.size
-      });
-      console.log('Pagination:', { currentPage: data.number, totalPages: data.totalPages, totalElements: data.totalElements });
-
-
-    } catch (error) {
-      console.error("Error loading SIMs:", error);
-      Swal.fire({ icon: "error", title: "Error", text: "Error al cargar SIMs" });
-    } finally {
-      setIsLoading(false);
-      setLoadingMore(false);
+    if (append) {
+      setSims(prev => [...prev, ...simsData]);
+    } else {
+      setSims(simsData);
     }
-  };
+
+    setPagination({
+      currentPage: data.number !== undefined ? data.number : page,
+      totalPages: data.totalPages,
+      totalElements: data.totalElements,
+      pageSize: data.size
+    });
+    
+    console.log('Pagination:', { 
+      currentPage: data.number !== undefined ? data.number : page, 
+      totalPages: data.totalPages, 
+      totalElements: data.totalElements,
+      backendNumber: data.number 
+    });
+
+  } catch (error) {
+    console.error("Error loading SIMs:", error);
+    Swal.fire({ icon: "error", title: "Error", text: "Error al cargar SIMs" });
+  } finally {
+    setIsLoading(false);
+    setLoadingMore(false);
+  }
+};
 
   const loadMoreSims = () => {
     if (pagination.currentPage < pagination.totalPages - 1 && !loadingMore) {
