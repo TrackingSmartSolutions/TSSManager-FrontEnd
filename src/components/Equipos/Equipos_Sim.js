@@ -962,6 +962,8 @@ const EquiposSim = () => {
         totalElements: data.totalElements,
         pageSize: data.size
       });
+      console.log('Pagination:', { currentPage: data.number, totalPages: data.totalPages, totalElements: data.totalElements });
+
 
     } catch (error) {
       console.error("Error loading SIMs:", error);
