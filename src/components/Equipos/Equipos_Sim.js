@@ -508,6 +508,31 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
 };
 
 const SimDetailsModal = ({ isOpen, onClose, sim = null, equipos }) => {
+  const [ultimoSaldo, setUltimoSaldo] = useState(null);
+
+  useEffect(() => {
+    if (isOpen && sim) {
+      fetchUltimoSaldo(sim.id);
+    } else {
+      setUltimoSaldo(null);
+    }
+  }, [isOpen, sim]);
+
+  const fetchUltimoSaldo = async (simId) => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/sims/${simId}/ultimo-saldo`);
+      if (response.ok) {
+        const data = await response.json();
+        setUltimoSaldo(data);
+      } else {
+        setUltimoSaldo(null);
+      }
+    } catch (error) {
+      console.error("Error fetching ultimo saldo:", error);
+      setUltimoSaldo(null);
+    }
+  };
+
   if (!sim) return null;
 
   const equipo = equipos.find(eq => eq.imei === sim.equipoImei);
@@ -607,6 +632,44 @@ const SimDetailsModal = ({ isOpen, onClose, sim = null, equipos }) => {
                 readOnly
               />
             </div>
+          </>
+        )}
+
+        {sim.responsable === "TSS" && (
+          <>
+            <div className="sim-form-group">
+              <label className="sim-form-label">Último saldo registrado</label>
+              <input
+                type="text"
+                value={ultimoSaldo ? new Date(ultimoSaldo.fecha + "T00:00:00-06:00").toLocaleDateString("es-MX", { timeZone: "America/Mexico_City" }) : "Sin registros"}
+                className="sim-form-control"
+                readOnly
+              />
+            </div>
+
+            {sim.tarifa === "POR_SEGUNDO" && ultimoSaldo && ultimoSaldo.saldoActual && (
+              <div className="sim-form-group">
+                <label className="sim-form-label">Último saldo actual</label>
+                <input
+                  type="text"
+                  value={`$${ultimoSaldo.saldoActual}`}
+                  className="sim-form-control"
+                  readOnly
+                />
+              </div>
+            )}
+
+            {(sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") && ultimoSaldo && ultimoSaldo.datos && (
+              <div className="sim-form-group">
+                <label className="sim-form-label">Último datos registrados</label>
+                <input
+                  type="text"
+                  value={`${ultimoSaldo.datos} MB`}
+                  className="sim-form-control"
+                  readOnly
+                />
+              </div>
+            )}
           </>
         )}
 
@@ -935,43 +998,43 @@ const EquiposSim = () => {
   };
 
   const fetchSimsPaginadas = async (page = 0, append = false) => {
-  try {
-    if (page === 0) setIsLoading(true);
-    else setLoadingMore(true);
+    try {
+      if (page === 0) setIsLoading(true);
+      else setLoadingMore(true);
 
-    const response = await fetchWithToken(`${API_BASE_URL}/sims/paged?page=${page}&size=${pagination.pageSize}`);
-    const data = await response.json();
+      const response = await fetchWithToken(`${API_BASE_URL}/sims/paged?page=${page}&size=${pagination.pageSize}`);
+      const data = await response.json();
 
-    const simsData = data.content.map((sim) => ({
-      ...sim,
-      equipo: sim.equipoNombre ? {
-        nombre: sim.equipoNombre,
-        imei: sim.equipoImei
-      } : null,
-    }));
+      const simsData = data.content.map((sim) => ({
+        ...sim,
+        equipo: sim.equipoNombre ? {
+          nombre: sim.equipoNombre,
+          imei: sim.equipoImei
+        } : null,
+      }));
 
-    if (append) {
-      setSims(prev => [...prev, ...simsData]);
-    } else {
-      setSims(simsData);
+      if (append) {
+        setSims(prev => [...prev, ...simsData]);
+      } else {
+        setSims(simsData);
+      }
+
+      setPagination({
+        currentPage: data.number !== undefined ? data.number : page,
+        totalPages: data.totalPages,
+        totalElements: data.totalElements,
+        pageSize: data.size
+      });
+
+
+    } catch (error) {
+      console.error("Error loading SIMs:", error);
+      Swal.fire({ icon: "error", title: "Error", text: "Error al cargar SIMs" });
+    } finally {
+      setIsLoading(false);
+      setLoadingMore(false);
     }
-
-    setPagination({
-      currentPage: data.number !== undefined ? data.number : page,
-      totalPages: data.totalPages,
-      totalElements: data.totalElements,
-      pageSize: data.size
-    });
-    
-
-  } catch (error) {
-    console.error("Error loading SIMs:", error);
-    Swal.fire({ icon: "error", title: "Error", text: "Error al cargar SIMs" });
-  } finally {
-    setIsLoading(false);
-    setLoadingMore(false);
-  }
-};
+  };
 
   const loadMoreSims = () => {
     if (pagination.currentPage < pagination.totalPages - 1 && !loadingMore) {

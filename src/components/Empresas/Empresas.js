@@ -376,8 +376,18 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
 
     // Validación Sitio Web: URL válida si se proporciona
     if (formData.sitioWeb) {
-      const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
-      if (!urlRegex.test(formData.sitioWeb)) {
+      try {
+        const urlToValidate = formData.sitioWeb.startsWith('http')
+          ? formData.sitioWeb
+          : `https://${formData.sitioWeb}`;
+
+        const url = new URL(urlToValidate);
+
+        if (!['http:', 'https:'].includes(url.protocol)) {
+          throw new Error('Protocolo no válido');
+        }
+
+      } catch (error) {
         newErrors.sitioWeb = "Este campo debe ser una URL válida (ej. https://ejemplo.com)";
       }
     }
@@ -400,7 +410,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
       } else if (formData.rfc.trim().length > 13) {
         newErrors.rfc = "El RFC no puede tener más de 13 caracteres";
       }
-      
+
       if (!formData.razonSocial?.trim()) {
         newErrors.razonSocial = "Este campo es obligatorio para estatus Cliente";
       }

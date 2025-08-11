@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, } from "react";
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -137,74 +137,116 @@ const Calendario = () => {
   };
 
   useEffect(() => {
-  const loadEvents = async () => {
-    if (!selectedUser) return;
+    const loadEvents = async () => {
+      if (!selectedUser) return;
 
-    if (isInitialLoad) {
-      setIsLoading(true);
-    }
-
-    const start = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1).toISOString();
-    const end = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString();
-
-    let url;
-    if (userRol === "ADMINISTRADOR") {
-      url = `${API_BASE_URL}/calendario/eventos?startDate=${start}&endDate=${end}&usuario=${selectedUser}`;
-    } else {
-      url = `${API_BASE_URL}/calendario/eventos?startDate=${start}&endDate=${end}`;
-    }
-
-    try {
-      const controller = new AbortController();
-      const response = await fetchWithToken(url, { signal: controller.signal });
-      const data = await response.json();
-
-      const processedEvents = data
-        .filter(event => event !== null) 
-        .map(event => ({
-          title: event.titulo,
-          start: new Date(event.inicio),
-          end: event.fin ? new Date(event.fin) : null,
-          color: event.color,
-          allDay: event.allDay || false,
-          className: getEventClassName(event.tipo),
-          extendedProps: {
-            id: event.id,
-            tipo: event.tipo,
-            asignadoA: event.asignadoA,
-            trato: event.trato,
-            modalidad: event.modalidad,
-            medio: event.medio,
-            numeroSim: event.numeroSim,
-            imei: event.imei,
-            numeroCuenta: event.numeroCuenta,
-            cliente: event.cliente,
-            estado: event.estado,
-            esquema: event.esquema,
-            monto: event.monto,
-            nota: event.nota
-          }
-        }));
-
-      setEvents(processedEvents);
-    } catch (error) {
-      if (error.name !== 'AbortError') {
-        console.error("ERROR al cargar eventos:", error);
-      }
-    } finally {
-      setIsLoading(false);
       if (isInitialLoad) {
-        setIsInitialLoad(false);
+        setIsLoading(true);
       }
-    }
-  };
 
-  const timeoutId = setTimeout(() => {
-    loadEvents();
-  }); 
+      const start = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1).toISOString();
+      const end = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString();
 
-  return () => clearTimeout(timeoutId);
-}, [currentDate, selectedUser, userRol, isInitialLoad]);
+      let url;
+      if (userRol === "ADMINISTRADOR") {
+        url = `${API_BASE_URL}/calendario/eventos?startDate=${start}&endDate=${end}&usuario=${selectedUser}`;
+      } else {
+        url = `${API_BASE_URL}/calendario/eventos?startDate=${start}&endDate=${end}`;
+      }
+
+      try {
+        const controller = new AbortController();
+        const response = await fetchWithToken(url, { signal: controller.signal });
+        const data = await response.json();
+
+        const processedEvents = data
+          .filter(event => event !== null)
+          .map(event => ({
+            title: event.titulo,
+            start: new Date(event.inicio),
+            end: event.fin ? new Date(event.fin) : null,
+            color: event.color,
+            allDay: event.allDay || false,
+            className: getEventClassName(event.tipo),
+            extendedProps: {
+              id: event.id,
+              tipo: event.tipo,
+              asignadoA: event.asignadoA,
+              trato: event.trato,
+              modalidad: event.modalidad,
+              medio: event.medio,
+              numeroSim: event.numeroSim,
+              imei: event.imei,
+              numeroCuenta: event.numeroCuenta,
+              cliente: event.cliente,
+              estado: event.estado,
+              esquema: event.esquema,
+              monto: event.monto,
+              nota: event.nota
+            }
+          }));
+
+        setEvents(processedEvents);
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error("ERROR al cargar eventos:", error);
+        }
+      } finally {
+        setIsLoading(false);
+        if (isInitialLoad) {
+          setIsInitialLoad(false);
+        }
+      }
+    };
+    const timeoutId = setTimeout(() => {
+      loadEvents();
+    });
+
+    return () => clearTimeout(timeoutId);
+  }, [currentDate, selectedUser, userRol, isInitialLoad]);
+
+  useEffect(() => {
+    const handlePopoverPosition = () => {
+      const popovers = document.querySelectorAll('.fc-popover');
+
+      popovers.forEach(popover => {
+        const rect = popover.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+
+        if (rect.bottom > windowHeight) {
+          popover.classList.add('repositioned');
+          const newTop = windowHeight - rect.height - 20;
+          popover.style.top = `${Math.max(10, newTop)}px`;
+        }
+
+        if (rect.right > window.innerWidth) {
+          popover.style.left = `${window.innerWidth - rect.width - 20}px`;
+        }
+
+        if (rect.left < 0) {
+          popover.style.left = '10px';
+        }
+      });
+    };
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.classList && node.classList.contains('fc-popover')) {
+            setTimeout(handlePopoverPosition, 10);
+          }
+        });
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
 
   const closeEventModal = () => {
     setSelectedEvent(null);
@@ -511,8 +553,9 @@ const Calendario = () => {
               day: 'Día',
               list: 'Lista'
             }}
-            dayHeaderFormat={{ weekday: 'short' }}
+            dayHeaderFormat={{ weekday: 'short', day: 'numeric' }}
             allDayText="Todo el día"
+            popoverClassNames="custom-popover"
           />
         </div>
 

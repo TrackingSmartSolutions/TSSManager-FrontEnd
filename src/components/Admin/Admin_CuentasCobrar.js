@@ -19,13 +19,27 @@ const fetchWithToken = async (url, options = {}) => {
   if (!(options.body instanceof FormData)) {
     headers.append("Content-Type", "application/json");
   }
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
-  if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`);
-  if (response.status === 204) return response;
-  return response.json();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60000); 
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`);
+    if (response.status === 204) return response;
+    return response.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('La operación tardó demasiado tiempo. Verifique su conexión.');
+    }
+    throw error;
+  }
 };
 
 const fetchFileWithToken = async (url, options = {}) => {
@@ -256,17 +270,46 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
       formDataToSend.append("comprobante", formData.comprobantePago);
 
       try {
+        Swal.fire({
+          title: 'Procesando...',
+          text: 'Marcando como pagado y subiendo comprobante',
+          allowOutsideClick: false,
+          showConfirmButton: false,
+          willOpen: () => {
+            Swal.showLoading();
+          }
+        });
+
         const updatedCuenta = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/marcar-pagada`, {
           method: "POST",
           body: formDataToSend,
         });
+
+        Swal.close();
         onSave(updatedCuenta);
         onClose();
+
+        if (updatedCuenta.comprobantePagoUrl === "ERROR_UPLOAD") {
+          Swal.fire({
+            icon: "warning",
+            title: "Parcialmente completado",
+            text: "La cuenta se marcó como pagada, pero hubo un error al subir el comprobante. Puede intentar subirlo nuevamente más tarde."
+          });
+        } else {
+          Swal.fire({
+            icon: "success",
+            title: "Éxito",
+            text: "Cuenta marcada como pagada correctamente"
+          });
+        }
       } catch (error) {
+        Swal.close();
         Swal.fire({ icon: "error", title: "Error", text: error.message });
       } finally {
         setIsLoading(false);
       }
+    } else {
+      setIsLoading(false);
     }
   };
 

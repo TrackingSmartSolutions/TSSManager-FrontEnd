@@ -184,6 +184,41 @@
   transform: translateY(-1px);
 }
 
+.cuentaspagar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--cuentaspagar-spacing-lg);
+}
+
+.cuentaspagar-header-info {
+  flex: 1;
+}
+
+.cuentaspagar-btn-reporte-container {
+  display: flex;
+  align-items: center;
+}
+
+.cuentaspagar-btn-reporte {
+  padding: var(--cuentaspagar-spacing-sm) var(--cuentaspagar-spacing-lg);
+  border: none;
+  border-radius: var(--cuentaspagar-border-radius-sm);
+  font-size: var(--cuentaspagar-font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+  text-align: center;
+  background-color: #c73232;
+  color: white;
+}
+
+.cuentaspagar-btn-reporte:hover {
+  background-color: #a82828;
+  transform: translateY(-1px);
+}
+
 /* Tabla */
 .cuentaspagar-table-card {
   background-color: white;
@@ -578,6 +613,74 @@
 .cuentaspagar-table td:nth-child(2) {
   width: 140px;
   min-width: 140px;
+}
+
+.cuentaspagar-filters-container {
+  display: flex;
+  gap: 20px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.cuentaspagar-date-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cuentaspagar-date-inputs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cuentaspagar-date-input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  min-width: 140px;
+}
+
+.cuentaspagar-date-separator {
+  color: #666;
+  font-weight: 500;
+}
+
+.cuentaspagar-clear-filter-btn {
+  background: #ff4757;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cuentaspagar-clear-filter-btn:hover {
+  background: #ff3742;
+}
+
+@media (max-width: 768px) {
+  .cuentaspagar-filters-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+  
+  .cuentaspagar-date-inputs {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .cuentaspagar-date-separator {
+    align-self: center;
+  }
 }
 
 /* Diseño responsivo */

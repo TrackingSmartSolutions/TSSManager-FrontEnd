@@ -27,6 +27,7 @@ import ConfiguracionCopias from './components/Configuración/Configuracion_Copia
 import ConfiguracionUsuarios from './components/Configuración/Configuracion_Usuarios';
 import Calendario from './components/Calendario/Calendario';
 import GoogleDriveCallback from './components/Configuración/GoogleDriveCallback';
+import DashboardMetricas from './components/Dashboard Metricas/DashboardMetricas';
 
 function App() {
   return (
@@ -60,6 +61,7 @@ function App() {
         <Route path="/configuracion_usuarios" element={<ConfiguracionUsuarios />} />
         <Route path="/calendario" element={<Calendario />} />
         <Route path="/google-drive-callback" element={<GoogleDriveCallback />} />
+        <Route path="/metricas_generales" element={<DashboardMetricas />}/>
       </Routes>
     </Router>
   );

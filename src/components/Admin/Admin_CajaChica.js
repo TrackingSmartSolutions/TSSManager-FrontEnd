@@ -116,17 +116,16 @@ const AdminCajaChica = () => {
 
   useEffect(() => {
     const calcularResumen = () => {
-      const transaccionesFiltradas = filtrarTransaccionesPorFecha(transaccionesEfectivo)
-      const totalIngresos = transaccionesFiltradas
+      const totalIngresos = transaccionesEfectivo
         .filter((t) => t.tipo === "INGRESO")
         .reduce((sum, t) => sum + t.monto, 0)
-      const totalGastos = transaccionesFiltradas.filter((t) => t.tipo === "GASTO").reduce((sum, t) => sum + t.monto, 0)
+      const totalGastos = transaccionesEfectivo.filter((t) => t.tipo === "GASTO").reduce((sum, t) => sum + t.monto, 0)
       const utilidadPerdida = totalIngresos - totalGastos
 
       setResumenCajaChica({ totalIngresos, totalGastos, utilidadPerdida })
     }
     calcularResumen()
-  }, [transaccionesEfectivo, filtroFechas])
+  }, [transaccionesEfectivo])
 
   const handleMenuNavigation = (menuItem) => {
     switch (menuItem) {
@@ -156,15 +155,37 @@ const AdminCajaChica = () => {
     }
   }
 
-  const calcularSaldoAcumulado = (transaccionesParaCalcular = transaccionesEfectivo) => {
-    let saldoAcumulado = 0
-    return transaccionesParaCalcular
+  const calcularSaldoAcumulado = () => {
+    // Primero calcular el saldo de todas las transacciones hasta la fecha de inicio del filtro
+    const fechaInicio = filtroFechas.fechaInicio ? new Date(filtroFechas.fechaInicio + 'T00:00:00') : null;
+
+    // Ordenar todas las transacciones por fecha
+    const todasTransaccionesOrdenadas = [...transaccionesEfectivo]
+      .sort((a, b) => new Date(a.fecha + 'T00:00:00') - new Date(b.fecha + 'T00:00:00'));
+
+    // Calcular saldo inicial (transacciones anteriores al filtro)
+    let saldoInicial = 0;
+    if (fechaInicio) {
+      todasTransaccionesOrdenadas.forEach((transaccion) => {
+        const fechaTransaccion = new Date(transaccion.fecha + 'T00:00:00');
+        if (fechaTransaccion < fechaInicio) {
+          if (transaccion.tipo === "INGRESO") saldoInicial += transaccion.monto;
+          else saldoInicial -= transaccion.monto;
+        }
+      });
+    }
+
+    // Filtrar transacciones por fecha y calcular saldo acumulado
+    const transaccionesFiltradas = filtrarTransaccionesPorFecha(transaccionesEfectivo);
+    let saldoAcumulado = saldoInicial;
+
+    return transaccionesFiltradas
       .sort((a, b) => new Date(a.fecha + 'T00:00:00') - new Date(b.fecha + 'T00:00:00'))
       .map((transaccion) => {
-        if (transaccion.tipo === "INGRESO") saldoAcumulado += transaccion.monto
-        else saldoAcumulado -= transaccion.monto
-        return { ...transaccion, saldoAcumulado }
-      })
+        if (transaccion.tipo === "INGRESO") saldoAcumulado += transaccion.monto;
+        else saldoAcumulado -= transaccion.monto;
+        return { ...transaccion, saldoAcumulado };
+      });
   }
 
   const filtrarTransaccionesPorFecha = (transacciones) => {
@@ -181,8 +202,7 @@ const AdminCajaChica = () => {
     });
   };
 
-  const transaccionesFiltradas = filtrarTransaccionesPorFecha(transaccionesEfectivo);
-  const transaccionesConSaldo = calcularSaldoAcumulado(transaccionesFiltradas);
+  const transaccionesConSaldo = calcularSaldoAcumulado();
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("es-MX", {

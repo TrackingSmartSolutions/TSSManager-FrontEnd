@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Equipos_Inventario.css";
 import Header from "../Header/Header";
@@ -54,6 +54,22 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true,
       </div>
     </div>
   );
+};
+
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
 };
 
 // Modal para Agregar/Editar Equipo
@@ -448,6 +464,7 @@ const EquiposInventario = () => {
   const [filterTipo, setFilterTipo] = useState("");
   const [filterCliente, setFilterCliente] = useState("");
   const [filterNombre, setFilterNombre] = useState("");
+  const debouncedFilterNombre = useDebounce(filterNombre, 300);
   const [isLoading, setIsLoading] = useState(true);
   const [modals, setModals] = useState({
     form: { isOpen: false, equipo: null },
@@ -485,6 +502,7 @@ const EquiposInventario = () => {
   const fetchData = async () => {
     try {
       setIsLoading(true);
+
       const [equiposResponse, modelosResponse, proveedoresResponse, empresasResponse, simsResponse] = await Promise.all([
         fetchWithToken(`${API_BASE_URL}/equipos`),
         fetchWithToken(`${API_BASE_URL}/modelos`),
@@ -492,17 +510,25 @@ const EquiposInventario = () => {
         fetchWithToken(`${API_BASE_URL}/empresas`),
         fetchWithToken(`${API_BASE_URL}/sims`),
       ]);
-      const equiposData = await equiposResponse.json();
-      const modelosData = await modelosResponse.json();
-      setEquipos(equiposData);
-      setModelos(modelosData); // Asegúrate de que modelos se actualice
-      setProveedores(await proveedoresResponse.json());
-      const empresas = await empresasResponse.json();
+
+      const [equiposData, modelosData, proveedoresData, empresas, simsData] = await Promise.all([
+        equiposResponse.json(),
+        modelosResponse.json(),
+        proveedoresResponse.json(),
+        empresasResponse.json(),
+        simsResponse.json(),
+      ]);
+
       const filteredClientes = empresas.filter(emp => ["CLIENTE", "EN_PROCESO"].includes(emp.estatus));
+
+      setEquipos(equiposData);
+      setModelos(modelosData);
+      setProveedores(proveedoresData);
       setClientes(filteredClientes);
-      setSims(await simsResponse.json());
-      // No llames a generateChartData aquí, lo manejaremos en useEffect
+      setSims(simsData);
+
     } catch (error) {
+      console.error("Error detallado:", error);
       Swal.fire({
         icon: "error",
         title: "Error",
@@ -516,71 +542,71 @@ const EquiposInventario = () => {
   // Generar la gráfica cuando cambien equipos o modelos
   useEffect(() => {
     if (equipos.length > 0 && modelos.length > 0) {
-      generateChartData();
+      const timer = setTimeout(() => {
+        generateChartData();
+      }, 100);
+
+      return () => clearTimeout(timer);
     }
-  }, [equipos, modelos]);
+  }, [equipos.length, modelos.length]);
 
   const generateChartData = () => {
-    const usos = [...new Set(equipos.map(e => {
-      const modelo = modelos.find(m => m.id === e.modeloId);
-      return modelo ? modelo.uso : "Desconocido";
-    }))].filter(uso => uso !== "Desconocido");
+    const modeloMap = new Map(modelos.map(m => [m.id, m]));
 
+    const counts = new Map();
     const tipos = ["ALMACEN", "DEMO", "VENDIDO"];
 
-    // Inicializar datos para cada tipo
-    const datasets = tipos.map(tipo => ({
-      label: tipo,
-      data: usos.map(() => 0),
-      backgroundColor: tipo === "ALMACEN" ? "#2563eb" : tipo === "DEMO" ? "#f59e0b" : "#10b981",
-    }));
-
-    // Contar equipos por uso y tipo
     equipos.forEach(equipo => {
-      const modelo = modelos.find(m => m.id === equipo.modeloId);
-      const uso = modelo ? modelo.uso : "Desconocido";
-      const tipo = equipo.tipo;
-      const usoIndex = usos.indexOf(uso);
-      const tipoIndex = tipos.indexOf(tipo);
-      if (usoIndex !== -1 && tipoIndex !== -1) {
-        datasets[tipoIndex].data[usoIndex]++;
+      const modelo = modeloMap.get(equipo.modeloId);
+      const uso = modelo?.uso || "Desconocido";
+
+      if (uso !== "Desconocido") {
+        const key = `${uso}-${equipo.tipo}`;
+        counts.set(key, (counts.get(key) || 0) + 1);
       }
     });
 
-    // Filtrar datasets vacíos y actualizar chartData
-    const filteredDatasets = datasets.filter(dataset => dataset.data.some(value => value > 0));
-    const newChartData = {
+    const usos = [...new Set([...counts.keys()].map(key => key.split('-')[0]))];
+
+    const datasets = tipos.map(tipo => ({
+      label: tipo,
+      data: usos.map(uso => counts.get(`${uso}-${tipo}`) || 0),
+      backgroundColor: tipo === "ALMACEN" ? "#2563eb" : tipo === "DEMO" ? "#f59e0b" : "#10b981",
+    })).filter(dataset => dataset.data.some(value => value > 0));
+
+    setChartData({
       labels: usos,
-      datasets: filteredDatasets,
-    };
-    setChartData(newChartData);
+      datasets: datasets,
+    });
   };
 
-  const filteredEquipos = equipos.filter((equipo) => {
-    const matchesTipo = !filterTipo || equipo.tipo === filterTipo;
-    const matchesCliente = !filterCliente ||
-      (equipo.clienteId && equipo.clienteId.toString() === filterCliente) ||
-      (equipo.clienteDefault && equipo.clienteDefault === filterCliente);
-    const matchesNombre = !filterNombre ||
-      equipo.nombre?.toLowerCase().includes(filterNombre.toLowerCase()) ||
-      equipo.imei?.includes(filterNombre);
-    return matchesTipo && matchesCliente && matchesNombre;
-  });
+  const filteredEquipos = useMemo(() => {
+    return equipos.filter((equipo) => {
+      const matchesTipo = !filterTipo || equipo.tipo === filterTipo;
+      const matchesCliente = !filterCliente ||
+        (equipo.clienteId && equipo.clienteId.toString() === filterCliente) ||
+        (equipo.clienteDefault && equipo.clienteDefault === filterCliente);
+      const matchesNombre = !debouncedFilterNombre ||
+        equipo.nombre?.toLowerCase().includes(debouncedFilterNombre.toLowerCase()) ||
+        equipo.imei?.includes(debouncedFilterNombre);
+      return matchesTipo && matchesCliente && matchesNombre;
+    });
+  }, [equipos, filterTipo, filterCliente, debouncedFilterNombre]);
 
-  const needsRenewal = (equipo) => {
+  const needsRenewal = useCallback((equipo) => {
     if (!equipo.fechaExpiracion || equipo.estatus !== "ACTIVO") return false;
     const today = new Date();
     const expirationDate = new Date(equipo.fechaExpiracion);
     const daysUntilExpiration = Math.ceil((expirationDate - today) / (1000 * 60 * 60 * 24));
     return daysUntilExpiration <= 30 && daysUntilExpiration >= 0;
-  };
+  }, []);
 
-  const isExpired = (equipo) => {
+  const isExpired = useCallback((equipo) => {
     if (!equipo.fechaExpiracion) return false;
     const today = new Date();
     const expirationDate = new Date(equipo.fechaExpiracion);
     return expirationDate < today;
-  };
+  }, []);
 
   const openModal = (modalType, data = {}) => {
     setModals((prev) => ({ ...prev, [modalType]: { isOpen: true, ...data } }));

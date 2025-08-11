@@ -568,6 +568,13 @@
   max-height: 400px !important;
   overflow-y: auto !important;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+  position: fixed !important; 
+  z-index: 10001 !important; 
+}
+
+.fc-popover.repositioned {
+  transform: translateY(-100%) !important;
+  margin-top: -10px !important;
 }
 
 .fc-popover-body {

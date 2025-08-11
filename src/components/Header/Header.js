@@ -562,6 +562,11 @@ const Header = ({ logoUrl }) => {
                       Reporte personal
                     </Link>
                   </li>
+                  <li>
+                    <Link to="/metricas_generales" onClick={() => setIsCrmDropdownOpen(false)}>
+                      Métricas Generales
+                    </Link>
+                  </li>
                 </ul>
               )}
             </li>
@@ -740,6 +745,11 @@ const Header = ({ logoUrl }) => {
               <li>
                 <Link to="/reporte_personal" onClick={toggleSidebar}>
                   Reporte personal
+                </Link>
+              </li>
+              <li>
+                <Link to="/metricas_generales" onClick={toggleSidebar}>
+                  Métricas Generales
                 </Link>
               </li>
             </ul>

@@ -577,7 +577,6 @@ const EquiposEstatusPlataforma = () => {
     fetchData();
   }, []);
 
-  // Agregar este useEffect después de los otros useEffect
 useEffect(() => {
   // Resetear las filas visibles cuando cambien los equipos offline
   setVisibleRows(50);

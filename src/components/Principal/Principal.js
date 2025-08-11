@@ -1253,7 +1253,7 @@ const ConfirmacionEnvioModal = ({ isOpen, onClose, onConfirm, tratoId, actividad
   const [step, setStep] = useState(1);
   const [datosContacto, setDatosContacto] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [loadingMethod, setLoadingMethod] = useState(null); 
+  const [loadingMethod, setLoadingMethod] = useState(null);
 
   useEffect(() => {
     if (isOpen && tratoId) {
@@ -1560,7 +1560,19 @@ const Principal = () => {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const response = await fetchWithToken(`${API_BASE_URL}/tratos/actividades/pendientes?asignadoAId=${userId}&timezone=${timezone}`);
       const data = await response.json();
-      setTareasPendientes(data);
+
+      const datosOrdenados = data.sort((a, b) => {
+        if (!a.horaInicio && !b.horaInicio) return 0;
+        if (!a.horaInicio) return 1;
+        if (!b.horaInicio) return -1;
+
+        const horaA = a.horaInicio.toString().substring(0, 5); 
+        const horaB = b.horaInicio.toString().substring(0, 5); 
+
+        return horaA.localeCompare(horaB);
+      });
+
+      setTareasPendientes(datosOrdenados);
 
       // Obtener detalles de contactos y empresas
       const contactoIds = [...new Set(data.map(task => task.contactoId).filter(id => id != null))];

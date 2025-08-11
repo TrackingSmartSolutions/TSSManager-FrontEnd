@@ -378,7 +378,7 @@ const RegenerarModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
           <p className="cuentaspagar-confirmation-message">
             ¿Quiere volver a generar las cuentas por pagar para esta cuenta?
           </p>
-          
+
           <div className="cuentaspagar-form-group" style={{ marginTop: "20px" }}>
             <label htmlFor="nuevoMonto">Monto para las nuevas cuentas <span className="required"> *</span></label>
             <div className="cuentaspagar-input-with-prefix">
@@ -420,6 +420,11 @@ const AdminCuentasPagar = () => {
     editarCuenta: { isOpen: false, cuenta: null },
     confirmarEliminacion: { isOpen: false, cuenta: null },
     regenerar: { isOpen: false, cuenta: null },
+  });
+  const [filtroFechas, setFiltroFechas] = useState({
+    fechaInicio: "",
+    fechaFin: "",
+    activo: false
   });
 
   useEffect(() => {
@@ -592,47 +597,47 @@ const AdminCuentasPagar = () => {
   };
 
   const handleRegenerar = async (confirmar, cuenta, nuevoMonto = null) => {
-  closeModal("regenerar");
+    closeModal("regenerar");
 
-  if (confirmar) {
-    try {
-      const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/regenerar`, {
-        method: "POST",
-        body: JSON.stringify({
-          transaccionId: cuenta.transaccion.id,
-          fechaUltimoPago: cuenta.fechaPago,
-          nuevoMonto: nuevoMonto 
-        }),
-      });
+    if (confirmar) {
+      try {
+        const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/regenerar`, {
+          method: "POST",
+          body: JSON.stringify({
+            transaccionId: cuenta.transaccion.id,
+            fechaUltimoPago: cuenta.fechaPago,
+            nuevoMonto: nuevoMonto
+          }),
+        });
 
-      if (response.ok) {
-        const cuentasResponse = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar`);
-        const updatedCuentas = await cuentasResponse.json();
-        setCuentasPagar(updatedCuentas);
+        if (response.ok) {
+          const cuentasResponse = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar`);
+          const updatedCuentas = await cuentasResponse.json();
+          setCuentasPagar(updatedCuentas);
 
+          Swal.fire({
+            icon: "success",
+            title: "Éxito",
+            text: "Nuevas cuentas por pagar generadas correctamente",
+          });
+        }
+      } catch (error) {
+        console.error("Error al regenerar cuentas:", error);
         Swal.fire({
-          icon: "success",
-          title: "Éxito",
-          text: "Nuevas cuentas por pagar generadas correctamente",
+          icon: "error",
+          title: "Error",
+          text: "No se pudieron regenerar las cuentas por pagar",
         });
       }
-    } catch (error) {
-      console.error("Error al regenerar cuentas:", error);
+    } else {
+      // Si cancela, solo mostrar mensaje de éxito del pago
       Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "No se pudieron regenerar las cuentas por pagar",
+        icon: "success",
+        title: "Éxito",
+        text: "Cuenta marcada como pagada",
       });
     }
-  } else {
-    // Si cancela, solo mostrar mensaje de éxito del pago
-    Swal.fire({
-      icon: "success",
-      title: "Éxito",
-      text: "Cuenta marcada como pagada",
-    });
-  }
-};
+  };
 
   const handleEditarCuenta = (updatedCuenta) => {
     setCuentasPagar((prev) =>
@@ -653,6 +658,66 @@ const AdminCuentasPagar = () => {
     }
   };
 
+  const handleGenerarReporte = async () => {
+    try {
+      const params = new URLSearchParams();
+
+      if (filtroFechas.activo) {
+        params.append('fechaInicio', filtroFechas.fechaInicio);
+        params.append('fechaFin', filtroFechas.fechaFin);
+      } else {
+        const fechaInicio = new Date();
+        fechaInicio.setFullYear(fechaInicio.getFullYear() - 1); 
+        const fechaFin = new Date();
+        fechaFin.setFullYear(fechaFin.getFullYear() + 1); 
+
+        params.append('fechaInicio', fechaInicio.toISOString().split('T')[0]);
+        params.append('fechaFin', fechaFin.toISOString().split('T')[0]);
+      }
+
+      params.append('filtroEstatus', filtroEstatus);
+
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/cuentas-por-pagar/reporte/pdf?${params.toString()}`
+      );
+
+      if (response.ok) {
+        const blob = await response.blob();
+
+        const url = window.URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+
+        const now = new Date();
+        const timestamp = now.toISOString().split('T')[0];
+        const estatusSuffix = filtroEstatus !== 'Todas' ? `_${filtroEstatus}` : '';
+        link.download = `reporte_cuentas_por_pagar_${timestamp}${estatusSuffix}.pdf`;
+
+        document.body.appendChild(link);
+        link.click();
+
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        Swal.fire({
+          icon: "success",
+          title: "Éxito",
+          text: "Reporte generado y descargado correctamente",
+          timer: 2000,
+          showConfirmButton: false
+        });
+      }
+    } catch (error) {
+      console.error("Error al generar reporte:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo generar el reporte. Inténtalo de nuevo.",
+      });
+    }
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("es-MX", {
       style: "currency",
@@ -665,14 +730,29 @@ const AdminCuentasPagar = () => {
   };
 
   const cuentasFiltradas = cuentasPagar.filter((cuenta) => {
-    if (filtroEstatus === "Todas") return true;
-    return cuenta.estatus === filtroEstatus;
+    // Filtro por estatus
+    const pasaFiltroEstatus = filtroEstatus === "Todas" || cuenta.estatus === filtroEstatus;
+
+    // Filtro por rango de fechas
+    let pasaFiltroFechas = true;
+    if (filtroFechas.activo) {
+      const fechaCuenta = new Date(cuenta.fechaPago);
+      const fechaInicio = new Date(filtroFechas.fechaInicio);
+      const fechaFin = new Date(filtroFechas.fechaFin);
+
+      fechaInicio.setHours(0, 0, 0, 0);
+      fechaFin.setHours(23, 59, 59, 999);
+
+      pasaFiltroFechas = fechaCuenta >= fechaInicio && fechaCuenta <= fechaFin;
+    }
+
+    return pasaFiltroEstatus && pasaFiltroFechas;
   });
 
   const cuentasOrdenadas = cuentasFiltradas.sort((a, b) => {
     const fechaA = new Date(a.fecha_pago);
     const fechaB = new Date(b.fecha_pago);
-    return fechaA - fechaB; // Orden ascendente (fechas más próximas primero)
+    return fechaA - fechaB;
   });
 
   const getDiasRenovacion = (esquema) => {
@@ -688,6 +768,31 @@ const AdminCuentasPagar = () => {
     };
 
     return diasPorEsquema[esquema] || 0;
+  };
+
+  const handleFiltroFechas = (campo, valor) => {
+  setFiltroFechas(prev => {
+    const nuevoEstado = {
+      ...prev,
+      [campo]: valor
+    };
+    
+    const fechaInicioCompleta = campo === "fechaInicio" ? valor !== "" : prev.fechaInicio !== "";
+    const fechaFinCompleta = campo === "fechaFin" ? valor !== "" : prev.fechaFin !== "";
+    
+    return {
+      ...nuevoEstado,
+      activo: fechaInicioCompleta && fechaFinCompleta
+    };
+  });
+};
+
+  const limpiarFiltroFechas = () => {
+    setFiltroFechas({
+      fechaInicio: "",
+      fechaFin: "",
+      activo: false
+    });
   };
 
   return (
@@ -739,27 +844,67 @@ const AdminCuentasPagar = () => {
                 <h3 className="cuentaspagar-page-title">Cuentas por Pagar</h3>
                 <p className="cuentaspagar-subtitle">Gestión de pagos pendientes</p>
               </div>
+              <div className="cuentaspagar-btn-reporte-container">
+                <button
+                  className="cuentaspagar-btn-reporte"
+                  onClick={handleGenerarReporte}
+                >
+                  Generar Reporte
+                </button>
+              </div>
             </div>
 
             <div className="cuentaspagar-table-card">
               <div className="cuentaspagar-table-header">
                 <h4 className="cuentaspagar-table-title">Cuentas por pagar</h4>
-                <div className="cuentaspagar-filter-container">
-                  <label htmlFor="filtroEstatus">Filtrar por estatus:</label>
-                  <select
-                    id="filtroEstatus"
-                    value={filtroEstatus}
-                    onChange={(e) => setFiltroEstatus(e.target.value)}
-                    className="cuentaspagar-filter-select"
-                  >
-                    <option value="Todas">Todas</option>
-                    <option value="Pendiente">Pendiente</option>
-                    <option value="Vencida">Vencida</option>
-                    <option value="Pagado">Pagado</option>
-                  </select>
+                <div className="cuentaspagar-filters-container">
+                  <div className="cuentaspagar-filter-container">
+                    <label htmlFor="filtroEstatus">Filtrar por estatus:</label>
+                    <select
+                      id="filtroEstatus"
+                      value={filtroEstatus}
+                      onChange={(e) => setFiltroEstatus(e.target.value)}
+                      className="cuentaspagar-filter-select"
+                    >
+                      <option value="Todas">Todas</option>
+                      <option value="Pendiente">Pendiente</option>
+                      <option value="Vencida">Vencida</option>
+                      <option value="Pagado">Pagado</option>
+                    </select>
+                  </div>
+
+                  <div className="cuentaspagar-filter-container cuentaspagar-date-filter">
+                    <label>Filtrar por fecha de pago:</label>
+                    <div className="cuentaspagar-date-inputs">
+                      <input
+                        type="date"
+                        value={filtroFechas.fechaInicio}
+                        onChange={(e) => handleFiltroFechas("fechaInicio", e.target.value)}
+                        className="cuentaspagar-date-input"
+                        placeholder="Fecha inicio"
+                      />
+                      <span className="cuentaspagar-date-separator">a</span>
+                      <input
+                        type="date"
+                        value={filtroFechas.fechaFin}
+                        onChange={(e) => handleFiltroFechas("fechaFin", e.target.value)}
+                        className="cuentaspagar-date-input"
+                        placeholder="Fecha fin"
+                      />
+                      {filtroFechas.activo && (
+                        <button
+                          type="button"
+                          onClick={limpiarFiltroFechas}
+                          className="cuentaspagar-clear-filter-btn"
+                          title="Limpiar filtro de fechas"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-
               <div className="cuentaspagar-table-container">
                 <table className="cuentaspagar-table">
                   <thead className="cuentaspagar-table-header-fixed">
@@ -844,9 +989,21 @@ const AdminCuentasPagar = () => {
                     ) : (
                       <tr>
                         <td colSpan="11" className="cuentaspagar-no-data">
-                          {filtroEstatus === "Todas"
-                            ? "No hay cuentas por pagar registradas"
-                            : `No hay cuentas por pagar con estatus "${filtroEstatus}"`}
+                          {(() => {
+                            if (filtroEstatus === "Todas" && !filtroFechas.activo) {
+                              return "No hay cuentas por pagar registradas";
+                            }
+
+                            let mensaje = "No hay cuentas por pagar";
+                            if (filtroEstatus !== "Todas") {
+                              mensaje += ` con estatus "${filtroEstatus}"`;
+                            }
+                            if (filtroFechas.activo) {
+                              mensaje += ` entre ${filtroFechas.fechaInicio} y ${filtroFechas.fechaFin}`;
+                            }
+
+                            return mensaje;
+                          })()}
                         </td>
                       </tr>
                     )}
