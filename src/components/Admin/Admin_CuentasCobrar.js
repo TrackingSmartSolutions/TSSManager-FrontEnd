@@ -20,8 +20,8 @@ const fetchWithToken = async (url, options = {}) => {
     headers.append("Content-Type", "application/json");
   }
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60000); 
-  
+  const timeoutId = setTimeout(() => controller.abort(), 60000);
+
   try {
     const response = await fetch(url, {
       ...options,
@@ -29,7 +29,7 @@ const fetchWithToken = async (url, options = {}) => {
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
-    
+
     if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`);
     if (response.status === 204) return response;
     return response.json();
@@ -942,6 +942,7 @@ const AdminCuentasCobrar = () => {
   const [solicitudes, setSolicitudes] = useState([]);
   const [cotizaciones, setCotizaciones] = useState([]);
   const [emisores, setEmisores] = useState([]);
+  const [cuentasVinculadas, setCuentasVinculadas] = useState(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [filtroEstatus, setFiltroEstatus] = useState("Todas");
 
@@ -967,6 +968,8 @@ const AdminCuentasCobrar = () => {
         setCuentasPorCobrar(cuentasData);
         setCotizaciones(cotizacionesData);
         setEmisores(emisoresData);
+
+        await verificarVinculaciones(cuentasData);
       } catch (error) {
         Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos" });
       } finally {
@@ -975,6 +978,23 @@ const AdminCuentasCobrar = () => {
     };
     fetchData();
   }, []);
+
+  const verificarVinculaciones = async (cuentas) => {
+    const vinculacionesPromises = cuentas.map(async (cuenta) => {
+      try {
+        const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/check-vinculada`);
+        return { id: cuenta.id, vinculada: response.vinculada };
+      } catch (error) {
+        return { id: cuenta.id, vinculada: false };
+      }
+    });
+
+    const vinculaciones = await Promise.all(vinculacionesPromises);
+    const cuentasVinculadasIds = new Set(
+      vinculaciones.filter(v => v.vinculada).map(v => v.id)
+    );
+    setCuentasVinculadas(cuentasVinculadasIds);
+  };
 
   useEffect(() => {
     const actualizarEstatus = () => {
@@ -1387,11 +1407,12 @@ const AdminCuentasCobrar = () => {
                                 </button>
                               )}
                               <button
-                                className="cuentascobrar-action-btn cuentascobrar-download-btn"
+                                className={`cuentascobrar-action-btn cuentascobrar-download-btn ${cuentasVinculadas.has(cuenta.id)
+                                  ? 'cuentascobrar-request-btn-vinculada'
+                                  : 'cuentascobrar-request-btn-disponible'
+                                  }`}
                                 onClick={async () => {
-                                  const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/check-vinculada`);
-                                  const { vinculada } = response;
-                                  if (vinculada) {
+                                  if (cuentasVinculadas.has(cuenta.id)) {
                                     Swal.fire({
                                       icon: "warning",
                                       title: "Alerta",
@@ -1401,7 +1422,11 @@ const AdminCuentasCobrar = () => {
                                     openModal("crearSolicitud", { cuenta: cuenta });
                                   }
                                 }}
-                                title="Generar Solicitud de Factura o Nota"
+                                title={
+                                  cuentasVinculadas.has(cuenta.id)
+                                    ? "Solicitud ya generada"
+                                    : "Generar Solicitud de Factura o Nota"
+                                }
                               >
                                 <img
                                   src={requestIcon || "/placeholder.svg"}
@@ -1409,7 +1434,6 @@ const AdminCuentasCobrar = () => {
                                   className="cuentascobrar-action-icon"
                                 />
                               </button>
-
                             </div>
                           </td>
                         </tr>
@@ -1435,6 +1459,10 @@ const AdminCuentasCobrar = () => {
           onClose={() => closeModal("crearSolicitud")}
           onSave={(savedSolicitud) => {
             setSolicitudes((prev) => [...prev, savedSolicitud]);
+            const cuentaId = modals.crearSolicitud.cuenta?.id;
+            if (cuentaId) {
+              setCuentasVinculadas(prev => new Set([...prev, cuentaId]));
+            }
             Swal.fire({
               icon: "success",
               title: "Éxito",

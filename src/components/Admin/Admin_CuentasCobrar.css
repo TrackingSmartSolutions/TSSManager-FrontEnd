@@ -813,6 +813,34 @@
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
+.cuentascobrar-request-btn-vinculada {
+  background-color: rgba(244, 67, 54, 0.1);
+  border-color: var(--cuentascobrar-danger-color);
+}
+
+.cuentascobrar-request-btn-vinculada:hover {
+  background-color: rgba(244, 67, 54, 0.2);
+  border-color: var(--cuentascobrar-danger-color);
+}
+
+.cuentascobrar-request-btn-vinculada .cuentascobrar-action-icon {
+  filter: brightness(0) saturate(100%) invert(25%) sepia(70%) saturate(7000%) hue-rotate(354deg) brightness(90%) contrast(97%);
+}
+
+.cuentascobrar-request-btn-disponible {
+  background-color: rgba(76, 175, 80, 0.1);
+  border-color: var(--cuentascobrar-success-color);
+}
+
+.cuentascobrar-request-btn-disponible:hover {
+  background-color: rgba(76, 175, 80, 0.2);
+  border-color: var(--cuentascobrar-success-color);
+}
+
+.cuentascobrar-request-btn-disponible .cuentascobrar-action-icon {
+  filter: brightness(0) saturate(100%) invert(44%) sepia(96%) saturate(1237%) hue-rotate(87deg) brightness(98%) contrast(89%);
+}
+
 /* Diseño responsivo */
 @media (max-width: 1200px) {
   .cuentascobrar-container {
