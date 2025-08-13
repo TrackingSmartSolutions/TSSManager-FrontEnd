@@ -2426,8 +2426,9 @@ const Empresas = () => {
                         Editar empresa
                       </button>
                       <button className="btn btn-details" onClick={handleCompanyDetails} title="Detalles empresa">
-                        <img src={detailsIcon || "/placeholder.svg"} alt="Detalles" className="btn-icon" />
-                      </button>
+  <img src={detailsIcon || "/placeholder.svg"} alt="Detalles" className="btn-icon" />
+  Detalles
+</button>
                     </div>
                   </div>
 

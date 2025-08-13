@@ -183,7 +183,6 @@ const DashboardMetricas = () => {
 
     const handleDownloadPDF = async () => {
         try {
-            // Mostrar loading
             Swal.fire({
                 title: 'Generando PDF...',
                 text: 'Por favor espera mientras se genera el reporte',
@@ -193,12 +192,11 @@ const DashboardMetricas = () => {
                 }
             })
 
-            // Crear un contenedor temporal para el PDF
             const tempContainer = document.createElement('div')
             tempContainer.style.position = 'absolute'
             tempContainer.style.left = '-9999px'
             tempContainer.style.top = '0'
-            tempContainer.style.width = '210mm' // A4 width
+            tempContainer.style.width = '210mm'
             tempContainer.style.backgroundColor = 'white'
             tempContainer.style.fontFamily = 'Arial, sans-serif'
             tempContainer.style.fontSize = '12px'
@@ -207,7 +205,6 @@ const DashboardMetricas = () => {
             tempContainer.style.padding = '20px'
             document.body.appendChild(tempContainer)
 
-            // Crear el contenido del PDF
             const fechaReporte = new Date().toLocaleDateString('es-MX', {
                 year: 'numeric',
                 month: 'long',
@@ -215,10 +212,10 @@ const DashboardMetricas = () => {
             })
 
             const formatDateCorrect = (dateString) => {
-            if (!dateString) return ''
-            const [year, month, day] = dateString.split('-')
-            return `${day}/${month}/${year}`
-        }
+                if (!dateString) return ''
+                const [year, month, day] = dateString.split('-')
+                return `${day}/${month}/${year}`
+            }
 
             const periodoReporte = `${formatDateCorrect(dateRange.startDate)} - ${formatDateCorrect(dateRange.endDate)}`
             const usuarioSeleccionado = selectedUser === "todos" ? "Todos los usuarios" :
@@ -430,19 +427,14 @@ const DashboardMetricas = () => {
 
                 <!-- Footer -->
                 <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; text-align: center; color: #666; font-size: 10px;">
-                    <p style="margin: 0;">
-                        Reporte generado automáticamente - TSS Manager Backend
-                    </p>
                     <p style="margin: 5px 0 0 0;">
                         ${new Date().toLocaleString('es-MX')}
                     </p>
                 </div>
             </div>
         `
-
-            // Capturar el contenido con html2canvas
             const canvas = await html2canvas(tempContainer, {
-                scale: 2, // Mayor resolución
+                scale: 2,
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: '#ffffff',
@@ -453,57 +445,47 @@ const DashboardMetricas = () => {
                 logging: false
             })
 
-            // Limpiar el contenedor temporal
             document.body.removeChild(tempContainer)
 
-            // Crear el PDF
             const imgData = canvas.toDataURL('image/png', 1.0)
 
-            // Crear documento PDF en formato A4
             const pdf = new jsPDF('p', 'mm', 'a4')
 
-            // Dimensiones A4 en mm
             const pdfWidth = 210
             const pdfHeight = 297
 
-            // Calcular dimensiones de la imagen
             const imgProps = pdf.getImageProperties(imgData)
-            const imgWidth = pdfWidth - 20 // 10mm margen cada lado
+            const imgWidth = pdfWidth - 20
             const imgHeight = (imgProps.height * imgWidth) / imgProps.width
 
-            // Si la imagen es más alta que la página, ajustar
             let finalImgWidth = imgWidth
             let finalImgHeight = imgHeight
 
-            if (imgHeight > pdfHeight - 20) { // 10mm margen arriba y abajo
+            if (imgHeight > pdfHeight - 20) {
                 finalImgHeight = pdfHeight - 20
                 finalImgWidth = (imgProps.width * finalImgHeight) / imgProps.height
             }
 
-            // Posicionar la imagen desde arriba con margen mínimo
             const x = (pdfWidth - finalImgWidth) / 2
-            const y = 10 // Margen superior de solo 10mm
+            const y = 10
 
-            // Agregar la imagen al PDF
             pdf.addImage(imgData, 'PNG', x, y, finalImgWidth, finalImgHeight, '', 'FAST')
 
-            // Si la imagen es muy alta, crear páginas adicionales
             if (imgHeight > pdfHeight - 20) {
                 let remainingHeight = imgHeight - (pdfHeight - 20)
-                let sourceY = pdfHeight - 20 // Comenzar desde donde terminó la primera página
+                let sourceY = pdfHeight - 20
 
                 while (remainingHeight > 0) {
                     pdf.addPage()
                     const pageHeight = Math.min(remainingHeight, pdfHeight - 20)
 
-                    // Calcular la proporción de la imagen para esta página
                     const cropHeight = (pageHeight / imgHeight) * imgProps.height
 
                     pdf.addImage(
                         imgData,
                         'PNG',
                         10,
-                        10, // Margen superior constante
+                        10,
                         imgWidth,
                         pageHeight,
                         '',
@@ -514,15 +496,12 @@ const DashboardMetricas = () => {
                 }
             }
 
-            // Generar nombre del archivo
             const fechaArchivo = new Date().toISOString().split('T')[0]
             const usuarioTexto = selectedUser === "todos" ? "todos-usuarios" : `usuario-${selectedUser}`
             const nombreArchivo = `dashboard-metricas-${fechaArchivo}-${usuarioTexto}.pdf`
 
-            // Descargar el PDF
             pdf.save(nombreArchivo)
 
-            // Cerrar el loading y mostrar éxito
             Swal.close()
             Swal.fire({
                 icon: 'success',
@@ -752,6 +731,26 @@ const DashboardMetricas = () => {
 
                         <div className="dashboard-metricas__grafica-conversion">
                             <h3 className="dashboard-metricas__grafica-titulo">Tasa de Conversión por Usuario</h3>
+
+                            <div className="dashboard-metricas__grafica-leyenda">
+                                <div className="dashboard-metricas__leyenda-item">
+                                    <span className="dashboard-metricas__leyenda-color" style={{ backgroundColor: '#87ceeb' }}></span>
+                                    <span className="dashboard-metricas__leyenda-texto">Contactadas</span>
+                                </div>
+                                <div className="dashboard-metricas__leyenda-item">
+                                    <span className="dashboard-metricas__leyenda-color" style={{ backgroundColor: '#5bc0de' }}></span>
+                                    <span className="dashboard-metricas__leyenda-texto">Respuesta Positiva</span>
+                                </div>
+                                <div className="dashboard-metricas__leyenda-item">
+                                    <span className="dashboard-metricas__leyenda-color" style={{ backgroundColor: '#2c5aa0' }}></span>
+                                    <span className="dashboard-metricas__leyenda-texto">Interés Medio/Alto</span>
+                                </div>
+                                <div className="dashboard-metricas__leyenda-item">
+                                    <span className="dashboard-metricas__leyenda-color" style={{ backgroundColor: '#030020' }}></span>
+                                    <span className="dashboard-metricas__leyenda-texto">Reuniones</span>
+                                </div>
+                            </div>
+
                             <div className="dashboard-metricas__conversion-content">
                                 {(dashboardData?.tasaConversion || []).map((item, index) => (
                                     <div key={index} className="dashboard-metricas__conversion-usuario">
@@ -761,30 +760,34 @@ const DashboardMetricas = () => {
                                                 <div
                                                     className="dashboard-metricas__conversion-segmento dashboard-metricas__conversion-segmento--contactadas"
                                                     style={{ width: "100%" }}
-                                                    title={`Contactadas: ${item.contactadas}`}
                                                 >
-                                                    <span>{item.contactadas}</span>
+                                                    {item.contactadas > 0 && (
+                                                        <span className="dashboard-metricas__conversion-valor-fijo">{item.contactadas}</span>
+                                                    )}
                                                 </div>
                                                 <div
                                                     className="dashboard-metricas__conversion-segmento dashboard-metricas__conversion-segmento--positiva"
                                                     style={{ width: `${item.contactadas > 0 ? (item.respuestaPositiva / item.contactadas) * 100 : 0}%` }}
-                                                    title={`Respuesta Positiva: ${item.respuestaPositiva}`}
                                                 >
-                                                    <span>{item.respuestaPositiva}</span>
+                                                    {item.respuestaPositiva > 0 && (
+                                                        <span className="dashboard-metricas__conversion-valor-fijo">{item.respuestaPositiva}</span>
+                                                    )}
                                                 </div>
                                                 <div
                                                     className="dashboard-metricas__conversion-segmento dashboard-metricas__conversion-segmento--interes"
                                                     style={{ width: `${item.contactadas > 0 ? (item.interesMedio / item.contactadas) * 100 : 0}%` }}
-                                                    title={`Interés Medio/Alto: ${item.interesMedio}`}
                                                 >
-                                                    <span>{item.interesMedio}</span>
+                                                    {item.interesMedio > 0 && (
+                                                        <span className="dashboard-metricas__conversion-valor-fijo">{item.interesMedio}</span>
+                                                    )}
                                                 </div>
                                                 <div
                                                     className="dashboard-metricas__conversion-segmento dashboard-metricas__conversion-segmento--reuniones"
                                                     style={{ width: `${item.contactadas > 0 ? (item.reuniones / item.contactadas) * 100 : 0}%` }}
-                                                    title={`Reuniones: ${item.reuniones}`}
                                                 >
-                                                    <span>{item.reuniones}</span>
+                                                    {item.reuniones > 0 && (
+                                                        <span className="dashboard-metricas__conversion-valor-fijo">{item.reuniones}</span>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>

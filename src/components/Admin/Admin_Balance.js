@@ -90,7 +90,7 @@ const AdminBalance = () => {
   const generarDatosGrafico = (transacciones, tipoFiltro) => {
     const { inicio, fin, labels } = obtenerRangoFechas(tipoFiltro)
     const transaccionesFiltradas = transacciones.filter((t) => {
-      const fechaTransaccion = new Date(t.fecha)
+      const fechaTransaccion = new Date(t.fechaPago)
       return fechaTransaccion >= inicio && fechaTransaccion <= fin
     })
 
@@ -104,7 +104,7 @@ const AdminBalance = () => {
         const ingresos = transaccionesFiltradas
           .filter((t) => t.tipo === "INGRESO")
           .filter((t) => {
-            const fechaTransaccion = new Date(t.fecha)
+            const fechaTransaccion = new Date(t.fechaPago)
             return (
               fechaTransaccion.getDate() === dia &&
               fechaTransaccion.getMonth() === mesActual &&
@@ -115,7 +115,7 @@ const AdminBalance = () => {
         const gastos = transaccionesFiltradas
           .filter((t) => t.tipo === "GASTO" && t.notas === "Transacción generada desde Cuentas por Pagar")
           .filter((t) => {
-            const fechaTransaccion = new Date(t.fecha)
+            const fechaTransaccion = new Date(t.fechaPago)
             return (
               fechaTransaccion.getDate() === dia &&
               fechaTransaccion.getMonth() === mesActual &&
@@ -137,14 +137,14 @@ const AdminBalance = () => {
         const ingresos = transaccionesFiltradas
           .filter((t) => t.tipo === "INGRESO")
           .filter((t) => {
-            const fechaTransaccion = new Date(t.fecha)
+            const fechaTransaccion = new Date(t.fechaPago)
             return fechaTransaccion.getMonth() === mes && fechaTransaccion.getFullYear() === añoActual
           })
           .reduce((sum, t) => sum + t.monto, 0)
         const gastos = transaccionesFiltradas
           .filter((t) => t.tipo === "GASTO" && t.notas === "Transacción generada desde Cuentas por Pagar")
           .filter((t) => {
-            const fechaTransaccion = new Date(t.fecha)
+            const fechaTransaccion = new Date(t.fechaPago)
             return fechaTransaccion.getMonth() === mes && fechaTransaccion.getFullYear() === añoActual
           })
           .reduce((sum, t) => sum + t.monto, 0)
@@ -158,14 +158,14 @@ const AdminBalance = () => {
         const ingresos = transaccionesFiltradas
           .filter((t) => t.tipo === "INGRESO")
           .filter((t) => {
-            const fechaTransaccion = new Date(t.fecha)
+            const fechaTransaccion = new Date(t.fechaPago)
             return fechaTransaccion.getMonth() === i && fechaTransaccion.getFullYear() === añoActual
           })
           .reduce((sum, t) => sum + t.monto, 0)
         const gastos = transaccionesFiltradas
           .filter((t) => t.tipo === "GASTO" && t.notas === "Transacción generada desde Cuentas por Pagar")
           .filter((t) => {
-            const fechaTransaccion = new Date(t.fecha)
+            const fechaTransaccion = new Date(t.fechaPago)
             return fechaTransaccion.getMonth() === i && fechaTransaccion.getFullYear() === añoActual
           })
           .reduce((sum, t) => sum + t.monto, 0)
@@ -179,11 +179,11 @@ const AdminBalance = () => {
         const año = añoActual - 4 + i
         const ingresos = transaccionesFiltradas
           .filter((t) => t.tipo === "INGRESO")
-          .filter((t) => new Date(t.fecha).getFullYear() === año)
+          .filter((t) => new Date(t.fechaPago).getFullYear() === año)
           .reduce((sum, t) => sum + t.monto, 0)
         const gastos = transaccionesFiltradas
           .filter((t) => t.tipo === "GASTO" && t.notas === "Transacción generada desde Cuentas por Pagar")
-          .filter((t) => new Date(t.fecha).getFullYear() === año)
+          .filter((t) => new Date(t.fechaPago).getFullYear() === año)
           .reduce((sum, t) => sum + t.monto, 0)
         return { mes: labels[i], ingresos, gastos }
       })
@@ -229,7 +229,7 @@ const AdminBalance = () => {
         return { categoria: cat.descripcion, cuenta: "Todas", monto: montoTotal }
       })
 
-      const equiposVendidos = await Promise.all(
+      const equiposVendidos = (await Promise.all(
         cuentasPorCobrar.map(async (c) => {
           const cotizacion = cotizaciones.find((co) => co.id === c.cotizacionId)
           return {
@@ -238,7 +238,7 @@ const AdminBalance = () => {
             numeroEquipos: cotizacion ? cotizacion.cantidadTotal : 0,
           }
         }),
-      )
+      )).filter(equipo => equipo.numeroEquipos > 0)
 
       setBalanceData({
         resumenContable: { totalIngresos, totalGastos, utilidadPerdida },

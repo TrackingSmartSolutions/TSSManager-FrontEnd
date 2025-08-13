@@ -778,19 +778,19 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
 
   };
   const validateForm = () => {
-  const newErrors = {};
-  if (!formData.clienteNombre) newErrors.clienteNombre = "El cliente es obligatorio";
-  if (!formData.esquema) newErrors.esquema = "El esquema es obligatorio";
-  if (!formData.numeroPagos || Number.parseInt(formData.numeroPagos) <= 0) {
-    newErrors.numeroPagos = "El número de pagos debe ser mayor a 0";
-  }
-  if (!formData.fechaInicial) newErrors.fechaInicial = "La fecha inicial es obligatoria"; // AGREGAR ESTA LÍNEA
-  if (formData.conceptos.filter(c => c.selected).length === 0) {
-    newErrors.conceptos = "Debe seleccionar al menos un concepto";
-  }
-  setErrors(newErrors);
-  return Object.keys(newErrors).length === 0;
-};
+    const newErrors = {};
+    if (!formData.clienteNombre) newErrors.clienteNombre = "El cliente es obligatorio";
+    if (!formData.esquema) newErrors.esquema = "El esquema es obligatorio";
+    if (!formData.numeroPagos || Number.parseInt(formData.numeroPagos) <= 0) {
+      newErrors.numeroPagos = "El número de pagos debe ser mayor a 0";
+    }
+    if (!formData.fechaInicial) newErrors.fechaInicial = "La fecha inicial es obligatoria"; // AGREGAR ESTA LÍNEA
+    if (formData.conceptos.filter(c => c.selected).length === 0) {
+      newErrors.conceptos = "Debe seleccionar al menos un concepto";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -909,7 +909,7 @@ const AdminCotizaciones = () => {
   const [users, setUsers] = useState([]);
   const [emisores, setEmisores] = useState([]);
   const [filterReceptor, setFilterReceptor] = useState("");
-
+  const [cotizacionesVinculadas, setCotizacionesVinculadas] = useState(new Set());
   const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -950,6 +950,9 @@ const AdminCotizaciones = () => {
 
         setClientes(clientes);
         setCotizaciones(cotizaciones);
+        if (cotizaciones.length > 0) {
+          await checkVinculaciones(cotizaciones);
+        }
         setUsers(users);
         setEmisores(emisores);
         setCuentasPorCobrar(cuentasPorCobrar);
@@ -965,6 +968,24 @@ const AdminCotizaciones = () => {
     };
     fetchData();
   }, []);
+
+  const checkVinculaciones = async (cotizacionesList) => {
+    try {
+      const vinculacionPromises = cotizacionesList.map(async (cotizacion) => {
+        const response = await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacion.id}/check-vinculada`);
+        const { vinculada } = await response.json();
+        return { id: cotizacion.id, vinculada };
+      });
+
+      const resultados = await Promise.all(vinculacionPromises);
+      const vinculadas = new Set(
+        resultados.filter(r => r.vinculada).map(r => r.id)
+      );
+      setCotizacionesVinculadas(vinculadas);
+    } catch (error) {
+      console.error("Error verificando vinculaciones:", error);
+    }
+  };
 
   const openModal = (modalType, data = {}) => {
     setModals((prev) => ({
@@ -1292,7 +1313,10 @@ const AdminCotizaciones = () => {
                                   />
                                 </button>
                                 <button
-                                  className="cotizaciones-action-btn cotizaciones-receivable-btn"
+                                  className={`cotizaciones-action-btn cotizaciones-receivable-btn ${cotizacionesVinculadas.has(cotizacion.id)
+                                      ? 'cotizaciones-receivable-btn-vinculada'
+                                      : 'cotizaciones-receivable-btn-disponible'
+                                    }`}
                                   onClick={async () => {
                                     const response = await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacion.id}/check-vinculada`);
                                     const { vinculada } = await response.json();
@@ -1306,7 +1330,11 @@ const AdminCotizaciones = () => {
                                       openModal("crearCuentas", { cotizacion: cotizacion });
                                     }
                                   }}
-                                  title="Generar Cuenta por Cobrar"
+                                  title={
+                                    cotizacionesVinculadas.has(cotizacion.id)
+                                      ? "Cuentas por cobrar ya generadas"
+                                      : "Generar Cuenta por Cobrar"
+                                  }
                                 >
                                   <img
                                     src={receivableIcon || "/placeholder.svg"}
@@ -1354,6 +1382,7 @@ const AdminCotizaciones = () => {
           onClose={() => closeModal("crearCuentas")}
           onSave={(savedCuentas) => {
             setCuentasPorCobrar((prev) => [...prev, ...savedCuentas]);
+            setCotizacionesVinculadas(prev => new Set([...prev, modals.crearCuentas?.cotizacion?.id]));
             handleSaveCuenta(savedCuentas[0]);
             Swal.fire({
               icon: "success",

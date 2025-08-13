@@ -154,12 +154,12 @@
     display: flex;
     justify-content: space-around;
     align-items: end;
-    height: 300px; 
-    padding: 70px 15px 30px 15px; 
+    height: 300px;
+    padding: 70px 15px 30px 15px;
     border-bottom: 2px solid #ecf0f1;
     position: relative;
     overflow: visible;
-    margin-top: 20px; 
+    margin-top: 20px;
 }
 
 .dashboard-metricas__barra-grupo {
@@ -174,7 +174,7 @@
 .dashboard-metricas__barras-container {
     display: flex;
     gap: 3px;
-    height: 180px; 
+    height: 180px;
     align-items: end;
     justify-content: center;
 }
@@ -182,7 +182,7 @@
 .dashboard-metricas__barra {
     width: 20px;
     min-height: 8px;
-    max-height: 180px; 
+    max-height: 180px;
     border-radius: 3px 3px 0 0;
     position: relative;
     display: flex;
@@ -198,14 +198,14 @@
 
 .dashboard-metricas__barra-valor {
     position: absolute;
-    top: -45px; 
+    top: -45px;
     left: 50%;
     transform: translateX(-50%);
     font-size: 0.75rem;
     font-weight: 600;
     color: #2c3e50;
     background: white;
-    padding: 4px 8px; 
+    padding: 4px 8px;
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     white-space: nowrap;
@@ -213,7 +213,7 @@
     opacity: 1;
     transition: opacity 0.3s ease;
     border: 1px solid #e9ecef;
-    min-width: 24px; 
+    min-width: 24px;
     text-align: center;
 }
 
@@ -353,7 +353,7 @@
     background-repeat: no-repeat;
     background-position: right 8px center;
     background-size: 16px;
-    padding-right: 40px; 
+    padding-right: 40px;
     position: relative;
 }
 
@@ -407,13 +407,31 @@
     border-color: #adb5bd;
 }
 
+.dashboard-metricas__conversion-valor-fijo {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+    pointer-events: none;
+    z-index: 2;
+    opacity: 1;
+}
+
+.dashboard-metricas__conversion-segmento {
+    position: relative;
+}
 
 /* Diseño responsivo */
 @media (max-width: 1200px) {
     .dashboard-metricas__graficas-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .dashboard-metricas__barra-grupo {
         max-width: 120px;
     }
@@ -445,18 +463,18 @@
     }
 
     .dashboard-metricas__grafica-barras {
-        height: 270px; 
-        padding: 60px 10px 25px 10px; 
+        height: 270px;
+        padding: 60px 10px 25px 10px;
     }
 
     .dashboard-metricas__barras-container {
-        height: 160px; 
+        height: 160px;
     }
 
     .dashboard-metricas__barra-valor {
-        top: -40px; 
+        top: -40px;
         font-size: 0.7rem;
-        padding: 3px 6px; 
+        padding: 3px 6px;
     }
 
     .dashboard-metricas__barra {
@@ -501,7 +519,7 @@
 
     .dashboard-metricas__grafica-barras {
         height: 250px;
-        padding: 55px 10px 25px 10px; 
+        padding: 55px 10px 25px 10px;
     }
 
     .dashboard-metricas__barras-container {
@@ -514,7 +532,7 @@
 
     .dashboard-metricas__barra {
         width: 16px;
-        max-height: 140px; 
+        max-height: 140px;
     }
 
     .dashboard-metricas__barra-label {
@@ -525,7 +543,7 @@
     .dashboard-metricas__barra-valor {
         font-size: 0.65rem;
         padding: 2px 4px;
-        top: -35px; 
+        top: -35px;
     }
 
     .dashboard-metricas__conversion-metricas {
@@ -556,13 +574,4 @@
 .dashboard-metricas__tarjeta-resumen:hover .dashboard-metricas__tarjeta-icono {
     transform: scale(1.1);
     transition: transform 0.3s ease;
-}
-
-.dashboard-metricas__conversion-segmento span {
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-.dashboard-metricas__conversion-segmento:hover span {
-    opacity: 1;
 }

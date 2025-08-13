@@ -568,13 +568,49 @@
   max-height: 400px !important;
   overflow-y: auto !important;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
-  position: fixed !important; 
-  z-index: 10001 !important; 
+  position: absolute !important;
+  z-index: 10001 !important;
 }
 
-.fc-popover.repositioned {
-  transform: translateY(-100%) !important;
-  margin-top: -10px !important;
+.fc-popover.custom-popover-fixed {
+  position: absolute !important;
+  transform: none !important;
+  margin-top: 0 !important;
+}
+
+.fc-daygrid-day-frame {
+  position: relative !important;
+}
+
+.fc-popover {
+  max-width: 300px !important;
+  min-width: 250px !important;
+}
+
+/* Scroll interno del popover */
+.fc-popover-body {
+  max-height: 300px !important;
+  overflow-y: auto !important;
+  padding: 8px !important;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 transparent;
+}
+
+.fc-popover-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.fc-popover-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.fc-popover-body::-webkit-scrollbar-thumb {
+  background-color: #cbd5e0;
+  border-radius: 3px;
+}
+
+.fc-popover-body::-webkit-scrollbar-thumb:hover {
+  background-color: #a0aec0;
 }
 
 .fc-popover-body {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, } from "react";
+import { useNavigate } from 'react-router-dom';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -29,6 +30,7 @@ const Calendario = () => {
   const userName = localStorage.getItem("userName");
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const navigate = useNavigate();
 
   // Inicializar selectedUser basándose en el rol
   const [selectedUser, setSelectedUser] = useState(
@@ -173,6 +175,7 @@ const Calendario = () => {
               tipo: event.tipo,
               asignadoA: event.asignadoA,
               trato: event.trato,
+              tratoId: event.tratoId,
               modalidad: event.modalidad,
               medio: event.medio,
               numeroSim: event.numeroSim,
@@ -204,49 +207,6 @@ const Calendario = () => {
 
     return () => clearTimeout(timeoutId);
   }, [currentDate, selectedUser, userRol, isInitialLoad]);
-
-  useEffect(() => {
-    const handlePopoverPosition = () => {
-      const popovers = document.querySelectorAll('.fc-popover');
-
-      popovers.forEach(popover => {
-        const rect = popover.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-
-        if (rect.bottom > windowHeight) {
-          popover.classList.add('repositioned');
-          const newTop = windowHeight - rect.height - 20;
-          popover.style.top = `${Math.max(10, newTop)}px`;
-        }
-
-        if (rect.right > window.innerWidth) {
-          popover.style.left = `${window.innerWidth - rect.width - 20}px`;
-        }
-
-        if (rect.left < 0) {
-          popover.style.left = '10px';
-        }
-      });
-    };
-
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        mutation.addedNodes.forEach((node) => {
-          if (node.classList && node.classList.contains('fc-popover')) {
-            setTimeout(handlePopoverPosition, 10);
-          }
-        });
-      });
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
 
   const closeEventModal = () => {
     setSelectedEvent(null);
@@ -370,6 +330,7 @@ const Calendario = () => {
             tipo: event.tipo,
             asignadoA: event.asignadoA,
             trato: event.trato,
+            tratoId: event.tratoId,
             modalidad: event.modalidad,
             medio: event.medio,
             numeroSim: event.numeroSim,
@@ -461,6 +422,14 @@ const Calendario = () => {
     });
   };
 
+  const handleTratoClick = (tratoId) => {
+    if (tratoId) {
+      navigate(`/detallestrato/${tratoId}`);
+      setIsEventModalOpen(false);
+      setSelectedEvent(null);
+    }
+  };
+
   return (
     <>
       <Header />
@@ -537,6 +506,7 @@ const Calendario = () => {
             dayMaxEvents={4}
             dayMaxEventRows={4}
             moreLinkClick="popover"
+            moreLinkClassNames="custom-popover-fixed"
             moreLinkText={(num) => `+${num} more`}
             eventDisplay="block"
             // Para eventos superpuestos:
@@ -597,7 +567,24 @@ const Calendario = () => {
                     )}
                     {selectedEvent.trato && (
                       <div className="ts-calendar-modal-field">
-                        <strong>Trato:</strong> {selectedEvent.trato}
+                        <strong>Trato:</strong>
+                        {selectedEvent.trato ? (
+                          <span
+                            onClick={() => handleTratoClick(selectedEvent.tratoId)}
+                            style={{
+                              color: '#3b82f6',
+                              cursor: 'pointer',
+                              textDecoration: 'underline',
+                              marginLeft: '5px'
+                            }}
+                            onMouseOver={(e) => e.target.style.color = '#1d4ed8'}
+                            onMouseOut={(e) => e.target.style.color = '#3b82f6'}
+                          >
+                            {selectedEvent.trato}
+                          </span>
+                        ) : (
+                          <span style={{ marginLeft: '5px' }}>No especificado</span>
+                        )}
                       </div>
                     )}
                   </>

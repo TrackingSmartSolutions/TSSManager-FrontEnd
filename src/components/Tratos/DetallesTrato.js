@@ -3030,7 +3030,8 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
   const [error, setError] = useState(null);
   const [plantillaSeleccionada, setPlantillaSeleccionada] = useState(null);
   const editorRef = useRef(null);
-
+  const [emailChips, setEmailChips] = useState([]);
+  const [inputEmail, setInputEmail] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -3038,10 +3039,15 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
         try {
           const response = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}`);
           const trato = await response.json();
-          setFormData(prev => ({
-            ...prev,
-            para: trato.contacto?.email || "",
-          }));
+
+          if (trato.contacto?.email) {
+            const email = trato.contacto.email.trim();
+            setEmailChips([email]);
+            setFormData(prev => ({
+              ...prev,
+              para: email,
+            }));
+          }
         } catch (error) {
           console.error("Error loading contact data:", error);
         }
@@ -3077,7 +3083,6 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
 
   useEffect(() => {
     if (editorRef.current && formData.mensaje) {
-      // Sincronizar el contenido HTML en el editor cuando cambie formData.mensaje
       if (editorRef.current.innerHTML !== formData.mensaje) {
         editorRef.current.innerHTML = formData.mensaje;
       }
@@ -3115,7 +3120,16 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.para.trim()) newErrors.para = "Debes especificar un destinatario o dejar el valor predeterminado";
+    if (!formData.para.trim()) {
+      newErrors.para = "Debes especificar al menos un destinatario";
+    } else {
+      const emails = formData.para.split(',').map(email => email.trim()).filter(email => email.length > 0);
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const invalidEmails = emails.filter(email => !emailRegex.test(email));
+      if (invalidEmails.length > 0) {
+        newErrors.para = `Emails inválidos: ${invalidEmails.join(', ')}`;
+      }
+    }
     if (!formData.asunto.trim()) newErrors.asunto = "Este campo es obligatorio";
     if (!formData.mensaje.trim()) newErrors.mensaje = "Este campo es obligatorio";
     setErrors(newErrors);
@@ -3135,7 +3149,8 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
     if (editorRef.current) {
       editorRef.current.innerHTML = '';
     }
-
+    setEmailChips([]);
+    setInputEmail('');
     setPlantillaSeleccionada(null);
     setErrors({});
     setError(null);
@@ -3380,6 +3395,32 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
     event.target.value = '';
   };
 
+  const isValidEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+  };
+
+  // Función para agregar email
+  const addEmailChip = (email) => {
+    const trimmedEmail = email.trim();
+    if (trimmedEmail && !emailChips.includes(trimmedEmail)) {
+      if (isValidEmail(trimmedEmail)) {
+        const newChips = [...emailChips, trimmedEmail];
+        setEmailChips(newChips);
+        setFormData(prev => ({ ...prev, para: newChips.join(', ') }));
+        setInputEmail('');
+        if (errors.para) setErrors(prev => ({ ...prev, para: '' }));
+      }
+    }
+  };
+
+  // Función para remover email
+  const removeEmailChip = (emailToRemove) => {
+    const newChips = emailChips.filter(email => email !== emailToRemove);
+    setEmailChips(newChips);
+    setFormData(prev => ({ ...prev, para: newChips.join(', ') }));
+  };
+
   return (
     <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Mensaje nuevo" size="lg" canClose={true} closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="gmail-compose-form">
@@ -3402,13 +3443,55 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
 
           <div className="gmail-field-group">
             <label className="gmail-field-label">Para</label>
-            <input
-              type="email"
-              value={formData.para}
-              onChange={(e) => handleInputChange("para", e.target.value)}
-              className={`gmail-field-input ${errors.para ? "error" : ""}`}
-              placeholder="Destinatarios"
-            />
+            <div className={`email-chips-container ${errors.para ? 'error' : ''}`}>
+              <div className="email-chips-wrapper">
+                {emailChips.map((email, index) => (
+                  <div key={index} className="email-chip">
+                    <span>{email}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeEmailChip(email)}
+                      className="email-chip-remove"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+
+                {/* Input para nuevos emails */}
+                <input
+                  type="text"
+                  value={inputEmail}
+                  onChange={(e) => setInputEmail(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ',') {
+                      e.preventDefault();
+                      if (inputEmail.trim()) {
+                        addEmailChip(inputEmail);
+                      }
+                    } else if (e.key === 'Backspace' && !inputEmail && emailChips.length > 0) {
+                      removeEmailChip(emailChips[emailChips.length - 1]);
+                    }
+                  }}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const pastedText = e.clipboardData.getData('text');
+                    const emailList = pastedText.split(/[,;\s]+/).filter(email => email.trim());
+                    emailList.forEach(email => addEmailChip(email));
+                  }}
+                  placeholder={emailChips.length === 0 ? "Ingresa emails..." : "Agregar más..."}
+                  className="email-input-field"
+                />
+              </div>
+            </div>
+            <div className="email-info-row">
+              <small>Presiona Enter o coma para agregar</small>
+              {emailChips.length > 0 && (
+                <span className="email-counter">
+                  {emailChips.length} destinatario{emailChips.length !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
             {errors.para && <span className="error-message">{errors.para}</span>}
           </div>
 
@@ -5458,7 +5541,10 @@ const DetallesTrato = () => {
                   <div key={email.id} className="email-item">
                     <div className="email-header">
                       <div className="email-destinatario">
-                        {email.destinatario}
+                        {email.destinatario.includes(',')
+                          ? `${email.destinatario.split(',').length} destinatarios: ${email.destinatario}`
+                          : email.destinatario
+                        }
                       </div>
                       <div className="email-fecha">
                         {new Date(email.fechaEnvio).toLocaleString()}

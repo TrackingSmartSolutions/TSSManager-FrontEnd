@@ -637,16 +637,6 @@ const SimDetailsModal = ({ isOpen, onClose, sim = null, equipos }) => {
 
         {sim.responsable === "TSS" && (
           <>
-            <div className="sim-form-group">
-              <label className="sim-form-label">Último saldo registrado</label>
-              <input
-                type="text"
-                value={ultimoSaldo ? new Date(ultimoSaldo.fecha + "T00:00:00-06:00").toLocaleDateString("es-MX", { timeZone: "America/Mexico_City" }) : "Sin registros"}
-                className="sim-form-control"
-                readOnly
-              />
-            </div>
-
             {sim.tarifa === "POR_SEGUNDO" && ultimoSaldo && ultimoSaldo.saldoActual && (
               <div className="sim-form-group">
                 <label className="sim-form-label">Último saldo actual</label>

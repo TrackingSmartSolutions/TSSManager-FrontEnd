@@ -691,6 +691,34 @@
   text-align: center;
 }
 
+.cotizaciones-receivable-btn-vinculada {
+  background-color: rgba(76, 175, 80, 0.1);
+  border-color: #4caf50;
+}
+
+.cotizaciones-receivable-btn-vinculada:hover {
+  background-color: rgba(76, 175, 80, 0.2);
+  border-color: #4caf50;
+}
+
+.cotizaciones-receivable-btn-vinculada .cotizaciones-action-icon {
+  filter: brightness(0) saturate(100%) invert(44%) sepia(96%) saturate(1237%) hue-rotate(87deg) brightness(98%) contrast(89%);
+}
+
+.cotizaciones-receivable-btn-disponible {
+  background-color: rgba(244, 67, 54, 0.1);
+  border-color: #f44336;
+}
+
+.cotizaciones-receivable-btn-disponible:hover {
+  background-color: rgba(244, 67, 54, 0.2);
+  border-color: #f44336;
+}
+
+.cotizaciones-receivable-btn-disponible .cotizaciones-action-icon {
+  filter: brightness(0) saturate(100%) invert(25%) sepia(70%) saturate(7000%) hue-rotate(354deg) brightness(90%) contrast(97%);
+}
+
 /* Ajustes responsive para la columna de equipos */
 @media (max-width: 992px) {
   .cotizaciones-equipos-column,

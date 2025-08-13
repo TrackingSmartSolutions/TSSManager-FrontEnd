@@ -2512,6 +2512,100 @@
   border-color: #adb5bd;
 }
 
+.email-chips-container {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 6px;
+  background: white;
+  min-height: 40px;
+  cursor: text;
+}
+
+.email-chips-container:focus-within {
+  border-color: #4285f4;
+  box-shadow: 0 0 0 1px #4285f4;
+}
+
+.email-chips-container.error {
+  border-color: #dc3545;
+}
+
+.email-chips-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.email-chip {
+  display: inline-flex;
+  align-items: center;
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 13px;
+  max-width: 200px;
+}
+
+.email-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.email-chip-remove {
+  background: none;
+  border: none;
+  color: #1976d2;
+  margin-left: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.email-chip-remove:hover {
+  background: rgba(25, 118, 210, 0.1);
+  border-radius: 50%;
+}
+
+.email-input-field {
+  border: none;
+  outline: none;
+  background: transparent;
+  flex: 1;
+  min-width: 120px;
+  font-size: 14px;
+  padding: 2px;
+}
+
+.email-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  margin-left: 8px;
+}
+
+.email-info-row small {
+  color: #666;
+  font-size: 11px;
+}
+
+.email-counter {
+  background: #f5f5f5;
+  color: #666;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
 /* Responsivo */
 @media (max-width: 480px) {
   .confirmacion-envio-step2 .method-buttons {
