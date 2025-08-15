@@ -3097,7 +3097,30 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
   };
 
   const handleFileUpload = (event) => {
+    const maxFileSize = 1 * 1024 * 1024; // 1MB por archivo
+    const maxFiles = 3; // Máximo 3 archivos
     const files = Array.from(event.target.files);
+
+    if (formData.adjuntos.length + files.length > maxFiles) {
+      Swal.fire({
+        icon: "warning",
+        title: "Límite de archivos excedido",
+        text: `Solo puedes agregar un máximo de ${maxFiles} archivos. Actualmente tienes ${formData.adjuntos.length} archivo(s).`,
+        confirmButtonText: "Aceptar",
+      });
+      return;
+    }
+    // Validar tamaño individual de archivos
+    const oversizedFiles = files.filter(file => file.size > maxFileSize);
+    if (oversizedFiles.length > 0) {
+      Swal.fire({
+        icon: "warning",
+        title: "Archivo muy grande",
+        text: `Uno o más archivos exceden el límite de 1MB por archivo. Por favor, selecciona archivos más pequeños.`,
+        confirmButtonText: "Aceptar",
+      });
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       adjuntos: [...prev.adjuntos, ...files],
@@ -4001,44 +4024,58 @@ const DetallesTrato = () => {
   };
 
   // Función para activar/desactivar correos de seguimiento
-  const toggleCorreosSeguimiento = async (tratoId, activar) => {
-    setCargandoCorreos(true);
-
-    try {
-      const endpoint = activar ? 'activar' : 'desactivar';
-      const response = await fetchWithToken(`${API_BASE_URL}/correos-seguimiento/${endpoint}/${tratoId}`, {
-        method: 'POST'
-      });
-
-      const mensaje = await response.text();
-      setCorreosSeguimientoActivo(activar);
+const toggleCorreosSeguimiento = async (tratoId, activar) => {
+  if (activar) {
+    if (!trato.contacto?.email || trato.contacto.email.trim() === '' || trato.contacto.email === 'N/A') {
+      // Revertir el estado del checkbox
+      setCorreosSeguimientoActivo(false);
+      
       Swal.fire({
-        icon: 'success',
-        title: activar ? 'Correos de seguimiento activados' : 'Correos de seguimiento desactivados',
-        text: mensaje,
-        showConfirmButton: false,
-        timer: 2000
+        icon: 'warning',
+        title: 'Email requerido',
+        text: 'Para activar los correos de seguimiento, primero debe agregar un email al contacto del trato.',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#3085d6'
       });
-
-    } catch (error) {
-      // Revertir el estado del checkbox si hay error
-      setCorreosSeguimientoActivo(!activar);
-
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: error.message || 'Error al cambiar el estado de los correos de seguimiento'
-      });
-    } finally {
-      setCargandoCorreos(false);
+      return;
     }
-  };
+  }
+  setCargandoCorreos(true);
+  try {
+    const endpoint = activar ? 'activar' : 'desactivar';
+    const response = await fetchWithToken(`${API_BASE_URL}/correos-seguimiento/${endpoint}/${tratoId}`, {
+      method: 'POST'
+    });
+
+    const mensaje = await response.text();
+    setCorreosSeguimientoActivo(activar);
+    Swal.fire({
+      icon: 'success',
+      title: activar ? 'Correos de seguimiento activados' : 'Correos de seguimiento desactivados',
+      text: mensaje,
+      showConfirmButton: false,
+      timer: 2000
+    });
+
+  } catch (error) {
+    setCorreosSeguimientoActivo(!activar);
+
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: error.message || 'Error al cambiar el estado de los correos de seguimiento'
+    });
+  } finally {
+    setCargandoCorreos(false);
+  }
+};
 
   // Función para manejar el cambio del checkbox
-  const handleCorreosSeguimientoChange = (e) => {
-    const isChecked = e.target.checked;
-    toggleCorreosSeguimiento(trato.id, isChecked);
-  };
+  // Función para manejar el cambio del checkbox
+const handleCorreosSeguimientoChange = (e) => {
+  const isChecked = e.target.checked;
+  toggleCorreosSeguimiento(trato.id, isChecked);
+};
 
   // useEffect para cargar el estado inicial cuando se carga el trato
   useEffect(() => {

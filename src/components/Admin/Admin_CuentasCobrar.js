@@ -199,22 +199,24 @@ const numeroALetras = (numero) => {
 // Modal para Agregar Comprobante de Pago
 const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
   const [formData, setFormData] = useState({
+    montoPago: "",
     fechaPago: "",
     comprobantePago: null,
   });
   const [errors, setErrors] = useState({});
-
+  const saldoPendiente = cuenta?.saldoPendiente || cuenta?.cantidadCobrar || 0;
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setFormData({
+        montoPago: saldoPendiente.toString(),
         fechaPago: new Date().toISOString().split("T")[0],
         comprobantePago: null,
       });
       setErrors({});
     }
-  }, [isOpen]);
+  }, [isOpen, cuenta]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -253,6 +255,13 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
 
   const validateForm = () => {
     const newErrors = {};
+    const montoPago = parseFloat(formData.montoPago);
+
+    if (!formData.montoPago || montoPago <= 0) {
+      newErrors.montoPago = "El monto debe ser mayor a 0";
+    } else if (montoPago > saldoPendiente) {
+      newErrors.montoPago = `El monto no puede ser mayor al saldo pendiente ($${saldoPendiente})`;
+    }
 
     if (!formData.fechaPago) newErrors.fechaPago = "La fecha de pago es obligatoria";
     if (!formData.comprobantePago) newErrors.comprobantePago = "El comprobante de pago es obligatorio";
@@ -266,6 +275,7 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
     e.preventDefault();
     if (validateForm()) {
       const formDataToSend = new FormData();
+      formDataToSend.append("montoPago", formData.montoPago)
       formDataToSend.append("fechaPago", formData.fechaPago);
       formDataToSend.append("comprobante", formData.comprobantePago);
 
@@ -316,7 +326,37 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Agregar Comprobante de Cobro" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="cuentascobrar-form">
+        <div className="cuentascobrar-info-section">
+          <div className="cuentascobrar-info-item">
+            <label>Monto Total:</label>
+            <span>${cuenta?.cantidadCobrar || 0}</span>
+          </div>
+          {cuenta?.montoPagado > 0 && (
+            <div className="cuentascobrar-info-item">
+              <label>Monto Pagado:</label>
+              <span>${cuenta.montoPagado}</span>
+            </div>
+          )}
+          <div className="cuentascobrar-info-item">
+            <label>Saldo Pendiente:</label>
+            <span>${saldoPendiente}</span>
+          </div>
+        </div>
         <div className="cuentascobrar-form-group">
+          <label htmlFor="montoPago">Monto a Cobrar <span className="required"> *</span></label>
+          <div className="cuentascobrar-input-with-prefix">
+            <span className="cuentascobrar-prefix">$</span>
+            <input
+              type="number"
+              id="montoPago"
+              step="0.01"
+              max={cuenta?.saldoPendiente || cuenta?.cantidadCobrar}
+              value={formData.montoPago}
+              onChange={(e) => handleInputChange("montoPago", e.target.value)}
+              className={`cuentascobrar-form-control ${errors.montoPago ? "error" : ""}`}
+            />
+          </div>
+          {errors.montoPago && <span className="cuentascobrar-error-message">{errors.montoPago}</span>}
           <label htmlFor="fechaPago">Fecha Pago <span className="required"> *</span></label>
           <input
             type="date"
@@ -954,6 +994,13 @@ const AdminCuentasCobrar = () => {
     crearSolicitud: { isOpen: false, cotizacion: null, cuenta: null },
   });
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+    }).format(amount);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -1232,6 +1279,8 @@ const AdminCuentasCobrar = () => {
     switch (estatus) {
       case "PAGADO":
         return "cuentascobrar-estatus-pagado";
+      case "EN_PROCESO":
+        return "cuentascobrar-estatus-en-proceso";
       case "VENCIDA":
         return "cuentascobrar-estatus-vencida";
       case "PENDIENTE":
@@ -1316,6 +1365,7 @@ const AdminCuentasCobrar = () => {
                     <option value="Todas">Todas</option>
                     <option value="PENDIENTE">Pendiente</option>
                     <option value="VENCIDA">Vencida</option>
+                    <option value="EN_PROCESO">En Proceso</option>
                     <option value="PAGADO">Pagado</option>
                   </select>
                 </div>
@@ -1348,7 +1398,17 @@ const AdminCuentasCobrar = () => {
                             </span>
                           </td>
                           <td>{cuenta.esquema}</td>
-                          <td>${cuenta.cantidadCobrar}</td>
+                          <td>
+                            <div className="cuentascobrar-monto-info">
+                              <div>{formatCurrency(cuenta.cantidadCobrar)}</div>
+                              {cuenta.montoPagado > 0 && (
+                                <div className="cuentascobrar-monto-detalle">
+                                  <small>Pagado: {formatCurrency(cuenta.montoPagado)}</small>
+                                  <small>Pendiente: {formatCurrency(cuenta.saldoPendiente)}</small>
+                                </div>
+                              )}
+                            </div>
+                          </td>
                           <td className="cuentascobrar-concepto-cell">
                             {cuenta.conceptos.length > 1
                               ? `${cuenta.conceptos.length} conceptos`

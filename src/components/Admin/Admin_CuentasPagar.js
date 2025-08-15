@@ -63,16 +63,17 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true,
 // Modal para Marcar como Pagada
 const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
   const [formData, setFormData] = useState({
-    monto: "",
+    montoPago: "",
     formaPago: "",
   });
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (isOpen && cuenta) {
+      const saldoPendiente = cuenta.saldoPendiente || cuenta.monto;
       setFormData({
-        monto: cuenta.monto.toString(),
-        formaPago: cuenta.formaPago,
+        montoPago: saldoPendiente.toString(),
+        formaPago: cuenta.formaPago || "",
       });
       setErrors({});
     }
@@ -87,10 +88,17 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
 
   const validateForm = () => {
     const newErrors = {};
+    const saldoPendiente = cuenta.saldoPendiente || cuenta.monto;
+    const montoPago = parseFloat(formData.montoPago);
 
-    if (!formData.monto || Number.parseFloat(formData.monto) <= 0) {
-      newErrors.monto = "El monto debe ser mayor a 0";
-      if (!formData.formaPago) newErrors.formaPago = "La forma de pago es obligatoria";
+    if (!formData.montoPago || montoPago <= 0) {
+      newErrors.montoPago = "El monto debe ser mayor a 0";
+    } else if (montoPago > saldoPendiente) {
+      newErrors.montoPago = `El monto no puede ser mayor al saldo pendiente ($${saldoPendiente})`;
+    }
+
+    if (!formData.formaPago) {
+      newErrors.formaPago = "La forma de pago es obligatoria";
     }
 
     setErrors(newErrors);
@@ -102,33 +110,53 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
     if (validateForm()) {
       const cuentaActualizada = {
         ...cuenta,
-        estatus: "Pagado",
-        monto: Number.parseFloat(formData.monto),
+        montoPago: parseFloat(formData.montoPago),
         formaPago: formData.formaPago,
       };
-
-      onSave(cuentaActualizada);
+      await onSave(cuentaActualizada);
       onClose();
     }
   };
 
+  const saldoPendiente = cuenta ? (cuenta.saldoPendiente || cuenta.monto) : 0;
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Agregar Fecha de Pago" size="md" closeOnOverlayClick={false}>
+    <Modal isOpen={isOpen} onClose={onClose} title="Registrar Pago" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="cuentaspagar-form">
+
+        {/* Mostrar información de la cuenta */}
+        <div className="cuentaspagar-info-section">
+          <div className="cuentaspagar-info-item">
+            <label>Monto Total:</label>
+            <span>${cuenta?.monto || 0}</span>
+          </div>
+          {cuenta?.montoPagado > 0 && (
+            <div className="cuentaspagar-info-item">
+              <label>Monto Pagado:</label>
+              <span>${cuenta.montoPagado}</span>
+            </div>
+          )}
+          <div className="cuentaspagar-info-item">
+            <label>Saldo Pendiente:</label>
+            <span>${saldoPendiente}</span>
+          </div>
+        </div>
+
         <div className="cuentaspagar-form-group">
-          <label htmlFor="monto">Monto  <span className="required"> *</span></label>
+          <label htmlFor="montoPago">Monto a Pagar <span className="required"> *</span></label>
           <div className="cuentaspagar-input-with-prefix">
             <span className="cuentaspagar-prefix">$</span>
             <input
               type="number"
-              id="monto"
+              id="montoPago"
               step="0.01"
-              value={formData.monto}
-              onChange={(e) => handleInputChange("monto", e.target.value)}
-              className={`cuentaspagar-form-control ${errors.monto ? "error" : ""}`}
+              max={saldoPendiente}
+              value={formData.montoPago}
+              onChange={(e) => handleInputChange("montoPago", e.target.value)}
+              className={`cuentaspagar-form-control ${errors.montoPago ? "error" : ""}`}
             />
           </div>
-          {errors.monto && <span className="cuentaspagar-error-message">{errors.monto}</span>}
+          {errors.montoPago && <span className="cuentaspagar-error-message">{errors.montoPago}</span>}
         </div>
 
         <div className="cuentaspagar-form-group">
@@ -150,8 +178,11 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
         </div>
 
         <div className="cuentaspagar-form-actions">
+          <button type="button" onClick={onClose} className="cuentaspagar-btn cuentaspagar-btn-cancel">
+            Cancelar
+          </button>
           <button type="submit" className="cuentaspagar-btn cuentaspagar-btn-primary">
-            Guardar
+            Registrar Pago
           </button>
         </div>
       </form>
@@ -532,6 +563,7 @@ const AdminCuentasPagar = () => {
         method: "POST",
         body: JSON.stringify({
           id: cuentaActualizada.id,
+          montoPago: cuentaActualizada.montoPago,
           monto: cuentaActualizada.monto,
           formaPago: cuentaActualizada.formaPago,
           usuarioId: 1,
@@ -539,21 +571,27 @@ const AdminCuentasPagar = () => {
       });
 
       if (response.status === 204) {
-        setCuentasPagar((prev) =>
-          prev.map((c) => (c.id === cuentaActualizada.id ? { ...c, ...cuentaActualizada } : c))
-        );
+        const cuentaActualizadaResponse = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar`);
+        const cuentasActualizadas = await cuentaActualizadaResponse.json();
+        setCuentasPagar(cuentasActualizadas);
 
-        // Verificar si es la última cuenta Y no es esquema UNICA
-        const esUltimaCuenta = cuentaActualizada.numeroPago === cuentaActualizada.totalPagos &&
-          cuentaActualizada.transaccion.esquema !== "UNICA";
+        const cuentaRecienActualizada = cuentasActualizadas.find(c => c.id === cuentaActualizada.id);
 
-        if (esUltimaCuenta) {
-          openModal("regenerar", { cuenta: cuentaActualizada });
+        // Solo mostrar modal de regeneración si:
+        // 1. La cuenta está completamente pagada (estatus = "Pagado")
+        // 2. Es la última cuenta de la serie
+        // 3. No es esquema UNICA
+        const esCompletamentePagada = cuentaRecienActualizada?.estatus === "Pagado";
+        const esUltimaCuenta = cuentaRecienActualizada?.numeroPago === cuentaRecienActualizada?.totalPagos;
+        const noEsUnica = cuentaRecienActualizada?.transaccion?.esquema !== "UNICA";
+
+        if (esCompletamentePagada && esUltimaCuenta && noEsUnica) {
+          openModal("regenerar", { cuenta: cuentaRecienActualizada });
         } else {
           Swal.fire({
             icon: "success",
             title: "Éxito",
-            text: "Cuenta marcada como pagada",
+            text: esCompletamentePagada ? "Cuenta marcada como pagada" : "Pago parcial registrado correctamente",
           });
         }
       }
@@ -650,6 +688,8 @@ const AdminCuentasPagar = () => {
     switch (estatus) {
       case "Pagado":
         return "cuentaspagar-estatus-pagado";
+      case "En proceso":
+        return "cuentaspagar-estatus-en-proceso";
       case "Vencida":
         return "cuentaspagar-estatus-vencida";
       case "Pendiente":
@@ -667,9 +707,9 @@ const AdminCuentasPagar = () => {
         params.append('fechaFin', filtroFechas.fechaFin);
       } else {
         const fechaInicio = new Date();
-        fechaInicio.setFullYear(fechaInicio.getFullYear() - 1); 
+        fechaInicio.setFullYear(fechaInicio.getFullYear() - 1);
         const fechaFin = new Date();
-        fechaFin.setFullYear(fechaFin.getFullYear() + 1); 
+        fechaFin.setFullYear(fechaFin.getFullYear() + 1);
 
         params.append('fechaInicio', fechaInicio.toISOString().split('T')[0]);
         params.append('fechaFin', fechaFin.toISOString().split('T')[0]);
@@ -771,21 +811,21 @@ const AdminCuentasPagar = () => {
   };
 
   const handleFiltroFechas = (campo, valor) => {
-  setFiltroFechas(prev => {
-    const nuevoEstado = {
-      ...prev,
-      [campo]: valor
-    };
-    
-    const fechaInicioCompleta = campo === "fechaInicio" ? valor !== "" : prev.fechaInicio !== "";
-    const fechaFinCompleta = campo === "fechaFin" ? valor !== "" : prev.fechaFin !== "";
-    
-    return {
-      ...nuevoEstado,
-      activo: fechaInicioCompleta && fechaFinCompleta
-    };
-  });
-};
+    setFiltroFechas(prev => {
+      const nuevoEstado = {
+        ...prev,
+        [campo]: valor
+      };
+
+      const fechaInicioCompleta = campo === "fechaInicio" ? valor !== "" : prev.fechaInicio !== "";
+      const fechaFinCompleta = campo === "fechaFin" ? valor !== "" : prev.fechaFin !== "";
+
+      return {
+        ...nuevoEstado,
+        activo: fechaInicioCompleta && fechaFinCompleta
+      };
+    });
+  };
 
   const limpiarFiltroFechas = () => {
     setFiltroFechas({
@@ -868,6 +908,7 @@ const AdminCuentasPagar = () => {
                     >
                       <option value="Todas">Todas</option>
                       <option value="Pendiente">Pendiente</option>
+                      <option value="En proceso">En proceso</option>
                       <option value="Vencida">Vencida</option>
                       <option value="Pagado">Pagado</option>
                     </select>
@@ -932,7 +973,17 @@ const AdminCuentasPagar = () => {
                           </td>
                           <td>{cuenta.fechaPago}</td>
                           <td>{cuenta.cuenta.nombre}</td>
-                          <td>{formatCurrency(cuenta.monto)}</td>
+                          <td>
+                            <div className="cuentaspagar-monto-info">
+                              <div>{formatCurrency(cuenta.monto)}</div>
+                              {cuenta.montoPagado > 0 && (
+                                <div className="cuentaspagar-monto-detalle">
+                                  <small>Pagado: {formatCurrency(cuenta.montoPagado)}</small>
+                                  <small>Pendiente: {formatCurrency(cuenta.saldoPendiente)}</small>
+                                </div>
+                              )}
+                            </div>
+                          </td>
                           <td>{formasPago[cuenta.formaPago]}</td>
                           <td>{cuenta.transaccion?.categoria?.descripcion || "-"}</td>
                           <td>{getDiasRenovacion(cuenta.transaccion?.esquema)}</td>

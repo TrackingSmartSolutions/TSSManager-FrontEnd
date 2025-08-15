@@ -40,7 +40,7 @@ const ConfiguracionPlantillas = () => {
   useEffect(() => {
     fetchTemplates();
   }, []);
-  
+
 
   const fetchTemplates = async () => {
     setIsLoading(true)
@@ -249,20 +249,30 @@ const ConfiguracionPlantillas = () => {
   };
 
   const handleFileUpload = async (event) => {
-    const files = Array.from(event.target.files);
-    const maxTotalSize = 10 * 1024 * 1024; // 10MB en bytes
-    const currentTotalSize = formData.adjuntos.reduce((total, file) => total + (file.size || 0), 0);
-    const newTotalSize = files.reduce((total, file) => total + file.size, 0);
+    const maxFileSize = 1 * 1024 * 1024; // 1MB por archivo
+    const maxFiles = 3; // Máximo 3 archivos
 
-    if (currentTotalSize + newTotalSize > maxTotalSize) {
+    const files = Array.from(event.target.files);
+    if (formData.adjuntos.length + files.length > maxFiles) {
       Swal.fire({
         icon: "warning",
-        title: "Límite de tamaño excedido",
-        text: `El tamaño total de los archivos excede el límite de 10MB. Por favor, seleccione archivos más pequeños o elimine algunos existentes.`,
+        title: "Límite de archivos excedido",
+        text: `Solo puedes agregar un máximo de ${maxFiles} archivos. Actualmente tienes ${formData.adjuntos.length} archivo(s).`,
         confirmButtonText: "Aceptar",
       });
       return;
     }
+    const oversizedFiles = files.filter(file => file.size > maxFileSize);
+    if (oversizedFiles.length > 0) {
+      Swal.fire({
+        icon: "warning",
+        title: "Archivo muy grande",
+        text: `Uno o más archivos exceden el límite de 1MB por archivo. Por favor, selecciona archivos más pequeños.`,
+        confirmButtonText: "Aceptar",
+      });
+      return;
+    }
+
 
     setFormData((prev) => ({
       ...prev,
@@ -599,7 +609,7 @@ const ConfiguracionPlantillas = () => {
                         <img src={uploadIcon || "/placeholder.svg"} alt="Upload" />
                       </div>
                       <p>Arrastra y suelta archivos aquí</p>
-                      <p className="correo-plantillas-file-formats">PDF, JPG, PNG, DOC (máx. 5MB por archivo, 10MB total)</p>
+                      <p className="correo-plantillas-file-formats">PDF, JPG, PNG, DOC (máx. 1MB por archivo, 3 archivos máximo)</p>
                       <input
                         type="file"
                         multiple

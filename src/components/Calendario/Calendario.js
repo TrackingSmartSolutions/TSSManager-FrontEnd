@@ -237,7 +237,7 @@ const Calendario = () => {
     setSelectedUser(newUser);
   };
 
-  const handleMarcarComoPagadaDesdeCalendario = (evento) => {
+  const handleMarcarComoPagadaDesdeCalendario = async (evento) => {
     if (!evento.id) {
       Swal.fire({
         icon: "error",
@@ -247,59 +247,57 @@ const Calendario = () => {
       return;
     }
 
-    const cuenta = {
-      id: parseInt(evento.id),
-      folio: evento.numeroCuenta,
-      fechaPago: new Date(evento.start).toISOString().split('T')[0],
-      monto: evento.monto,
-      formaPago: "01",
-      estatus: evento.estado,
-      cuenta: {
-        nombre: evento.cliente
-      },
-      sim: evento.numeroSim ? { numero: evento.numeroSim } : null
-    };
-
-    setModalMarcarPagada({
-      isOpen: true,
-      cuenta: cuenta
-    });
-    setIsEventModalOpen(false);
-    setSelectedEvent(null);
-  };
-
-  const handleSaveMarcarPagada = async (cuentaActualizada) => {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/marcar-como-pagada-calendario`, {
-        method: "POST",
-        body: JSON.stringify({
-          id: cuentaActualizada.id,
-          monto: cuentaActualizada.monto,
-          formaPago: cuentaActualizada.formaPago,
-          usuarioId: 1,
-        }),
+      const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/${evento.id}`);
+      const cuentaCompleta = await response.json();
+
+      setModalMarcarPagada({
+        isOpen: true,
+        cuenta: cuentaCompleta
       });
-
-      if (response.status === 204) {
-        await reloadCalendarEvents();
-
-        Swal.fire({
-          icon: "success",
-          title: "Éxito",
-          text: "Cuenta marcada como pagada y nuevas cuentas generadas automáticamente",
-        });
-      }
+      setIsEventModalOpen(false);
+      setSelectedEvent(null);
     } catch (error) {
-      console.error("Error al marcar como pagada:", error);
+      console.error("Error al obtener datos de la cuenta:", error);
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Error al marcar la cuenta como pagada",
+        text: "No se pudo cargar la información de la cuenta",
       });
     }
-
-    setModalMarcarPagada({ isOpen: false, cuenta: null });
   };
+
+  const handleSaveMarcarPagada = async (cuentaActualizada) => {
+  try {
+    const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/marcar-como-pagada-calendario`, {
+      method: "POST",
+      body: JSON.stringify({
+        id: cuentaActualizada.id,
+        montoPago: cuentaActualizada.montoPago, 
+        formaPago: cuentaActualizada.formaPago,
+        usuarioId: 1,
+      }),
+    });
+
+    if (response.status === 204) {
+      await reloadCalendarEvents();
+      Swal.fire({
+        icon: "success",
+        title: "Éxito",
+        text: "Cuenta marcada como pagada correctamente",
+      });
+    }
+  } catch (error) {
+    console.error("Error al marcar como pagada:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Error al marcar la cuenta como pagada",
+    });
+  }
+
+  setModalMarcarPagada({ isOpen: false, cuenta: null });
+};
 
   const reloadCalendarEvents = async () => {
     if (!selectedUser) return;
