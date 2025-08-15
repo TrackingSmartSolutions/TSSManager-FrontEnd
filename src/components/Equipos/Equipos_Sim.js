@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Equipos_Sim.css";
 import Header from "../Header/Header";
@@ -930,6 +930,8 @@ const EquiposSim = () => {
   });
 
   const [loadingMore, setLoadingMore] = useState(false);
+  const [filterNumeroInput, setFilterNumeroInput] = useState("");
+  const debounceTimerRef = useRef(null);
 
   // Cache simple para equipos
   const equiposCache = useRef(null);
@@ -973,10 +975,9 @@ const EquiposSim = () => {
     try {
       setIsLoading(true);
 
-      const gruposResponse = await fetchWithToken(`${API_BASE_URL}/sims/grupos-disponibles`);
-      const gruposData = await gruposResponse.json();
-      setGruposDisponibles(gruposData);
+      await fetchAllGroups();
 
+      // Cargar SIMs paginadas
       await fetchSimsPaginadas(0);
 
     } catch (error) {
@@ -987,12 +988,33 @@ const EquiposSim = () => {
     }
   };
 
+  useEffect(() => {
+    fetchSimsPaginadas(0);
+  }, [filterGrupo, filterNumero]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
   const fetchSimsPaginadas = async (page = 0, append = false) => {
     try {
       if (page === 0) setIsLoading(true);
       else setLoadingMore(true);
 
-      const response = await fetchWithToken(`${API_BASE_URL}/sims/paged?page=${page}&size=${pagination.pageSize}`);
+      // Construir URL con filtros
+      const params = new URLSearchParams({
+        page: page.toString(),
+        size: pagination.pageSize.toString()
+      });
+
+      if (filterGrupo) params.append('grupo', filterGrupo);
+      if (filterNumero) params.append('numero', filterNumero);
+
+      const response = await fetchWithToken(`${API_BASE_URL}/sims/paged?${params.toString()}`);
       const data = await response.json();
 
       const simsData = data.content.map((sim) => ({
@@ -1016,13 +1038,22 @@ const EquiposSim = () => {
         pageSize: data.size
       });
 
-
     } catch (error) {
       console.error("Error loading SIMs:", error);
       Swal.fire({ icon: "error", title: "Error", text: "Error al cargar SIMs" });
     } finally {
       setIsLoading(false);
       setLoadingMore(false);
+    }
+  };
+
+  const fetchAllGroups = async () => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/sims/grupos-todos`);
+      const grupos = await response.json();
+      setGruposDisponibles(grupos);
+    } catch (error) {
+      console.error("Error loading all groups:", error);
     }
   };
 
@@ -1058,6 +1089,22 @@ const EquiposSim = () => {
 
   const closeModal = (modalType) => {
     setModals((prev) => ({ ...prev, [modalType]: { isOpen: false } }));
+  };
+
+  const debouncedSearch = useCallback((numero) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      setFilterNumero(numero);
+    }, 500);
+  }, []);
+
+  const handleNumeroInputChange = (e) => {
+    const value = e.target.value;
+    setFilterNumeroInput(value);
+    debouncedSearch(value);
   };
 
   const handleMenuNavigation = (menuItem) => {
@@ -1217,17 +1264,23 @@ const EquiposSim = () => {
                   <input
                     type="text"
                     placeholder="Buscar por número..."
-                    value={filterNumero}
-                    onChange={(e) => setFilterNumero(e.target.value)}
+                    value={filterNumeroInput}
+                    onChange={handleNumeroInputChange}
                     className="sim-filter-input"
                   />
                   <select
                     value={filterGrupo}
-                    onChange={(e) => setFilterGrupo(e.target.value)}
+                    onChange={(e) => {
+                      setFilterGrupo(e.target.value);
+                      if (e.target.value !== filterGrupo) {
+                        setFilterNumeroInput("");
+                        setFilterNumero("");
+                      }
+                    }}
                     className="sim-filter-select"
                   >
                     <option value="">Todos los grupos</option>
-                    {[...new Set(sims.map((sim) => sim.grupo))]
+                    {gruposDisponibles
                       .sort((a, b) => Number(a) - Number(b))
                       .map((grupo) => (
                         <option key={grupo} value={grupo}>
@@ -1259,13 +1312,7 @@ const EquiposSim = () => {
                   </thead>
                   <tbody>
                     {sims
-                      .filter((sim) => {
-                        const matchesGrupo = !filterGrupo || sim.grupo?.toString() === filterGrupo;
-                        const matchesNumero = !filterNumero || sim.numero?.toLowerCase().includes(filterNumero.toLowerCase());
-                        return matchesGrupo && matchesNumero;
-                      })
                       .sort((a, b) => {
-
                         if (filterGrupo) {
                           if (a.principal === "SI" && b.principal === "NO") return -1;
                           if (a.principal === "NO" && b.principal === "SI") return 1;
@@ -1327,17 +1374,13 @@ const EquiposSim = () => {
                           </td>
                         </tr>
                       ))}
-                    {sims.filter((sim) => {
-                      const matchesGrupo = !filterGrupo || sim.grupo?.toString() === filterGrupo;
-                      const matchesNumero = !filterNumero || sim.numero?.toLowerCase().includes(filterNumero.toLowerCase());
-                      return matchesGrupo && matchesNumero;
-                    }).length === 0 && (
-                        <tr>
-                          <td colSpan="11" className="sim-no-data">
-                            No se encontraron SIMs
-                          </td>
-                        </tr>
-                      )}
+                    {sims.length === 0 && (
+                      <tr>
+                        <td colSpan="11" className="sim-no-data">
+                          No se encontraron SIMs
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
                 {pagination.currentPage < pagination.totalPages - 1 && (
