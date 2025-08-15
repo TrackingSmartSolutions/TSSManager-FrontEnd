@@ -22,6 +22,7 @@ const AdminCajaChica = () => {
   const navigate = useNavigate()
   const [transaccionesEfectivo, setTransaccionesEfectivo] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [ordenFecha, setOrdenFecha] = useState('asc');
   const [resumenCajaChica, setResumenCajaChica] = useState({
     totalIngresos: 0,
     totalGastos: 0,
@@ -156,14 +157,12 @@ const AdminCajaChica = () => {
   }
 
   const calcularSaldoAcumulado = () => {
-    // Primero calcular el saldo de todas las transacciones hasta la fecha de inicio del filtro
     const fechaInicio = filtroFechas.fechaInicio ? new Date(filtroFechas.fechaInicio + 'T00:00:00') : null;
 
-    // Ordenar todas las transacciones por fecha
+    // Ordenar todas las transacciones por fecha (ascendente para cálculo correcto)
     const todasTransaccionesOrdenadas = [...transaccionesEfectivo]
       .sort((a, b) => new Date(a.fecha + 'T00:00:00') - new Date(b.fecha + 'T00:00:00'));
 
-    // Calcular saldo inicial (transacciones anteriores al filtro)
     let saldoInicial = 0;
     if (fechaInicio) {
       todasTransaccionesOrdenadas.forEach((transaccion) => {
@@ -174,19 +173,25 @@ const AdminCajaChica = () => {
         }
       });
     }
-
-    // Filtrar transacciones por fecha y calcular saldo acumulado
     const transaccionesFiltradas = filtrarTransaccionesPorFecha(transaccionesEfectivo);
+
+    const transaccionesOrdenadas = transaccionesFiltradas
+      .sort((a, b) => new Date(a.fecha + 'T00:00:00') - new Date(b.fecha + 'T00:00:00'));
+
     let saldoAcumulado = saldoInicial;
 
-    return transaccionesFiltradas
-      .sort((a, b) => new Date(a.fecha + 'T00:00:00') - new Date(b.fecha + 'T00:00:00'))
-      .map((transaccion) => {
-        if (transaccion.tipo === "INGRESO") saldoAcumulado += transaccion.monto;
-        else saldoAcumulado -= transaccion.monto;
-        return { ...transaccion, saldoAcumulado };
-      });
-  }
+    const transaccionesConSaldo = transaccionesOrdenadas.map((transaccion) => {
+      if (transaccion.tipo === "INGRESO") saldoAcumulado += transaccion.monto;
+      else saldoAcumulado -= transaccion.monto;
+      return { ...transaccion, saldoAcumulado };
+    });
+
+    if (ordenFecha === 'desc') {
+      return transaccionesConSaldo.reverse();
+    } else {
+      return transaccionesConSaldo;
+    }
+  };
 
   const filtrarTransaccionesPorFecha = (transacciones) => {
     if (!filtroFechas.fechaInicio || !filtroFechas.fechaFin) {
@@ -210,6 +215,11 @@ const AdminCajaChica = () => {
       currency: "MXN",
     }).format(amount)
   }
+
+  const toggleOrdenFecha = () => {
+    setOrdenFecha(prevOrden => prevOrden === 'desc' ? 'asc' : 'desc');
+  };
+
 
   // Función para dividir transacciones en chunks
   const dividirTransaccionesEnChunks = (datos, filasPorPagina = 20) => {
@@ -540,6 +550,13 @@ const AdminCajaChica = () => {
                 onClick={() => setFiltroFechas(obtenerRangoMesActual())}
               >
                 Mes actual
+              </button>
+              <button
+                className="cajachica-btn cajachica-btn-filtro cajachica-btn-orden"
+                onClick={toggleOrdenFecha}
+                title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
+              >
+                {ordenFecha === 'desc' ? '📅 ↓ Recientes primero' : '📅 ↑ Antiguas primero'}
               </button>
             </div>
             <div className="cajachica-table-card">

@@ -252,7 +252,7 @@
   overflow-x: auto;
   border: 1px solid var(--cuentaspagar-border-color);
   border-radius: var(--cuentaspagar-border-radius-sm);
-  max-height: 600px; 
+  max-height: 600px;
   overflow-y: auto;
 }
 
@@ -383,18 +383,15 @@
 .cuentaspagar-action-icon {
   width: 16px;
   height: 16px;
-  filter: brightness(0) saturate(100%) invert(44%) sepia(7%) saturate(1102%) hue-rotate(169deg) brightness(96%)
-    contrast(88%);
+  filter: brightness(0) saturate(100%) invert(44%) sepia(7%) saturate(1102%) hue-rotate(169deg) brightness(96%) contrast(88%);
 }
 
 .cuentaspagar-delete-btn .cuentaspagar-action-icon {
-  filter: brightness(0) saturate(100%) invert(27%) sepia(98%) saturate(7462%) hue-rotate(3deg) brightness(103%)
-    contrast(97%);
+  filter: brightness(0) saturate(100%) invert(27%) sepia(98%) saturate(7462%) hue-rotate(3deg) brightness(103%) contrast(97%);
 }
 
 .cuentaspagar-check-btn .cuentaspagar-action-icon {
-  filter: brightness(0) saturate(100%) invert(44%) sepia(96%) saturate(1237%) hue-rotate(87deg) brightness(98%)
-    contrast(89%);
+  filter: brightness(0) saturate(100%) invert(44%) sepia(96%) saturate(1237%) hue-rotate(87deg) brightness(98%) contrast(89%);
 }
 
 /* Modales */
@@ -633,13 +630,13 @@
   letter-spacing: 0.5px;
 }
 
-.cuentaspagar-table th:nth-child(1), 
+.cuentaspagar-table th:nth-child(1),
 .cuentaspagar-table td:nth-child(1) {
   width: 180px;
   min-width: 180px;
 }
 
-.cuentaspagar-table th:nth-child(2), 
+.cuentaspagar-table th:nth-child(2),
 .cuentaspagar-table td:nth-child(2) {
   width: 140px;
   min-width: 140px;
@@ -695,19 +692,41 @@
   background: #ff3742;
 }
 
+.cuentaspagar-btn-orden {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.cuentaspagar-btn-orden:hover {
+  background-color: #5a6268;
+}
+
+.cuentaspagar-btn-orden:active {
+  background-color: #545b62;
+}
+
 @media (max-width: 768px) {
   .cuentaspagar-filters-container {
     flex-direction: column;
     align-items: stretch;
     gap: 15px;
   }
-  
+
   .cuentaspagar-date-inputs {
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
   }
-  
+
   .cuentaspagar-date-separator {
     align-self: center;
   }
@@ -884,6 +903,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -896,6 +916,7 @@
 
 /* Ajustes para impresión */
 @media print {
+
   .cuentaspagar-sidebar,
   .cuentaspagar-header-actions,
   .cuentaspagar-actions {
@@ -949,6 +970,7 @@
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

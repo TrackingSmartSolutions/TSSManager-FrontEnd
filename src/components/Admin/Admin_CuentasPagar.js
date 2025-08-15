@@ -446,6 +446,7 @@ const AdminCuentasPagar = () => {
   const [cuentasPagar, setCuentasPagar] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filtroEstatus, setFiltroEstatus] = useState("Todas");
+  const [ordenFecha, setOrdenFecha] = useState('asc');
   const [modals, setModals] = useState({
     marcarPagada: { isOpen: false, cuenta: null },
     editarCuenta: { isOpen: false, cuenta: null },
@@ -790,10 +791,19 @@ const AdminCuentasPagar = () => {
   });
 
   const cuentasOrdenadas = cuentasFiltradas.sort((a, b) => {
-    const fechaA = new Date(a.fecha_pago);
-    const fechaB = new Date(b.fecha_pago);
-    return fechaA - fechaB;
+    const fechaA = new Date(a.fechaPago);
+    const fechaB = new Date(b.fechaPago);
+
+    if (ordenFecha === 'asc') {
+      return fechaA - fechaB;
+    } else {
+      return fechaB - fechaA;
+    }
   });
+
+  const toggleOrdenFecha = () => {
+    setOrdenFecha(prevOrden => prevOrden === 'asc' ? 'desc' : 'asc');
+  };
 
   const getDiasRenovacion = (esquema) => {
     const diasPorEsquema = {
@@ -899,6 +909,15 @@ const AdminCuentasPagar = () => {
                 <h4 className="cuentaspagar-table-title">Cuentas por pagar</h4>
                 <div className="cuentaspagar-filters-container">
                   <div className="cuentaspagar-filter-container">
+                    <div className="cuentaspagar-filter-container">
+                      <button
+                        className="cuentaspagar-btn-orden"
+                        onClick={toggleOrdenFecha}
+                        title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'}`}
+                      >
+                        {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
+                      </button>
+                    </div>
                     <label htmlFor="filtroEstatus">Filtrar por estatus:</label>
                     <select
                       id="filtroEstatus"

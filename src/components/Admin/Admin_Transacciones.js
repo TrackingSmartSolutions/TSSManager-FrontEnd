@@ -835,6 +835,7 @@ const AdminTransacciones = () => {
   const [cuentas, setCuentas] = useState([]);
   const [filtrosCuenta, setFiltrosCuenta] = useState("Todas");
   const [isLoading, setIsLoading] = useState(true);
+  const [ordenFecha, setOrdenFecha] = useState('asc');
   const [modals, setModals] = useState({
     nuevaTransaccion: { isOpen: false },
     gestionarCategorias: { isOpen: false },
@@ -1102,10 +1103,14 @@ const AdminTransacciones = () => {
   const transaccionesFiltradas = transaccionesSinOrdenar.sort((a, b) => {
     const fechaA = new Date(a.fecha);
     const fechaB = new Date(b.fecha);
-    return fechaB - fechaA;
+    return ordenFecha === 'desc' ? fechaB - fechaA : fechaA - fechaB;
   });
 
   const cuentasUnicas = ["Todas", ...new Set(cuentas.filter(c => c && c.nombre).map((c) => c.nombre))];
+
+  const toggleOrdenFecha = () => {
+    setOrdenFecha(prevOrden => prevOrden === 'desc' ? 'asc' : 'desc');
+  };
 
   return (
     <>
@@ -1209,6 +1214,13 @@ const AdminTransacciones = () => {
                   onClick={() => setFiltroFechas(obtenerRangoMesActual())}
                 >
                   Mes actual
+                </button>
+                <button
+                  className="transacciones-btn transacciones-btn-filtro transacciones-btn-orden"
+                  onClick={toggleOrdenFecha}
+                  title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
+                >
+                  {ordenFecha === 'desc' ? '📅 ↓ Recientes primero' : '📅 ↑ Antiguas primero'}
                 </button>
               </div>
 

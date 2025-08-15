@@ -868,6 +868,28 @@
   filter: brightness(0) saturate(100%) invert(25%) sepia(70%) saturate(7000%) hue-rotate(354deg) brightness(90%) contrast(97%);
 }
 
+.cuentascobrar-btn-orden {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.cuentascobrar-btn-orden:hover {
+  background-color: #5a6268;
+}
+
+.cuentascobrar-btn-orden:active {
+  background-color: #545b62;
+}
+
 /* Diseño responsivo */
 @media (max-width: 1200px) {
   .cuentascobrar-container {

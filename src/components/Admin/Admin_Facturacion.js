@@ -941,6 +941,7 @@ const AdminFacturacion = () => {
   const [cotizaciones, setCotizaciones] = useState([]);
   const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [ordenFecha, setOrdenFecha] = useState('asc');
 
   const [modals, setModals] = useState({
     emisor: { isOpen: false, emisor: null },
@@ -1183,6 +1184,32 @@ const AdminFacturacion = () => {
 
   const emisorActual = emisores[emisorSeleccionado];
 
+  const solicitudesOrdenadas = solicitudes.sort((a, b) => {
+    const fechaA = new Date(a.fechaEmision || '1900-01-01');
+    const fechaB = new Date(b.fechaEmision || '1900-01-01');
+
+    if (ordenFecha === 'asc') {
+      return fechaA - fechaB;
+    } else {
+      return fechaB - fechaA;
+    }
+  });
+
+  const facturasOrdenadas = facturas.sort((a, b) => {
+    const fechaA = new Date(a.fechaCreacion || a.id);
+    const fechaB = new Date(b.fechaCreacion || b.id);
+
+    if (ordenFecha === 'asc') {
+      return fechaA - fechaB;
+    } else {
+      return fechaB - fechaA;
+    }
+  });
+
+  const toggleOrdenFecha = () => {
+    setOrdenFecha(prevOrden => prevOrden === 'asc' ? 'desc' : 'asc');
+  };
+
   return (
     <>
       <Header />
@@ -1273,12 +1300,21 @@ const AdminFacturacion = () => {
             <div className="facturacion-table-card">
               <div className="facturacion-table-header">
                 <h4 className="facturacion-table-title">Solicitudes de Facturas y Notas</h4>
-                <button
-                  className="facturacion-btn facturacion-btn-primary"
-                  onClick={() => openModal("solicitud", { solicitud: null })}
-                >
-                  Generar
-                </button>
+                <div className="facturacion-header-controls">
+                  <button
+                    className="facturacion-btn-orden"
+                    onClick={toggleOrdenFecha}
+                    title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'} (afecta ambas tablas)`}
+                  >
+                    {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
+                  </button>
+                  <button
+                    className="facturacion-btn facturacion-btn-primary"
+                    onClick={() => openModal("solicitud", { solicitud: null })}
+                  >
+                    Generar
+                  </button>
+                </div>
               </div>
               <div className="facturacion-table-container">
                 <table className="facturacion-table">
@@ -1296,8 +1332,8 @@ const AdminFacturacion = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {solicitudes.length > 0 ? (
-                      solicitudes.map((solicitud) => (
+                    {solicitudesOrdenadas.length > 0 ? (
+                      solicitudesOrdenadas.map((solicitud) => (
                         <tr key={solicitud.id}>
                           <td>{solicitud.identificador}</td>
                           <td>{solicitud.fechaEmision || "N/A"}</td>
@@ -1382,8 +1418,8 @@ const AdminFacturacion = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {facturas.length > 0 ? (
-                      facturas.map((factura) => (
+                    {facturasOrdenadas.length > 0 ? (
+                      facturasOrdenadas.map((factura) => (
                         <tr key={factura.id}>
                           <td>{factura.folioFiscal}</td>
                           <td>{factura.noSolicitud}</td>

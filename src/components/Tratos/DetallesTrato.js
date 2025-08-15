@@ -3039,17 +3039,48 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
         try {
           const response = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}`);
           const trato = await response.json();
+          let emailsToLoad = [];
 
           if (trato.contacto?.email) {
-            const email = trato.contacto.email.trim();
-            setEmailChips([email]);
+            emailsToLoad.push(trato.contacto.email.trim());
+          }
+
+          if (trato.empresaId) {
+            const contactosResponse = await fetchWithToken(`${API_BASE_URL}/empresas/${trato.empresaId}/contactos`);
+
+            if (contactosResponse.ok) {
+              const contactos = await contactosResponse.json();
+
+              contactos.forEach(contacto => {
+                if (contacto.correos && Array.isArray(contacto.correos) && contacto.correos.length > 0) {
+                  contacto.correos.forEach(correoObj => {
+                    if (correoObj.correo && correoObj.correo.trim() && correoObj.correo !== 'N/A') {
+                      const email = correoObj.correo.trim();
+                      if (!emailsToLoad.includes(email)) {
+                        emailsToLoad.push(email);
+                      }
+                    }
+                  });
+                }
+              });
+            } else {
+              console.error('Error en response de contactos:', contactosResponse.status);
+            }
+          } else {
+            console.log('No hay empresaId asociada al trato');
+          }
+          if (emailsToLoad.length > 0) {
+            setEmailChips(emailsToLoad);
             setFormData(prev => ({
               ...prev,
-              para: email,
+              para: emailsToLoad.join(', '),
             }));
+          } else {
+            console.log('No se encontraron emails para precargar');
           }
+
         } catch (error) {
-          console.error("Error loading contact data:", error);
+          console.error("Stack trace:", error.stack);
         }
       };
       loadContactoData();
@@ -3168,7 +3199,6 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
       adjuntosPlantilla: [],
     });
 
-    // Limpiar el editor también
     if (editorRef.current) {
       editorRef.current.innerHTML = '';
     }
@@ -4024,58 +4054,57 @@ const DetallesTrato = () => {
   };
 
   // Función para activar/desactivar correos de seguimiento
-const toggleCorreosSeguimiento = async (tratoId, activar) => {
-  if (activar) {
-    if (!trato.contacto?.email || trato.contacto.email.trim() === '' || trato.contacto.email === 'N/A') {
-      // Revertir el estado del checkbox
-      setCorreosSeguimientoActivo(false);
-      
-      Swal.fire({
-        icon: 'warning',
-        title: 'Email requerido',
-        text: 'Para activar los correos de seguimiento, primero debe agregar un email al contacto del trato.',
-        confirmButtonText: 'Entendido',
-        confirmButtonColor: '#3085d6'
-      });
-      return;
+  const toggleCorreosSeguimiento = async (tratoId, activar) => {
+    if (activar) {
+      if (!trato.contacto?.email || trato.contacto.email.trim() === '' || trato.contacto.email === 'N/A') {
+        // Revertir el estado del checkbox
+        setCorreosSeguimientoActivo(false);
+
+        Swal.fire({
+          icon: 'warning',
+          title: 'Email requerido',
+          text: 'Para activar los correos de seguimiento, primero debe agregar un email al contacto del trato.',
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#3085d6'
+        });
+        return;
+      }
     }
-  }
-  setCargandoCorreos(true);
-  try {
-    const endpoint = activar ? 'activar' : 'desactivar';
-    const response = await fetchWithToken(`${API_BASE_URL}/correos-seguimiento/${endpoint}/${tratoId}`, {
-      method: 'POST'
-    });
+    setCargandoCorreos(true);
+    try {
+      const endpoint = activar ? 'activar' : 'desactivar';
+      const response = await fetchWithToken(`${API_BASE_URL}/correos-seguimiento/${endpoint}/${tratoId}`, {
+        method: 'POST'
+      });
 
-    const mensaje = await response.text();
-    setCorreosSeguimientoActivo(activar);
-    Swal.fire({
-      icon: 'success',
-      title: activar ? 'Correos de seguimiento activados' : 'Correos de seguimiento desactivados',
-      text: mensaje,
-      showConfirmButton: false,
-      timer: 2000
-    });
+      const mensaje = await response.text();
+      setCorreosSeguimientoActivo(activar);
+      Swal.fire({
+        icon: 'success',
+        title: activar ? 'Correos de seguimiento activados' : 'Correos de seguimiento desactivados',
+        text: mensaje,
+        showConfirmButton: false,
+        timer: 2000
+      });
 
-  } catch (error) {
-    setCorreosSeguimientoActivo(!activar);
+    } catch (error) {
+      setCorreosSeguimientoActivo(!activar);
 
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: error.message || 'Error al cambiar el estado de los correos de seguimiento'
-    });
-  } finally {
-    setCargandoCorreos(false);
-  }
-};
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error.message || 'Error al cambiar el estado de los correos de seguimiento'
+      });
+    } finally {
+      setCargandoCorreos(false);
+    }
+  };
 
   // Función para manejar el cambio del checkbox
-  // Función para manejar el cambio del checkbox
-const handleCorreosSeguimientoChange = (e) => {
-  const isChecked = e.target.checked;
-  toggleCorreosSeguimiento(trato.id, isChecked);
-};
+  const handleCorreosSeguimientoChange = (e) => {
+    const isChecked = e.target.checked;
+    toggleCorreosSeguimiento(trato.id, isChecked);
+  };
 
   // useEffect para cargar el estado inicial cuando se carga el trato
   useEffect(() => {
