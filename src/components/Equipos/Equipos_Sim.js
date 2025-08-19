@@ -841,8 +841,8 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
                     historialSaldos.map((registro, index) => (
                       <tr key={index}>
                         <td>{new Date(registro.fecha + "T00:00:00-06:00").toLocaleDateString("es-MX", { timeZone: "America/Mexico_City" })}</td>
-                        {sim.tarifa === "POR_SEGUNDO" && <td>${registro.saldoActual}</td>}
-                        {(sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") && <td>{registro.datos} MB</td>}
+                        {sim.tarifa === "POR_SEGUNDO" && <td>${registro.saldoActual ?? '0'}</td>}
+                        {(sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") && <td>{registro.datos ?? '0'} MB</td>}
                       </tr>
                     ))
                   ) : (
