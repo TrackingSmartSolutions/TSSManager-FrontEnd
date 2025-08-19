@@ -1679,6 +1679,56 @@ const Tratos = () => {
     }
   };
 
+  const updateTratoLocally = (tratoId, sourceColumn, targetColumn, updatedTrato) => {
+    setColumnas(prevColumnas => {
+      const newColumnas = prevColumnas.map(columna => ({ ...columna, tratos: [...columna.tratos] }));
+
+      // Encontrar las columnas
+      const sourceCol = newColumnas.find(c => c.id === sourceColumn.id);
+      const targetCol = newColumnas.find(c => c.id === targetColumn.id);
+
+      // Encontrar y remover el trato de la columna origen
+      const tratoIndex = sourceCol.tratos.findIndex(t => t.id === tratoId);
+      const trato = sourceCol.tratos[tratoIndex];
+      sourceCol.tratos.splice(tratoIndex, 1);
+      sourceCol.count--;
+
+      // Agregar el trato actualizado a la columna destino
+      const updatedTratoForUI = {
+        ...trato,
+        propietario: updatedTrato.propietarioNombre || trato.propietario,
+        fechaCierre: updatedTrato.fechaCierre ? new Date(updatedTrato.fechaCierre).toLocaleDateString() : trato.fechaCierre
+      };
+
+      targetCol.tratos.push(updatedTratoForUI);
+      targetCol.count++;
+
+      return newColumnas;
+    });
+  };
+
+  const updateSingleTratoActivity = (tratoId, newActivity) => {
+  setColumnas(prevColumnas => {
+    return prevColumnas.map(columna => ({
+      ...columna,
+      tratos: columna.tratos.map(trato => {
+        if (trato.id === tratoId) {
+          return {
+            ...trato,
+            hasActivities: true,
+            lastActivityType: newActivity.tipo,
+            proximaActividadTipo: newActivity.tipo,
+            proximaActividadFecha: newActivity.fechaLimite || newActivity.horaInicio,
+            actividadesAbiertasCount: (trato.actividadesAbiertasCount || 0) + 1,
+            isNeglected: false
+          };
+        }
+        return trato;
+      })
+    }));
+  });
+};
+
   const filtrarTratosPorNombre = (tratos) => {
     let filteredTratos = tratos;
 
@@ -1816,12 +1866,11 @@ const Tratos = () => {
       }
       return updatedColumnas;
     });
-    fetchData();
   };
 
   const handleSaveActividad = async (actividad, tipo) => {
-    await fetchData();
-  };
+  updateSingleTratoActivity(actividad.tratoId, actividad);
+};
 
   const handleDragStart = (trato) => {
     setDraggedTrato(trato);
@@ -1902,8 +1951,8 @@ const Tratos = () => {
           fetchData();
         });
       } else {
-        // Si no fue escalado, solo actualizar los datos
-        await fetchData();
+        // Si no fue escalado, actualizar localmente sin recargar
+        updateTratoLocally(tratoId, sourceColumn, targetColumn, updatedTrato);
       }
     } catch (error) {
       console.error("Error moving trato:", error);

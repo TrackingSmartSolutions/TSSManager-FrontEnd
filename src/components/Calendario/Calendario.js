@@ -208,12 +208,26 @@ const Calendario = () => {
     return () => clearTimeout(timeoutId);
   }, [currentDate, selectedUser, userRol, isInitialLoad]);
 
+  useEffect(() => {
+  if (isEventModalOpen) {
+    const popovers = document.querySelectorAll('.fc-popover');
+    popovers.forEach(popover => {
+      popover.remove();
+    });
+  }
+}, [isEventModalOpen]);
+
   const closeEventModal = () => {
     setSelectedEvent(null);
     setIsEventModalOpen(false);
   };
 
   const handleEventClick = (info) => {
+     const popovers = document.querySelectorAll('.fc-popover');
+  popovers.forEach(popover => {
+    popover.remove();
+  });
+  
     const eventData = {
       title: info.event.title,
       start: info.event.start,
