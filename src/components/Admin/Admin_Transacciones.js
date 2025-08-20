@@ -910,7 +910,7 @@ const AdminTransacciones = () => {
 
   const isFullyPaid = (transaccionId) => {
     const transaccion = transacciones.find((t) => t.id === transaccionId);
-    return transaccion && transaccion.notas.includes === "Transacción generada desde Cuentas por Pagar";
+    return transaccion && transaccion.notas === "Transacción generada desde Cuentas por Pagar - Pago Parcial";
   };
 
   const filtrarTransaccionesPorFecha = (transacciones) => {
