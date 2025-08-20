@@ -73,7 +73,7 @@ const AdminCajaChica = () => {
           (t) =>
             t.formaPago === "01" &&
             (t.tipo === "INGRESO" ||
-              (t.tipo === "GASTO" && t.notas === "Transacción generada desde Cuentas por Pagar")),
+              (t.tipo === "GASTO" && t.notas && t.notas.includes("Transacción generada desde Cuentas por Pagar"))),
         )
 
         setTransaccionesEfectivo(transaccionesFiltradas)

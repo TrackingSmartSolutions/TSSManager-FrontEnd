@@ -909,7 +909,6 @@ const AdminTransacciones = () => {
   }, []);
 
 
-
   const filtrarTransaccionesPorFecha = (transacciones) => {
     if (!filtroFechas.fechaInicio || !filtroFechas.fechaFin) {
       return transacciones;
