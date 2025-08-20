@@ -908,10 +908,7 @@ const AdminTransacciones = () => {
     fetchData();
   }, []);
 
-  const isFullyPaid = (transaccionId) => {
-    const transaccion = transacciones.find((t) => t.id === transaccionId);
-    return transaccion && transaccion.notas === "Transacción generada desde Cuentas por Pagar";
-  };
+
 
   const filtrarTransaccionesPorFecha = (transacciones) => {
     if (!filtroFechas.fechaInicio || !filtroFechas.fechaFin) {
@@ -1094,7 +1091,7 @@ const AdminTransacciones = () => {
     });
   };
 
-  const transaccionesBase = transacciones.filter((t) => t.tipo === "INGRESO" || (t.tipo === "GASTO" && isFullyPaid(t.id)));
+  const transaccionesBase = transacciones.filter((t) => t.tipo === "INGRESO" || t.tipo === "GASTO");
   const transaccionesPorFecha = filtrarTransaccionesPorFecha(transaccionesBase);
   const transaccionesSinOrdenar = filtrosCuenta === "Todas"
     ? transaccionesPorFecha
