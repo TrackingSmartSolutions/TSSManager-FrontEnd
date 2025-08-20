@@ -909,9 +909,9 @@ const AdminTransacciones = () => {
   }, []);
 
   const isFullyPaid = (transaccionId) => {
-    const transaccion = transacciones.find((t) => t.id === transaccionId);
-    return transaccion && transaccion.notas === "Transacción generada desde Cuentas por Pagar - Pago Parcial";
-  };
+  const transaccion = transacciones.find((t) => t.id === transaccionId);
+  return transaccion && transaccion.notas && transaccion.notas.includes("Transacción generada desde Cuentas por Pagar");
+};
 
   const filtrarTransaccionesPorFecha = (transacciones) => {
     if (!filtroFechas.fechaInicio || !filtroFechas.fechaFin) {
