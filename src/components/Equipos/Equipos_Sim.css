@@ -855,6 +855,28 @@
   transform: none;
 }
 
+.sim-btn-orden {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.sim-btn-orden:hover {
+  background-color: #5a6268;
+}
+
+.sim-btn-orden:active {
+  background-color: #545b62;
+}
+
 /* Diseño responsivo */
 @media (max-width: 1200px) {
   .sim-container {

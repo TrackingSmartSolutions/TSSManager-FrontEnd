@@ -915,6 +915,7 @@ const EquiposSim = () => {
   const [filterGrupo, setFilterGrupo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [equiposLoaded, setEquiposLoaded] = useState(false);
+  const [ordenFechaVigencia, setOrdenFechaVigencia] = useState('asc');
   const [filterNumero, setFilterNumero] = useState("");
   const [modals, setModals] = useState({
     form: { isOpen: false, sim: null },
@@ -1215,6 +1216,26 @@ const EquiposSim = () => {
     return dateString ? new Date(dateString + "T00:00:00-06:00").toLocaleDateString("es-MX", { timeZone: "America/Mexico_City" }) : "N/A";
   };
 
+  const toggleOrdenFechaVigencia = () => {
+    setOrdenFechaVigencia(prevOrden => prevOrden === 'desc' ? 'asc' : 'desc');
+  };
+
+  const getSimsOrdenados = () => {
+    return [...sims].sort((a, b) => {
+      // Primero, manejar casos donde no hay fecha de vigencia
+      const fechaA = a.vigencia ? new Date(a.vigencia + 'T00:00:00') : null;
+      const fechaB = b.vigencia ? new Date(b.vigencia + 'T00:00:00') : null;
+
+      if (!fechaA && !fechaB) return 0;
+      if (!fechaA) return 1;
+      if (!fechaB) return -1;
+
+      // Ordenar por fecha
+      const diff = fechaA - fechaB;
+      return ordenFechaVigencia === 'desc' ? -diff : diff;
+    });
+  };
+
   return (
     <>
       <Header />
@@ -1261,6 +1282,13 @@ const EquiposSim = () => {
               <div className="sim-table-header">
                 <h4 className="sim-table-title">SIMs</h4>
                 <div className="sim-table-controls">
+                  <button
+                    className="sim-btn sim-btn-secondary sim-btn-orden"
+                    onClick={toggleOrdenFechaVigencia}
+                    title={`Cambiar a orden ${ordenFechaVigencia === 'desc' ? 'ascendente' : 'descendente'} por vigencia`}
+                  >
+                    {ordenFechaVigencia === 'desc' ? '📅 ↓ Recientes primero' : '📅 ↑ Antiguas primero'}
+                  </button>
                   <input
                     type="text"
                     placeholder="Buscar por número..."
@@ -1311,14 +1339,7 @@ const EquiposSim = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {sims
-                      .sort((a, b) => {
-                        if (filterGrupo) {
-                          if (a.principal === "SI" && b.principal === "NO") return -1;
-                          if (a.principal === "NO" && b.principal === "SI") return 1;
-                        }
-                        return 0;
-                      })
+                    {getSimsOrdenados()
                       .map((sim) => (
                         <tr key={sim.id}>
                           <td>{sim.numero}</td>

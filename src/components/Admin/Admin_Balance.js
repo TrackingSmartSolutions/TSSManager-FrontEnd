@@ -239,6 +239,7 @@ const AdminBalance = () => {
           }
         }),
       )).filter(equipo => equipo.numeroEquipos > 0)
+      .sort((a, b) => new Date(a.fechaPago) - new Date(b.fechaPago))
 
       setBalanceData({
         resumenContable: { totalIngresos, totalGastos, utilidadPerdida },

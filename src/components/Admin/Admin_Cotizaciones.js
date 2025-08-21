@@ -911,6 +911,7 @@ const AdminCotizaciones = () => {
   const [filterReceptor, setFilterReceptor] = useState("");
   const [cotizacionesVinculadas, setCotizacionesVinculadas] = useState(new Set());
   const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
+  const [ordenFecha, setOrdenFecha] = useState('asc');
   const [isLoading, setIsLoading] = useState(true);
 
   const [modals, setModals] = useState({
@@ -1169,6 +1170,23 @@ const AdminCotizaciones = () => {
     }
   };
 
+  const toggleOrdenFecha = () => {
+    setOrdenFecha(prevOrden => prevOrden === 'desc' ? 'asc' : 'desc');
+  };
+
+  const ordenarCotizaciones = (cotizacionesList) => {
+    return [...cotizacionesList].sort((a, b) => {
+      const fechaA = new Date(a.fechaCreacion);
+      const fechaB = new Date(b.fechaCreacion);
+
+      if (ordenFecha === 'desc') {
+        return fechaB - fechaA;
+      } else {
+        return fechaA - fechaB;
+      }
+    });
+  };
+
   return (
     <>
       <Header />
@@ -1240,6 +1258,13 @@ const AdminCotizaciones = () => {
                 placeholder="Escribe el nombre del receptor"
                 className="cotizaciones-form-control"
               />
+                <button
+              className="cotizaciones-btn cotizaciones-btn-orden"
+              onClick={toggleOrdenFecha}
+              title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
+            >
+              {ordenFecha === 'desc' ? '📅 ↓ Recientes primero' : '📅 ↑ Antiguas primero'}
+            </button>
             </div>
 
             {/* Tabla de Cotizaciones */}
@@ -1252,6 +1277,7 @@ const AdminCotizaciones = () => {
                     <tr>
                       <th>No.</th>
                       <th>Receptor</th>
+                      <th>Fecha</th>
                       <th className="cotizaciones-equipos-column-header">Total de equipos</th>
                       <th>Concepto</th>
                       <th>Subtotal</th>
@@ -1262,7 +1288,7 @@ const AdminCotizaciones = () => {
                   </thead>
                   <tbody>
                     {cotizaciones.length > 0 ? (
-                      cotizaciones
+                      ordenarCotizaciones(cotizaciones)
                         .filter((cotizacion) =>
                           cotizacion.clienteNombre
                             ?.toLowerCase()
@@ -1272,6 +1298,7 @@ const AdminCotizaciones = () => {
                           <tr key={cotizacion.id}>
                             <td>{index + 1}</td>
                             <td>{cotizacion.clienteNombre}</td>
+                            <td>{cotizacion.fecha}</td>
                             <td className="cotizaciones-equipos-column">{cotizacion.cantidadTotal || 0}</td>
                             <td>{cotizacion.conceptosCount === 1 ? "1 concepto" : cotizacion.conceptosCount > 0 ? `${cotizacion.conceptosCount} conceptos` : "0 conceptos"}</td>
                             <td>${cotizacion.subtotal?.toFixed(2) || '0.00'}</td>
@@ -1314,8 +1341,8 @@ const AdminCotizaciones = () => {
                                 </button>
                                 <button
                                   className={`cotizaciones-action-btn cotizaciones-receivable-btn ${cotizacionesVinculadas.has(cotizacion.id)
-                                      ? 'cotizaciones-receivable-btn-vinculada'
-                                      : 'cotizaciones-receivable-btn-disponible'
+                                    ? 'cotizaciones-receivable-btn-vinculada'
+                                    : 'cotizaciones-receivable-btn-disponible'
                                     }`}
                                   onClick={async () => {
                                     const response = await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacion.id}/check-vinculada`);

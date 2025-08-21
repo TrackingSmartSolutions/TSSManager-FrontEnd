@@ -581,6 +581,7 @@
   align-items: center;
   gap: var(--cotizaciones-spacing-md);
   flex-wrap: wrap;
+  justify-content: flex-start;
 }
 
 .cotizaciones-filter label {
@@ -718,6 +719,29 @@
 .cotizaciones-receivable-btn-disponible .cotizaciones-action-icon {
   filter: brightness(0) saturate(100%) invert(25%) sepia(70%) saturate(7000%) hue-rotate(354deg) brightness(90%) contrast(97%);
 }
+
+.cotizaciones-btn-orden {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.cotizaciones-btn-orden:hover {
+  background-color: #5a6268;
+}
+
+.cotizaciones-btn-orden:active {
+  background-color: #545b62;
+}
+
 
 /* Ajustes responsive para la columna de equipos */
 @media (max-width: 992px) {
@@ -976,6 +1000,10 @@
     flex-direction: column;
     align-items: stretch;
     gap: var(--cotizaciones-spacing-sm);
+  }
+
+  .cotizaciones-filter .cotizaciones-btn-orden {
+    align-self: flex-start; 
   }
   
   .cotizaciones-filter label {
