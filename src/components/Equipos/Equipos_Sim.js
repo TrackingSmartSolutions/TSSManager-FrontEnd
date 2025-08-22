@@ -407,17 +407,23 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
                     (formData.tarifa === "M2M_GLOBAL_15" ? (
                       <option value="0">Grupo 0 (M2M)</option>
                     ) : (
-                      gruposDisponibles.map((grupo) => {
-                        const simsInGroup = (sims || []).filter((s) => s.grupo === grupo);
-                        const principalCount = simsInGroup.filter((s) => s.principal === "SI").length;
-                        const nonPrincipalCount = simsInGroup.filter((s) => s.principal === "NO").length;
-                        const remaining = 6 - (principalCount + nonPrincipalCount);
-                        return (
-                          <option key={grupo} value={grupo}>
-                            Grupo {grupo} ({remaining}/6)
-                          </option>
-                        );
-                      })
+                      gruposDisponibles
+                        .filter(grupo => grupo !== 0 && grupo !== 99)
+                        .map((grupo) => {
+                          const simsInGroup = (sims || []).filter((s) => s.grupo === grupo);
+                          const principalCount = simsInGroup.filter((s) => s.principal === "SI").length;
+                          const nonPrincipalCount = simsInGroup.filter((s) => s.principal === "NO").length;
+                          const remaining = 6 - (principalCount + nonPrincipalCount);
+
+                          if (remaining <= 0) return null;
+
+                          return (
+                            <option key={grupo} value={grupo}>
+                              Grupo {grupo} ({remaining}/6)
+                            </option>
+                          );
+                        })
+                        .filter(option => option !== null) 
                     ))}
                 </select>
                 {!isPrincipal && <small className="sim-help-text">Seleccione un grupo disponible</small>}
@@ -910,6 +916,7 @@ const EquiposSim = () => {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState("ADMINISTRADOR");
   const [sims, setSims] = useState([]);
+  const [allSims, setAllSims] = useState([]);
   const [equipos, setEquipos] = useState([]);
   const [gruposDisponibles, setGruposDisponibles] = useState([]);
   const [filterGrupo, setFilterGrupo] = useState("");
@@ -972,11 +979,23 @@ const EquiposSim = () => {
     fetchCriticalData();
   }, []);
 
+  const fetchAllSimsForCounting = async () => {
+  try {
+    const response = await fetchWithToken(`${API_BASE_URL}/sims`);
+    const allSimsData = await response.json();
+    setAllSims(allSimsData);
+  } catch (error) {
+    console.error("Error loading all SIMs for counting:", error);
+    setAllSims([]);
+  }
+};
+
   const fetchCriticalData = async () => {
     try {
       setIsLoading(true);
 
       await fetchAllGroups();
+      await fetchAllSimsForCounting();
 
       // Cargar SIMs paginadas
       await fetchSimsPaginadas(0);
@@ -1150,6 +1169,26 @@ const EquiposSim = () => {
         );
       }
     });
+
+    setAllSims((prev) => {
+    const isNew = !prev.find(s => s.id === simData.id);
+    const simWithEquipo = {
+      ...simData,
+      compañia: simData.tarifa === "M2M_GLOBAL_15" ? "M2M" : "Telcel",
+      equipo: simData.equipoNombre ? {
+        nombre: simData.equipoNombre,
+        imei: simData.equipoImei
+      } : null,
+    };
+
+    if (isNew) {
+      return [simWithEquipo, ...prev];
+    } else {
+      return prev.map(sim =>
+        sim.id === simData.id ? simWithEquipo : sim
+      );
+    }
+  });
     Swal.fire({
       icon: "success",
       title: "Éxito",
@@ -1427,7 +1466,7 @@ const EquiposSim = () => {
           onSave={handleSaveSim}
           equipos={equipos}
           gruposDisponibles={gruposDisponibles}
-          sims={sims}
+          sims={allSims}
         />
         <SaldosSidePanel
           isOpen={modals.saldos.isOpen}

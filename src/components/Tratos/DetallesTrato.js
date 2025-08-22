@@ -2893,7 +2893,7 @@ const EditarTratoModal = ({ isOpen, onClose, onSave, trato, users, companies }) 
               className="modal-form-control"
             >
               {users.map((user) => (
-                <option key={user.id} value={user.nombre}>
+                <option key={user.id} value={user.nombreReal}>
                   {user.nombreReal}
                 </option>
               ))}
