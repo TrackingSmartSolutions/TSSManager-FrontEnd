@@ -942,6 +942,7 @@ const AdminFacturacion = () => {
   const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [ordenFecha, setOrdenFecha] = useState('asc');
+  const [solicitudesTimbradas, setSolicitudesTimbradas] = useState(new Set());
 
   const [modals, setModals] = useState({
     emisor: { isOpen: false, emisor: null },
@@ -961,11 +962,19 @@ const AdminFacturacion = () => {
           fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota`),
           fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/facturas`),
         ]);
+
         setEmisores(await emisoresResp.json());
         setCotizaciones(await cotizacionesResp.json());
         setCuentasPorCobrar(await cuentasResp.json());
         setSolicitudes(await solicitudesResp.json());
-        setFacturas(await facturasResp.json());
+
+        const facturasData = await facturasResp.json();
+        setFacturas(facturasData);
+
+        // Crear set de solicitudes timbradas
+        const timbradas = new Set(facturasData.map(f => f.noSolicitud));
+        setSolicitudesTimbradas(timbradas);
+
       } catch (error) {
         Swal.fire({ icon: "error", title: "Error", text: error.message });
       } finally {
@@ -1091,8 +1100,21 @@ const AdminFacturacion = () => {
     });
   };
 
+  const handleTimbrarClick = (solicitud) => {
+    if (solicitudesTimbradas.has(solicitud.identificador)) {
+      Swal.fire({
+        icon: "info",
+        title: "Solicitud ya timbrada",
+        text: "Esta solicitud ya ha sido timbrada previamente.",
+      });
+    } else {
+      openModal("timbrar", { solicitud });
+    }
+  };
+
   const handleTimbrarSolicitud = (savedFactura) => {
     setFacturas((prev) => [...prev, savedFactura]);
+    setSolicitudesTimbradas((prev) => new Set([...prev, savedFactura.noSolicitud]));
   };
 
   const handleDescargarPDF = async (solicitud) => {
@@ -1386,11 +1408,18 @@ const AdminFacturacion = () => {
                               </button>
                               {solicitud.tipo === "SOLICITUD_DE_FACTURA" && (
                                 <button
-                                  className="facturacion-action-btn facturacion-stamp-btn"
-                                  onClick={() => openModal("timbrar", { solicitud })}
-                                  title="Timbrar"
+                                  className={`facturacion-action-btn ${solicitudesTimbradas.has(solicitud.identificador)
+                                      ? 'facturacion-stamp-btn-vinculada'
+                                      : 'facturacion-stamp-btn-disponible'
+                                    }`}
+                                  onClick={() => handleTimbrarClick(solicitud)}
+                                  title={solicitudesTimbradas.has(solicitud.identificador) ? "Ya timbrada" : "Timbrar"}
                                 >
-                                  <img src={stampIcon || "/placeholder.svg"} alt="Timbrar" className="facturacion-action-icon" />
+                                  <img
+                                    src={stampIcon || "/placeholder.svg"}
+                                    alt="Timbrar"
+                                    className="facturacion-action-icon"
+                                  />
                                 </button>
                               )}
                             </div>
@@ -1425,7 +1454,9 @@ const AdminFacturacion = () => {
                           <td>{factura.noSolicitud}</td>
                           <td>
                             <div className="facturacion-factura-actions">
-                              <span className="facturacion-archivo-nombre">{factura.archivoUrl?.split("/").pop() || "N/A"}</span>
+                              <span className="facturacion-archivo-nombre">
+                                {factura.nombreArchivo || "archivo.pdf"}
+                              </span>
                               <button
                                 className="facturacion-action-btn facturacion-download-btn"
                                 onClick={() => handleDescargarFactura(factura)}
