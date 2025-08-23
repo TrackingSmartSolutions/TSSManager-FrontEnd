@@ -577,10 +577,10 @@ const EquiposEstatusPlataforma = () => {
     fetchData();
   }, []);
 
-useEffect(() => {
-  // Resetear las filas visibles cuando cambien los equipos offline
-  setVisibleRows(50);
-}, [equiposData.equiposOffline.length]);
+  useEffect(() => {
+    // Resetear las filas visibles cuando cambien los equipos offline
+    setVisibleRows(50);
+  }, [equiposData.equiposOffline.length]);
 
   const openModal = (modalType, data = {}) => {
     setModals((prev) => ({
@@ -933,7 +933,7 @@ useEffect(() => {
     ],
   };
 
-  const chartOptions = {
+  const estatusClienteChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     devicePixelRatio: 2,
@@ -1006,6 +1006,65 @@ useEffect(() => {
       }
     }
   };
+
+  const plataformaChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    devicePixelRatio: 2,
+    plugins: {
+      legend: {
+        position: "top",
+        labels: {
+          usePointStyle: true,
+          padding: 20,
+          font: {
+            size: 14,
+          },
+        },
+      },
+      tooltip: {
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 2,
+          font: {
+            size: 12,
+          },
+        },
+      },
+      x: {
+        ticks: {
+          font: {
+            size: 12,
+          },
+          maxRotation: 45,
+          minRotation: 45,
+          padding: 5,
+        },
+        display: true,
+      },
+    },
+    animation: {
+      onComplete: function () {
+        const chartId = this.canvas.parentElement.id;
+        if (chartId) {
+          chartRefs.current[chartId] = this;
+        }
+      }
+    },
+    layout: {
+      padding: {
+        bottom: 20,
+        left: 10,
+        right: 10,
+        top: 10
+      }
+    }
+  };
+
 
   const handleMenuNavigation = (menuItem) => {
     switch (menuItem) {
@@ -1094,14 +1153,14 @@ useEffect(() => {
                     width: '100%'
                   }}
                 >
-                  <Bar data={estatusClienteChartData} options={chartOptions} />
+                  <Bar data={estatusClienteChartData} options={estatusClienteChartOptions} />
                 </div>
               </div>
 
               <div className="estatusplataforma-chart-card">
                 <h4 className="estatusplataforma-chart-title">Equipos por Plataforma</h4>
                 <div id="plataformaChart" className="estatusplataforma-chart-container">
-                  <Bar data={plataformaChartData} options={chartOptions} />
+                  <Bar data={plataformaChartData} options={plataformaChartOptions} />
                 </div>
               </div>
             </div>
