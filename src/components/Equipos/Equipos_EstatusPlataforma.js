@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Equipos_EstatusPlataforma.css";
 import Header from "../Header/Header";
@@ -62,86 +62,6 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true,
   );
 };
 
-const processEstatusPorCliente = (equipos, estatusData, clientes) => {
-  const clienteIds = [...new Set(equipos.map(e => e.clienteId || e.clienteDefault || null))].filter(id => id !== null);
-
-  // Obtener la fecha más reciente de los datos de estatus
-  const fechaUltimoCheck = estatusData.length > 0
-    ? Math.max(...estatusData.map(es => new Date(es.fechaCheck).getTime()))
-    : null;
-
-  const fechaUltimoCheckStr = fechaUltimoCheck
-    ? new Date(fechaUltimoCheck).toISOString().split('T')[0]
-    : null;
-
-  return clienteIds.map(clienteId => {
-    const equiposCliente = equipos.filter(e => e.clienteId === clienteId || e.clienteDefault === clienteId);
-
-    // Filtrar solo los estatus de la fecha más reciente
-    const estatus = estatusData.filter(es =>
-      equiposCliente.some(e => e.id === es.equipoId) &&
-      es.fechaCheck === fechaUltimoCheckStr
-    );
-
-    const enLinea = estatus.filter(es => es.estatus === "REPORTANDO").length;
-    const fueraLinea = estatus.filter(es => es.estatus === "NO_REPORTANDO").length;
-
-    const clienteNombre = clientes.find(c => c.id === clienteId)?.nombre ||
-      (clienteId === "AG" || clienteId === "BN" || clienteId === "PERDIDO" ? clienteId : "Sin Cliente");
-
-    return { cliente: clienteNombre, enLinea, fueraLinea };
-  });
-};
-
-const processEquiposPorPlataforma = (equipos) => {
-  const plataformaMap = {
-    TRACK_SOLID: "Track Solid",
-    WHATSGPS: "WhatsGPS",
-    TRACKERKING: "TrackerKing",
-    JOINTCLOUD: "JointCloud"
-  };
-  const uniquePlatforms = [...new Set(equipos.map(e => e.plataforma))].filter(p => p);
-  return uniquePlatforms.map(p => ({
-    plataforma: plataformaMap[p] || p,
-    cantidad: equipos.filter(e => e.plataforma === p).length,
-  })).filter(p => p.cantidad > 0);
-};
-
-const processEquiposOffline = (equipos, estatusData, clientes) => {
-  if (!estatusData.length) return [];
-
-  // Obtener la fecha más reciente
-  const fechaUltimo = Math.max(...estatusData.map(es => new Date(es.fechaCheck).getTime()));
-  const fechaUltimoStr = new Date(fechaUltimo).toISOString().split('T')[0];
-
-  // Filtrar solo los equipos offline de la fecha más reciente
-  const offline = estatusData.filter(es =>
-    es.estatus === "NO_REPORTANDO" &&
-    es.fechaCheck === fechaUltimoStr
-  );
-
-  return offline.map(es => {
-    const equipo = equipos.find(e => e.id === es.equipoId);
-
-
-    let clienteNombre = "N/A";
-
-    if (equipo.clienteId) {
-
-      const cliente = clientes.find(c => c.id === equipo.clienteId);
-      clienteNombre = cliente?.nombre || `Cliente ID: ${equipo.clienteId}`;
-    } else if (equipo.clienteDefault) {
-      clienteNombre = equipo.clienteDefault;
-    }
-
-    return {
-      cliente: clienteNombre,
-      nombre: equipo.nombre,
-      plataforma: equipo.plataforma,
-      motivo: es.motivo,
-    };
-  });
-};
 
 const processEquiposPorMotivo = (equiposOffline) => {
   const motivoCount = {};
@@ -188,6 +108,28 @@ const CheckEquiposSidePanel = ({
   const fixedPlatforms = ["TRACKERKING", "TRACK_SOLID", "WHATSGPS", "JOINTCLOUD"];
   const dynamicPlatforms = [...new Set(equipos.map(e => e.plataforma))].filter(p => p && !fixedPlatforms.includes(p));
   const plataformas = ["Todos", ...fixedPlatforms, ...dynamicPlatforms];
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Función para refrescar equipos
+  const refreshEquipos = useCallback(async () => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/equipos/dashboard-estatus`);
+      const data = await response.json();
+      // Actualizar solo si el panel está abierto
+      if (isOpen) {
+        setRefreshTrigger(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error('Error refreshing equipos:', error);
+    }
+  }, [isOpen]);
+
+  // Escuchar cambios cuando se abre el panel
+  useEffect(() => {
+    if (isOpen) {
+      refreshEquipos();
+    }
+  }, [isOpen, refreshEquipos]);
 
   useEffect(() => {
     if (isOpen && equipos.length > 0) {
@@ -204,7 +146,7 @@ const CheckEquiposSidePanel = ({
         return newStatus;
       });
     }
-  }, [isOpen, equipos]);
+  }, [isOpen, equipos, equipos.length]);
 
   const filteredEquipos = equipos
     .filter((equipo) => selectedPlatform === "Todos" || equipo.plataforma === selectedPlatform)
@@ -502,6 +444,7 @@ const EquiposEstatusPlataforma = () => {
   const navigate = useNavigate();
   const chartRefs = useRef({});
   const [visibleRows, setVisibleRows] = useState(50);
+  const [equiposVersion, setEquiposVersion] = useState(0);
 
   const [equiposData, setEquiposData] = useState({
     estatusPorCliente: [],
@@ -581,6 +524,20 @@ const EquiposEstatusPlataforma = () => {
     // Resetear las filas visibles cuando cambien los equipos offline
     setVisibleRows(50);
   }, [equiposData.equiposOffline.length]);
+
+  const notifyEquiposUpdate = useCallback(() => {
+  setEquiposVersion(prev => prev + 1);
+  if (modals.checkEquipos.isOpen) {
+    fetchData();
+  }
+}, [modals.checkEquipos.isOpen, fetchData]);
+
+useEffect(() => {
+  window.notifyEquiposUpdate = notifyEquiposUpdate;
+  return () => {
+    delete window.notifyEquiposUpdate;
+  };
+}, [notifyEquiposUpdate]);
 
   const openModal = (modalType, data = {}) => {
     setModals((prev) => ({

@@ -260,11 +260,13 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
             <option value="AG">AG</option>
             <option value="BN">BN</option>
             <option value="PERDIDO">PERDIDO</option>
-            {clientes.map((cliente) => (
-              <option key={cliente.id} value={cliente.id}>
-                {cliente.nombre}
-              </option>
-            ))}
+            {clientes
+              .sort((a, b) => a.nombre.localeCompare(b.nombre))
+              .map((cliente) => (
+                <option key={cliente.id} value={cliente.id}>
+                  {cliente.nombre}
+                </option>
+              ))}
           </select>
         </div>
 
@@ -640,6 +642,12 @@ const EquiposInventario = () => {
             ? prev.map((e) => (e.id === equipoData.id ? equipoData : e))
             : [...prev, equipoData]
         );
+
+        // Notificar a otros componentes sobre la actualización
+        if (window.notifyEquiposUpdate) {
+          window.notifyEquiposUpdate();
+        }
+
         Swal.fire({
           icon: "success",
           title: "Éxito",

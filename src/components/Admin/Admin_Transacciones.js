@@ -321,11 +321,13 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
               disabled={!formData.tipo}
             >
               <option value="">Ninguna seleccionada</option>
-              {categoriasFiltradas.map((cat) => (
-                <option key={cat.id} value={cat.descripcion}>
-                  {cat.descripcion}
-                </option>
-              ))}
+              {categoriasFiltradas
+                .sort((a, b) => a.descripcion.localeCompare(b.descripcion))
+                .map((cat) => (
+                  <option key={cat.id} value={cat.descripcion}>
+                    {cat.descripcion}
+                  </option>
+                ))}
             </select>
             {errors.categoria && <span className="transacciones-error-message">{errors.categoria}</span>}
           </div>
@@ -341,11 +343,13 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
               disabled={!formData.categoria}
             >
               <option value="">Ninguna seleccionada</option>
-              {cuentasFiltradas.map((cuenta, index) => (
-                <option key={index} value={cuenta}>
-                  {cuenta}
-                </option>
-              ))}
+              {cuentasFiltradas
+                .sort((a, b) => a.localeCompare(b))
+                .map((cuenta, index) => (
+                  <option key={index} value={cuenta}>
+                    {cuenta}
+                  </option>
+                ))}
             </select>
             {errors.cuenta && <span className="transacciones-error-message">{errors.cuenta}</span>}
           </div>
@@ -754,11 +758,13 @@ const GestionarCuentasModal = ({ isOpen, onClose, cuentas, categorias, onSaveCue
                 className={`transacciones-form-control ${errors.categoria ? "error" : ""}`}
               >
                 <option value="">Seleccione una categoría</option>
-                {categorias.map((cat) => (
-                  <option key={cat.id} value={cat.descripcion}>
-                    {cat.descripcion}
-                  </option>
-                ))}
+                {categorias
+                  .sort((a, b) => a.descripcion.localeCompare(b.descripcion))
+                  .map((cat) => (
+                    <option key={cat.id} value={cat.descripcion}>
+                      {cat.descripcion}
+                    </option>
+                  ))}
               </select>
               {errors.categoria && <span className="transacciones-error-message">{errors.categoria}</span>}
             </div>
@@ -909,9 +915,9 @@ const AdminTransacciones = () => {
   }, []);
 
   const isFullyPaid = (transaccionId) => {
-  const transaccion = transacciones.find((t) => t.id === transaccionId);
-  return transaccion && transaccion.notas && transaccion.notas.includes("Transacción generada desde Cuentas por Pagar");
-};
+    const transaccion = transacciones.find((t) => t.id === transaccionId);
+    return transaccion && transaccion.notas && transaccion.notas.includes("Transacción generada desde Cuentas por Pagar");
+  };
 
   const filtrarTransaccionesPorFecha = (transacciones) => {
     if (!filtroFechas.fechaInicio || !filtroFechas.fechaFin) {

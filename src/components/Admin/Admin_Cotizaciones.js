@@ -553,11 +553,13 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
               className={`cotizaciones-form-control ${errors.cliente ? "error" : ""}`}
             >
               <option value="">Seleccione un cliente</option>
-              {clientes.map((cliente) => (
-                <option key={cliente.id} value={cliente.nombre}>
-                  {cliente.nombre}
-                </option>
-              ))}
+              {clientes
+                .sort((a, b) => a.nombre.localeCompare(b.nombre))
+                .map((cliente) => (
+                  <option key={cliente.id} value={cliente.nombre}>
+                    {cliente.nombre}
+                  </option>
+                ))}
             </select>
             {errors.cliente && <span className="cotizaciones-error-message">{errors.cliente}</span>}
           </div>
@@ -1258,13 +1260,13 @@ const AdminCotizaciones = () => {
                 placeholder="Escribe el nombre del receptor"
                 className="cotizaciones-form-control"
               />
-                <button
-              className="cotizaciones-btn cotizaciones-btn-orden"
-              onClick={toggleOrdenFecha}
-              title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
-            >
-              {ordenFecha === 'desc' ? '📅 ↓ Recientes primero' : '📅 ↑ Antiguas primero'}
-            </button>
+              <button
+                className="cotizaciones-btn cotizaciones-btn-orden"
+                onClick={toggleOrdenFecha}
+                title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
+              >
+                {ordenFecha === 'desc' ? '📅 ↓ Recientes primero' : '📅 ↑ Antiguas primero'}
+              </button>
             </div>
 
             {/* Tabla de Cotizaciones */}
