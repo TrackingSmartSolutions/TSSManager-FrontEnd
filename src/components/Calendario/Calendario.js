@@ -32,9 +32,8 @@ const Calendario = () => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const navigate = useNavigate();
 
-  // Inicializar selectedUser basándose en el rol
   const [selectedUser, setSelectedUser] = useState(
-    userRol === "ADMINISTRADOR" ? "Todos los usuarios" : (userName || null)
+    userRol === "EMPLEADO" ? (userName || null) : null
   );
 
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -42,9 +41,7 @@ const Calendario = () => {
   const [events, setEvents] = useState([]);
   const calendarRef = useRef(null);
 
-  const [users, setUsers] = useState(
-    userRol === "ADMINISTRADOR" ? ["Todos los usuarios"] : []
-  );
+  const [users, setUsers] = useState([]);
 
   const [modalMarcarPagada, setModalMarcarPagada] = useState({
     isOpen: false,
@@ -94,25 +91,53 @@ const Calendario = () => {
   }, [userRol, userName]);
 
   useEffect(() => {
-    const loadUsers = async () => {
-
+  const loadCurrentAdminUser = async () => {
+    if (userRol === "ADMINISTRADOR" && !userName) {
       try {
-        const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
-        const data = await response.json();
-        const usersList = ["Todos los usuarios", ...data.map(user => user.nombre)];
+        const response = await fetchWithToken(`${API_BASE_URL}/auth/me`);
+        const userData = await response.json();
 
-        setUsers(usersList);
+        localStorage.setItem("userName", userData.nombre);
+        setSelectedUser(userData.nombre);
       } catch (error) {
-        console.error("ERROR al cargar usuarios:", error);
+        console.error("ERROR al cargar datos del usuario administrador:", error);
+        // En caso de error, establecer un usuario por defecto
+        setSelectedUser("Todos los usuarios");
       }
-    };
-
-    // Solo cargar usuarios si es administrador
-    if (userRol === "ADMINISTRADOR") {
-      loadUsers();
     }
-  }, [userRol]);
+  };
 
+  if (userRol === "ADMINISTRADOR") {
+    loadCurrentAdminUser();
+  }
+}, [userRol, userName]);
+
+  useEffect(() => {
+  const loadUsers = async () => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+      const data = await response.json();
+
+      const usersList = userRol === "ADMINISTRADOR"
+        ? ["Todos los usuarios", ...data.map(user => user.nombre)]
+        : data.map(user => user.nombre);
+
+      setUsers(usersList);
+      
+      // Si el selectedUser aún es null y ya tenemos userName, establecerlo
+      if (userRol === "ADMINISTRADOR" && !selectedUser && userName) {
+        setSelectedUser(userName);
+      }
+    } catch (error) {
+      console.error("ERROR al cargar usuarios:", error);
+    }
+  };
+
+  // Solo cargar usuarios si es administrador
+  if (userRol === "ADMINISTRADOR") {
+    loadUsers();
+  }
+}, [userRol, selectedUser, userName]);
   const navigateDate = (direction) => {
     const calendarApi = calendarRef.current.getApi();
     calendarApi[direction]();
@@ -206,16 +231,16 @@ const Calendario = () => {
     });
 
     return () => clearTimeout(timeoutId);
-  }, [currentDate, selectedUser, userRol, isInitialLoad]);
+ }, [currentDate, selectedUser, userRol, isInitialLoad, users]);
 
   useEffect(() => {
-  if (isEventModalOpen) {
-    const popovers = document.querySelectorAll('.fc-popover');
-    popovers.forEach(popover => {
-      popover.remove();
-    });
-  }
-}, [isEventModalOpen]);
+    if (isEventModalOpen) {
+      const popovers = document.querySelectorAll('.fc-popover');
+      popovers.forEach(popover => {
+        popover.remove();
+      });
+    }
+  }, [isEventModalOpen]);
 
   const closeEventModal = () => {
     setSelectedEvent(null);
@@ -223,11 +248,11 @@ const Calendario = () => {
   };
 
   const handleEventClick = (info) => {
-     const popovers = document.querySelectorAll('.fc-popover');
-  popovers.forEach(popover => {
-    popover.remove();
-  });
-  
+    const popovers = document.querySelectorAll('.fc-popover');
+    popovers.forEach(popover => {
+      popover.remove();
+    });
+
     const eventData = {
       title: info.event.title,
       start: info.event.start,
@@ -282,36 +307,36 @@ const Calendario = () => {
   };
 
   const handleSaveMarcarPagada = async (cuentaActualizada) => {
-  try {
-    const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/marcar-como-pagada-calendario`, {
-      method: "POST",
-      body: JSON.stringify({
-        id: cuentaActualizada.id,
-        montoPago: cuentaActualizada.montoPago, 
-        formaPago: cuentaActualizada.formaPago,
-        usuarioId: 1,
-      }),
-    });
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/marcar-como-pagada-calendario`, {
+        method: "POST",
+        body: JSON.stringify({
+          id: cuentaActualizada.id,
+          montoPago: cuentaActualizada.montoPago,
+          formaPago: cuentaActualizada.formaPago,
+          usuarioId: 1,
+        }),
+      });
 
-    if (response.status === 204) {
-      await reloadCalendarEvents();
+      if (response.status === 204) {
+        await reloadCalendarEvents();
+        Swal.fire({
+          icon: "success",
+          title: "Éxito",
+          text: "Cuenta marcada como pagada correctamente",
+        });
+      }
+    } catch (error) {
+      console.error("Error al marcar como pagada:", error);
       Swal.fire({
-        icon: "success",
-        title: "Éxito",
-        text: "Cuenta marcada como pagada correctamente",
+        icon: "error",
+        title: "Error",
+        text: "Error al marcar la cuenta como pagada",
       });
     }
-  } catch (error) {
-    console.error("Error al marcar como pagada:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "Error al marcar la cuenta como pagada",
-    });
-  }
 
-  setModalMarcarPagada({ isOpen: false, cuenta: null });
-};
+    setModalMarcarPagada({ isOpen: false, cuenta: null });
+  };
 
   const reloadCalendarEvents = async () => {
     if (!selectedUser) return;
@@ -457,7 +482,7 @@ const Calendario = () => {
           {userRol === "ADMINISTRADOR" && (
             <div className="ts-calendar-user-filter">
               <select
-                value={selectedUser || "Todos los usuarios"}
+                value={selectedUser || ""}
                 onChange={handleUserChange}
                 className="ts-calendar-select"
               >

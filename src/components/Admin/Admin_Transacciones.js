@@ -925,14 +925,15 @@ const AdminTransacciones = () => {
     }
 
     return transacciones.filter(transaccion => {
-      const fechaTransaccion = new Date(transaccion.fecha + 'T00:00:00');
+      // Cambiar de transaccion.fecha a transaccion.fechaPago
+      const fechaTransaccion = new Date(transaccion.fechaPago + 'T00:00:00');
       const fechaInicio = new Date(filtroFechas.fechaInicio + 'T00:00:00');
       const fechaFin = new Date(filtroFechas.fechaFin + 'T23:59:59');
 
       return fechaTransaccion >= fechaInicio && fechaTransaccion <= fechaFin;
     });
   };
-
+  
   const openModal = (modalType, data = {}) => {
     setModals((prev) => ({
       ...prev,
@@ -1260,7 +1261,7 @@ const AdminTransacciones = () => {
                       transaccionesFiltradas.map((transaccion) => (
                         <tr key={transaccion.id}>
                           <td>
-                            {new Date(new Date(transaccion.fecha).getTime() + 24 * 60 * 60 * 1000).toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                            {transaccion.fechaPago}
                           </td>
                           <td>
                             <span className={`transacciones-tipo-badge ${transaccion.tipo.toLowerCase()}`}>

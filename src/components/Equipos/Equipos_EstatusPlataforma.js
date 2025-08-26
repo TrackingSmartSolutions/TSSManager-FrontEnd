@@ -22,6 +22,47 @@ const fetchWithToken = async (url, options = {}) => {
   return response;
 };
 
+const useCountdown = (targetTime) => {
+  const [timeLeft, setTimeLeft] = useState(null);
+
+  useEffect(() => {
+    if (!targetTime) {
+      setTimeLeft(null);
+      return;
+    }
+
+    const calculateTimeLeft = () => {
+      const now = Date.now();
+      const difference = targetTime - now;
+
+      if (difference <= 0) {
+        return null;
+      }
+
+      const hours = Math.floor(difference / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+      return { hours, minutes, seconds };
+    };
+
+    setTimeLeft(calculateTimeLeft());
+
+    const interval = setInterval(() => {
+      const newTimeLeft = calculateTimeLeft();
+      setTimeLeft(newTimeLeft);
+
+      if (!newTimeLeft) {
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [targetTime]);
+
+  return timeLeft;
+};
+
 // Componente Modal Base
 const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
   useEffect(() => {
@@ -62,7 +103,6 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true,
   );
 };
 
-
 const processEquiposPorMotivo = (equiposOffline) => {
   const motivoCount = {};
 
@@ -76,10 +116,9 @@ const processEquiposPorMotivo = (equiposOffline) => {
     .sort((a, b) => b.cantidad - a.cantidad); // Ordenar por cantidad descendente
 };
 
-const getTodayStart = () => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return today.getTime();
+const getLastCheckWindow = () => {
+  const now = new Date();
+  return now.getTime();
 };
 
 // Panel Lateral Deslizante para Check Equipos
@@ -109,6 +148,24 @@ const CheckEquiposSidePanel = ({
   const dynamicPlatforms = [...new Set(equipos.map(e => e.plataforma))].filter(p => p && !fixedPlatforms.includes(p));
   const plataformas = ["Todos", ...fixedPlatforms, ...dynamicPlatforms];
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const nextCheckTime = lastCheckTime ? lastCheckTime + (6 * 60 * 60 * 1000) : null;
+  const countdown = useCountdown(nextCheckTime);
+
+  // Función para formatear el tiempo restante
+  const formatCountdown = (countdown) => {
+    if (!countdown) return '';
+
+    const { hours, minutes, seconds } = countdown;
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${seconds}s`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${seconds}s`;
+    } else {
+      return `${seconds}s`;
+    }
+  };
 
   // Función para refrescar equipos
   const refreshEquipos = useCallback(async () => {
@@ -148,6 +205,15 @@ const CheckEquiposSidePanel = ({
     }
   }, [isOpen, equipos, equipos.length]);
 
+  useEffect(() => {
+  if (countdown === null && lastCheckTime && isOpen) {
+    // El countdown terminó, refrescar el estado
+    setTimeout(() => {
+      refreshEquipos();
+    }, 1000);
+  }
+}, [countdown, lastCheckTime, isOpen, refreshEquipos]);
+
   const filteredEquipos = equipos
     .filter((equipo) => selectedPlatform === "Todos" || equipo.plataforma === selectedPlatform)
     .sort((a, b) => {
@@ -184,7 +250,6 @@ const CheckEquiposSidePanel = ({
       },
     }));
   };
-
 
   const handleSaveChecklist = async () => {
     const equiposConStatus = Object.entries(equiposStatus)
@@ -232,8 +297,8 @@ const CheckEquiposSidePanel = ({
         text: `Se ha guardado el checklist de ${equiposConStatus.length} equipos.`,
       });
 
-      const todayStart = getTodayStart();
-      setLastCheckTime(todayStart);
+      const currentTime = Date.now();
+      setLastCheckTime(currentTime);
       fetchData();
       closeModal("checkEquipos");
     } catch (error) {
@@ -248,8 +313,7 @@ const CheckEquiposSidePanel = ({
     }
   };
 
-
-  const canCheck = !lastCheckTime || (Date.now() - lastCheckTime >= 24 * 60 * 60 * 1000);
+  const canCheck = !lastCheckTime || countdown === null;
 
   return (
     <>
@@ -258,6 +322,18 @@ const CheckEquiposSidePanel = ({
       <div className={`estatusplataforma-side-panel ${isOpen ? "estatusplataforma-side-panel-open" : ""}`}>
         <div className="estatusplataforma-side-panel-header">
           <h2 className="estatusplataforma-side-panel-title">Selecciona la plataforma</h2>
+          {countdown && (
+            <div style={{
+              fontSize: '12px',
+              color: '#6b7280',
+              marginTop: '4px',
+              textAlign: 'center'
+            }}>
+              Próximo check disponible en: <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>
+                {formatCountdown(countdown)}
+              </span>
+            </div>
+          )}
           <button className="estatusplataforma-side-panel-close" onClick={onClose}>
             ✕
           </button>
@@ -335,14 +411,25 @@ const CheckEquiposSidePanel = ({
                   ) : (
                     <tr>
                       <td colSpan="3" className="estatusplataforma-no-data">
-                        No hay equipos para check
+                        <div>
+                          El checklist ya se realizó.
+                          {countdown ? (
+                            <div style={{ marginTop: '8px', fontSize: '14px', fontWeight: 'bold', color: '#3b82f6' }}>
+                              Próximo check disponible en: {formatCountdown(countdown)}
+                            </div>
+                          ) : (
+                            <div style={{ marginTop: '8px', fontSize: '14px', color: '#22c55e' }}>
+                              ¡Ya puedes realizar un nuevo check!
+                            </div>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )
                 ) : (
                   <tr>
                     <td colSpan="3" className="estatusplataforma-no-data">
-                      El checklist ya se realizó hoy. Espera al siguiente día para volver a cargarlos.
+                      El checklist ya se realizó. Espera 6 horas para volver a realizarlo :).
                     </td>
                   </tr>
                 )}
@@ -358,7 +445,7 @@ const CheckEquiposSidePanel = ({
             className="estatusplataforma-btn estatusplataforma-btn-primary estatusplataforma-btn-full-width"
             disabled={!canCheck || filteredEquipos.length === 0 || isSaving}
           >
-            {isSaving ? "Guardando..." : "Guardar checklist"}
+            {isSaving ? "Guardando..." : countdown ? `Disponible en ${formatCountdown(countdown)}` : "Guardar checklist"}
           </button>
         </div>
       </div>
@@ -526,18 +613,18 @@ const EquiposEstatusPlataforma = () => {
   }, [equiposData.equiposOffline.length]);
 
   const notifyEquiposUpdate = useCallback(() => {
-  setEquiposVersion(prev => prev + 1);
-  if (modals.checkEquipos.isOpen) {
-    fetchData();
-  }
-}, [modals.checkEquipos.isOpen, fetchData]);
+    setEquiposVersion(prev => prev + 1);
+    if (modals.checkEquipos.isOpen) {
+      fetchData();
+    }
+  }, [modals.checkEquipos.isOpen, fetchData]);
 
-useEffect(() => {
-  window.notifyEquiposUpdate = notifyEquiposUpdate;
-  return () => {
-    delete window.notifyEquiposUpdate;
-  };
-}, [notifyEquiposUpdate]);
+  useEffect(() => {
+    window.notifyEquiposUpdate = notifyEquiposUpdate;
+    return () => {
+      delete window.notifyEquiposUpdate;
+    };
+  }, [notifyEquiposUpdate]);
 
   const openModal = (modalType, data = {}) => {
     setModals((prev) => ({

@@ -161,12 +161,12 @@ const AdminCajaChica = () => {
 
     // Ordenar todas las transacciones por fecha (ascendente para cálculo correcto)
     const todasTransaccionesOrdenadas = [...transaccionesEfectivo]
-      .sort((a, b) => new Date(a.fecha + 'T00:00:00') - new Date(b.fecha + 'T00:00:00'));
+      .sort((a, b) => new Date(a.fechaPago + 'T00:00:00') - new Date(b.fechaPago + 'T00:00:00'));
 
     let saldoInicial = 0;
     if (fechaInicio) {
       todasTransaccionesOrdenadas.forEach((transaccion) => {
-        const fechaTransaccion = new Date(transaccion.fecha + 'T00:00:00');
+        const fechaTransaccion = new Date(transaccion.fechaPago + 'T00:00:00');
         if (fechaTransaccion < fechaInicio) {
           if (transaccion.tipo === "INGRESO") saldoInicial += transaccion.monto;
           else saldoInicial -= transaccion.monto;
@@ -176,7 +176,7 @@ const AdminCajaChica = () => {
     const transaccionesFiltradas = filtrarTransaccionesPorFecha(transaccionesEfectivo);
 
     const transaccionesOrdenadas = transaccionesFiltradas
-      .sort((a, b) => new Date(a.fecha + 'T00:00:00') - new Date(b.fecha + 'T00:00:00'));
+      .sort((a, b) => new Date(a.fechaPago + 'T00:00:00') - new Date(b.fechaPago + 'T00:00:00'));
 
     let saldoAcumulado = saldoInicial;
 
@@ -194,18 +194,20 @@ const AdminCajaChica = () => {
   };
 
   const filtrarTransaccionesPorFecha = (transacciones) => {
-    if (!filtroFechas.fechaInicio || !filtroFechas.fechaFin) {
-      return transacciones;
-    }
+  if (!filtroFechas.fechaInicio || !filtroFechas.fechaFin) {
+    return transacciones;
+  }
 
-    return transacciones.filter(transaccion => {
-      const fechaTransaccion = new Date(transaccion.fecha + 'T00:00:00');
-      const fechaInicio = new Date(filtroFechas.fechaInicio + 'T00:00:00');
-      const fechaFin = new Date(filtroFechas.fechaFin + 'T23:59:59');
+  return transacciones.filter(transaccion => {
+    // Cambiar de transaccion.fecha a transaccion.fechaPago
+    const fechaTransaccion = new Date(transaccion.fechaPago + 'T00:00:00');
+    const fechaInicio = new Date(filtroFechas.fechaInicio + 'T00:00:00');
+    const fechaFin = new Date(filtroFechas.fechaFin + 'T23:59:59');
 
-      return fechaTransaccion >= fechaInicio && fechaTransaccion <= fechaFin;
-    });
-  };
+    return fechaTransaccion >= fechaInicio && fechaTransaccion <= fechaFin;
+  });
+};
+
 
   const transaccionesConSaldo = calcularSaldoAcumulado();
 
@@ -577,7 +579,8 @@ const AdminCajaChica = () => {
                     {transaccionesConSaldo.length > 0 ? (
                       transaccionesConSaldo.map((transaccion) => (
                         <tr key={transaccion.id}>
-                          <td>{new Date(transaccion.fecha + 'T00:00:00').toLocaleDateString("es-MX")}</td>                          <td>{transaccion.cuenta.nombre}</td>
+                          <td>{transaccion.fechaPago}</td>                          
+                          <td>{transaccion.cuenta.nombre}</td>
                           <td>{transaccion.notas || "-"}</td>
                           <td className="cajachica-gasto">
                             {transaccion.tipo === "GASTO" ? formatCurrency(transaccion.monto) : "-"}
