@@ -116,10 +116,6 @@ const processEquiposPorMotivo = (equiposOffline) => {
     .sort((a, b) => b.cantidad - a.cantidad); // Ordenar por cantidad descendente
 };
 
-const getLastCheckWindow = () => {
-  const now = new Date();
-  return now.getTime();
-};
 
 // Panel Lateral Deslizante para Check Equipos
 const CheckEquiposSidePanel = ({
@@ -206,13 +202,13 @@ const CheckEquiposSidePanel = ({
   }, [isOpen, equipos, equipos.length]);
 
   useEffect(() => {
-  if (countdown === null && lastCheckTime && isOpen) {
-    // El countdown terminó, refrescar el estado
-    setTimeout(() => {
-      refreshEquipos();
-    }, 1000);
-  }
-}, [countdown, lastCheckTime, isOpen, refreshEquipos]);
+    if (countdown === null && lastCheckTime && isOpen) {
+      // El countdown terminó, refrescar el estado
+      setTimeout(() => {
+        refreshEquipos();
+      }, 1000);
+    }
+  }, [countdown, lastCheckTime, isOpen, refreshEquipos]);
 
   const filteredEquipos = equipos
     .filter((equipo) => selectedPlatform === "Todos" || equipo.plataforma === selectedPlatform)
@@ -524,6 +520,22 @@ const ConfirmarCambioEstatusModal = ({
       </div>
     </Modal>
   );
+};
+
+const formatDateTime = (isoString) => {
+  if (!isoString) return '';
+
+  const date = new Date(isoString);
+  const options = {
+    timeZone: 'America/Mexico_City',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  };
+
+  return date.toLocaleDateString('es-MX', options);
 };
 
 // Componente Principal
@@ -1182,7 +1194,9 @@ const EquiposEstatusPlataforma = () => {
             <p className="estatusplataforma-subtitle">Monitoreo de equipos por cliente</p>
 
             {equiposData.fechaUltimoCheck && (
-              <p className="estatusplataforma-data-date">Datos actualizados: {equiposData.fechaUltimoCheck}</p>
+              <p className="estatusplataforma-data-date">
+                Datos actualizados: {formatDateTime(equiposData.fechaUltimoCheck)}
+              </p>
             )}
 
             <div className="estatusplataforma-charts-grid">
