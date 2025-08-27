@@ -113,7 +113,7 @@ const AdminBalance = () => {
           })
           .reduce((sum, t) => sum + t.monto, 0)
         const gastos = transaccionesFiltradas
-          .filter((t) => t.tipo === "GASTO" && t.notas === "Transacción generada desde Cuentas por Pagar")
+          .filter((t) => t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))
           .filter((t) => {
             const fechaTransaccion = new Date(t.fechaPago)
             return (
@@ -142,7 +142,7 @@ const AdminBalance = () => {
           })
           .reduce((sum, t) => sum + t.monto, 0)
         const gastos = transaccionesFiltradas
-          .filter((t) => t.tipo === "GASTO" && t.notas === "Transacción generada desde Cuentas por Pagar")
+          .filter((t) => t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))
           .filter((t) => {
             const fechaTransaccion = new Date(t.fechaPago)
             return fechaTransaccion.getMonth() === mes && fechaTransaccion.getFullYear() === añoActual
@@ -163,7 +163,7 @@ const AdminBalance = () => {
           })
           .reduce((sum, t) => sum + t.monto, 0)
         const gastos = transaccionesFiltradas
-          .filter((t) => t.tipo === "GASTO" && t.notas === "Transacción generada desde Cuentas por Pagar")
+          .filter((t) => t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))
           .filter((t) => {
             const fechaTransaccion = new Date(t.fechaPago)
             return fechaTransaccion.getMonth() === i && fechaTransaccion.getFullYear() === añoActual
@@ -182,7 +182,7 @@ const AdminBalance = () => {
           .filter((t) => new Date(t.fechaPago).getFullYear() === año)
           .reduce((sum, t) => sum + t.monto, 0)
         const gastos = transaccionesFiltradas
-          .filter((t) => t.tipo === "GASTO" && t.notas === "Transacción generada desde Cuentas por Pagar")
+          .filter((t) => t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))
           .filter((t) => new Date(t.fechaPago).getFullYear() === año)
           .reduce((sum, t) => sum + t.monto, 0)
         return { mes: labels[i], ingresos, gastos }
@@ -209,7 +209,7 @@ const AdminBalance = () => {
 
       const totalIngresos = transacciones.filter((t) => t.tipo === "INGRESO").reduce((sum, t) => sum + t.monto, 0)
       const totalGastos = transacciones
-        .filter((t) => t.tipo === "GASTO" && t.notas === "Transacción generada desde Cuentas por Pagar")
+        .filter((t) => t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))
         .reduce((sum, t) => sum + t.monto, 0)
       const utilidadPerdida = totalIngresos - totalGastos
 
@@ -223,7 +223,7 @@ const AdminBalance = () => {
               t.categoria.id === cat.id &&
               t.cuenta.id !== REPOSICION_ID &&
               (t.tipo === "INGRESO" ||
-                (t.tipo === "GASTO" && t.notas === "Transacción generada desde Cuentas por Pagar")),
+                (t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))),
           )
           .reduce((sum, t) => sum + t.monto, 0)
         return { categoria: cat.descripcion, cuenta: "Todas", monto: montoTotal }
