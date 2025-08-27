@@ -791,14 +791,25 @@ const AdminCuentasPagar = () => {
   });
 
   const cuentasOrdenadas = cuentasFiltradas.sort((a, b) => {
+    // Primer nivel: ordenamiento por fecha
     const fechaA = new Date(a.fechaPago);
     const fechaB = new Date(b.fechaPago);
 
+    let comparacionFecha;
     if (ordenFecha === 'asc') {
-      return fechaA - fechaB;
+      comparacionFecha = fechaA - fechaB;
     } else {
-      return fechaB - fechaA;
+      comparacionFecha = fechaB - fechaA;
     }
+
+    if (comparacionFecha !== 0) {
+      return comparacionFecha;
+    }
+
+    const nombreA = a.cuenta.nombre.toLowerCase();
+    const nombreB = b.cuenta.nombre.toLowerCase();
+
+    return nombreA.localeCompare(nombreB, 'es', { sensitivity: 'base' });
   });
 
   const toggleOrdenFecha = () => {
