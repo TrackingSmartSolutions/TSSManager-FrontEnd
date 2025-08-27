@@ -1245,6 +1245,25 @@ const AdminCuentasCobrar = () => {
       return;
     }
 
+    // Verificar si hay errores en la subida del comprobante
+    if (cuenta.comprobantePagoUrl === "ERROR_UPLOAD") {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "El comprobante de pago no se pudo subir correctamente. Intente subirlo nuevamente.",
+      });
+      return;
+    }
+
+    if (cuenta.comprobantePagoUrl === "UPLOADING") {
+      Swal.fire({
+        icon: "warning",
+        title: "En proceso",
+        text: "El comprobante de pago está siendo procesado. Intente más tarde.",
+      });
+      return;
+    }
+
     try {
       const response = await fetchFileWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/download-comprobante`, {
         method: "GET",
@@ -1470,19 +1489,22 @@ const AdminCuentasCobrar = () => {
                                   />
                                 </button>
                               )}
-                              {cuenta.estatus === "PAGADO" && cuenta.comprobantePagoUrl && (
-                                <button
-                                  className="cuentascobrar-action-btn cuentascobrar-download-btn"
-                                  onClick={() => handleDescargarComprobante(cuenta)}
-                                  title="Descargar comprobante de pago"
-                                >
-                                  <img
-                                    src={downloadIcon || "/placeholder.svg"}
-                                    alt="Descargar"
-                                    className="cuentascobrar-action-icon"
-                                  />
-                                </button>
-                              )}
+                              {cuenta.estatus === "PAGADO" &&
+                                cuenta.comprobantePagoUrl &&
+                                cuenta.comprobantePagoUrl !== "ERROR_UPLOAD" &&
+                                cuenta.comprobantePagoUrl !== "UPLOADING" && (
+                                  <button
+                                    className="cuentascobrar-action-btn cuentascobrar-download-btn"
+                                    onClick={() => handleDescargarComprobante(cuenta)}
+                                    title="Descargar comprobante de pago"
+                                  >
+                                    <img
+                                      src={downloadIcon || "/placeholder.svg"}
+                                      alt="Descargar"
+                                      className="cuentascobrar-action-icon"
+                                    />
+                                  </button>
+                                )}
                               <button
                                 className={`cuentascobrar-action-btn cuentascobrar-download-btn ${cuentasVinculadas.has(cuenta.id)
                                   ? 'cuentascobrar-request-btn-vinculada'
