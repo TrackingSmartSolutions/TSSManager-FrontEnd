@@ -249,7 +249,7 @@ const ConfiguracionPlantillas = () => {
   };
 
   const handleFileUpload = async (event) => {
-    const maxFileSize = 1 * 1024 * 1024; // 1MB por archivo
+    const maxFileSize = 1.5 * 1024 * 1024; // 1.5MB por archivo
     const maxFiles = 3; // Máximo 3 archivos
 
     const files = Array.from(event.target.files);
@@ -267,7 +267,7 @@ const ConfiguracionPlantillas = () => {
       Swal.fire({
         icon: "warning",
         title: "Archivo muy grande",
-        text: `Uno o más archivos exceden el límite de 1MB por archivo. Por favor, selecciona archivos más pequeños.`,
+        text: `Uno o más archivos exceden el límite de 1.5MB por archivo. Por favor, selecciona archivos más pequeños.`,
         confirmButtonText: "Aceptar",
       });
       return;
@@ -313,11 +313,11 @@ const ConfiguracionPlantillas = () => {
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > 1.5 * 1024 * 1024) {
       Swal.fire({
         icon: 'warning',
         title: 'Archivo muy grande',
-        text: 'La imagen es muy grande. Máximo 2MB para imágenes embebidas',
+        text: 'La imagen es muy grande. Máximo 1.5MB para imágenes embebidas',
         confirmButtonText: 'Entendido'
       });
       return;
@@ -609,7 +609,7 @@ const ConfiguracionPlantillas = () => {
                         <img src={uploadIcon || "/placeholder.svg"} alt="Upload" />
                       </div>
                       <p>Arrastra y suelta archivos aquí</p>
-                      <p className="correo-plantillas-file-formats">PDF, JPG, PNG, DOC (máx. 1MB por archivo, 3 archivos máximo)</p>
+                      <p className="correo-plantillas-file-formats">PDF, JPG, PNG, DOC (máx. 1.5MB por archivo, 3 archivos máximo)</p>
                       <input
                         type="file"
                         multiple
