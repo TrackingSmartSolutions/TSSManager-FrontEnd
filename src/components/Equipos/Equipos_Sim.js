@@ -252,6 +252,7 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
 
     } catch (error) {
       console.error("Error completo:", error);
+      console.error("Stack trace:", error.stack);
 
       // Mostrar error más específico
       let errorText = error.message;
@@ -263,13 +264,18 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
         errorText = "Equipo no encontrado. Verifique que el equipo existe y está disponible";
       } else if (errorText.includes("IllegalArgumentException")) {
         errorText = "Los datos enviados no son válidos. Verifique todos los campos";
+      } else if (errorText.includes("Error crítico al crear transacción automática")) {
+        errorText = "Error al crear la cuenta por pagar automática. La SIM se creó pero requiere revisión manual.";
+      } else if (errorText.includes("RuntimeException")) {
+        errorText = "Error interno del sistema. Contacte al administrador si persiste el problema.";
       }
 
       Swal.fire({
         icon: "error",
         title: "Error al guardar SIM",
         text: errorText,
-        showConfirmButton: true
+        showConfirmButton: true,
+        footer: 'Si el problema persiste, revise los logs del servidor'
       });
     }
     onClose();
@@ -423,7 +429,7 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
                             </option>
                           );
                         })
-                        .filter(option => option !== null) 
+                        .filter(option => option !== null)
                     ))}
                 </select>
                 {!isPrincipal && <small className="sim-help-text">Seleccione un grupo disponible</small>}
@@ -980,15 +986,15 @@ const EquiposSim = () => {
   }, []);
 
   const fetchAllSimsForCounting = async () => {
-  try {
-    const response = await fetchWithToken(`${API_BASE_URL}/sims`);
-    const allSimsData = await response.json();
-    setAllSims(allSimsData);
-  } catch (error) {
-    console.error("Error loading all SIMs for counting:", error);
-    setAllSims([]);
-  }
-};
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/sims`);
+      const allSimsData = await response.json();
+      setAllSims(allSimsData);
+    } catch (error) {
+      console.error("Error loading all SIMs for counting:", error);
+      setAllSims([]);
+    }
+  };
 
   const fetchCriticalData = async () => {
     try {
@@ -1171,24 +1177,24 @@ const EquiposSim = () => {
     });
 
     setAllSims((prev) => {
-    const isNew = !prev.find(s => s.id === simData.id);
-    const simWithEquipo = {
-      ...simData,
-      compañia: simData.tarifa === "M2M_GLOBAL_15" ? "M2M" : "Telcel",
-      equipo: simData.equipoNombre ? {
-        nombre: simData.equipoNombre,
-        imei: simData.equipoImei
-      } : null,
-    };
+      const isNew = !prev.find(s => s.id === simData.id);
+      const simWithEquipo = {
+        ...simData,
+        compañia: simData.tarifa === "M2M_GLOBAL_15" ? "M2M" : "Telcel",
+        equipo: simData.equipoNombre ? {
+          nombre: simData.equipoNombre,
+          imei: simData.equipoImei
+        } : null,
+      };
 
-    if (isNew) {
-      return [simWithEquipo, ...prev];
-    } else {
-      return prev.map(sim =>
-        sim.id === simData.id ? simWithEquipo : sim
-      );
-    }
-  });
+      if (isNew) {
+        return [simWithEquipo, ...prev];
+      } else {
+        return prev.map(sim =>
+          sim.id === simData.id ? simWithEquipo : sim
+        );
+      }
+    });
     Swal.fire({
       icon: "success",
       title: "Éxito",
