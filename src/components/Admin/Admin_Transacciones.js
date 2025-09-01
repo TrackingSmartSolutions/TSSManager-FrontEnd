@@ -925,7 +925,6 @@ const AdminTransacciones = () => {
     }
 
     return transacciones.filter(transaccion => {
-      // Cambiar de transaccion.fecha a transaccion.fechaPago
       const fechaTransaccion = new Date(transaccion.fechaPago + 'T00:00:00');
       const fechaInicio = new Date(filtroFechas.fechaInicio + 'T00:00:00');
       const fechaFin = new Date(filtroFechas.fechaFin + 'T23:59:59');
@@ -1108,10 +1107,10 @@ const AdminTransacciones = () => {
     : transaccionesPorFecha.filter((t) => t.cuenta && t.cuenta.nombre === filtrosCuenta);
 
   const transaccionesFiltradas = transaccionesSinOrdenar.sort((a, b) => {
-    const fechaA = new Date(a.fecha);
-    const fechaB = new Date(b.fecha);
-    return ordenFecha === 'desc' ? fechaB - fechaA : fechaA - fechaB;
-  });
+  const fechaA = new Date(a.fechaPago);
+  const fechaB = new Date(b.fechaPago);
+  return ordenFecha === 'desc' ? fechaB - fechaA : fechaA - fechaB;
+});
 
   const cuentasUnicas = ["Todas", ...new Set(cuentas.filter(c => c && c.nombre).map((c) => c.nombre))];
 
