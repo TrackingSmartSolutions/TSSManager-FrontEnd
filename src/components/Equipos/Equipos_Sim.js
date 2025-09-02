@@ -1165,6 +1165,7 @@ const EquiposSim = () => {
           nombre: simData.equipoNombre,
           imei: simData.equipoImei
         } : null,
+        ultimoSaldoRegistrado: simData.ultimoSaldoRegistrado || "Sin registros" 
       };
 
       if (isNew) {
@@ -1248,6 +1249,7 @@ const EquiposSim = () => {
         text: data.message || "Saldo registrado correctamente",
       });
       closeModal("saldos");
+      fetchSimsPaginadas(0);
     } catch (error) {
       Swal.fire({
         icon: "error",
@@ -1379,6 +1381,7 @@ const EquiposSim = () => {
                       <th>Grupo</th>
                       <th>Principal</th>
                       <th>Equipo</th>
+                      <th>Último saldo registrado</th>
                       <th>Contraseña</th>
                       <th>Acciones</th>
                     </tr>
@@ -1400,6 +1403,7 @@ const EquiposSim = () => {
                             </span>
                           </td>
                           <td>{sim.equipo?.nombre || "N/A"}</td>
+                          <td>{sim.ultimoSaldoRegistrado || "Sin registros"}</td> 
                           <td>{sim.contrasena || "N/A"}</td>
                           <td>
                             <div className="sim-action-buttons">
@@ -1442,7 +1446,7 @@ const EquiposSim = () => {
                       ))}
                     {sims.length === 0 && (
                       <tr>
-                        <td colSpan="11" className="sim-no-data">
+                        <td colSpan="12" className="sim-no-data">
                           No se encontraron SIMs
                         </td>
                       </tr>
