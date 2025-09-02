@@ -352,7 +352,9 @@
   display: flex;
   gap: var(--inventario-spacing-xs);
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  min-width: fit-content;
 }
 
 .inventario-btn-action {
@@ -604,6 +606,52 @@
   font-size: var(--inventario-font-size-md);
   color: var(--inventario-text-color);
   margin: 0;
+}
+
+/* Alerta de expiración */
+.inventario-expiration-alert {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: var(--inventario-border-radius-sm);
+  padding: var(--inventario-spacing-xs);
+  min-width: 32px;
+  height: 32px;
+  margin-left: auto;
+}
+
+.inventario-expiration-count {
+  font-size: var(--inventario-font-size-xs);
+  font-weight: 600;
+  color: #856404;
+  white-space: nowrap;
+}
+
+/* Responsive para la alerta */
+@media (max-width: 768px) {
+  .inventario-expiration-alert {
+    min-width: 28px;
+    height: 28px;
+    padding: 2px;
+  }
+  
+  .inventario-expiration-count {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .inventario-expiration-alert {
+    min-width: 24px;
+    height: 24px;
+    padding: 1px;
+  }
+  
+  .inventario-expiration-count {
+    font-size: 0.65rem;
+  }
 }
 
 /* Diseño responsivo */

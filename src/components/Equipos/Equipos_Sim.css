@@ -877,6 +877,59 @@
   background-color: #545b62;
 }
 
+.sim-saldo-warning {
+  background-color: #fff3cd !important;
+  color: #856404 !important;
+  font-weight: 600;
+  border: 1px solid #ffeaa7;
+}
+
+.sim-saldo-danger {
+  background-color: #ffe6cc !important;
+  color: #e67e22 !important;
+  font-weight: 600;
+  border: 1px solid #fd9644;
+}
+
+.sim-table tbody tr:hover .sim-saldo-warning {
+  background-color: #fff3cd !important;
+}
+
+.sim-table tbody tr:hover .sim-saldo-danger {
+  background-color: #ffe6cc !important;
+}
+
+/* Estilo para fila completa con alerta de caída de saldo */
+.sim-table tbody tr.sim-row-alert-caida {
+  background-color: #fcbdc6 !important;
+  border-left: 4px solid #f44336 !important;
+}
+
+.sim-table tbody tr.sim-row-alert-caida:hover {
+  background-color: #ffcdd2 !important;
+}
+
+/* Botón de aprobar alerta */
+.sim-btn-action.sim-aprobar {
+  background-color: #4caf50;
+  border-color: #4caf50;
+}
+
+.sim-btn-action.sim-aprobar:hover {
+  background-color: #45a049;
+  border-color: #45a049;
+}
+
+.sim-btn-action.sim-aprobar img {
+  filter: brightness(0) saturate(100%) invert(100%);
+}
+
+.sim-row-alert-caida .sim-saldo-warning,
+.sim-row-alert-caida .sim-saldo-danger {
+  position: relative;
+  z-index: 1;
+}
+
 /* Diseño responsivo */
 @media (max-width: 1200px) {
   .sim-container {

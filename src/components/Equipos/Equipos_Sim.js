@@ -5,6 +5,7 @@ import Header from "../Header/Header";
 import Swal from "sweetalert2";
 import editIcon from "../../assets/icons/editar.png";
 import deleteIcon from "../../assets/icons/eliminar.png";
+import aprobarIcon from "../../assets/icons/aprobar.png";
 import detailsIcon from "../../assets/icons/lupa.png";
 import balancesIcon from "../../assets/icons/check-saldos.png";
 import { API_BASE_URL } from "../Config/Config";
@@ -930,6 +931,7 @@ const EquiposSim = () => {
   const [equiposLoaded, setEquiposLoaded] = useState(false);
   const [ordenFechaVigencia, setOrdenFechaVigencia] = useState('asc');
   const [filterNumero, setFilterNumero] = useState("");
+  const [alertasSaldo, setAlertasSaldo] = useState(new Set());
   const [modals, setModals] = useState({
     form: { isOpen: false, sim: null },
     saldos: { isOpen: false, sim: null },
@@ -1057,6 +1059,17 @@ const EquiposSim = () => {
         setSims(simsData);
       }
 
+      const nuevasAlertas = new Set(alertasSaldo);
+      for (const sim of simsData.filter(s => s.tarifa === "POR_SEGUNDO")) {
+        if (!alertasSaldo.has(sim.id)) {
+          const tieneCaida = await verificarCaidaSaldo(sim.id, sim.numero);
+          if (tieneCaida) {
+            nuevasAlertas.add(sim.id);
+          }
+        }
+      }
+      setAlertasSaldo(nuevasAlertas);
+
       setPagination({
         currentPage: data.number !== undefined ? data.number : page,
         totalPages: data.totalPages,
@@ -1165,7 +1178,7 @@ const EquiposSim = () => {
           nombre: simData.equipoNombre,
           imei: simData.equipoImei
         } : null,
-        ultimoSaldoRegistrado: simData.ultimoSaldoRegistrado || "Sin registros" 
+        ultimoSaldoRegistrado: simData.ultimoSaldoRegistrado || "Sin registros"
       };
 
       if (isNew) {
@@ -1268,18 +1281,96 @@ const EquiposSim = () => {
   };
 
   const getSimsOrdenados = () => {
-    return [...sims].sort((a, b) => {
-      // Primero, manejar casos donde no hay fecha de vigencia
-      const fechaA = a.vigencia ? new Date(a.vigencia + 'T00:00:00') : null;
-      const fechaB = b.vigencia ? new Date(b.vigencia + 'T00:00:00') : null;
+  return [...sims].sort((a, b) => {
+    // Primero, manejar casos donde no hay fecha de vigencia
+    const fechaA = a.vigencia ? new Date(a.vigencia + 'T00:00:00') : null;
+    const fechaB = b.vigencia ? new Date(b.vigencia + 'T00:00:00') : null;
 
-      if (!fechaA && !fechaB) return 0;
-      if (!fechaA) return 1;
-      if (!fechaB) return -1;
+    if (!fechaA && !fechaB) {
+      // Si ninguna tiene vigencia, ordenar por número
+      return a.numero.localeCompare(b.numero, undefined, { numeric: true });
+    }
+    if (!fechaA) return 1;
+    if (!fechaB) return -1;
 
-      // Ordenar por fecha
-      const diff = fechaA - fechaB;
-      return ordenFechaVigencia === 'desc' ? -diff : diff;
+    // Ordenar por fecha primero
+    const diff = fechaA - fechaB;
+    const fechaComparison = ordenFechaVigencia === 'desc' ? -diff : diff;
+    
+    // Si las fechas son iguales, ordenar por número como segundo criterio
+    if (fechaComparison === 0) {
+      return a.numero.localeCompare(b.numero, undefined, { numeric: true });
+    }
+    
+    return fechaComparison;
+  });
+};
+
+  const getSaldoClassName = (sim) => {
+    if (!sim.ultimoSaldoRegistrado || sim.ultimoSaldoRegistrado === "Sin registros" || sim.ultimoSaldoRegistrado === "N/A") {
+      return "";
+    }
+
+    let className = "";
+
+    // Para tarifa POR_SEGUNDO - verificar si el saldo es menor a $10
+    if (sim.tarifa === "POR_SEGUNDO" && sim.ultimoSaldoRegistrado.startsWith("$")) {
+      const saldoValue = parseFloat(sim.ultimoSaldoRegistrado.replace("$", ""));
+      if (!isNaN(saldoValue) && saldoValue < 10) {
+        className = "sim-saldo-warning";
+      }
+    }
+
+    // Para tarifa M2M_GLOBAL_15 - verificar si los datos son mayores a 15MB
+    if (sim.tarifa === "M2M_GLOBAL_15" && sim.ultimoSaldoRegistrado.includes("MB")) {
+      const datosValue = parseFloat(sim.ultimoSaldoRegistrado.replace("MB", "").trim());
+      if (!isNaN(datosValue) && datosValue > 15) {
+        className = "sim-saldo-danger";
+      }
+    }
+
+    return className;
+  };
+
+  const verificarCaidaSaldo = async (simId, simNumero) => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/sims/${simId}/historial`);
+      const historial = await response.json();
+
+      if (historial.length < 2) return false;
+
+      const historialOrdenado = historial
+        .filter(h => h.saldoActual !== null)
+        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+      if (historialOrdenado.length < 2) return false;
+
+      const ultimoSaldo = parseFloat(historialOrdenado[0].saldoActual);
+      const penultimoSaldo = parseFloat(historialOrdenado[1].saldoActual);
+
+      // Verificar caída de $5 o más
+      const diferencia = penultimoSaldo - ultimoSaldo;
+      return diferencia >= 5;
+
+    } catch (error) {
+      console.error("Error verificando caída de saldo:", error);
+      return false;
+    }
+  };
+
+  const aprobarAlertaSaldo = (simId) => {
+    setAlertasSaldo(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(simId);
+      return newSet;
+    });
+
+    Swal.fire({
+      icon: "success",
+      title: "Alerta aprobada",
+      text: "La alerta de caída de saldo ha sido dismissada",
+      timer: 2000,
+      showConfirmButton: false
     });
   };
 
@@ -1389,7 +1480,7 @@ const EquiposSim = () => {
                   <tbody>
                     {getSimsOrdenados()
                       .map((sim) => (
-                        <tr key={sim.id}>
+                        <tr key={sim.id} className={alertasSaldo.has(sim.id) ? "sim-row-alert-caida" : ""}>
                           <td>{sim.numero}</td>
                           <td>{sim.tarifa}</td>
                           <td>{sim.tarifa === "M2M_GLOBAL_15" ? "M2M" : sim.compañia || "Telcel"}</td>
@@ -1403,7 +1494,9 @@ const EquiposSim = () => {
                             </span>
                           </td>
                           <td>{sim.equipo?.nombre || "N/A"}</td>
-                          <td>{sim.ultimoSaldoRegistrado || "Sin registros"}</td> 
+                          <td className={getSaldoClassName(sim)}>
+                            {sim.ultimoSaldoRegistrado || "Sin registros"}
+                          </td>
                           <td>{sim.contrasena || "N/A"}</td>
                           <td>
                             <div className="sim-action-buttons">
@@ -1440,6 +1533,15 @@ const EquiposSim = () => {
                               >
                                 <img src={balancesIcon} alt="Saldos" />
                               </button>
+                              {alertasSaldo.has(sim.id) && (
+                                <button
+                                  className="sim-btn-action sim-aprobar"
+                                  onClick={() => aprobarAlertaSaldo(sim.id)}
+                                  title="Aprobar alerta de caída"
+                                >
+                                  <img src={aprobarIcon} alt="Aprobar" />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
