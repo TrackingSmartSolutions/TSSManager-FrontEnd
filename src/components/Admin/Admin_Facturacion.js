@@ -1375,12 +1375,18 @@ const AdminFacturacion = () => {
                               : solicitud.formaPago === "03"
                                 ? "Transferencia electrónica de fondos"
                                 : solicitud.formaPago === "02"
-                                  ? "Cheque Nominativo"
+                                  ? "Tarjeta Spin"
                                   : solicitud.formaPago === "04"
                                     ? "Tarjeta de crédito"
                                     : solicitud.formaPago === "28"
                                       ? "Tarjeta de débito"
-                                      : "otros"}
+                                      : solicitud.formaPago === "07"
+                                        ? "Con saldo acumulado"
+                                        : solicitud.formaPago === "30"
+                                          ? "Aplicación de anticipos"
+                                          : solicitud.formaPago === "99"
+                                            ? "Por definir"
+                                            : "otros"}
                           </td>
                           <td>{solicitud.folio || "N/A"}</td>
                           <td>
@@ -1409,8 +1415,8 @@ const AdminFacturacion = () => {
                               {solicitud.tipo === "SOLICITUD_DE_FACTURA" && (
                                 <button
                                   className={`facturacion-action-btn ${solicitudesTimbradas.has(solicitud.identificador)
-                                      ? 'facturacion-stamp-btn-vinculada'
-                                      : 'facturacion-stamp-btn-disponible'
+                                    ? 'facturacion-stamp-btn-vinculada'
+                                    : 'facturacion-stamp-btn-disponible'
                                     }`}
                                   onClick={() => handleTimbrarClick(solicitud)}
                                   title={solicitudesTimbradas.has(solicitud.identificador) ? "Ya timbrada" : "Timbrar"}
