@@ -85,6 +85,7 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
     estatus: "INACTIVO",
     tipoActivacion: "ANUAL",
     plataforma: "TRACK_SOLID",
+    creditosUsados: 0,
   });
   const [errors, setErrors] = useState({});
 
@@ -102,6 +103,7 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
           estatus: equipo.estatus || "INACTIVO",
           tipoActivacion: equipo.tipoActivacion || "ANUAL",
           plataforma: equipo.plataforma || "TRACK_SOLID",
+          creditosUsados: equipo.creditosUsados || 0,
         });
         if (equipo.clienteId === null && equipo.clienteDefault) {
           setFormData((prev) => ({
@@ -121,6 +123,7 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
           estatus: "INACTIVO",
           tipoActivacion: "ANUAL",
           plataforma: "TRACK_SOLID",
+          creditosUsados: 0,
         });
       }
       setErrors({});
@@ -350,6 +353,25 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
           </select>
         </div>
 
+        {formData.estatus === "ACTIVO" && (
+          <div className="inventario-form-group">
+            <label htmlFor="creditosUsados" className="inventario-form-label">
+              Créditos usados <span className="required"> *</span>
+            </label>
+            <input
+              type="number"
+              id="creditosUsados"
+              name="creditosUsados"
+              value={formData.creditosUsados}
+              onChange={handleInputChange}
+              className="inventario-form-control"
+              placeholder="Número de créditos usados"
+              min="0"
+            />
+          </div>
+        )}
+
+
         <div className="inventario-form-actions">
           <button type="button" onClick={onClose} className="inventario-btn inventario-btn-cancel">Cancelar</button>
           <button type="submit" className="inventario-btn inventario-btn-primary">{equipo ? "Guardar cambios" : "Agregar"}</button>
@@ -393,6 +415,10 @@ const DetallesEquipoModal = ({ isOpen, onClose, equipo, modelos, proveedores, cl
           <div className="inventario-detalle-item"><label>Fecha expiración:</label><span>{formatDate(equipo.fechaExpiracion)}</span></div>
           <div className="inventario-detalle-item"><label>Plataforma:</label><span>{equipo.plataforma || "N/A"}</span></div>
           <div className="inventario-detalle-item"><label>SIM Referenciada:</label><span>{equipo.simReferenciada ? sims.find(s => s.id === equipo.simReferenciada.id)?.numero : "N/A"}</span></div>
+          <div className="inventario-detalle-item">
+            <label>Créditos usados:</label>
+            <span>{equipo.creditosUsados || 0}</span>
+          </div>
         </div>
         <div className="inventario-form-actions">
           <button type="button" onClick={onClose} className="inventario-btn inventario-btn-primary">Cerrar</button>
@@ -455,6 +481,47 @@ const ConfirmarActivacionModal = ({ isOpen, onClose, onConfirm, equipo }) => {
   );
 };
 
+const CreditosModal = ({ isOpen, onClose, onConfirm, titulo }) => {
+  const [creditos, setCreditos] = useState(0);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onConfirm(creditos);
+    onClose();
+    setCreditos(0);
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={titulo} size="sm" closeOnOverlayClick={false}>
+      <form onSubmit={handleSubmit} className="inventario-form">
+        <div className="inventario-form-group">
+          <label htmlFor="creditos" className="inventario-form-label">
+            Créditos usados <span className="required"> *</span>
+          </label>
+          <input
+            type="number"
+            id="creditos"
+            value={creditos}
+            onChange={(e) => setCreditos(parseInt(e.target.value) || 0)}
+            className="inventario-form-control"
+            placeholder="Número de créditos"
+            min="0"
+            required
+          />
+        </div>
+        <div className="inventario-form-actions">
+          <button type="button" onClick={onClose} className="inventario-btn inventario-btn-cancel">
+            Cancelar
+          </button>
+          <button type="submit" className="inventario-btn inventario-btn-primary">
+            Confirmar
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
 // Componente Principal
 const EquiposInventario = () => {
   const navigate = useNavigate();
@@ -473,6 +540,7 @@ const EquiposInventario = () => {
     detalles: { isOpen: false, equipo: null },
     confirmDelete: { isOpen: false, equipo: null, hasSimVinculada: false },
     confirmActivate: { isOpen: false, equipo: null },
+    creditos: { isOpen: false, tipo: null, equipo: null },
   });
 
   const [chartData, setChartData] = useState({
@@ -633,6 +701,7 @@ const EquiposInventario = () => {
       case "proveedores": navigate("/equipos_proveedores"); break;
       case "inventario": navigate("/equipos_inventario"); break;
       case "sim": navigate("/equipos_sim"); break;
+      case "creditos-plataforma": navigate("/equipos_creditosplataforma"); break;
       default: break;
     }
   };
@@ -688,7 +757,7 @@ const EquiposInventario = () => {
 
   const handleActivateEquipo = (equipoId) => {
     const equipo = equipos.find((e) => e.id === equipoId);
-    if (equipo) openModal("confirmActivate", { equipo });
+    if (equipo) openModal("creditos", { tipo: "activar", equipo });
   };
 
   const handleConfirmActivateEquipo = () => {
@@ -700,12 +769,26 @@ const EquiposInventario = () => {
   };
 
   const handleRenewEquipo = (equipoId) => {
-    fetchWithToken(`${API_BASE_URL}/equipos/${equipoId}/renovar`, { method: "POST" })
-      .then(() => fetchData())
-      .then(() => Swal.fire({ icon: "success", title: "Éxito", text: "Equipo renovado correctamente" }))
-      .catch((error) => Swal.fire({ icon: "error", title: "Error", text: error.message }));
+    const equipo = equipos.find((e) => e.id === equipoId);
+    if (equipo) openModal("creditos", { tipo: "renovar", equipo });
   };
 
+  const handleConfirmWithCreditos = (creditosUsados) => {
+    const { tipo, equipo } = modals.creditos;
+    const endpoint = tipo === "activar" ? "activar-con-creditos" : "renovar-con-creditos";
+
+    fetchWithToken(`${API_BASE_URL}/equipos/${equipo.id}/${endpoint}`, {
+      method: "POST",
+      body: JSON.stringify({ creditosUsados }),
+    })
+      .then(() => fetchData())
+      .then(() => Swal.fire({
+        icon: "success",
+        title: "Éxito",
+        text: `Equipo ${tipo === "activar" ? "activado" : "renovado"} correctamente`
+      }))
+      .catch((error) => Swal.fire({ icon: "error", title: "Error", text: error.message }));
+  };
 
   const chartOptions = {
     responsive: true,
@@ -738,6 +821,12 @@ const EquiposInventario = () => {
               <div className="inventario-menu-item" onClick={() => handleMenuNavigation("proveedores")}>Proveedores</div>
               <div className="inventario-menu-item inventario-menu-item-active" onClick={() => handleMenuNavigation("inventario")}>Inventario de equipos</div>
               <div className="inventario-menu-item" onClick={() => handleMenuNavigation("sim")}>SIM</div>
+              <div
+                className="creditosplataforma-menu-item"
+                onClick={() => handleMenuNavigation("creditos-plataforma")}
+              >
+                Créditos Plataformas
+              </div>
             </div>
           </section>
 
@@ -790,6 +879,7 @@ const EquiposInventario = () => {
                       <th>Tipo</th>
                       <th>Estatus</th>
                       <th>SIM</th>
+                      <th>Créditos</th>
                       <th>Acciones</th>
                     </tr>
                   </thead>
@@ -815,6 +905,7 @@ const EquiposInventario = () => {
                             </span>
                           </td>
                           <td>{equipo.simReferenciada ? sims.find(s => s.id === equipo.simReferenciada.id)?.numero : "N/A"}</td>
+                          <td>{equipo.creditosUsados || 0}</td>
                           <td>
                             <div className="inventario-action-buttons">
                               <button className="inventario-btn-action inventario-edit" onClick={() => openModal("form", { equipo })} title="Editar">
@@ -850,7 +941,7 @@ const EquiposInventario = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="7" className="inventario-no-data">No se encontraron equipos</td>
+                        <td colSpan="8" className="inventario-no-data">No se encontraron equipos</td>
                       </tr>
                     )}
                   </tbody>
@@ -894,6 +985,13 @@ const EquiposInventario = () => {
           onClose={() => closeModal("confirmActivate")}
           onConfirm={handleConfirmActivateEquipo}
           equipo={modals.confirmActivate.equipo}
+        />
+
+        <CreditosModal
+          isOpen={modals.creditos.isOpen}
+          onClose={() => closeModal("creditos")}
+          onConfirm={handleConfirmWithCreditos}
+          titulo={modals.creditos.tipo === "activar" ? "Activar equipo" : "Renovar equipo"}
         />
       </main>
     </>

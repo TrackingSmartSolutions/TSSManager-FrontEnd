@@ -65,8 +65,12 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
   const [formData, setFormData] = useState({
     montoPago: "",
     formaPago: "",
+    cantidadCreditos: "",
   });
   const [errors, setErrors] = useState({});
+
+  // Verificar si es una cuenta de créditos plataforma
+  const esCuentaCreditos = cuenta?.transaccion?.categoria?.descripcion?.toLowerCase().includes("créditos plataforma");
 
   useEffect(() => {
     if (isOpen && cuenta) {
@@ -74,6 +78,7 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
       setFormData({
         montoPago: saldoPendiente.toString(),
         formaPago: cuenta.formaPago || "",
+        cantidadCreditos: "",
       });
       setErrors({});
     }
@@ -101,6 +106,14 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
       newErrors.formaPago = "La forma de pago es obligatoria";
     }
 
+    // Validar cantidad de créditos si es cuenta de créditos plataforma
+    if (esCuentaCreditos) {
+      const cantidadCreditos = parseFloat(formData.cantidadCreditos);
+      if (!formData.cantidadCreditos || cantidadCreditos <= 0) {
+        newErrors.cantidadCreditos = "La cantidad de créditos debe ser mayor a 0";
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -112,6 +125,7 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
         ...cuenta,
         montoPago: parseFloat(formData.montoPago),
         formaPago: formData.formaPago,
+        cantidadCreditos: esCuentaCreditos ? parseFloat(formData.cantidadCreditos) : null,
       };
       await onSave(cuentaActualizada);
       onClose();
@@ -140,6 +154,12 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
             <label>Saldo Pendiente:</label>
             <span>${saldoPendiente}</span>
           </div>
+          {esCuentaCreditos && (
+            <div className="cuentaspagar-info-item">
+              <label>Cuenta:</label>
+              <span>{cuenta.transaccion?.cuenta?.nombre}</span>
+            </div>
+          )}
         </div>
 
         <div className="cuentaspagar-form-group">
@@ -158,6 +178,27 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
           </div>
           {errors.montoPago && <span className="cuentaspagar-error-message">{errors.montoPago}</span>}
         </div>
+
+        {/* Campo de cantidad de créditos solo para cuentas de créditos plataforma */}
+        {esCuentaCreditos && (
+          <div className="cuentaspagar-form-group">
+            <label htmlFor="cantidadCreditos">Cantidad de Créditos Comprados <span className="required"> *</span></label>
+            <input
+              type="number"
+              id="cantidadCreditos"
+              step="1"
+              min="1"
+              value={formData.cantidadCreditos}
+              onChange={(e) => handleInputChange("cantidadCreditos", e.target.value)}
+              className={`cuentaspagar-form-control ${errors.cantidadCreditos ? "error" : ""}`}
+              placeholder="Ej: 100"
+            />
+            {errors.cantidadCreditos && <span className="cuentaspagar-error-message">{errors.cantidadCreditos}</span>}
+            <small className="cuentaspagar-help-text">
+              Especifica cuántos créditos se compraron con este pago
+            </small>
+          </div>
+        )}
 
         <div className="cuentaspagar-form-group">
           <label htmlFor="formaPago">Forma de Pago <span className="required"> *</span></label>
@@ -568,6 +609,7 @@ const AdminCuentasPagar = () => {
           monto: cuentaActualizada.monto,
           formaPago: cuentaActualizada.formaPago,
           usuarioId: 1,
+          cantidadCreditos: cuentaActualizada.cantidadCreditos,
         }),
       });
 

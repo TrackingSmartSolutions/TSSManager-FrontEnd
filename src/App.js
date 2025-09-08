@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Login from './components/Login/Login';
 import Principal from './components/Principal/Principal';
@@ -28,6 +27,7 @@ import ConfiguracionUsuarios from './components/Configuración/Configuracion_Usu
 import Calendario from './components/Calendario/Calendario';
 import GoogleDriveCallback from './components/Configuración/GoogleDriveCallback';
 import DashboardMetricas from './components/Dashboard Metricas/DashboardMetricas';
+import EquiposCreditosPlataforma from './components/Equipos/Equipos_CreditosPlataforma';
 
 function App() {
   return (
@@ -45,6 +45,7 @@ function App() {
         <Route path="/equipos_proveedores" element={<EquiposProveedores />} />
         <Route path="/equipos_inventario" element={<EquiposInventario />} />
         <Route path="/equipos_sim" element={<EquiposSim />} />
+        <Route path="/equipos_creditosplataforma" element={<EquiposCreditosPlataforma />} />
         <Route path="/admin_balance" element={<AdminBalance />} />
         <Route path="/admin_transacciones" element={<AdminTransacciones />} />
         <Route path="/admin_cotizaciones" element={<AdminCotizaciones />} />

@@ -42,7 +42,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true,
   }
 
   return (
-    <div className="modelos-modal-overlay" onClick={closeOnOverlayClick ? onClose: () => { }}>
+    <div className="modelos-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
       <div className={`modelos-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="modelos-modal-header">
           <h2 className="modelos-modal-title">{title}</h2>
@@ -401,23 +401,23 @@ const EquiposModelos = () => {
   }, []);
 
   const fetchData = async () => {
-  try {
-    setIsLoading(true);
-    
-    const response = await fetchWithToken(`${API_BASE_URL}/modelos/summary`);
-    const data = await response.json();
-    
-    setModelos(data.modelos);
-  } catch (error) {
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "No se pudieron cargar los modelos",
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
+    try {
+      setIsLoading(true);
+
+      const response = await fetchWithToken(`${API_BASE_URL}/modelos/summary`);
+      const data = await response.json();
+
+      setModelos(data.modelos);
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudieron cargar los modelos",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const openModal = (modalType, data = {}) => {
     setModals((prev) => ({
@@ -454,6 +454,7 @@ const EquiposModelos = () => {
       case "sim":
         navigate("/equipos_sim");
         break;
+      case "creditos-plataforma": navigate("/equipos_creditosplataforma"); break;
       default:
         break;
     }
@@ -527,6 +528,12 @@ const EquiposModelos = () => {
               </div>
               <div className="modelos-menu-item" onClick={() => handleMenuNavigation("sim")}>
                 SIM
+              </div>
+              <div
+                className="creditosplataforma-menu-item"
+                onClick={() => handleMenuNavigation("creditos-plataforma")}
+              >
+                Créditos Plataformas
               </div>
             </div>
           </section>

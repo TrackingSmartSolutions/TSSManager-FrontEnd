@@ -1163,6 +1163,7 @@ const EquiposSim = () => {
       case "sim":
         navigate("/equipos_sim");
         break;
+      case "creditos-plataforma": navigate("/equipos_creditosplataforma"); break;
       default:
         break;
     }
@@ -1281,30 +1282,30 @@ const EquiposSim = () => {
   };
 
   const getSimsOrdenados = () => {
-  return [...sims].sort((a, b) => {
-    // Primero, manejar casos donde no hay fecha de vigencia
-    const fechaA = a.vigencia ? new Date(a.vigencia + 'T00:00:00') : null;
-    const fechaB = b.vigencia ? new Date(b.vigencia + 'T00:00:00') : null;
+    return [...sims].sort((a, b) => {
+      // Primero, manejar casos donde no hay fecha de vigencia
+      const fechaA = a.vigencia ? new Date(a.vigencia + 'T00:00:00') : null;
+      const fechaB = b.vigencia ? new Date(b.vigencia + 'T00:00:00') : null;
 
-    if (!fechaA && !fechaB) {
-      // Si ninguna tiene vigencia, ordenar por número
-      return a.numero.localeCompare(b.numero, undefined, { numeric: true });
-    }
-    if (!fechaA) return 1;
-    if (!fechaB) return -1;
+      if (!fechaA && !fechaB) {
+        // Si ninguna tiene vigencia, ordenar por número
+        return a.numero.localeCompare(b.numero, undefined, { numeric: true });
+      }
+      if (!fechaA) return 1;
+      if (!fechaB) return -1;
 
-    // Ordenar por fecha primero
-    const diff = fechaA - fechaB;
-    const fechaComparison = ordenFechaVigencia === 'desc' ? -diff : diff;
-    
-    // Si las fechas son iguales, ordenar por número como segundo criterio
-    if (fechaComparison === 0) {
-      return a.numero.localeCompare(b.numero, undefined, { numeric: true });
-    }
-    
-    return fechaComparison;
-  });
-};
+      // Ordenar por fecha primero
+      const diff = fechaA - fechaB;
+      const fechaComparison = ordenFechaVigencia === 'desc' ? -diff : diff;
+
+      // Si las fechas son iguales, ordenar por número como segundo criterio
+      if (fechaComparison === 0) {
+        return a.numero.localeCompare(b.numero, undefined, { numeric: true });
+      }
+
+      return fechaComparison;
+    });
+  };
 
   const getSaldoClassName = (sim) => {
     if (!sim.ultimoSaldoRegistrado || sim.ultimoSaldoRegistrado === "Sin registros" || sim.ultimoSaldoRegistrado === "N/A") {
@@ -1404,6 +1405,12 @@ const EquiposSim = () => {
               </div>
               <div className="sim-menu-item sim-menu-item-active" onClick={() => handleMenuNavigation("sim")}>
                 SIM
+              </div>
+              <div
+                className="creditosplataforma-menu-item"
+                onClick={() => handleMenuNavigation("creditos-plataforma")}
+              >
+                Créditos Plataformas
               </div>
             </div>
           </section>

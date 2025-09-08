@@ -1139,6 +1139,7 @@ const EquiposEstatusPlataforma = () => {
       case "sim":
         navigate("/equipos_sim");
         break;
+      case "creditos-plataforma": navigate("/equipos_creditosplataforma"); break;
       default:
         break;
     }
@@ -1177,6 +1178,12 @@ const EquiposEstatusPlataforma = () => {
               </div>
               <div className="estatusplataforma-menu-item" onClick={() => handleMenuNavigation("sim")}>
                 SIM
+              </div>
+              <div
+                className="creditosplataforma-menu-item"
+                onClick={() => handleMenuNavigation("creditos-plataforma")}
+              >
+                Créditos Plataformas
               </div>
             </div>
           </section>

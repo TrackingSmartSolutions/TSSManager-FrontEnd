@@ -325,6 +325,7 @@ const EquiposProveedores = () => {
       case "sim":
         navigate("/equipos_sim")
         break
+      case "creditos-plataforma": navigate("/equipos_creditosplataforma"); break;
       default:
         break
     }
@@ -364,11 +365,11 @@ const EquiposProveedores = () => {
     <>
       <Header />
       {isLoading && (
-      <div className="proveedores-loading">
-        <div className="spinner"></div>
-        <p>Cargando proveedores...</p>
-      </div>
-    )}
+        <div className="proveedores-loading">
+          <div className="spinner"></div>
+          <p>Cargando proveedores...</p>
+        </div>
+      )}
       <main className="proveedores-main-content">
         <div className="proveedores-container">
           <section className="proveedores-sidebar">
@@ -390,6 +391,12 @@ const EquiposProveedores = () => {
               </div>
               <div className="proveedores-menu-item" onClick={() => handleMenuNavigation("sim")}>
                 SIM
+              </div>
+              <div
+                className="creditosplataforma-menu-item"
+                onClick={() => handleMenuNavigation("creditos-plataforma")}
+              >
+                Créditos Plataformas
               </div>
             </div>
           </section>
