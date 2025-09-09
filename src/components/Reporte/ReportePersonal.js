@@ -33,6 +33,8 @@ const ReportePersonal = () => {
   const [notasData, setNotasData] = useState([]);
   const [currentUser, setCurrentUser] = useState({ nombre: "", apellidos: "" });
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const activitiesChartRef = useRef(null);
   const companiesChartRef = useRef(null);
@@ -49,23 +51,57 @@ const ReportePersonal = () => {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const decodedToken = jwtDecode(token);
-        const nombreUsuario = decodedToken.sub;
-        fetchUserDetails(nombreUsuario);
-      } catch (decodeError) {
-        console.error("Error decodificando el token:", decodeError);
-        setCurrentUser({ nombre: "Usuario", apellidos: "Desconocido" });
+    const loadCurrentUser = async () => {
+      const token = localStorage.getItem("token");
+      const userRol = localStorage.getItem("userRol");
+
+      if (token) {
+        try {
+          const decodedToken = jwtDecode(token);
+          const nombreUsuario = decodedToken.sub;
+          const userData = await fetchUserDetails(nombreUsuario);
+
+          setCurrentUser({
+            nombre: userData.nombre,
+            apellidos: userData.apellidos
+          });
+
+          // Si es administrador, establecer como usuario seleccionado por defecto
+          if (userRol === "ADMINISTRADOR") {
+            setSelectedUser(userData.nombre);
+          }
+        } catch (decodeError) {
+          console.error("Error decodificando el token:", decodeError);
+          setCurrentUser({ nombre: "Usuario", apellidos: "Desconocido" });
+        }
       }
-    } else {
-      console.log("No se encontró token en localStorage");
-    }
+    };
+
+    loadCurrentUser();
+
     if (!initialDataLoaded) {
       fetchReportData();
       setInitialDataLoaded(true);
     }
+  }, []);
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      const userRol = localStorage.getItem("userRol");
+
+      if (userRol === "ADMINISTRADOR") {
+        try {
+          const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+          const data = await response.json();
+          const usersList = data.map(user => user.nombre);
+          setUsers(usersList);
+        } catch (error) {
+          console.error("ERROR al cargar usuarios:", error);
+        }
+      }
+    };
+
+    loadUsers();
   }, []);
 
   // Actualizar datos cuando cambie el rango de fechas
@@ -75,6 +111,11 @@ const ReportePersonal = () => {
     }
   }, [dateRange, initialDataLoaded]);
 
+  useEffect(() => {
+    if (initialDataLoaded && selectedUser) {
+      fetchReportData();
+    }
+  }, [selectedUser, initialDataLoaded]);
 
   // Crear/actualizar gráficos cuando cambien los datos
   useEffect(() => {
@@ -88,10 +129,10 @@ const ReportePersonal = () => {
     try {
       const response = await fetchWithToken(`${API_BASE_URL}/auth/users/by-username/${nombreUsuario}`);
       const user = await response.json();
-      setCurrentUser({ nombre: user.nombre, apellidos: user.apellidos });
+      return user;
     } catch (error) {
       console.error("Error fetching user details:", error);
-      setCurrentUser({ nombre: "Usuario", apellidos: "Desconocido" });
+      return { nombre: "Usuario", apellidos: "Desconocido" };
     }
   };
 
@@ -101,12 +142,17 @@ const ReportePersonal = () => {
       const todayDate = getTodayDate();
       const startDate = dateRange.startDate || todayDate;
       const endDate = dateRange.endDate || todayDate;
+      const userRol = localStorage.getItem("userRol");
 
-      const response = await fetchWithToken(
-        `${API_BASE_URL}/reportes/actividades?startDate=${startDate}&endDate=${endDate}`
-      );
+      let url = `${API_BASE_URL}/reportes/actividades?startDate=${startDate}&endDate=${endDate}`;
+
+      // Si es administrador y tiene un usuario seleccionado, agregarlo a la URL
+      if (userRol === "ADMINISTRADOR" && selectedUser) {
+        url += `&usuario=${selectedUser}`;
+      }
+
+      const response = await fetchWithToken(url);
       const data = await response.json();
-
 
       setActividadesData(data.actividades || []);
       setEmpresasData(data.empresas || []);
@@ -421,7 +467,7 @@ const ReportePersonal = () => {
       pdfContent.innerHTML = `
       <h1 style="text-align: center;">Reporte de Actividades</h1>
       <p style="text-align: center; margin-bottom: 30px;">
-        Usuario: ${currentUser.nombre} ${currentUser.apellidos} - Fecha: ${formatDate()}
+        Usuario: ${localStorage.getItem("userRol") === "ADMINISTRADOR" && selectedUser ? selectedUser : `${currentUser.nombre} ${currentUser.apellidos}`} - Fecha: ${formatDate()}
       </p>
       <div style="margin: 20px 0;">
         <h2>Gráficos de Actividades</h2>
@@ -489,6 +535,11 @@ const ReportePersonal = () => {
     }
   };
 
+  const handleUserChange = (e) => {
+    const newUser = e.target.value;
+    setSelectedUser(newUser);
+  };
+
   return (
     <>
       <Header />
@@ -498,10 +549,29 @@ const ReportePersonal = () => {
             <div className="reporte-header-info">
               <h1 className="reporte-page-title">Reportes de actividad</h1>
               <p className="reporte-subtitle">
-                {currentUser.nombre} {currentUser.apellidos} - {formatDate()}
+                {localStorage.getItem("userRol") === "ADMINISTRADOR" && selectedUser
+                  ? `${selectedUser} - ${formatDate()}`
+                  : `${currentUser.nombre} ${currentUser.apellidos} - ${formatDate()}`
+                }
               </p>
             </div>
             <div className="reporte-header-controls">
+              {localStorage.getItem("userRol") === "ADMINISTRADOR" && (
+                <div className="reporte-user-filter">
+                  <label className="reporte-date-label">Usuario</label>
+                  <select
+                    value={selectedUser || ""}
+                    onChange={handleUserChange}
+                    className="reporte-user-select"
+                  >
+                    {users.map((user) => (
+                      <option key={user} value={user}>
+                        {user}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="reporte-date-range-container">
                 <label className="reporte-date-label">Rango de fecha</label>
                 <div className="reporte-date-inputs">

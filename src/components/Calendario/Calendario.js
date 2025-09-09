@@ -59,15 +59,11 @@ const Calendario = () => {
     "01": "Efectivo",
     "03": "Transferencia electrónica de fondos",
     "04": "Tarjeta de crédito",
-    "06": "Dinero electrónico",
     "07": "Con Saldo Acumulado",
-    "08": "Vales de despensa",
-    "15": "Condonación",
-    "17": "Compensación",
     "28": "Tarjeta de débito",
-    "29": "Tarjeta de servicios",
     "30": "Aplicación de anticipos",
     "99": "Por definir",
+    "02": "Tarjeta Spin"
   });
 
   useEffect(() => {

@@ -1199,6 +1199,27 @@ body {
   border-radius: 4px;
 }
 
+.company-item.no-deals {
+  border-left: 4px solid #f44336;
+  background-color: #faccd3;
+}
+
+.company-item.no-deals:hover {
+  background-color: #ffcdd2;
+}
+
+.no-deals-indicator {
+  font-size: 14px;
+  color: #f44336;
+  margin-left: auto;
+}
+
+.company-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 /* Ajustes para pantallas grandes */
 @media (max-width: 1200px) {
   .empresas-container {

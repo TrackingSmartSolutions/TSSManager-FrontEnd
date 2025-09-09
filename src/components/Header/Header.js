@@ -47,7 +47,7 @@ const Header = ({ logoUrl }) => {
   const logoFetchedRef = useRef(false)
   const touchHandledRef = useRef(false)
   const logoErrorHandled = useRef(false)
-  const HELP_URL = "https://drive.google.com/file/d/1E7I0QgDK_rUKqs9xze-13K9woIBPAQhu/view?usp=drive_link";
+  const HELP_URL = "https://drive.google.com/file/d/1AsgJBmqi-r2X65Gz4soyGO5WCOJ_v2XF/view?usp=drive_link";
 
   const preloadImage = (url) => {
     return new Promise((resolve, reject) => {
@@ -341,8 +341,8 @@ const Header = ({ logoUrl }) => {
 
   // Maneja temporizador de inactividad
   useEffect(() => {
-    const timeoutDuration = 15 * 60 * 1000 // 15 minutos
-    const warningDuration = 13 * 60 * 1000 // 13 minutos
+    const timeoutDuration = 30 * 60 * 1000 // 30 minutos
+    const warningDuration = 28 * 60 * 1000 // 28 minutos
 
     const resetTimer = () => {
       setLastActivity(Date.now())

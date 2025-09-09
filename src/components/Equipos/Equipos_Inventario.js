@@ -668,7 +668,7 @@ const EquiposInventario = () => {
     const today = new Date();
     const expirationDate = new Date(equipo.fechaExpiracion);
     const daysUntilExpiration = Math.ceil((expirationDate - today) / (1000 * 60 * 60 * 24));
-    return daysUntilExpiration <= 30 && daysUntilExpiration >= 0;
+    return daysUntilExpiration <= 30;
   }, []);
 
   const isExpired = useCallback((equipo) => {
@@ -925,7 +925,7 @@ const EquiposInventario = () => {
                                   <img src={activateIcon || "/placeholder.svg"} alt="Activar" className="inventario-action-icon" /> Activar
                                 </button>
                               )}
-                              {needsRenewal(equipo) && (
+                              {(needsRenewal(equipo) || isExpired(equipo)) && equipo.estatus === "ACTIVO" && (
                                 <button className="inventario-btn inventario-btn-renew" onClick={() => handleRenewEquipo(equipo.id)} title="Renovar">
                                   <img src={renewIcon || "/placeholder.svg"} alt="Renovar" className="inventario-action-icon" /> Renovar
                                 </button>

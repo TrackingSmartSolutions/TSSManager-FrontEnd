@@ -1640,6 +1640,7 @@ const Empresas = () => {
   const [companies, setCompanies] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [dateRange, setDateRange] = useState([null, null])
+  const [companiesWithoutDeals, setCompaniesWithoutDeals] = useState(new Set())
   const [startDate, endDate] = dateRange
   const navigate = useNavigate()
 
@@ -2020,6 +2021,12 @@ const Empresas = () => {
     fetchTratos();
   }, [selectedCompany?.id]);
 
+  useEffect(() => {
+    if (companies.length > 0) {
+      checkCompaniesWithoutDeals(companies);
+    }
+  }, [companies.length]);
+
 
   const filteredContacts = contacts.filter((contact) => {
     const matchesSearch = contact.nombre?.toLowerCase().includes(contactSearch.toLowerCase())
@@ -2308,6 +2315,12 @@ const Empresas = () => {
         noTrato: newTrato.noTrato
       }]);
 
+      setCompaniesWithoutDeals(prev => {
+        const updated = new Set(prev);
+        updated.delete(selectedCompany.id);
+        return updated;
+      });
+
       closeModal("nuevoTrato");
 
       Swal.fire({
@@ -2334,6 +2347,26 @@ const Empresas = () => {
       CLIENTE: "#4CAF50",
     }
     return statusColors[status] || "#87CEEB"
+  }
+
+  const checkCompaniesWithoutDeals = async (companiesList) => {
+    const companiesWithoutDealsSet = new Set()
+
+    for (const company of companiesList) {
+      try {
+        const response = await fetchWithToken(`${API_BASE_URL}/empresas/${company.id}/has-tratos`)
+        if (response.ok) {
+          const hasTratos = await response.json()
+          if (!hasTratos) {
+            companiesWithoutDealsSet.add(company.id)
+          }
+        }
+      } catch (error) {
+        console.error(`Error checking tratos for company ${company.id}:`, error)
+      }
+    }
+
+    setCompaniesWithoutDeals(companiesWithoutDealsSet)
   }
 
   return (
@@ -2400,7 +2433,8 @@ const Empresas = () => {
               {filteredCompanies.map((company) => (
                 <div
                   key={company.id}
-                  className={`company-item ${selectedCompany?.id === company.id ? "selected" : ""}`}
+                  className={`company-item ${selectedCompany?.id === company.id ? "selected" : ""} ${companiesWithoutDeals.has(company.id) ? "no-deals" : ""
+                    }`}
                   onClick={() => handleCompanySelect(company)}
                 >
                   <div className="company-info">
@@ -2409,6 +2443,11 @@ const Empresas = () => {
                       className="status-indicator"
                       style={{ backgroundColor: company.statusColor || "#87CEEB" }}
                     ></div>
+                    {companiesWithoutDeals.has(company.id) && (
+                      <div className="no-deals-indicator" title="Sin tratos">
+                        ⚠️
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -2426,9 +2465,9 @@ const Empresas = () => {
                         Editar empresa
                       </button>
                       <button className="btn btn-details" onClick={handleCompanyDetails} title="Detalles empresa">
-  <img src={detailsIcon || "/placeholder.svg"} alt="Detalles" className="btn-icon" />
-  Detalles
-</button>
+                        <img src={detailsIcon || "/placeholder.svg"} alt="Detalles" className="btn-icon" />
+                        Detalles
+                      </button>
                     </div>
                   </div>
 
