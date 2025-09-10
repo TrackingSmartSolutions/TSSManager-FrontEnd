@@ -484,6 +484,7 @@ const RegenerarModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
 // Componente Principal
 const AdminCuentasPagar = () => {
   const navigate = useNavigate();
+  const userRol = localStorage.getItem("userRol") 
   const [cuentasPagar, setCuentasPagar] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filtroEstatus, setFiltroEstatus] = useState("Todas");
@@ -914,9 +915,11 @@ const AdminCuentasPagar = () => {
               <h3 className="cuentaspagar-sidebar-title">Administración</h3>
             </div>
             <div className="cuentaspagar-sidebar-menu">
+              {userRol === "ADMINISTRADOR" && (
               <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("balance")}>
                 Balance
               </div>
+              )}
               <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
                 Transacciones
               </div>

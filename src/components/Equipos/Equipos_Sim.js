@@ -1521,7 +1521,7 @@ const EquiposSim = () => {
                               >
                                 <img src={detailsIcon} alt="Ver detalles" />
                               </button>
-                              {userRole === "ADMINISTRADOR" && (
+                              {(userRole === "ADMINISTRADOR" || userRole === "GESTOR") && (
                                 <button
                                   className="sim-btn-action sim-delete"
                                   onClick={() => {

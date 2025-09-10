@@ -2007,7 +2007,7 @@ const Tratos = () => {
         <div className="tratos-container">
           <div className="tratos-controls">
             <div className="tratos-filters">
-              {userRol === "ADMINISTRADOR" && (
+              {(userRol === "ADMINISTRADOR" || userRol === "GESTOR") && (
                 <div className="filter-group">
                   <div className="filter-dropdown">
                     <select

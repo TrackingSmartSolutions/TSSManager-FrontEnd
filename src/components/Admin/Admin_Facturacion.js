@@ -933,7 +933,7 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, tipo, item }) =
 // Componente Principal
 const AdminFacturacion = () => {
   const navigate = useNavigate();
-
+  const userRol = localStorage.getItem("userRol")
   const [emisores, setEmisores] = useState([]);
   const [emisorSeleccionado, setEmisorSeleccionado] = useState(0);
   const [solicitudes, setSolicitudes] = useState([]);
@@ -1248,7 +1248,8 @@ const AdminFacturacion = () => {
               <h3 className="facturacion-sidebar-title">Administración</h3>
             </div>
             <div className="facturacion-sidebar-menu">
-              <div className="facturacion-menu-item" onClick={() => handleMenuNavigation("balance")}>Balance</div>
+              {userRol === "ADMINISTRADOR" && (
+              <div className="facturacion-menu-item" onClick={() => handleMenuNavigation("balance")}>Balance</div>)}
               <div className="facturacion-menu-item" onClick={() => handleMenuNavigation("transacciones")}>Transacciones</div>
               <div className="facturacion-menu-item" onClick={() => handleMenuNavigation("cotizaciones")}>Cotizaciones</div>
               <div className="facturacion-menu-item facturacion-menu-item-active" onClick={() => handleMenuNavigation("facturacion")}>

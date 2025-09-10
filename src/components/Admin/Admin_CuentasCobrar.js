@@ -197,11 +197,12 @@ const numeroALetras = (numero) => {
 }
 
 // Modal para Agregar Comprobante de Pago
-const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
+const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta, categoriasIngreso }) => {
   const [formData, setFormData] = useState({
     montoPago: "",
     fechaPago: "",
     comprobantePago: null,
+    categoriaId: "",
   });
   const [errors, setErrors] = useState({});
   const saldoPendiente = cuenta?.saldoPendiente || cuenta?.cantidadCobrar || 0;
@@ -213,6 +214,7 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
         montoPago: saldoPendiente.toString(),
         fechaPago: new Date().toISOString().split("T")[0],
         comprobantePago: null,
+        categoriaId: "",
       });
       setErrors({});
     }
@@ -265,6 +267,7 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
 
     if (!formData.fechaPago) newErrors.fechaPago = "La fecha de pago es obligatoria";
     if (!formData.comprobantePago) newErrors.comprobantePago = "El comprobante de pago es obligatorio";
+    if (!formData.categoriaId) newErrors.categoriaId = "La categoría es obligatoria";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -277,6 +280,7 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
       const formDataToSend = new FormData();
       formDataToSend.append("montoPago", formData.montoPago)
       formDataToSend.append("fechaPago", formData.fechaPago);
+      formDataToSend.append("categoriaId", formData.categoriaId);
       formDataToSend.append("comprobante", formData.comprobantePago);
 
       try {
@@ -366,6 +370,24 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
             className={`cuentascobrar-form-control ${errors.fechaPago ? "error" : ""}`}
           />
           {errors.fechaPago && <span className="cuentascobrar-error-message">{errors.fechaPago}</span>}
+        </div>
+
+        <div className="cuentascobrar-form-group">
+          <label htmlFor="categoriaId">Categoría <span className="required"> *</span></label>
+          <select
+            id="categoriaId"
+            value={formData.categoriaId}
+            onChange={(e) => handleInputChange("categoriaId", e.target.value)}
+            className={`cuentascobrar-form-control ${errors.categoriaId ? "error" : ""}`}
+          >
+            <option value="">Seleccione una categoría</option>
+            {categoriasIngreso.map((categoria) => (
+              <option key={categoria.id} value={categoria.id}>
+                {categoria.descripcion}
+              </option>
+            ))}
+          </select>
+          {errors.categoriaId && <span className="cuentascobrar-error-message">{errors.categoriaId}</span>}
         </div>
 
         <div className="cuentascobrar-form-group">
@@ -976,7 +998,7 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta }) => {
 // Componente Principal
 const AdminCuentasCobrar = () => {
   const navigate = useNavigate();
-
+  const userRol = localStorage.getItem("userRol")
   const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [solicitudes, setSolicitudes] = useState([]);
@@ -985,6 +1007,7 @@ const AdminCuentasCobrar = () => {
   const [cuentasVinculadas, setCuentasVinculadas] = useState(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [filtroEstatus, setFiltroEstatus] = useState("Todas");
+  const [categoriasIngreso, setCategoriasIngreso] = useState([]);
   const [ordenFecha, setOrdenFecha] = useState('asc');
 
   const [modals, setModals] = useState({
@@ -1006,16 +1029,18 @@ const AdminCuentasCobrar = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [clientesData, cuentasData, cotizacionesData, emisoresData] = await Promise.all([
+        const [clientesData, cuentasData, cotizacionesData, emisoresData, categoriasIngresoData] = await Promise.all([
           fetchWithToken(`${API_BASE_URL}/empresas?estatus=CLIENTE`),
           fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar`),
           fetchWithToken(`${API_BASE_URL}/cotizaciones`),
           fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/emisores`),
+          fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/categorias-ingreso`),
         ]);
         setClientes(clientesData);
         setCuentasPorCobrar(cuentasData);
         setCotizaciones(cotizacionesData);
         setEmisores(emisoresData);
+        setCategoriasIngreso(categoriasIngresoData);
 
         await verificarVinculaciones(cuentasData);
       } catch (error) {
@@ -1345,9 +1370,11 @@ const AdminCuentasCobrar = () => {
               <h3 className="cuentascobrar-sidebar-title">Administración</h3>
             </div>
             <div className="cuentascobrar-sidebar-menu">
+              {userRol === "ADMINISTRADOR" && (
               <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("balance")}>
                 Balance
               </div>
+              )}
               <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
                 Transacciones
               </div>
@@ -1581,6 +1608,7 @@ const AdminCuentasCobrar = () => {
           onClose={() => closeModal("comprobante")}
           onSave={handleMarcarPagada}
           cuenta={modals.comprobante.cuenta}
+          categoriasIngreso={categoriasIngreso}
         />
 
         <EditarCuentaModal

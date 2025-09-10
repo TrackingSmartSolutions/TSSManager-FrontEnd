@@ -629,7 +629,7 @@ const DashboardMetricas = () => {
                                     />
                                 </div>
                             </div>
-                            {userRole === "ADMINISTRADOR" && (
+                            {(userRole === "ADMINISTRADOR" || userRole === "GESTOR") && (
                                 <div className="reporte-date-range-container">
                                     <label className="reporte-date-label">Usuario</label>
                                     <select

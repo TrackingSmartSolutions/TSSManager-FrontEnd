@@ -905,7 +905,7 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
 // Componente Principal
 const AdminCotizaciones = () => {
   const navigate = useNavigate()
-
+  const userRol = localStorage.getItem("userRol")
   const [cotizaciones, setCotizaciones] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [users, setUsers] = useState([]);
@@ -1205,9 +1205,11 @@ const AdminCotizaciones = () => {
               <h3 className="cotizaciones-sidebar-title">Administración</h3>
             </div>
             <div className="cotizaciones-sidebar-menu">
+              {userRol === "ADMINISTRADOR" && (
               <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("balance")}>
                 Balance
               </div>
+              )}
               <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
                 Transacciones
               </div>

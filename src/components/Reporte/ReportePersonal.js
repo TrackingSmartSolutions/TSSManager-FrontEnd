@@ -66,8 +66,7 @@ const ReportePersonal = () => {
             apellidos: userData.apellidos
           });
 
-          // Si es administrador, establecer como usuario seleccionado por defecto
-          if (userRol === "ADMINISTRADOR") {
+          if (userRol === "ADMINISTRADOR"|| userRol === "GESTOR"){
             setSelectedUser(userData.nombre);
           }
         } catch (decodeError) {
@@ -89,7 +88,7 @@ const ReportePersonal = () => {
     const loadUsers = async () => {
       const userRol = localStorage.getItem("userRol");
 
-      if (userRol === "ADMINISTRADOR") {
+      if (userRol === "ADMINISTRADOR"|| userRol === "GESTOR") {
         try {
           const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
           const data = await response.json();
@@ -467,7 +466,7 @@ const ReportePersonal = () => {
       pdfContent.innerHTML = `
       <h1 style="text-align: center;">Reporte de Actividades</h1>
       <p style="text-align: center; margin-bottom: 30px;">
-        Usuario: ${localStorage.getItem("userRol") === "ADMINISTRADOR" && selectedUser ? selectedUser : `${currentUser.nombre} ${currentUser.apellidos}`} - Fecha: ${formatDate()}
+        Usuario: ${(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR")&& selectedUser ? selectedUser : `${currentUser.nombre} ${currentUser.apellidos}`} - Fecha: ${formatDate()}
       </p>
       <div style="margin: 20px 0;">
         <h2>Gráficos de Actividades</h2>
@@ -549,14 +548,14 @@ const ReportePersonal = () => {
             <div className="reporte-header-info">
               <h1 className="reporte-page-title">Reportes de actividad</h1>
               <p className="reporte-subtitle">
-                {localStorage.getItem("userRol") === "ADMINISTRADOR" && selectedUser
+                {(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR") && selectedUser
                   ? `${selectedUser} - ${formatDate()}`
                   : `${currentUser.nombre} ${currentUser.apellidos} - ${formatDate()}`
                 }
               </p>
             </div>
             <div className="reporte-header-controls">
-              {localStorage.getItem("userRol") === "ADMINISTRADOR" && (
+              {(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR") && (
                 <div className="reporte-user-filter">
                   <label className="reporte-date-label">Usuario</label>
                   <select

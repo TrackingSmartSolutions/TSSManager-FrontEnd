@@ -20,6 +20,7 @@ const fetchWithToken = async (url, options = {}) => {
 
 const AdminCajaChica = () => {
   const navigate = useNavigate()
+  const userRol = localStorage.getItem("userRol") 
   const [transaccionesEfectivo, setTransaccionesEfectivo] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [ordenFecha, setOrdenFecha] = useState('asc');
@@ -481,9 +482,11 @@ const AdminCajaChica = () => {
               <h3 className="cajachica-sidebar-title">Administración</h3>
             </div>
             <div className="cajachica-sidebar-menu">
+              {userRol === "ADMINISTRADOR" && (
               <div className="cajachica-menu-item" onClick={() => handleMenuNavigation("balance")}>
                 Balance
               </div>
+              )}
               <div className="cajachica-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
                 Transacciones
               </div>

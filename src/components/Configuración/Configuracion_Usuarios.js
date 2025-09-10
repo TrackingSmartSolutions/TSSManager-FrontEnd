@@ -79,6 +79,7 @@ const UsuarioModal = ({ isOpen, onClose, onSave, usuario, mode }) => {
   const rolesOptions = [
     { value: "ADMINISTRADOR", label: "Administrador" },
     { value: "EMPLEADO", label: "Empleado" },
+    { value: "GESTOR", label: "Gestor" },
   ]
 
   useEffect(() => {

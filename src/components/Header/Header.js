@@ -570,9 +570,9 @@ const Header = ({ logoUrl }) => {
                 </ul>
               )}
             </li>
-            {userRol === "ADMINISTRADOR" && (
+            {(userRol === "ADMINISTRADOR" || userRol === "GESTOR") && (
               <li>
-                <Link to="/admin_balance">Admin</Link>
+                <Link to={userRol === "ADMINISTRADOR" ? "/admin_balance" : "/admin_transacciones"}>Admin</Link>
               </li>
             )}
             <li>
@@ -754,9 +754,9 @@ const Header = ({ logoUrl }) => {
               </li>
             </ul>
           </div>
-          {userRol === "ADMINISTRADOR" && (
+          {(userRol === "ADMINISTRADOR" || userRol === "GESTOR") && (
             <div className="ts-header-sidebar-section">
-              <Link to="/admin_balance" onClick={toggleSidebar} className="ts-header-sidebar-link">
+              <Link to={userRol === "ADMINISTRADOR" ? "/admin_balance" : "/admin_transacciones"} onClick={toggleSidebar} className="ts-header-sidebar-link">
                 Admin
               </Link>
             </div>

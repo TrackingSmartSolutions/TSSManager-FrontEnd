@@ -88,7 +88,7 @@ const Calendario = () => {
 
   useEffect(() => {
   const loadCurrentAdminUser = async () => {
-    if (userRol === "ADMINISTRADOR" && !userName) {
+    if ((userRol === "ADMINISTRADOR" || userRol === "GESTOR") && !userName) {
       try {
         const response = await fetchWithToken(`${API_BASE_URL}/auth/me`);
         const userData = await response.json();
@@ -103,7 +103,7 @@ const Calendario = () => {
     }
   };
 
-  if (userRol === "ADMINISTRADOR") {
+  if (userRol === "ADMINISTRADOR" || userRol === "GESTOR") {
     loadCurrentAdminUser();
   }
 }, [userRol, userName]);
@@ -114,14 +114,14 @@ const Calendario = () => {
       const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
       const data = await response.json();
 
-      const usersList = userRol === "ADMINISTRADOR"
+      const usersList = (userRol === "ADMINISTRADOR"  || userRol === "GESTOR")
         ? ["Todos los usuarios", ...data.map(user => user.nombre)]
         : data.map(user => user.nombre);
 
       setUsers(usersList);
       
       // Si el selectedUser aún es null y ya tenemos userName, establecerlo
-      if (userRol === "ADMINISTRADOR" && !selectedUser && userName) {
+      if ((userRol === "ADMINISTRADOR" || userRol === "GESTOR") && !selectedUser && userName) {
         setSelectedUser(userName);
       }
     } catch (error) {
@@ -130,7 +130,7 @@ const Calendario = () => {
   };
 
   // Solo cargar usuarios si es administrador
-  if (userRol === "ADMINISTRADOR") {
+  if (userRol === "ADMINISTRADOR" || userRol === "GESTOR") {
     loadUsers();
   }
 }, [userRol, selectedUser, userName]);
@@ -171,7 +171,7 @@ const Calendario = () => {
       const end = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString();
 
       let url;
-      if (userRol === "ADMINISTRADOR") {
+      if (userRol === "ADMINISTRADOR" || userRol === "GESTOR") {
         url = `${API_BASE_URL}/calendario/eventos?startDate=${start}&endDate=${end}&usuario=${selectedUser}`;
       } else {
         url = `${API_BASE_URL}/calendario/eventos?startDate=${start}&endDate=${end}`;
@@ -341,7 +341,7 @@ const Calendario = () => {
     const end = new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 0).toISOString();
 
     let url;
-    if (userRol === "ADMINISTRADOR") {
+    if (userRol === "ADMINISTRADOR" || userRol === "GESTOR") {
       url = `${API_BASE_URL}/calendario/eventos?startDate=${start}&endDate=${end}&usuario=${selectedUser}`;
     } else {
       url = `${API_BASE_URL}/calendario/eventos?startDate=${start}&endDate=${end}`;
@@ -475,7 +475,7 @@ const Calendario = () => {
       <div className="ts-calendar-container">
         <div className="ts-calendar-header">
 
-          {userRol === "ADMINISTRADOR" && (
+          {(userRol === "ADMINISTRADOR"  || userRol === "GESTOR") && (
             <div className="ts-calendar-user-filter">
               <select
                 value={selectedUser || ""}

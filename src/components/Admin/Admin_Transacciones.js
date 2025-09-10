@@ -44,16 +44,6 @@ const fetchEmpresas = async () => {
   }
 };
 
-const fetchProveedores = async () => {
-  try {
-    const response = await fetchWithToken(`${API_BASE_URL}/proveedores`);
-    return response.data || [];
-  } catch (error) {
-    console.error("Error fetching proveedores:", error);
-    return [];
-  }
-};
-
 const fetchUsuarios = async () => {
   try {
     const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
@@ -192,9 +182,6 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
             if (["rentas", "compra y activación de sim", "recargas de saldos"].includes(categoriaDesc)) {
               const empresas = await fetchEmpresas();
               cuentasAPI = empresas.map(emp => emp.nombre);
-            } else if (["compra de equipos", "créditos plataforma"].includes(categoriaDesc)) {
-              const proveedores = await fetchProveedores();
-              cuentasAPI = proveedores.map(prov => prov.nombre);
             } else if (categoriaDesc === "comisiones") {
               const usuarios = await fetchUsuarios();
               cuentasAPI = usuarios.map(user => `${user.nombre} ${user.apellidos}`);
@@ -836,6 +823,7 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, tipo, item }) =
 
 const AdminTransacciones = () => {
   const navigate = useNavigate();
+  const userRol = localStorage.getItem("userRol") 
   const [transacciones, setTransacciones] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [cuentas, setCuentas] = useState([]);
@@ -1134,9 +1122,11 @@ const AdminTransacciones = () => {
               <h3 className="transacciones-sidebar-title">Administración</h3>
             </div>
             <div className="transacciones-sidebar-menu">
+              {userRol === "ADMINISTRADOR" && (
               <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("balance")}>
                 Balance
               </div>
+              )}
               <div
                 className="transacciones-menu-item transacciones-menu-item-active"
                 onClick={() => handleMenuNavigation("transacciones")}
