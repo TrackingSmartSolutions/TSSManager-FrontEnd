@@ -634,6 +634,17 @@
   background-color: #545b62;
 }
 
+.transacciones-filters-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.transacciones-filter-row {
+  display: flex;
+  align-items: center;
+}
+
 /* Diseño responsivo */
 @media (max-width: 1200px) {
   .transacciones-container {

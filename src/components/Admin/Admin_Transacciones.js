@@ -172,7 +172,7 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
             if (["rentas", "compra y activación de sim", "recargas de saldos"].includes(categoriaDesc)) {
               const empresas = await fetchEmpresas();
               cuentasAPI = empresas.map(emp => emp.nombre);
-            } 
+            }
           }
 
           const todasLasCuentas = [...cuentasForCat, ...cuentasAPI];
@@ -810,11 +810,12 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, tipo, item }) =
 
 const AdminTransacciones = () => {
   const navigate = useNavigate();
-  const userRol = localStorage.getItem("userRol") 
+  const userRol = localStorage.getItem("userRol")
   const [transacciones, setTransacciones] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [cuentas, setCuentas] = useState([]);
   const [filtrosCuenta, setFiltrosCuenta] = useState("Todas");
+  const [filtroCategoria, setFiltroCategoria] = useState("Todas");
   const [isLoading, setIsLoading] = useState(true);
   const [ordenFecha, setOrdenFecha] = useState('asc');
   const [modals, setModals] = useState({
@@ -907,7 +908,7 @@ const AdminTransacciones = () => {
       return fechaTransaccion >= fechaInicio && fechaTransaccion <= fechaFin;
     });
   };
-  
+
   const openModal = (modalType, data = {}) => {
     setModals((prev) => ({
       ...prev,
@@ -960,6 +961,11 @@ const AdminTransacciones = () => {
 
   const handleSaveCuenta = async (cuentaData) => {
     setCuentas((prev) => [...prev, cuentaData.data]);
+  };
+
+  const handleCategoriaChange = (categoria) => {
+    setFiltroCategoria(categoria);
+    setFiltrosCuenta("Todas");
   };
 
   const handleDeleteTransaccion = (transaccion) => {
@@ -1077,17 +1083,35 @@ const AdminTransacciones = () => {
 
   const transaccionesBase = transacciones.filter((t) => t.tipo === "INGRESO" || (t.tipo === "GASTO" && isFullyPaid(t.id)));
   const transaccionesPorFecha = filtrarTransaccionesPorFecha(transaccionesBase);
-  const transaccionesSinOrdenar = filtrosCuenta === "Todas"
+
+  // Filtrar por categoría primero
+  const transaccionesPorCategoria = filtroCategoria === "Todas"
     ? transaccionesPorFecha
-    : transaccionesPorFecha.filter((t) => t.cuenta && t.cuenta.nombre === filtrosCuenta);
+    : transaccionesPorFecha.filter((t) => t.categoria && t.categoria.descripcion === filtroCategoria);
+
+  // Luego filtrar por cuenta
+  const transaccionesSinOrdenar = filtrosCuenta === "Todas"
+    ? transaccionesPorCategoria
+    : transaccionesPorCategoria.filter((t) => t.cuenta && t.cuenta.nombre === filtrosCuenta);
 
   const transaccionesFiltradas = transaccionesSinOrdenar.sort((a, b) => {
-  const fechaA = new Date(a.fechaPago);
-  const fechaB = new Date(b.fechaPago);
-  return ordenFecha === 'desc' ? fechaB - fechaA : fechaA - fechaB;
-});
+    const fechaA = new Date(a.fechaPago);
+    const fechaB = new Date(b.fechaPago);
+    return ordenFecha === 'desc' ? fechaB - fechaA : fechaA - fechaB;
+  });
 
-  const cuentasUnicas = ["Todas", ...new Set(cuentas.filter(c => c && c.nombre).map((c) => c.nombre))];
+  const cuentasUnicas = (() => {
+    if (filtroCategoria === "Todas") {
+      return ["Todas", ...new Set(cuentas.filter(c => c && c.nombre).map((c) => c.nombre))];
+    } else {
+      const cuentasFiltradas = cuentas.filter(c =>
+        c && c.nombre && c.categoria && c.categoria.descripcion === filtroCategoria
+      );
+      return ["Todas", ...new Set(cuentasFiltradas.map((c) => c.nombre))];
+    }
+  })();
+
+  const categoriasUnicas = ["Todas", ...new Set(categorias.map(c => c.descripcion))];
 
   const toggleOrdenFecha = () => {
     setOrdenFecha(prevOrden => prevOrden === 'desc' ? 'asc' : 'desc');
@@ -1095,222 +1119,241 @@ const AdminTransacciones = () => {
 
   return (
     <>
-     <div className="page-with-header">
-      <Header />
-      {isLoading && (
-        <div className="transacciones-loading">
-          <div className="spinner"></div>
-          <p>Cargando datos de transacciones...</p>
-        </div>
-      )}
-      <main className="transacciones-main-content">
-        <div className="transacciones-container">
-          <section className="transacciones-sidebar">
-            <div className="transacciones-sidebar-header">
-              <h3 className="transacciones-sidebar-title">Administración</h3>
-            </div>
-            <div className="transacciones-sidebar-menu">
-              {userRol === "ADMINISTRADOR" && (
-              <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("balance")}>
-                Balance
+      <div className="page-with-header">
+        <Header />
+        {isLoading && (
+          <div className="transacciones-loading">
+            <div className="spinner"></div>
+            <p>Cargando datos de transacciones...</p>
+          </div>
+        )}
+        <main className="transacciones-main-content">
+          <div className="transacciones-container">
+            <section className="transacciones-sidebar">
+              <div className="transacciones-sidebar-header">
+                <h3 className="transacciones-sidebar-title">Administración</h3>
               </div>
-              )}
-              <div
-                className="transacciones-menu-item transacciones-menu-item-active"
-                onClick={() => handleMenuNavigation("transacciones")}
-              >
-                Transacciones
-              </div>
-              <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("cotizaciones")}>
-                Cotizaciones
-              </div>
-              <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("facturacion")}>
-                Facturas/Notas
-              </div>
-              <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("cuentas-cobrar")}>
-                Cuentas por Cobrar
-              </div>
-              <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("cuentas-pagar")}>
-                Cuentas por Pagar
-              </div>
-              <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>
-                Caja chica
-              </div>
-            </div>
-          </section>
-          <section className="transacciones-content-panel">
-            <div className="transacciones-header">
-              <div className="transacciones-header-info">
-                <h3 className="transacciones-page-title">Transacciones</h3>
-                <p className="transacciones-subtitle">Gestión de ingresos y gastos</p>
-              </div>
-              <div className="transacciones-header-actions">
-                <button
-                  className="transacciones-btn transacciones-btn-secondary"
-                  onClick={() => openModal("gestionarCategorias")}
+              <div className="transacciones-sidebar-menu">
+                {userRol === "ADMINISTRADOR" && (
+                  <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("balance")}>
+                    Balance
+                  </div>
+                )}
+                <div
+                  className="transacciones-menu-item transacciones-menu-item-active"
+                  onClick={() => handleMenuNavigation("transacciones")}
                 >
-                  Gestionar categorías
-                </button>
-                <button
-                  className="transacciones-btn transacciones-btn-secondary"
-                  onClick={() => openModal("gestionarCuentas")}
-                >
-                  Gestionar cuentas
-                </button>
-              </div>
-            </div>
-            <div className="transacciones-filters-section">
-              <div className="transacciones-filter-group">
-                <select
-                  value={filtrosCuenta}
-                  onChange={(e) => setFiltrosCuenta(e.target.value)}
-                  className="transacciones-filter-select"
-                >
-                  {cuentasUnicas.map((cuenta) => (
-                    <option key={cuenta} value={cuenta}>
-                      {cuenta === "Todas" ? "Todas las cuentas" : cuenta}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="transacciones-filtros-fecha">
-                <div className="transacciones-filtro-grupo">
-                  <label>Fecha inicio:</label>
-                  <input
-                    type="date"
-                    value={filtroFechas.fechaInicio}
-                    onChange={(e) => setFiltroFechas(prev => ({ ...prev, fechaInicio: e.target.value }))}
-                    className="transacciones-date-input"
-                  />
+                  Transacciones
                 </div>
-                <div className="transacciones-filtro-grupo">
-                  <label>Fecha fin:</label>
-                  <input
-                    type="date"
-                    value={filtroFechas.fechaFin}
-                    onChange={(e) => setFiltroFechas(prev => ({ ...prev, fechaFin: e.target.value }))}
-                    className="transacciones-date-input"
-                  />
+                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("cotizaciones")}>
+                  Cotizaciones
                 </div>
-                <button
-                  className="transacciones-btn transacciones-btn-filtro"
-                  onClick={() => setFiltroFechas(obtenerRangoMesActual())}
-                >
-                  Mes actual
-                </button>
-                <button
-                  className="transacciones-btn transacciones-btn-filtro transacciones-btn-orden"
-                  onClick={toggleOrdenFecha}
-                  title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
-                >
-                  {ordenFecha === 'desc' ? '📅 ↓ Recientes primero' : '📅 ↑ Antiguas primero'}
-                </button>
+                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("facturacion")}>
+                  Facturas/Notas
+                </div>
+                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("cuentas-cobrar")}>
+                  Cuentas por Cobrar
+                </div>
+                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("cuentas-pagar")}>
+                  Cuentas por Pagar
+                </div>
+                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>
+                  Caja chica
+                </div>
               </div>
+            </section>
+            <section className="transacciones-content-panel">
+              <div className="transacciones-header">
+                <div className="transacciones-header-info">
+                  <h3 className="transacciones-page-title">Transacciones</h3>
+                  <p className="transacciones-subtitle">Gestión de ingresos y gastos</p>
+                </div>
+                <div className="transacciones-header-actions">
+                  <button
+                    className="transacciones-btn transacciones-btn-secondary"
+                    onClick={() => openModal("gestionarCategorias")}
+                  >
+                    Gestionar categorías
+                  </button>
+                  <button
+                    className="transacciones-btn transacciones-btn-secondary"
+                    onClick={() => openModal("gestionarCuentas")}
+                  >
+                    Gestionar cuentas
+                  </button>
+                </div>
+              </div>
+              <div className="transacciones-filters-section">
+                <div className="transacciones-filters-column">
+                  <div className="transacciones-filter-row">
+                    <div className="transacciones-filter-group">
+                      <select
+                        value={filtroCategoria}
+                        onChange={(e) => handleCategoriaChange(e.target.value)}
+                        className="transacciones-filter-select"
+                      >
+                        {categoriasUnicas.map((categoria) => (
+                          <option key={categoria} value={categoria}>
+                            {categoria === "Todas" ? "Todas las categorías" : categoria}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
 
-              <div className="transacciones-actions-group">
-                <button
-                  className="transacciones-btn transacciones-btn-primary"
-                  onClick={() => openModal("nuevaTransaccion")}
-                >
-                  Crear transacción
-                </button>
+                  <div className="transacciones-filter-row">
+                    <div className="transacciones-filter-group">
+                      <select
+                        value={filtrosCuenta}
+                        onChange={(e) => setFiltrosCuenta(e.target.value)}
+                        className="transacciones-filter-select"
+                      >
+                        {cuentasUnicas.map((cuenta) => (
+                          <option key={cuenta} value={cuenta}>
+                            {cuenta === "Todas" ? "Todas las cuentas" : cuenta}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div className="transacciones-filtros-fecha">
+                  <div className="transacciones-filtro-grupo">
+                    <label>Fecha inicio:</label>
+                    <input
+                      type="date"
+                      value={filtroFechas.fechaInicio}
+                      onChange={(e) => setFiltroFechas(prev => ({ ...prev, fechaInicio: e.target.value }))}
+                      className="transacciones-date-input"
+                    />
+                  </div>
+                  <div className="transacciones-filtro-grupo">
+                    <label>Fecha fin:</label>
+                    <input
+                      type="date"
+                      value={filtroFechas.fechaFin}
+                      onChange={(e) => setFiltroFechas(prev => ({ ...prev, fechaFin: e.target.value }))}
+                      className="transacciones-date-input"
+                    />
+                  </div>
+                  <button
+                    className="transacciones-btn transacciones-btn-filtro"
+                    onClick={() => setFiltroFechas(obtenerRangoMesActual())}
+                  >
+                    Mes actual
+                  </button>
+                  <button
+                    className="transacciones-btn transacciones-btn-filtro transacciones-btn-orden"
+                    onClick={toggleOrdenFecha}
+                    title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
+                  >
+                    {ordenFecha === 'desc' ? '📅 ↓ Recientes primero' : '📅 ↑ Antiguas primero'}
+                  </button>
+                </div>
+
+                <div className="transacciones-actions-group">
+                  <button
+                    className="transacciones-btn transacciones-btn-primary"
+                    onClick={() => openModal("nuevaTransaccion")}
+                  >
+                    Crear transacción
+                  </button>
+                </div>
               </div>
-            </div>
-            <div className="transacciones-table-card">
-              <h4 className="transacciones-table-title">Transacciones</h4>
-              <div className="transacciones-table-container">
-                <table className="transacciones-table">
-                  <thead className="transacciones-table-header-fixed">
-                    <tr>
-                      <th>Fecha</th>
-                      <th>Tipo</th>
-                      <th>Categoría</th>
-                      <th>Cuenta</th>
-                      <th>Monto</th>
-                      <th>Forma de pago</th>
-                      <th>Nota</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {transaccionesFiltradas.length > 0 ? (
-                      transaccionesFiltradas.map((transaccion) => (
-                        <tr key={transaccion.id}>
-                          <td>
-                            {transaccion.fechaPago}
-                          </td>
-                          <td>
-                            <span className={`transacciones-tipo-badge ${transaccion.tipo.toLowerCase()}`}>
-                              {transaccion.tipo}
-                            </span>
-                          </td>
-                          <td>{transaccion.categoria?.descripcion || 'N/A'}</td>
-                          <td>{transaccion.cuenta?.nombre || 'N/A'}</td>
-                          <td>${transaccion.monto.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
-                          <td>
-                            {formasPago.find((fp) => fp.value === transaccion.formaPago)?.label || transaccion.formaPago}
-                          </td>
-                          <td>{transaccion.notas || "-"}</td>
-                          <td>
-                            <button
-                              className="transacciones-action-btn transacciones-delete-btn"
-                              onClick={() => handleDeleteTransaccion(transaccion)}
-                              title="Eliminar"
-                            >
-                              <img
-                                src={deleteIcon || "/placeholder.svg"}
-                                alt="Eliminar"
-                                className="transacciones-action-icon"
-                              />
-                            </button>
+              <div className="transacciones-table-card">
+                <h4 className="transacciones-table-title">Transacciones</h4>
+                <div className="transacciones-table-container">
+                  <table className="transacciones-table">
+                    <thead className="transacciones-table-header-fixed">
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Categoría</th>
+                        <th>Cuenta</th>
+                        <th>Monto</th>
+                        <th>Forma de pago</th>
+                        <th>Nota</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transaccionesFiltradas.length > 0 ? (
+                        transaccionesFiltradas.map((transaccion) => (
+                          <tr key={transaccion.id}>
+                            <td>
+                              {transaccion.fechaPago}
+                            </td>
+                            <td>
+                              <span className={`transacciones-tipo-badge ${transaccion.tipo.toLowerCase()}`}>
+                                {transaccion.tipo}
+                              </span>
+                            </td>
+                            <td>{transaccion.categoria?.descripcion || 'N/A'}</td>
+                            <td>{transaccion.cuenta?.nombre || 'N/A'}</td>
+                            <td>${transaccion.monto.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
+                            <td>
+                              {formasPago.find((fp) => fp.value === transaccion.formaPago)?.label || transaccion.formaPago}
+                            </td>
+                            <td>{transaccion.notas || "-"}</td>
+                            <td>
+                              <button
+                                className="transacciones-action-btn transacciones-delete-btn"
+                                onClick={() => handleDeleteTransaccion(transaccion)}
+                                title="Eliminar"
+                              >
+                                <img
+                                  src={deleteIcon || "/placeholder.svg"}
+                                  alt="Eliminar"
+                                  className="transacciones-action-icon"
+                                />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="8" className="transacciones-no-data">
+                            No hay transacciones registradas
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="8" className="transacciones-no-data">
-                          No hay transacciones registradas
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          </section>
-        </div>
-        <NuevaTransaccionModal
-          isOpen={modals.nuevaTransaccion.isOpen}
-          onClose={() => closeModal("nuevaTransaccion")}
-          onSave={handleSaveTransaccion}
-          categorias={categorias}
-          cuentas={cuentas}
-          formasPago={formasPago}
-        />
-        <GestionarCategoriasModal
-          isOpen={modals.gestionarCategorias.isOpen}
-          onClose={() => closeModal("gestionarCategorias")}
-          categorias={categorias}
-          onSaveCategoria={handleSaveCategoria}
-          onDeleteCategoria={handleDeleteCategoria}
-        />
-        <GestionarCuentasModal
-          isOpen={modals.gestionarCuentas.isOpen}
-          onClose={() => closeModal("gestionarCuentas")}
-          cuentas={cuentas}
-          categorias={categorias}
-          onSaveCuenta={handleSaveCuenta}
-          onDeleteCuenta={handleDeleteCuenta}
-        />
-        <ConfirmarEliminacionModal
-          isOpen={modals.confirmarEliminacion.isOpen}
-          onClose={() => closeModal("confirmarEliminacion")}
-          onConfirm={modals.confirmarEliminacion.onConfirm}
-          tipo={modals.confirmarEliminacion.tipo}
-          item={modals.confirmarEliminacion.item}
-        />
-      </main>
+            </section>
+          </div>
+          <NuevaTransaccionModal
+            isOpen={modals.nuevaTransaccion.isOpen}
+            onClose={() => closeModal("nuevaTransaccion")}
+            onSave={handleSaveTransaccion}
+            categorias={categorias}
+            cuentas={cuentas}
+            formasPago={formasPago}
+          />
+          <GestionarCategoriasModal
+            isOpen={modals.gestionarCategorias.isOpen}
+            onClose={() => closeModal("gestionarCategorias")}
+            categorias={categorias}
+            onSaveCategoria={handleSaveCategoria}
+            onDeleteCategoria={handleDeleteCategoria}
+          />
+          <GestionarCuentasModal
+            isOpen={modals.gestionarCuentas.isOpen}
+            onClose={() => closeModal("gestionarCuentas")}
+            cuentas={cuentas}
+            categorias={categorias}
+            onSaveCuenta={handleSaveCuenta}
+            onDeleteCuenta={handleDeleteCuenta}
+          />
+          <ConfirmarEliminacionModal
+            isOpen={modals.confirmarEliminacion.isOpen}
+            onClose={() => closeModal("confirmarEliminacion")}
+            onConfirm={modals.confirmarEliminacion.onConfirm}
+            tipo={modals.confirmarEliminacion.tipo}
+            item={modals.confirmarEliminacion.item}
+          />
+        </main>
       </div>
     </>
   );

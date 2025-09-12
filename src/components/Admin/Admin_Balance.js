@@ -49,8 +49,8 @@ const AdminBalance = () => {
   const CATEGORIA_REPOSICION_NORMALIZADA = normalizarTexto("Reposición")
 
   const esCategoriaReposicion = (descripcionCategoria) => {
-  return normalizarTexto(descripcionCategoria) === CATEGORIA_REPOSICION_NORMALIZADA
-}
+    return normalizarTexto(descripcionCategoria) === CATEGORIA_REPOSICION_NORMALIZADA
+  }
 
   const obtenerRangoFechas = (tipoFiltro) => {
     const ahora = new Date()
@@ -227,18 +227,28 @@ const AdminBalance = () => {
 
       const graficoMensual = generarDatosGrafico(transacciones, filtros.tiempoGrafico)
 
-      const acumuladoCuentas = categoriasResp.map((cat) => {
+      const acumuladoCuentas = []
+
+      categoriasResp.forEach((cat) => {
+        if (esCategoriaReposicion(cat.descripcion)) return
+
         const cuentasFiltradas = cuentasResp.filter((c) => c.categoria.id === cat.id && !esCategoriaReposicion(c.categoria.descripcion))
-        const montoTotal = transacciones
-          .filter(
-            (t) =>
-              t.categoria.id === cat.id &&
-              !esCategoriaReposicion(t.categoria.descripcion) &&
-              (t.tipo === "INGRESO" ||
-                (t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))),
-          )
-          .reduce((sum, t) => sum + t.monto, 0)
-        return { categoria: cat.descripcion, cuenta: "Todas", monto: montoTotal }
+
+        cuentasFiltradas.forEach((cuenta) => {
+          const montoCuenta = transacciones
+            .filter(
+              (t) =>
+                t.cuenta?.id === cuenta.id &&
+                !esCategoriaReposicion(t.categoria.descripcion) &&
+                (t.tipo === "INGRESO" ||
+                  (t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))),
+            )
+            .reduce((sum, t) => sum + t.monto, 0)
+
+          if (montoCuenta > 0) {
+            acumuladoCuentas.push({ categoria: cat.descripcion, cuenta: cuenta.nombre, monto: montoCuenta })
+          }
+        })
       })
 
       const equiposVendidos = (await Promise.all(
@@ -665,214 +675,216 @@ const AdminBalance = () => {
   }
 
   const opcionesTiempo = ["Mes", "Trimestre", "Año", "Histórico"]
-  const cuentasPorCategoria = categorias.reduce(
-    (acc, cat) => {
-      acc[cat.descripcion] = [
-        "Todas",
-        ...cuentas.filter((c) => c.categoria.id === cat.id && !esCategoriaReposicion(c.categoria.descripcion)).map((c) => c.nombre),
-      ]
-      return acc
-    },
-    { Todas: ["Todas"] },
-  )
+  const cuentasPorCategoria = categorias
+    .filter(cat => !esCategoriaReposicion(cat.descripcion))
+    .reduce(
+      (acc, cat) => {
+        acc[cat.descripcion] = [
+          "Todas",
+          ...cuentas.filter((c) => c.categoria.id === cat.id && !esCategoriaReposicion(c.categoria.descripcion)).map((c) => c.nombre),
+        ]
+        return acc
+      },
+      { Todas: ["Todas"] },
+    )
 
   return (
     <>
-     <div className="page-with-header">
-      <Header />
-      {isLoading && (
-        <div className="adminbalance-loading">
-          <div className="spinner"></div>
-          <p>Cargando datos del balance...</p>
-        </div>
-      )}
-      <main className="adminbalance-main-content">
-        <div className="adminbalance-container">
-          <section className="adminbalance-sidebar">
-            <div className="adminbalance-sidebar-header">
-              <h3 className="adminbalance-sidebar-title">Administración</h3>
-            </div>
-            <div className="adminbalance-sidebar-menu">
-              <div
-                className="adminbalance-menu-item adminbalance-menu-item-active"
-                onClick={() => handleMenuNavigation("balance")}
-              >
-                Balance
+      <div className="page-with-header">
+        <Header />
+        {isLoading && (
+          <div className="adminbalance-loading">
+            <div className="spinner"></div>
+            <p>Cargando datos del balance...</p>
+          </div>
+        )}
+        <main className="adminbalance-main-content">
+          <div className="adminbalance-container">
+            <section className="adminbalance-sidebar">
+              <div className="adminbalance-sidebar-header">
+                <h3 className="adminbalance-sidebar-title">Administración</h3>
               </div>
-              <div className="adminbalance-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
-                Transacciones
-              </div>
-              <div className="adminbalance-menu-item" onClick={() => handleMenuNavigation("cotizaciones")}>
-                Cotizaciones
-              </div>
-              <div className="adminbalance-menu-item" onClick={() => handleMenuNavigation("facturas-notas")}>
-                Facturas/Notas
-              </div>
-              <div className="adminbalance-menu-item" onClick={() => handleMenuNavigation("cuentas-cobrar")}>
-                Cuentas por Cobrar
-              </div>
-              <div className="adminbalance-menu-item" onClick={() => handleMenuNavigation("cuentas-pagar")}>
-                Cuentas por Pagar
-              </div>
-              <div className="adminbalance-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>
-                Caja chica
-              </div>
-            </div>
-          </section>
-          <section className="adminbalance-content-panel">
-            <div className="adminbalance-header">
-              <h3 className="adminbalance-page-title">Balance</h3>
-              <div className="adminbalance-header-actions">
-                <div className="adminbalance-filtro-tiempo">
-                  <select
-                    value={filtros.tiempoGrafico}
-                    onChange={(e) => handleFiltroTiempoChange(e.target.value)}
-                    className="adminbalance-filtro-select"
-                  >
-                    {opcionesTiempo.map((opcion) => (
-                      <option key={opcion} value={opcion}>
-                        {opcion}
-                      </option>
-                    ))}
-                  </select>
+              <div className="adminbalance-sidebar-menu">
+                <div
+                  className="adminbalance-menu-item adminbalance-menu-item-active"
+                  onClick={() => handleMenuNavigation("balance")}
+                >
+                  Balance
+                </div>
+                <div className="adminbalance-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
+                  Transacciones
+                </div>
+                <div className="adminbalance-menu-item" onClick={() => handleMenuNavigation("cotizaciones")}>
+                  Cotizaciones
+                </div>
+                <div className="adminbalance-menu-item" onClick={() => handleMenuNavigation("facturas-notas")}>
+                  Facturas/Notas
+                </div>
+                <div className="adminbalance-menu-item" onClick={() => handleMenuNavigation("cuentas-cobrar")}>
+                  Cuentas por Cobrar
+                </div>
+                <div className="adminbalance-menu-item" onClick={() => handleMenuNavigation("cuentas-pagar")}>
+                  Cuentas por Pagar
+                </div>
+                <div className="adminbalance-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>
+                  Caja chica
                 </div>
               </div>
-            </div>
-            <p className="adminbalance-subtitle">Gestión de ingresos y generación de reportes contables</p>
-            <div className="adminbalance-resumen-grid">
-              <div className="adminbalance-resumen-card adminbalance-ingresos">
-                <h4 className="adminbalance-resumen-titulo">Total Ingresos</h4>
-                <p className="adminbalance-resumen-monto">
-                  ${balanceData.resumenContable.totalIngresos.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-              <div className="adminbalance-resumen-card adminbalance-gastos">
-                <h4 className="adminbalance-resumen-titulo">Total Gastos</h4>
-                <p className="adminbalance-resumen-monto">
-                  ${balanceData.resumenContable.totalGastos.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-              <div className="adminbalance-resumen-card adminbalance-utilidad">
-                <h4 className="adminbalance-resumen-titulo">Utilidad o Pérdida</h4>
-                <p className="adminbalance-resumen-monto">
-                  ${balanceData.resumenContable.utilidadPerdida.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-            </div>
-            {balanceData.graficoMensual.length > 0 && (
-              <div className="adminbalance-chart-card">
-                <h4 className="adminbalance-chart-title">{obtenerTituloGrafico()}</h4>
-                <div className="adminbalance-chart-container">
-                  <Bar data={graficoBalanceData} options={chartOptions} />
+            </section>
+            <section className="adminbalance-content-panel">
+              <div className="adminbalance-header">
+                <h3 className="adminbalance-page-title">Balance</h3>
+                <div className="adminbalance-header-actions">
+                  <div className="adminbalance-filtro-tiempo">
+                    <select
+                      value={filtros.tiempoGrafico}
+                      onChange={(e) => handleFiltroTiempoChange(e.target.value)}
+                      className="adminbalance-filtro-select"
+                    >
+                      {opcionesTiempo.map((opcion) => (
+                        <option key={opcion} value={opcion}>
+                          {opcion}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
-            )}
-            <div className="adminbalance-tables-grid">
-              <div className="adminbalance-table-card">
-                <h4 className="adminbalance-table-title">Acumulado de Cuentas</h4>
-                <div className="adminbalance-table-filters">
-                  <select
-                    value={filtros.categoriaSeleccionada}
-                    onChange={(e) => handleCategoriaChange(e.target.value)}
-                    className="adminbalance-table-select"
-                  >
-                    <option value="Todas">Todas</option>
-                    {categorias.map((cat) => (
-                      <option key={cat.id} value={cat.descripcion}>
-                        {cat.descripcion}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={filtros.cuentaSeleccionada}
-                    onChange={(e) => handleCuentaChange(e.target.value)}
-                    className="adminbalance-table-select"
-                  >
-                    {cuentasPorCategoria[filtros.categoriaSeleccionada || "Todas"].map((cuenta) => (
-                      <option key={cuenta} value={cuenta}>
-                        {cuenta}
-                      </option>
-                    ))}
-                  </select>
+              <p className="adminbalance-subtitle">Gestión de ingresos y generación de reportes contables</p>
+              <div className="adminbalance-resumen-grid">
+                <div className="adminbalance-resumen-card adminbalance-ingresos">
+                  <h4 className="adminbalance-resumen-titulo">Total Ingresos</h4>
+                  <p className="adminbalance-resumen-monto">
+                    ${balanceData.resumenContable.totalIngresos.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                  </p>
                 </div>
-                <div className="adminbalance-table-container">
-                  <table className="adminbalance-table">
-                    <thead>
-                      <tr>
-                        <th>Categoría</th>
-                        <th>Cuenta</th>
-                        <th>Monto</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {balanceData.acumuladoCuentas.length > 0 ? (
-                        balanceData.acumuladoCuentas
-                          .filter(
-                            (ac) =>
-                              filtros.categoriaSeleccionada === "Todas" ||
-                              ac.categoria === filtros.categoriaSeleccionada,
-                          )
-                          .filter(
-                            (ac) => filtros.cuentaSeleccionada === "Todas" || ac.cuenta === filtros.cuentaSeleccionada,
-                          )
-                          .map((ac, index) => (
+                <div className="adminbalance-resumen-card adminbalance-gastos">
+                  <h4 className="adminbalance-resumen-titulo">Total Gastos</h4>
+                  <p className="adminbalance-resumen-monto">
+                    ${balanceData.resumenContable.totalGastos.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+                <div className="adminbalance-resumen-card adminbalance-utilidad">
+                  <h4 className="adminbalance-resumen-titulo">Utilidad o Pérdida</h4>
+                  <p className="adminbalance-resumen-monto">
+                    ${balanceData.resumenContable.utilidadPerdida.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+              </div>
+              {balanceData.graficoMensual.length > 0 && (
+                <div className="adminbalance-chart-card">
+                  <h4 className="adminbalance-chart-title">{obtenerTituloGrafico()}</h4>
+                  <div className="adminbalance-chart-container">
+                    <Bar data={graficoBalanceData} options={chartOptions} />
+                  </div>
+                </div>
+              )}
+              <div className="adminbalance-tables-grid">
+                <div className="adminbalance-table-card">
+                  <h4 className="adminbalance-table-title">Acumulado de Cuentas</h4>
+                  <div className="adminbalance-table-filters">
+                    <select
+                      value={filtros.categoriaSeleccionada}
+                      onChange={(e) => handleCategoriaChange(e.target.value)}
+                      className="adminbalance-table-select"
+                    >
+                      <option value="Todas">Todas</option>
+                      {categorias.map((cat) => (
+                        <option key={cat.id} value={cat.descripcion}>
+                          {cat.descripcion}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={filtros.cuentaSeleccionada}
+                      onChange={(e) => handleCuentaChange(e.target.value)}
+                      className="adminbalance-table-select"
+                    >
+                      {cuentasPorCategoria[filtros.categoriaSeleccionada || "Todas"].map((cuenta) => (
+                        <option key={cuenta} value={cuenta}>
+                          {cuenta}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="adminbalance-table-container">
+                    <table className="adminbalance-table">
+                      <thead>
+                        <tr>
+                          <th>Categoría</th>
+                          <th>Cuenta</th>
+                          <th>Monto</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {balanceData.acumuladoCuentas.length > 0 ? (
+                          balanceData.acumuladoCuentas
+                            .filter(
+                              (ac) =>
+                                filtros.categoriaSeleccionada === "Todas" ||
+                                ac.categoria === filtros.categoriaSeleccionada,
+                            )
+                            .filter(
+                              (ac) => filtros.cuentaSeleccionada === "Todas" || ac.cuenta === filtros.cuentaSeleccionada,
+                            )
+                            .map((ac, index) => (
+                              <tr key={index}>
+                                <td>{ac.categoria}</td>
+                                <td>{ac.cuenta}</td>
+                                <td>${ac.monto.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
+                              </tr>
+                            ))
+                        ) : (
+                          <tr>
+                            <td colSpan="3" className="adminbalance-no-data">
+                              No hay datos disponibles
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div className="adminbalance-table-card">
+                  <h4 className="adminbalance-table-title">Equipos vendidos</h4>
+                  <div className="adminbalance-table-container">
+                    <table className="adminbalance-table">
+                      <thead>
+                        <tr>
+                          <th>Cliente</th>
+                          <th>Fecha</th>
+                          <th>N° Equipos</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {balanceData.equiposVendidos.length > 0 ? (
+                          balanceData.equiposVendidos.map((equipo, index) => (
                             <tr key={index}>
-                              <td>{ac.categoria}</td>
-                              <td>{ac.cuenta}</td>
-                              <td>${ac.monto.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
+                              <td>{equipo.cliente}</td>
+                              <td>{equipo.fechaPago}</td>
+                              <td>{equipo.numeroEquipos}</td>
                             </tr>
                           ))
-                      ) : (
-                        <tr>
-                          <td colSpan="3" className="adminbalance-no-data">
-                            No hay datos disponibles
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <div className="adminbalance-table-card">
-                <h4 className="adminbalance-table-title">Equipos vendidos</h4>
-                <div className="adminbalance-table-container">
-                  <table className="adminbalance-table">
-                    <thead>
-                      <tr>
-                        <th>Cliente</th>
-                        <th>Fecha</th>
-                        <th>N° Equipos</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {balanceData.equiposVendidos.length > 0 ? (
-                        balanceData.equiposVendidos.map((equipo, index) => (
-                          <tr key={index}>
-                            <td>{equipo.cliente}</td>
-                            <td>{equipo.fechaPago}</td>
-                            <td>{equipo.numeroEquipos}</td>
+                        ) : (
+                          <tr>
+                            <td colSpan="3" className="adminbalance-no-data">
+                              No hay equipos vendidos
+                            </td>
                           </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan="3" className="adminbalance-no-data">
-                            No hay equipos vendidos
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="adminbalance-reporte-button-container">
-              <button className="adminbalance-btn adminbalance-btn-reporte" onClick={handleGenerarReporte}>
-                Crear reporte
-              </button>
-            </div>
-          </section>
-        </div>
-      </main>
+              <div className="adminbalance-reporte-button-container">
+                <button className="adminbalance-btn adminbalance-btn-reporte" onClick={handleGenerarReporte}>
+                  Crear reporte
+                </button>
+              </div>
+            </section>
+          </div>
+        </main>
       </div>
     </>
   )
