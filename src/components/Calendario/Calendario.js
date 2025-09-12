@@ -465,6 +465,7 @@ const Calendario = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       {isLoading && (
         <div className="calendario-loading">
@@ -745,6 +746,7 @@ const Calendario = () => {
         sim={simDetailsModal.sim}
         equipos={equipos}
       />
+      </div>
     </>
   );
 };

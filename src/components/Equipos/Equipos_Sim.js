@@ -938,14 +938,6 @@ const EquiposSim = () => {
     confirmDelete: { isOpen: false, sim: null, hasEquipoVinculado: false },
     details: { isOpen: false, sim: null },
   });
-  const [pagination, setPagination] = useState({
-    currentPage: 0,
-    totalPages: 0,
-    totalElements: 0,
-    pageSize: 50
-  });
-
-  const [loadingMore, setLoadingMore] = useState(false);
   const [filterNumeroInput, setFilterNumeroInput] = useState("");
   const debounceTimerRef = useRef(null);
 
@@ -1001,13 +993,9 @@ const EquiposSim = () => {
   const fetchCriticalData = async () => {
     try {
       setIsLoading(true);
-
       await fetchAllGroups();
       await fetchAllSimsForCounting();
-
-      // Cargar SIMs paginadas
-      await fetchSimsPaginadas(0);
-
+      await fetchSims();
     } catch (error) {
       console.error("Error loading critical data:", error);
       Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos críticos" });
@@ -1017,7 +1005,7 @@ const EquiposSim = () => {
   };
 
   useEffect(() => {
-    fetchSimsPaginadas(0);
+    fetchSims();
   }, [filterGrupo, filterNumero]);
 
   useEffect(() => {
@@ -1028,24 +1016,18 @@ const EquiposSim = () => {
     };
   }, []);
 
-  const fetchSimsPaginadas = async (page = 0, append = false) => {
+  const fetchSims = async () => {
     try {
-      if (page === 0) setIsLoading(true);
-      else setLoadingMore(true);
+      setIsLoading(true);
 
-      // Construir URL con filtros
-      const params = new URLSearchParams({
-        page: page.toString(),
-        size: pagination.pageSize.toString()
-      });
-
+      const params = new URLSearchParams();
       if (filterGrupo) params.append('grupo', filterGrupo);
       if (filterNumero) params.append('numero', filterNumero);
 
-      const response = await fetchWithToken(`${API_BASE_URL}/sims/paged?${params.toString()}`);
-      const data = await response.json();
+      const response = await fetchWithToken(`${API_BASE_URL}/sims/filtered?${params.toString()}`);
+      const simsData = await response.json();
 
-      const simsData = data.content.map((sim) => ({
+      const simsWithEquipo = simsData.map((sim) => ({
         ...sim,
         equipo: sim.equipoNombre ? {
           nombre: sim.equipoNombre,
@@ -1053,14 +1035,14 @@ const EquiposSim = () => {
         } : null,
       }));
 
-      if (append) {
-        setSims(prev => [...prev, ...simsData]);
-      } else {
-        setSims(simsData);
-      }
+      setSims(simsWithEquipo);
 
       const nuevasAlertas = new Set(alertasSaldo);
-      for (const sim of simsData.filter(s => s.tarifa === "POR_SEGUNDO")) {
+      const simsParaVerificar = simsWithEquipo
+        .filter(s => s.tarifa === "POR_SEGUNDO")
+        .slice(0, 20);
+
+      for (const sim of simsParaVerificar) {
         if (!alertasSaldo.has(sim.id)) {
           const tieneCaida = await verificarCaidaSaldo(sim.id, sim.numero);
           if (tieneCaida) {
@@ -1070,19 +1052,11 @@ const EquiposSim = () => {
       }
       setAlertasSaldo(nuevasAlertas);
 
-      setPagination({
-        currentPage: data.number !== undefined ? data.number : page,
-        totalPages: data.totalPages,
-        totalElements: data.totalElements,
-        pageSize: data.size
-      });
-
     } catch (error) {
       console.error("Error loading SIMs:", error);
       Swal.fire({ icon: "error", title: "Error", text: "Error al cargar SIMs" });
     } finally {
       setIsLoading(false);
-      setLoadingMore(false);
     }
   };
 
@@ -1093,12 +1067,6 @@ const EquiposSim = () => {
       setGruposDisponibles(grupos);
     } catch (error) {
       console.error("Error loading all groups:", error);
-    }
-  };
-
-  const loadMoreSims = () => {
-    if (pagination.currentPage < pagination.totalPages - 1 && !loadingMore) {
-      fetchSimsPaginadas(pagination.currentPage + 1, true);
     }
   };
 
@@ -1263,7 +1231,7 @@ const EquiposSim = () => {
         text: data.message || "Saldo registrado correctamente",
       });
       closeModal("saldos");
-      fetchSimsPaginadas(0);
+      fetchSims();
     } catch (error) {
       Swal.fire({
         icon: "error",
@@ -1282,29 +1250,11 @@ const EquiposSim = () => {
   };
 
   const getSimsOrdenados = () => {
-    return [...sims].sort((a, b) => {
-      // Primero, manejar casos donde no hay fecha de vigencia
-      const fechaA = a.vigencia ? new Date(a.vigencia + 'T00:00:00') : null;
-      const fechaB = b.vigencia ? new Date(b.vigencia + 'T00:00:00') : null;
-
-      if (!fechaA && !fechaB) {
-        // Si ninguna tiene vigencia, ordenar por número
-        return a.numero.localeCompare(b.numero, undefined, { numeric: true });
-      }
-      if (!fechaA) return 1;
-      if (!fechaB) return -1;
-
-      // Ordenar por fecha primero
-      const diff = fechaA - fechaB;
-      const fechaComparison = ordenFechaVigencia === 'desc' ? -diff : diff;
-
-      // Si las fechas son iguales, ordenar por número como segundo criterio
-      if (fechaComparison === 0) {
-        return a.numero.localeCompare(b.numero, undefined, { numeric: true });
-      }
-
-      return fechaComparison;
-    });
+    // Ya vienen ordenados del backend, solo aplicar el toggle si es necesario
+    if (ordenFechaVigencia === 'desc') {
+      return [...sims].reverse();
+    }
+    return sims;
   };
 
   const getSaldoClassName = (sim) => {
@@ -1377,6 +1327,7 @@ const EquiposSim = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       {isLoading && (
         <div className="sim-loading">
@@ -1562,17 +1513,6 @@ const EquiposSim = () => {
                     )}
                   </tbody>
                 </table>
-                {pagination.currentPage < pagination.totalPages - 1 && (
-                  <div className="sim-load-more-container">
-                    <button
-                      className="sim-btn sim-btn-secondary"
-                      onClick={loadMoreSims}
-                      disabled={loadingMore}
-                    >
-                      {loadingMore ? 'Cargando...' : `Cargar más SIMs (${sims.length} de ${pagination.totalElements})`}
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           </section>
@@ -1608,6 +1548,7 @@ const EquiposSim = () => {
           equipos={equipos}
         />
       </main>
+      </div>
     </>
   );
 };

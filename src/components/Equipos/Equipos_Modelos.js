@@ -497,6 +497,7 @@ const EquiposModelos = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       {isLoading && (
         <div className="modelos-loading">
@@ -599,6 +600,7 @@ const EquiposModelos = () => {
           onConfirm={handleDeleteModelo}
         />
       </main>
+      </div>
     </>
   );
 };

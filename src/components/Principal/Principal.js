@@ -1566,8 +1566,8 @@ const Principal = () => {
         if (!a.horaInicio) return 1;
         if (!b.horaInicio) return -1;
 
-        const horaA = a.horaInicio.toString().substring(0, 5); 
-        const horaB = b.horaInicio.toString().substring(0, 5); 
+        const horaA = a.horaInicio.toString().substring(0, 5);
+        const horaB = b.horaInicio.toString().substring(0, 5);
 
         return horaA.localeCompare(horaB);
       });
@@ -1844,163 +1844,165 @@ const Principal = () => {
 
   return (
     <>
-      <Header />
-      <main className="main-content">
-        <h1 className="welcome-message">
-          Bienvenido/a {userName}!
-          <img src={welcomeIcon || "/placeholder.svg"} alt="Icono de Bienvenida" className="welcome-icon" />
-        </h1>
+      <div className="page-with-header">
+        <Header />
+        <main className="main-content page-with-header">
+          <h1 className="welcome-message">
+            Bienvenido/a {userName}!
+            <img src={welcomeIcon || "/placeholder.svg"} alt="Icono de Bienvenida" className="welcome-icon" />
+          </h1>
 
-        <div className="dashboard-container">
-          <section className="tasks-panel">
-            <h2>Mis tareas pendientes del día de hoy</h2>
-            <div className="task-list">
-              {tareasPendientes.length > 0 ? (
-                tareasPendientes.map((task) => (
-                  <div key={task.id} className="task-item">
-                    <div className="task-info">
-                      <div className="task-header">
-                        {task.contactoId && contactos[task.contactoId] && contactos[task.contactoId].empresaId && empresas[contactos[task.contactoId].empresaId] && (
-                          <div
-                            className="task-empresa clickable"
-                            onClick={() => handleEmpresaClick(task.tratoId)}
-                            style={{ cursor: 'pointer' }}
-                          >
-                            {empresas[contactos[task.contactoId].empresaId].nombre}
-                          </div>
-                        )}
-                        <h3>
-                          {task.tipo === "LLAMADA" && <img src={phoneIcon || "/placeholder.svg"} alt="Icono de Teléfono" className="task-icon" />}
-                          {task.tipo === "REUNION" && <img src={meetingIcon || "/placeholder.svg"} alt="Icono de Reunión" className="task-icon" />}
-                          {task.tipo === "TAREA" && <img src={emailIcon || "/placeholder.svg"} alt="Icono de Correo" className="task-icon" />}
-                          {task.contactoId && contactos[task.contactoId] ? (
-                            `${contactos[task.contactoId].nombre} - ${task.tipo}${task.subtipoTarea ? ` - ${task.subtipoTarea}` : ""}`
-                          ) : (
-                            task.contactoId ? `${task.contactoId} - ${task.tipo}${task.subtipoTarea ? ` - ${task.subtipoTarea}` : ""}` : task.tipo
+          <div className="dashboard-container">
+            <section className="tasks-panel">
+              <h2>Mis tareas pendientes del día de hoy</h2>
+              <div className="task-list">
+                {tareasPendientes.length > 0 ? (
+                  tareasPendientes.map((task) => (
+                    <div key={task.id} className="task-item">
+                      <div className="task-info">
+                        <div className="task-header">
+                          {task.contactoId && contactos[task.contactoId] && contactos[task.contactoId].empresaId && empresas[contactos[task.contactoId].empresaId] && (
+                            <div
+                              className="task-empresa clickable"
+                              onClick={() => handleEmpresaClick(task.tratoId)}
+                              style={{ cursor: 'pointer' }}
+                            >
+                              {empresas[contactos[task.contactoId].empresaId].nombre}
+                            </div>
                           )}
-                        </h3>
+                          <h3>
+                            {task.tipo === "LLAMADA" && <img src={phoneIcon || "/placeholder.svg"} alt="Icono de Teléfono" className="task-icon" />}
+                            {task.tipo === "REUNION" && <img src={meetingIcon || "/placeholder.svg"} alt="Icono de Reunión" className="task-icon" />}
+                            {task.tipo === "TAREA" && <img src={emailIcon || "/placeholder.svg"} alt="Icono de Correo" className="task-icon" />}
+                            {task.contactoId && contactos[task.contactoId] ? (
+                              `${contactos[task.contactoId].nombre} - ${task.tipo}${task.subtipoTarea ? ` - ${task.subtipoTarea}` : ""}`
+                            ) : (
+                              task.contactoId ? `${task.contactoId} - ${task.tipo}${task.subtipoTarea ? ` - ${task.subtipoTarea}` : ""}` : task.tipo
+                            )}
+                          </h3>
+                        </div>
+                        <div className="task-time">
+                          {task.horaInicio ? task.horaInicio.toString() : "Sin hora"}
+                        </div>
                       </div>
-                      <div className="task-time">
-                        {task.horaInicio ? task.horaInicio.toString() : "Sin hora"}
+                      <div className="task-actions">
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => openModal("completarActividad", { actividad: task })}
+                        >
+                          Completar
+                        </button>
+                        <button
+                          className="btn btn-secondary"
+                          onClick={() => {
+                            const modalType = task.tipo === "LLAMADA" ? "reprogramarLlamada" :
+                              task.tipo === "REUNION" ? "reprogramarReunion" :
+                                "reprogramarTarea";
+                            openModal(modalType, { actividad: task });
+                          }}
+                        >
+                          Reprogramar
+                        </button>
                       </div>
                     </div>
-                    <div className="task-actions">
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => openModal("completarActividad", { actividad: task })}
+                  ))
+                ) : (
+                  <p>No hay tareas pendientes para hoy.</p>
+                )}
+              </div>
+            </section>
+
+            <section className="stats-panel">
+              <div className="stats-header">
+                <h2>Estadísticas</h2>
+                {userRol !== "EMPLEADO" && (
+                  <div className="user-filter">
+                    <label htmlFor="userSelect">Filtrar por usuario:</label>
+                    <div className="modal-select-wrapper">
+                      <select
+                        id="userSelect"
+                        value={selectedUser}
+                        onChange={(e) => setSelectedUser(e.target.value)}
+                        className="modal-form-control"
                       >
-                        Completar
-                      </button>
-                      <button
-                        className="btn btn-secondary"
-                        onClick={() => {
-                          const modalType = task.tipo === "LLAMADA" ? "reprogramarLlamada" :
-                            task.tipo === "REUNION" ? "reprogramarReunion" :
-                              "reprogramarTarea";
-                          openModal(modalType, { actividad: task });
-                        }}
-                      >
-                        Reprogramar
-                      </button>
+                        {usuarios.map((usuario) => (
+                          <option key={usuario} value={usuario}>
+                            {usuario}
+                          </option>
+                        ))}
+                      </select>
+                      <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
                     </div>
                   </div>
-                ))
-              ) : (
-                <p>No hay tareas pendientes para hoy.</p>
-              )}
-            </div>
-          </section>
-
-          <section className="stats-panel">
-            <div className="stats-header">
-              <h2>Estadísticas</h2>
-              {userRol !== "EMPLEADO" && (
-                <div className="user-filter">
-                  <label htmlFor="userSelect">Filtrar por usuario:</label>
-                  <div className="modal-select-wrapper">
-                    <select
-                      id="userSelect"
-                      value={selectedUser}
-                      onChange={(e) => setSelectedUser(e.target.value)}
-                      className="modal-form-control"
-                    >
-                      {usuarios.map((usuario) => (
-                        <option key={usuario} value={usuario}>
-                          {usuario}
-                        </option>
-                      ))}
-                    </select>
-                    <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="charts-grid">
-              <div className="chart-section">
-                <h3>Prospectos por Etapa</h3>
-                <div className="chart-container">
-                  {isLoadingTratos ? (
-                    <div className="loading-spinner">
-                      <div className="spinner"></div>
-                      <p>Cargando datos...</p>
-                    </div>
-                  ) : (
-                    <Bar data={data} options={options} id="prospectsChart" />
-                  )}
-                </div>
+                )}
               </div>
 
-              {userRol !== "EMPLEADO" && (
+              <div className="charts-grid">
                 <div className="chart-section">
-                  <h3>Tratos Creados por Usuario</h3>
+                  <h3>Prospectos por Etapa</h3>
                   <div className="chart-container">
-                    {isLoadingUsuarios ? (
+                    {isLoadingTratos ? (
                       <div className="loading-spinner">
                         <div className="spinner"></div>
                         <p>Cargando datos...</p>
                       </div>
                     ) : (
-                      <Doughnut data={tratosPorUsuario} options={usuariosOptions} id="usersChart" />
+                      <Bar data={data} options={options} id="prospectsChart" />
                     )}
                   </div>
                 </div>
-              )}
-            </div>
-          </section>
-        </div>
-      </main>
 
-      <ReprogramarLlamadaModal
-        isOpen={modals.reprogramarLlamada.isOpen}
-        onClose={() => closeModal("reprogramarLlamada")}
-        onSave={(data) => handleSaveReprogramar(data, "llamada")}
-        actividad={modals.reprogramarLlamada.actividad}
-      />
+                {userRol !== "EMPLEADO" && (
+                  <div className="chart-section">
+                    <h3>Tratos Creados por Usuario</h3>
+                    <div className="chart-container">
+                      {isLoadingUsuarios ? (
+                        <div className="loading-spinner">
+                          <div className="spinner"></div>
+                          <p>Cargando datos...</p>
+                        </div>
+                      ) : (
+                        <Doughnut data={tratosPorUsuario} options={usuariosOptions} id="usersChart" />
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        </main>
 
-      <ReprogramarReunionModal
-        isOpen={modals.reprogramarReunion.isOpen}
-        onClose={() => closeModal("reprogramarReunion")}
-        onSave={(data) => handleSaveReprogramar(data, "reunion")}
-        actividad={modals.reprogramarReunion.actividad}
-      />
+        <ReprogramarLlamadaModal
+          isOpen={modals.reprogramarLlamada.isOpen}
+          onClose={() => closeModal("reprogramarLlamada")}
+          onSave={(data) => handleSaveReprogramar(data, "llamada")}
+          actividad={modals.reprogramarLlamada.actividad}
+        />
 
-      <ReprogramarTareaModal
-        isOpen={modals.reprogramarTarea.isOpen}
-        onClose={() => closeModal("reprogramarTarea")}
-        onSave={(data) => handleSaveReprogramar(data, "tarea")}
-        actividad={modals.reprogramarTarea.actividad}
-      />
+        <ReprogramarReunionModal
+          isOpen={modals.reprogramarReunion.isOpen}
+          onClose={() => closeModal("reprogramarReunion")}
+          onSave={(data) => handleSaveReprogramar(data, "reunion")}
+          actividad={modals.reprogramarReunion.actividad}
+        />
 
-      <CompletarActividadModal
-        isOpen={modals.completarActividad.isOpen}
-        onClose={() => closeModal("completarActividad")}
-        onSave={(data, tipo) => handleSaveCompletarActividad(data, tipo)}
-        actividad={modals.completarActividad.actividad}
-        tratoId={modals.completarActividad.actividad?.tratoId || null}
-        contactos={contactos}
-        openModal={openModal}
-      />
+        <ReprogramarTareaModal
+          isOpen={modals.reprogramarTarea.isOpen}
+          onClose={() => closeModal("reprogramarTarea")}
+          onSave={(data) => handleSaveReprogramar(data, "tarea")}
+          actividad={modals.reprogramarTarea.actividad}
+        />
+
+        <CompletarActividadModal
+          isOpen={modals.completarActividad.isOpen}
+          onClose={() => closeModal("completarActividad")}
+          onSave={(data, tipo) => handleSaveCompletarActividad(data, tipo)}
+          actividad={modals.completarActividad.actividad}
+          tratoId={modals.completarActividad.actividad?.tratoId || null}
+          contactos={contactos}
+          openModal={openModal}
+        />
+      </div>
     </>
   );
 };

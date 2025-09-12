@@ -1356,6 +1356,7 @@ const AdminCuentasCobrar = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       {isLoading && (
         <div className="cuentascobrar-loading">
@@ -1630,6 +1631,7 @@ const AdminCuentasCobrar = () => {
           cuenta={modals.confirmarEliminacion.cuenta}
         />
       </main>
+      </div>
     </>
   );
 };

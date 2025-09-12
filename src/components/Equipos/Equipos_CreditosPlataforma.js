@@ -244,6 +244,7 @@ const EquiposCreditosPlataforma = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       {isLoading && (
         <div className="creditosplataforma-loading">
@@ -430,6 +431,7 @@ const EquiposCreditosPlataforma = () => {
           </section>
         </div>
       </main>
+      </div>
     </>
   )
 }

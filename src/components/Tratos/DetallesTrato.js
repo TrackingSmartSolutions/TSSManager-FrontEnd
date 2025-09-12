@@ -5048,6 +5048,7 @@ const DetallesTrato = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       <main className="main-content">
         <div className="detalles-trato-container">
@@ -5780,6 +5781,7 @@ const DetallesTrato = () => {
         onSelectTemplate={modals.seleccionarPlantilla.onSelectTemplate}
         plantillas={modals.seleccionarPlantilla.plantillas || []}
       />
+      </div>
     </>
   )
 }

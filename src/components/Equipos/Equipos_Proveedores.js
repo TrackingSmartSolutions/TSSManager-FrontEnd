@@ -363,6 +363,7 @@ const EquiposProveedores = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       {isLoading && (
         <div className="proveedores-loading">
@@ -503,6 +504,7 @@ const EquiposProveedores = () => {
           onConfirm={handleDeleteProveedor}
         />
       </main>
+      </div>
     </>
   )
 }

@@ -1234,6 +1234,7 @@ const AdminFacturacion = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       {isLoading && (
         <div className="facturacion-loading">
@@ -1515,6 +1516,7 @@ const AdminFacturacion = () => {
           item={modals.confirmarEliminacion.item}
         />
       </main>
+      </div>
     </>
   );
 };

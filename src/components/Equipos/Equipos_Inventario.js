@@ -802,6 +802,7 @@ const EquiposInventario = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       {isLoading && (
         <div className="inventario-loading">
@@ -994,6 +995,7 @@ const EquiposInventario = () => {
           titulo={modals.creditos.tipo === "activar" ? "Activar equipo" : "Renovar equipo"}
         />
       </main>
+      </div>
     </>
   );
 };

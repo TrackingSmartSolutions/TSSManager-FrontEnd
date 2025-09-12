@@ -443,6 +443,7 @@ const ConfiguracionAdministrador = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       {isLoading && (
         <div className="config-admin-loading">
@@ -680,6 +681,7 @@ const ConfiguracionAdministrador = () => {
           </section>
         </div>
       </main>
+      </div>
     </>
   )
 }

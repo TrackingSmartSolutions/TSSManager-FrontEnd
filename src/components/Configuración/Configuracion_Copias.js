@@ -438,6 +438,7 @@ useEffect(() => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       {isLoading && (
         <div className="config-copias-loading">
@@ -674,6 +675,7 @@ useEffect(() => {
           </section>
         </div>
       </main>
+      </div>
     </>
   )
 }

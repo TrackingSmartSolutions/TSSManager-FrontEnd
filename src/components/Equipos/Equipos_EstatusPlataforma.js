@@ -1147,6 +1147,7 @@ const EquiposEstatusPlataforma = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       {isLoading && (
         <div className="estatusplataforma-loading">
@@ -1333,6 +1334,7 @@ const EquiposEstatusPlataforma = () => {
           }
         />
       </main>
+      </div>
     </>
   );
 };

@@ -1949,7 +1949,9 @@ const Empresas = () => {
     if (params.empresaId && companies.length > 0) {
       const empresaFromUrl = companies.find(company => company.id === parseInt(params.empresaId));
       if (empresaFromUrl) {
-        setSelectedCompany(empresaFromUrl);
+        if (!selectedCompany || selectedCompany.id !== empresaFromUrl.id) {
+          setSelectedCompany(empresaFromUrl);
+        }
       } else {
         Swal.fire({
           icon: 'error',
@@ -1960,8 +1962,10 @@ const Empresas = () => {
       }
     } else if (!params.empresaId && companies.length > 0 && !selectedCompany) {
       setSelectedCompany(companies[0]);
+      navigate(`/empresas/${companies[0].id}`, { replace: true });
     }
-  }, [params.empresaId, companies, navigate]);
+  }, [params.empresaId, companies, navigate, selectedCompany?.id]);
+
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -2023,7 +2027,7 @@ const Empresas = () => {
 
   useEffect(() => {
     if (companies.length > 0) {
-      checkCompaniesWithoutDeals(companies);
+      checkCompaniesWithoutDeals();
     }
   }, [companies.length]);
 
@@ -2185,6 +2189,9 @@ const Empresas = () => {
     }
     setCompanies((prev) => [...prev, newCompany])
     setSelectedCompany(newCompany)
+
+    navigate(`/empresas/${newCompany.id}`, { replace: true });
+
     closeModal("empresa")
     openModal(
       "contacto",
@@ -2201,10 +2208,11 @@ const Empresas = () => {
       telefonos: contactoData.telefonos || [],
     }
 
+    const empresaId = selectedCompany.id;
     if (modals.contacto.mode === "add") {
       setCompanies((prev) =>
         prev.map((company) =>
-          company.id === selectedCompany.id
+          company.id === empresaId
             ? {
               ...company,
               contacts: [...(company.contacts || []), normalizedContacto],
@@ -2222,7 +2230,7 @@ const Empresas = () => {
     } else {
       setCompanies((prev) =>
         prev.map((company) =>
-          company.id === selectedCompany.id
+          company.id === empresaId
             ? {
               ...company,
               contacts: (company.contacts || []).map((contact) =>
@@ -2350,27 +2358,20 @@ const Empresas = () => {
   }
 
   const checkCompaniesWithoutDeals = async (companiesList) => {
-    const companiesWithoutDealsSet = new Set()
-
-    for (const company of companiesList) {
-      try {
-        const response = await fetchWithToken(`${API_BASE_URL}/empresas/${company.id}/has-tratos`)
-        if (response.ok) {
-          const hasTratos = await response.json()
-          if (!hasTratos) {
-            companiesWithoutDealsSet.add(company.id)
-          }
-        }
-      } catch (error) {
-        console.error(`Error checking tratos for company ${company.id}:`, error)
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/empresas/sin-tratos`)
+      if (response.ok) {
+        const empresasSinTratos = await response.json()
+        setCompaniesWithoutDeals(new Set(empresasSinTratos))
       }
+    } catch (error) {
+      console.error('Error checking companies without deals:', error)
     }
-
-    setCompaniesWithoutDeals(companiesWithoutDealsSet)
   }
 
   return (
     <>
+     <div className="page-with-header"> 
       <Header />
       {isLoading && (
         <div className="empresas-loading">
@@ -2443,11 +2444,6 @@ const Empresas = () => {
                       className="status-indicator"
                       style={{ backgroundColor: company.statusColor || "#87CEEB" }}
                     ></div>
-                    {companiesWithoutDeals.has(company.id) && (
-                      <div className="no-deals-indicator" title="Sin tratos">
-                        ⚠️
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}
@@ -2729,6 +2725,7 @@ const Empresas = () => {
           empresaPreseleccionada={modals.nuevoTrato.empresaPreseleccionada}
         />
       </main>
+      </div>
     </>
   )
 }

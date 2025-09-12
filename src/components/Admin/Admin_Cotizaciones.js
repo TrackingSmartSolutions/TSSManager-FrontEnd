@@ -13,11 +13,14 @@ import { API_BASE_URL } from "../Config/Config";
 
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token")
+  const isFormData = options.body instanceof FormData
+  
   const headers = {
-    "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(!isFormData ? { "Content-Type": "application/json" } : {}),
     ...options.headers,
   }
+  
   const response = await fetch(url, { ...options, headers })
   if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`)
   return response
@@ -902,6 +905,121 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
   );
 };
 
+const SubirArchivoModal = ({ isOpen, onClose, onDownload, cotizacion }) => {
+  const [archivo, setArchivo] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setArchivo(null);
+    }
+  }, [isOpen]);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type === 'application/pdf') {
+      setArchivo(file);
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Solo se permiten archivos PDF'
+      });
+      e.target.value = '';
+    }
+  };
+
+  const handleDownloadWithFile = async () => {
+  if (!archivo) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Debe seleccionar un archivo PDF'
+    });
+    return;
+  }
+
+  setUploading(true);
+  const formData = new FormData();
+  formData.append('archivo', archivo);
+
+  try {
+    await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacion.id}/upload-archivo`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    await onDownload(cotizacion.id, true);
+    onClose();
+  } catch (error) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Error al subir el archivo: ' + error.message
+    });
+  } finally {
+    setUploading(false);
+  }
+};
+
+  const handleDownloadWithoutFile = async () => {
+    // Descargar solo la cotización
+    await onDownload(cotizacion.id, false);
+    onClose();
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Descargar Cotización" size="md" closeOnOverlayClick={false}>
+      <div className="cotizaciones-form">
+        <div className="cotizaciones-form-group">
+          <p className="cotizaciones-modal-text">
+            ¿Deseas agregar un archivo PDF adicional a esta cotización?
+          </p>
+        </div>
+
+        <div className="cotizaciones-form-group">
+          <label>Seleccionar archivo PDF (opcional):</label>
+          <input
+            type="file"
+            accept=".pdf"
+            onChange={handleFileChange}
+            className="cotizaciones-form-control"
+          />
+          {archivo && (
+            <p className="cotizaciones-file-selected">
+              Archivo seleccionado: {archivo.name}
+            </p>
+          )}
+        </div>
+
+        <div className="cotizaciones-form-actions">
+          <button
+            onClick={onClose}
+            className="cotizaciones-btn cotizaciones-btn-cancel"
+            disabled={uploading}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleDownloadWithoutFile}
+            className="cotizaciones-btn cotizaciones-btn-secondary"
+            disabled={uploading}
+          >
+            Descargar sin archivo
+          </button>
+          <button
+            onClick={handleDownloadWithFile}
+            className="cotizaciones-btn cotizaciones-btn-primary"
+            disabled={uploading}
+          >
+            {uploading ? 'Subiendo...' : 'Subir y descargar'}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
 // Componente Principal
 const AdminCotizaciones = () => {
   const navigate = useNavigate()
@@ -920,6 +1038,7 @@ const AdminCotizaciones = () => {
     cotizacion: { isOpen: false, cotizacion: null },
     confirmarEliminacion: { isOpen: false, cotizacion: null },
     crearCuentas: { isOpen: false, cotizacion: null },
+    subirArchivo: { isOpen: false, cotizacion: null },
   });
 
 
@@ -1145,15 +1264,22 @@ const AdminCotizaciones = () => {
   };
 
 
-  const handleDownloadCotizacionPDF = async (cotizacionId) => {
+  const handleDownloadCotizacionPDF = (cotizacionId) => {
+    openModal("subirArchivo", { cotizacion: { id: cotizacionId } });
+  };
+
+  const executeDownload = async (cotizacionId, incluirArchivo) => {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacionId}/download-pdf`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/pdf'
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/cotizaciones/${cotizacionId}/download-pdf?incluirArchivo=${incluirArchivo}`,
+        {
+          method: 'GET',
+          headers: { 'Accept': 'application/pdf' }
         }
-      });
+      );
+
       if (!response.ok) throw new Error('Error downloading PDF');
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -1163,6 +1289,7 @@ const AdminCotizaciones = () => {
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
+
     } catch (error) {
       Swal.fire({
         icon: 'error',
@@ -1191,241 +1318,250 @@ const AdminCotizaciones = () => {
 
   return (
     <>
-      <Header />
-      {isLoading && (
-        <div className="cotizaciones-loading">
-          <div className="spinner"></div>
-          <p>Cargando cotizaciones...</p>
-        </div>
-      )}
-      <main className="cotizaciones-main-content">
-        <div className="cotizaciones-container">
-          <section className="cotizaciones-sidebar">
-            <div className="cotizaciones-sidebar-header">
-              <h3 className="cotizaciones-sidebar-title">Administración</h3>
-            </div>
-            <div className="cotizaciones-sidebar-menu">
-              {userRol === "ADMINISTRADOR" && (
-              <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("balance")}>
-                Balance
+      <div className="page-with-header">
+        <Header />
+        {isLoading && (
+          <div className="cotizaciones-loading">
+            <div className="spinner"></div>
+            <p>Cargando cotizaciones...</p>
+          </div>
+        )}
+        <main className="cotizaciones-main-content">
+          <div className="cotizaciones-container">
+            <section className="cotizaciones-sidebar">
+              <div className="cotizaciones-sidebar-header">
+                <h3 className="cotizaciones-sidebar-title">Administración</h3>
               </div>
-              )}
-              <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
-                Transacciones
-              </div>
-              <div
-                className="cotizaciones-menu-item cotizaciones-menu-item-active"
-                onClick={() => handleMenuNavigation("cotizaciones")}
-              >
-                Cotizaciones
-              </div>
-              <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("facturacion")}>
-                Facturas/Notas
-              </div>
-              <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("cuentas-cobrar")}>
-                Cuentas por Cobrar
-              </div>
-              <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("cuentas-pagar")}>
-                Cuentas por Pagar
-              </div>
-              <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>
-                Caja chica
-              </div>
-            </div>
-          </section>
-
-          {/* Main Content */}
-          <section className="cotizaciones-content-panel">
-            <div className="cotizaciones-header">
-
-              <div className="cotizaciones-header-info">
-                <h3 className="cotizaciones-page-title">Cotizaciones</h3>
-                <p className="cotizaciones-subtitle">Gestión de cotizaciones para clientes</p>
-              </div>
-              <div className="cotizaciones-header-actions">
-                <button
-                  className="cotizaciones-btn cotizaciones-btn-primary"
-                  onClick={() => openModal("cotizacion", { cotizacion: null })}
+              <div className="cotizaciones-sidebar-menu">
+                {userRol === "ADMINISTRADOR" && (
+                  <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("balance")}>
+                    Balance
+                  </div>
+                )}
+                <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
+                  Transacciones
+                </div>
+                <div
+                  className="cotizaciones-menu-item cotizaciones-menu-item-active"
+                  onClick={() => handleMenuNavigation("cotizaciones")}
                 >
-                  Crear cotización
+                  Cotizaciones
+                </div>
+                <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("facturacion")}>
+                  Facturas/Notas
+                </div>
+                <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("cuentas-cobrar")}>
+                  Cuentas por Cobrar
+                </div>
+                <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("cuentas-pagar")}>
+                  Cuentas por Pagar
+                </div>
+                <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>
+                  Caja chica
+                </div>
+              </div>
+            </section>
+
+            {/* Main Content */}
+            <section className="cotizaciones-content-panel">
+              <div className="cotizaciones-header">
+
+                <div className="cotizaciones-header-info">
+                  <h3 className="cotizaciones-page-title">Cotizaciones</h3>
+                  <p className="cotizaciones-subtitle">Gestión de cotizaciones para clientes</p>
+                </div>
+                <div className="cotizaciones-header-actions">
+                  <button
+                    className="cotizaciones-btn cotizaciones-btn-primary"
+                    onClick={() => openModal("cotizacion", { cotizacion: null })}
+                  >
+                    Crear cotización
+                  </button>
+                </div>
+              </div>
+
+              <div className="cotizaciones-filter">
+                <label htmlFor="filterReceptor">Filtrar por Receptor: </label>
+                <input
+                  type="text"
+                  id="filterReceptor"
+                  value={filterReceptor}
+                  onChange={(e) => setFilterReceptor(e.target.value)}
+                  placeholder="Escribe el nombre del receptor"
+                  className="cotizaciones-form-control"
+                />
+                <button
+                  className="cotizaciones-btn cotizaciones-btn-orden"
+                  onClick={toggleOrdenFecha}
+                  title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
+                >
+                  {ordenFecha === 'desc' ? '📅 ↓ Recientes primero' : '📅 ↑ Antiguas primero'}
                 </button>
               </div>
-            </div>
 
-            <div className="cotizaciones-filter">
-              <label htmlFor="filterReceptor">Filtrar por Receptor: </label>
-              <input
-                type="text"
-                id="filterReceptor"
-                value={filterReceptor}
-                onChange={(e) => setFilterReceptor(e.target.value)}
-                placeholder="Escribe el nombre del receptor"
-                className="cotizaciones-form-control"
-              />
-              <button
-                className="cotizaciones-btn cotizaciones-btn-orden"
-                onClick={toggleOrdenFecha}
-                title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
-              >
-                {ordenFecha === 'desc' ? '📅 ↓ Recientes primero' : '📅 ↑ Antiguas primero'}
-              </button>
-            </div>
+              {/* Tabla de Cotizaciones */}
+              <div className="cotizaciones-table-card">
+                <h4 className="cotizaciones-table-title">Cotizaciones</h4>
 
-            {/* Tabla de Cotizaciones */}
-            <div className="cotizaciones-table-card">
-              <h4 className="cotizaciones-table-title">Cotizaciones</h4>
-
-              <div className="cotizaciones-table-container">
-                <table className="cotizaciones-table">
-                  <thead className="cotizaciones-table-header-fixed">
-                    <tr>
-                      <th>No.</th>
-                      <th>Receptor</th>
-                      <th>Fecha</th>
-                      <th className="cotizaciones-equipos-column-header">Total de equipos</th>
-                      <th>Concepto</th>
-                      <th>Subtotal</th>
-                      <th>IVA</th>
-                      <th>Total</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cotizaciones.length > 0 ? (
-                      ordenarCotizaciones(cotizaciones)
-                        .filter((cotizacion) =>
-                          cotizacion.clienteNombre
-                            ?.toLowerCase()
-                            .includes(filterReceptor.toLowerCase())
-                        )
-                        .map((cotizacion, index) => (
-                          <tr key={cotizacion.id}>
-                            <td>{index + 1}</td>
-                            <td>{cotizacion.clienteNombre}</td>
-                            <td>{cotizacion.fecha}</td>
-                            <td className="cotizaciones-equipos-column">{cotizacion.cantidadTotal || 0}</td>
-                            <td>{cotizacion.conceptosCount === 1 ? "1 concepto" : cotizacion.conceptosCount > 0 ? `${cotizacion.conceptosCount} conceptos` : "0 conceptos"}</td>
-                            <td>${cotizacion.subtotal?.toFixed(2) || '0.00'}</td>
-                            <td>${cotizacion.iva?.toFixed(2) || '0.00'}</td>
-                            <td className="cotizaciones-total-cell">${cotizacion.total?.toFixed(2) || '0.00'}</td>
-                            <td>
-                              <div className="cotizaciones-actions">
-                                <button
-                                  className="cotizaciones-action-btn cotizaciones-edit-btn"
-                                  onClick={() => openModal("cotizacion", { cotizacion })}
-                                  title="Editar"
-                                >
-                                  <img
-                                    src={editIcon || "/placeholder.svg"}
-                                    alt="Editar"
-                                    className="cotizaciones-action-icon"
-                                  />
-                                </button>
-                                <button
-                                  className="cotizaciones-action-btn cotizaciones-delete-btn"
-                                  onClick={() => handleDeleteCotizacion(cotizacion)}
-                                  title="Eliminar"
-                                >
-                                  <img
-                                    src={deleteIcon || "/placeholder.svg"}
-                                    alt="Eliminar"
-                                    className="cotizaciones-action-icon"
-                                  />
-                                </button>
-                                <button
-                                  className="cotizaciones-action-btn cotizaciones-download-btn"
-                                  onClick={() => handleDownloadCotizacionPDF(cotizacion.id)}
-                                  title="Descargar Cotización en PDF"
-                                >
-                                  <img
-                                    src={downloadIcon || "/placeholder.svg"}
-                                    alt="Descargar"
-                                    className="cotizaciones-action-icon"
-                                  />
-                                </button>
-                                <button
-                                  className={`cotizaciones-action-btn cotizaciones-receivable-btn ${cotizacionesVinculadas.has(cotizacion.id)
-                                    ? 'cotizaciones-receivable-btn-vinculada'
-                                    : 'cotizaciones-receivable-btn-disponible'
-                                    }`}
-                                  onClick={async () => {
-                                    const response = await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacion.id}/check-vinculada`);
-                                    const { vinculada } = await response.json();
-                                    if (vinculada) {
-                                      Swal.fire({
-                                        icon: "warning",
-                                        title: "Alerta",
-                                        text: "Ya se generaron las cuentas por cobrar",
-                                      });
-                                    } else {
-                                      openModal("crearCuentas", { cotizacion: cotizacion });
-                                    }
-                                  }}
-                                  title={
-                                    cotizacionesVinculadas.has(cotizacion.id)
-                                      ? "Cuentas por cobrar ya generadas"
-                                      : "Generar Cuenta por Cobrar"
-                                  }
-                                >
-                                  <img
-                                    src={receivableIcon || "/placeholder.svg"}
-                                    alt="Generar Cuenta"
-                                    className="cotizaciones-action-icon"
-                                  />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                    ) : (
+                <div className="cotizaciones-table-container">
+                  <table className="cotizaciones-table">
+                    <thead className="cotizaciones-table-header-fixed">
                       <tr>
-                        <td colSpan="10" className="cotizaciones-no-data">
-                          No hay cotizaciones registradas
-                        </td>
+                        <th>No.</th>
+                        <th>Receptor</th>
+                        <th>Fecha</th>
+                        <th className="cotizaciones-equipos-column-header">Total de equipos</th>
+                        <th>Concepto</th>
+                        <th>Subtotal</th>
+                        <th>IVA</th>
+                        <th>Total</th>
+                        <th>Acciones</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {cotizaciones.length > 0 ? (
+                        ordenarCotizaciones(cotizaciones)
+                          .filter((cotizacion) =>
+                            cotizacion.clienteNombre
+                              ?.toLowerCase()
+                              .includes(filterReceptor.toLowerCase())
+                          )
+                          .map((cotizacion, index) => (
+                            <tr key={cotizacion.id}>
+                              <td>{index + 1}</td>
+                              <td>{cotizacion.clienteNombre}</td>
+                              <td>{cotizacion.fecha}</td>
+                              <td className="cotizaciones-equipos-column">{cotizacion.cantidadTotal || 0}</td>
+                              <td>{cotizacion.conceptosCount === 1 ? "1 concepto" : cotizacion.conceptosCount > 0 ? `${cotizacion.conceptosCount} conceptos` : "0 conceptos"}</td>
+                              <td>${cotizacion.subtotal?.toFixed(2) || '0.00'}</td>
+                              <td>${cotizacion.iva?.toFixed(2) || '0.00'}</td>
+                              <td className="cotizaciones-total-cell">${cotizacion.total?.toFixed(2) || '0.00'}</td>
+                              <td>
+                                <div className="cotizaciones-actions">
+                                  <button
+                                    className="cotizaciones-action-btn cotizaciones-edit-btn"
+                                    onClick={() => openModal("cotizacion", { cotizacion })}
+                                    title="Editar"
+                                  >
+                                    <img
+                                      src={editIcon || "/placeholder.svg"}
+                                      alt="Editar"
+                                      className="cotizaciones-action-icon"
+                                    />
+                                  </button>
+                                  <button
+                                    className="cotizaciones-action-btn cotizaciones-delete-btn"
+                                    onClick={() => handleDeleteCotizacion(cotizacion)}
+                                    title="Eliminar"
+                                  >
+                                    <img
+                                      src={deleteIcon || "/placeholder.svg"}
+                                      alt="Eliminar"
+                                      className="cotizaciones-action-icon"
+                                    />
+                                  </button>
+                                  <button
+                                    className="cotizaciones-action-btn cotizaciones-download-btn"
+                                    onClick={() => handleDownloadCotizacionPDF(cotizacion.id)}
+                                    title="Descargar Cotización en PDF"
+                                  >
+                                    <img
+                                      src={downloadIcon || "/placeholder.svg"}
+                                      alt="Descargar"
+                                      className="cotizaciones-action-icon"
+                                    />
+                                  </button>
+                                  <button
+                                    className={`cotizaciones-action-btn cotizaciones-receivable-btn ${cotizacionesVinculadas.has(cotizacion.id)
+                                      ? 'cotizaciones-receivable-btn-vinculada'
+                                      : 'cotizaciones-receivable-btn-disponible'
+                                      }`}
+                                    onClick={async () => {
+                                      const response = await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacion.id}/check-vinculada`);
+                                      const { vinculada } = await response.json();
+                                      if (vinculada) {
+                                        Swal.fire({
+                                          icon: "warning",
+                                          title: "Alerta",
+                                          text: "Ya se generaron las cuentas por cobrar",
+                                        });
+                                      } else {
+                                        openModal("crearCuentas", { cotizacion: cotizacion });
+                                      }
+                                    }}
+                                    title={
+                                      cotizacionesVinculadas.has(cotizacion.id)
+                                        ? "Cuentas por cobrar ya generadas"
+                                        : "Generar Cuenta por Cobrar"
+                                    }
+                                  >
+                                    <img
+                                      src={receivableIcon || "/placeholder.svg"}
+                                      alt="Generar Cuenta"
+                                      className="cotizaciones-action-icon"
+                                    />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                      ) : (
+                        <tr>
+                          <td colSpan="10" className="cotizaciones-no-data">
+                            No hay cotizaciones registradas
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          </section>
-        </div>
+            </section>
+          </div>
 
-        {/* Modales */}
-        <CotizacionModal
-          isOpen={modals.cotizacion.isOpen}
-          onClose={() => closeModal("cotizacion")}
-          onSave={handleSaveCotizacion}
-          cotizacion={modals.cotizacion.cotizacion}
-          clientes={clientes}
-          modals={modals}
-          setModals={setModals}
-          users={users}
-        />
-        <ConfirmarEliminacionModal
-          isOpen={modals.confirmarEliminacion.isOpen}
-          onClose={() => closeModal("confirmarEliminacion")}
-          onConfirm={handleConfirmDelete}
-          cotizacion={modals.confirmarEliminacion.cotizacion}
-        />
-        <CrearCuentasModal
-          isOpen={modals.crearCuentas?.isOpen || false}
-          onClose={() => closeModal("crearCuentas")}
-          onSave={(savedCuentas) => {
-            setCuentasPorCobrar((prev) => [...prev, ...savedCuentas]);
-            setCotizacionesVinculadas(prev => new Set([...prev, modals.crearCuentas?.cotizacion?.id]));
-            handleSaveCuenta(savedCuentas[0]);
-            Swal.fire({
-              icon: "success",
-              title: "Éxito",
-              text: "Cuenta/s por cobrar creada correctamente",
-            });
-            closeModal("crearCuentas");
-          }}
-          cotizacion={modals.crearCuentas?.cotizacion}
-        />
+          {/* Modales */}
+          <CotizacionModal
+            isOpen={modals.cotizacion.isOpen}
+            onClose={() => closeModal("cotizacion")}
+            onSave={handleSaveCotizacion}
+            cotizacion={modals.cotizacion.cotizacion}
+            clientes={clientes}
+            modals={modals}
+            setModals={setModals}
+            users={users}
+          />
+          <ConfirmarEliminacionModal
+            isOpen={modals.confirmarEliminacion.isOpen}
+            onClose={() => closeModal("confirmarEliminacion")}
+            onConfirm={handleConfirmDelete}
+            cotizacion={modals.confirmarEliminacion.cotizacion}
+          />
+          <CrearCuentasModal
+            isOpen={modals.crearCuentas?.isOpen || false}
+            onClose={() => closeModal("crearCuentas")}
+            onSave={(savedCuentas) => {
+              setCuentasPorCobrar((prev) => [...prev, ...savedCuentas]);
+              setCotizacionesVinculadas(prev => new Set([...prev, modals.crearCuentas?.cotizacion?.id]));
+              handleSaveCuenta(savedCuentas[0]);
+              Swal.fire({
+                icon: "success",
+                title: "Éxito",
+                text: "Cuenta/s por cobrar creada correctamente",
+              });
+              closeModal("crearCuentas");
+            }}
+            cotizacion={modals.crearCuentas?.cotizacion}
+          />
 
-      </main>
+          <SubirArchivoModal
+            isOpen={modals.subirArchivo.isOpen}
+            onClose={() => closeModal("subirArchivo")}
+            onDownload={executeDownload}
+            cotizacion={modals.subirArchivo.cotizacion}
+          />
+
+        </main>
+      </div>
     </>
   )
 }

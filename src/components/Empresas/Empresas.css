@@ -1208,12 +1208,6 @@ body {
   background-color: #ffcdd2;
 }
 
-.no-deals-indicator {
-  font-size: 14px;
-  color: #f44336;
-  margin-left: auto;
-}
-
 .company-info {
   display: flex;
   align-items: center;

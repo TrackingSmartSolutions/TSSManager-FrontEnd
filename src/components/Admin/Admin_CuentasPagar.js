@@ -901,6 +901,7 @@ const AdminCuentasPagar = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       {isLoading && (
         <div className="cuentaspagar-loading">
@@ -1170,6 +1171,7 @@ const AdminCuentasPagar = () => {
           cuenta={modals.regenerar.cuenta}
         />
       </main>
+      </div>
     </>
   );
 };

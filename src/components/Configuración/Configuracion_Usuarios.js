@@ -774,6 +774,7 @@ const ConfiguracionUsuarios = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       {isLoading && (
       <div className="config-usuarios-loading">
@@ -896,6 +897,7 @@ const ConfiguracionUsuarios = () => {
         onConfirm={handleConfirmDelete}
         usuario={modals.confirmarEliminacion.data}
       />
+      </div>
     </>
   )
 }

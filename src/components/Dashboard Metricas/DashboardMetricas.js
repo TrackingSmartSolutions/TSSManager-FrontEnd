@@ -600,6 +600,7 @@ const DashboardMetricas = () => {
 
     return (
         <>
+         <div className="page-with-header">
             <Header />
             <main className="reporte-main-content">
                 <div className="reporte-container">
@@ -803,6 +804,7 @@ const DashboardMetricas = () => {
                     </div>
                 </div >
             </main >
+            </div>
         </>
     )
 }

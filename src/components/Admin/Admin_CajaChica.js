@@ -468,6 +468,7 @@ const AdminCajaChica = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       {isLoading && (
         <div className="cajachica-loading">
@@ -613,6 +614,7 @@ const AdminCajaChica = () => {
           </section>
         </div>
       </main>
+      </div>
     </>
   )
 }

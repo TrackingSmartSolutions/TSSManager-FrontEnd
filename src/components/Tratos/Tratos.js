@@ -1708,26 +1708,26 @@ const Tratos = () => {
   };
 
   const updateSingleTratoActivity = (tratoId, newActivity) => {
-  setColumnas(prevColumnas => {
-    return prevColumnas.map(columna => ({
-      ...columna,
-      tratos: columna.tratos.map(trato => {
-        if (trato.id === tratoId) {
-          return {
-            ...trato,
-            hasActivities: true,
-            lastActivityType: newActivity.tipo,
-            proximaActividadTipo: newActivity.tipo,
-            proximaActividadFecha: newActivity.fechaLimite || newActivity.horaInicio,
-            actividadesAbiertasCount: (trato.actividadesAbiertasCount || 0) + 1,
-            isNeglected: false
-          };
-        }
-        return trato;
-      })
-    }));
-  });
-};
+    setColumnas(prevColumnas => {
+      return prevColumnas.map(columna => ({
+        ...columna,
+        tratos: columna.tratos.map(trato => {
+          if (trato.id === tratoId) {
+            return {
+              ...trato,
+              hasActivities: true,
+              lastActivityType: newActivity.tipo,
+              proximaActividadTipo: newActivity.tipo,
+              proximaActividadFecha: newActivity.fechaLimite || newActivity.horaInicio,
+              actividadesAbiertasCount: (trato.actividadesAbiertasCount || 0) + 1,
+              isNeglected: false
+            };
+          }
+          return trato;
+        })
+      }));
+    });
+  };
 
   const filtrarTratosPorNombre = (tratos) => {
     let filteredTratos = tratos;
@@ -1869,8 +1869,8 @@ const Tratos = () => {
   };
 
   const handleSaveActividad = async (actividad, tipo) => {
-  updateSingleTratoActivity(actividad.tratoId, actividad);
-};
+    updateSingleTratoActivity(actividad.tratoId, actividad);
+  };
 
   const handleDragStart = (trato) => {
     setDraggedTrato(trato);
@@ -1996,178 +1996,180 @@ const Tratos = () => {
 
   return (
     <>
-      <Header />
-      {isLoading && (
-        <div className="tratos-loading">
-          <div className="spinner"></div>
-          <p>Cargando tratos...</p>
-        </div>
-      )}
-      <main className="main-content">
-        <div className="tratos-container">
-          <div className="tratos-controls">
-            <div className="tratos-filters">
-              {(userRol === "ADMINISTRADOR" || userRol === "GESTOR") && (
-                <div className="filter-group">
-                  <div className="filter-dropdown">
-                    <select
-                      value={selectedUser}
-                      onChange={(e) => setSelectedUser(e.target.value)}
-                      className="user-select"
-                    >
-                      <option value="Todos los usuarios">Todos los usuarios</option>
-                      {users.map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.nombre || user.nombreUsuario || "Sin nombre"}
-                        </option>
-                      ))}
-                    </select>
-                    <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="icon-deploy" />
-                  </div>
-                  <span className="filter-legend">Filtro por usuario</span>
-                </div>
-              )}
-              <div className="filter-group">
-                <div className="date-range-container">
-                  <DatePicker
-                    selectsRange={true}
-                    startDate={startDate}
-                    endDate={endDate}
-                    onChange={onChangeDateRange}
-                    dateFormat="dd/MM/yyyy"
-                    customInput={
-                      <button className="date-filter-btn">
-                        <span>{dateRangeText}</span>
-                        <div>
-                          <img
-                            src={calendarFilter || "/placeholder.svg"}
-                            alt="Filtro de Calendario"
-                            className="icon-calendar"
-                          />
-                        </div>
-                      </button>
-                    }
-                  />
-                </div>
-                <span className="filter-legend">Filtro por un rango de tiempo</span>
-              </div>
-
-              <div className="filter-group">
-                <div className="search-container">
-                  <input
-                    type="text"
-                    placeholder="Buscar trato por nombre..."
-                    value={globalSearchTerm}
-                    onChange={(e) => setGlobalSearchTerm(e.target.value)}
-                    className="global-search-input"
-                  />
-                </div>
-                <span className="filter-legend">Búsqueda por nombre de trato</span>
-              </div>
-            </div>
-
-            <div className="tratos-actions">
-              <button className="btn-toggle-all" onClick={handleToggleAllColumns}>
-                {allExpanded ? "Contraer Todos" : "Expandir Todos"}
-              </button>
-              <button className="btn-crear-trato" onClick={handleCrearTrato}>
-                Crear Trato
-              </button>
-            </div>
+      <div className="page-with-header">
+        <Header />
+        {isLoading && (
+          <div className="tratos-loading">
+            <div className="spinner"></div>
+            <p>Cargando tratos...</p>
           </div>
-
-          <div className="kanban-board">
-            {columnas.map((columna) => (
-              <div
-                key={columna.id}
-                className={`kanban-column ${expandedColumns.includes(columna.id) ? "expanded" : ""}`}
-              >
-                <div className={`column-color-line ${columna.className}-line`}></div>
-                <div className={`column-header ${columna.className}`}>
-                  <div className="column-title">
-                    <span className="vertical-text">{columna.nombre}</span>
-                  </div>
-                  <div className="column-count">{columna.count}</div>
-                </div>
-
-                <div
-                  className="column-content"
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, columna.id)}
-                >
-                  {columna.tratos.length > 0 ? (
-                    filtrarTratosPorNombre(columna.tratos).map((trato) => (
-                      <TratoCard
-                        key={trato.id}
-                        trato={trato}
-                        onDragStart={handleDragStart}
-                        onDragEnd={handleDragEnd}
-                        onTratoClick={handleTratoClick}
-                        onActivityAdded={handleActivityAdded}
-                        navigate={navigate}
-                      />
-                    ))
-                  ) : (
-                    <div className="empty-column">
-                      <p>No se encontró ningún trato</p>
+        )}
+        <main className="main-content">
+          <div className="tratos-container">
+            <div className="tratos-controls">
+              <div className="tratos-filters">
+                {(userRol === "ADMINISTRADOR" || userRol === "GESTOR") && (
+                  <div className="filter-group">
+                    <div className="filter-dropdown">
+                      <select
+                        value={selectedUser}
+                        onChange={(e) => setSelectedUser(e.target.value)}
+                        className="user-select"
+                      >
+                        <option value="Todos los usuarios">Todos los usuarios</option>
+                        {users.map((user) => (
+                          <option key={user.id} value={user.id}>
+                            {user.nombre || user.nombreUsuario || "Sin nombre"}
+                          </option>
+                        ))}
+                      </select>
+                      <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="icon-deploy" />
                     </div>
-                  )}
+                    <span className="filter-legend">Filtro por usuario</span>
+                  </div>
+                )}
+                <div className="filter-group">
+                  <div className="date-range-container">
+                    <DatePicker
+                      selectsRange={true}
+                      startDate={startDate}
+                      endDate={endDate}
+                      onChange={onChangeDateRange}
+                      dateFormat="dd/MM/yyyy"
+                      customInput={
+                        <button className="date-filter-btn">
+                          <span>{dateRangeText}</span>
+                          <div>
+                            <img
+                              src={calendarFilter || "/placeholder.svg"}
+                              alt="Filtro de Calendario"
+                              className="icon-calendar"
+                            />
+                          </div>
+                        </button>
+                      }
+                    />
+                  </div>
+                  <span className="filter-legend">Filtro por un rango de tiempo</span>
                 </div>
 
-                <div className="column-navigation">
-                  <span className="nav-icon" onClick={() => handleToggleColumn(columna.id)}>
-                    {expandedColumns.includes(columna.id) ? (
-                      <img src={expandIcon || "/placeholder.svg"} alt="Expandir" className="icon" />
-                    ) : (
-                      <img src={contractIcon || "/placeholder.svg"} alt="Contraer" className="icon" />
-                    )}
-                  </span>
+                <div className="filter-group">
+                  <div className="search-container">
+                    <input
+                      type="text"
+                      placeholder="Buscar trato por nombre..."
+                      value={globalSearchTerm}
+                      onChange={(e) => setGlobalSearchTerm(e.target.value)}
+                      className="global-search-input"
+                    />
+                  </div>
+                  <span className="filter-legend">Búsqueda por nombre de trato</span>
                 </div>
               </div>
-            ))}
+
+              <div className="tratos-actions">
+                <button className="btn-toggle-all" onClick={handleToggleAllColumns}>
+                  {allExpanded ? "Contraer Todos" : "Expandir Todos"}
+                </button>
+                <button className="btn-crear-trato" onClick={handleCrearTrato}>
+                  Crear Trato
+                </button>
+              </div>
+            </div>
+
+            <div className="kanban-board">
+              {columnas.map((columna) => (
+                <div
+                  key={columna.id}
+                  className={`kanban-column ${expandedColumns.includes(columna.id) ? "expanded" : ""}`}
+                >
+                  <div className={`column-color-line ${columna.className}-line`}></div>
+                  <div className={`column-header ${columna.className}`}>
+                    <div className="column-title">
+                      <span className="vertical-text">{columna.nombre}</span>
+                    </div>
+                    <div className="column-count">{columna.count}</div>
+                  </div>
+
+                  <div
+                    className="column-content"
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, columna.id)}
+                  >
+                    {columna.tratos.length > 0 ? (
+                      filtrarTratosPorNombre(columna.tratos).map((trato) => (
+                        <TratoCard
+                          key={trato.id}
+                          trato={trato}
+                          onDragStart={handleDragStart}
+                          onDragEnd={handleDragEnd}
+                          onTratoClick={handleTratoClick}
+                          onActivityAdded={handleActivityAdded}
+                          navigate={navigate}
+                        />
+                      ))
+                    ) : (
+                      <div className="empty-column">
+                        <p>No se encontró ningún trato</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="column-navigation">
+                    <span className="nav-icon" onClick={() => handleToggleColumn(columna.id)}>
+                      {expandedColumns.includes(columna.id) ? (
+                        <img src={expandIcon || "/placeholder.svg"} alt="Expandir" className="icon" />
+                      ) : (
+                        <img src={contractIcon || "/placeholder.svg"} alt="Contraer" className="icon" />
+                      )}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <NuevoTratoModal
-          isOpen={modals.nuevoTrato.isOpen}
-          onClose={() => closeModal("nuevoTrato")}
-          onSave={handleSaveNuevoTrato}
-        />
+          <NuevoTratoModal
+            isOpen={modals.nuevoTrato.isOpen}
+            onClose={() => closeModal("nuevoTrato")}
+            onSave={handleSaveNuevoTrato}
+          />
 
-        <SeleccionarActividadModal
-          isOpen={modals.seleccionarActividad.isOpen}
-          onClose={() => closeModal("seleccionarActividad")}
-          onSelectActivity={handleSelectActivity}
-          tratoId={modals.seleccionarActividad.tratoId}
-        />
+          <SeleccionarActividadModal
+            isOpen={modals.seleccionarActividad.isOpen}
+            onClose={() => closeModal("seleccionarActividad")}
+            onSelectActivity={handleSelectActivity}
+            tratoId={modals.seleccionarActividad.tratoId}
+          />
 
-        <ProgramarLlamadaModal
-          isOpen={modals.programarLlamada.isOpen}
-          onClose={() => closeModal("programarLlamada")}
-          onSave={handleSaveActividad}
-          tratoId={modals.programarLlamada.tratoId}
-          users={users}
-          creatorId={modals.programarLlamada.creatorId}
-        />
+          <ProgramarLlamadaModal
+            isOpen={modals.programarLlamada.isOpen}
+            onClose={() => closeModal("programarLlamada")}
+            onSave={handleSaveActividad}
+            tratoId={modals.programarLlamada.tratoId}
+            users={users}
+            creatorId={modals.programarLlamada.creatorId}
+          />
 
-        <ProgramarReunionModal
-          isOpen={modals.programarReunion.isOpen}
-          onClose={() => closeModal("programarReunion")}
-          onSave={handleSaveActividad}
-          tratoId={modals.programarReunion.tratoId}
-          users={users}
-          creatorId={modals.programarReunion.creatorId}
-        />
+          <ProgramarReunionModal
+            isOpen={modals.programarReunion.isOpen}
+            onClose={() => closeModal("programarReunion")}
+            onSave={handleSaveActividad}
+            tratoId={modals.programarReunion.tratoId}
+            users={users}
+            creatorId={modals.programarReunion.creatorId}
+          />
 
-        <ProgramarTareaModal
-          isOpen={modals.programarTarea.isOpen}
-          onClose={() => closeModal("programarTarea")}
-          onSave={handleSaveActividad}
-          tratoId={modals.programarTarea.tratoId}
-          users={users}
-          creatorId={modals.programarTarea.creatorId}
-        />
-      </main>
+          <ProgramarTareaModal
+            isOpen={modals.programarTarea.isOpen}
+            onClose={() => closeModal("programarTarea")}
+            onSave={handleSaveActividad}
+            tratoId={modals.programarTarea.tratoId}
+            users={users}
+            creatorId={modals.programarTarea.creatorId}
+          />
+        </main>
+      </div>
     </>
   );
 };

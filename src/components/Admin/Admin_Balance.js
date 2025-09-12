@@ -22,6 +22,14 @@ const fetchWithToken = async (url, options = {}) => {
   return response.json()
 }
 
+const normalizarTexto = (texto) => {
+  return texto
+    .toLowerCase()
+    .normalize("NFD") // Descompone caracteres con acentos
+    .replace(/[\u0300-\u036f]/g, "") // Elimina los diacríticos (acentos)
+    .trim()
+}
+
 const AdminBalance = () => {
   const navigate = useNavigate()
   const [balanceData, setBalanceData] = useState({
@@ -38,7 +46,11 @@ const AdminBalance = () => {
   })
   const [categorias, setCategorias] = useState([])
   const [cuentas, setCuentas] = useState([])
-  const REPOSICION_ID = 12
+  const CATEGORIA_REPOSICION_NORMALIZADA = normalizarTexto("Reposición")
+
+  const esCategoriaReposicion = (descripcionCategoria) => {
+  return normalizarTexto(descripcionCategoria) === CATEGORIA_REPOSICION_NORMALIZADA
+}
 
   const obtenerRangoFechas = (tipoFiltro) => {
     const ahora = new Date()
@@ -203,7 +215,7 @@ const AdminBalance = () => {
           fetchWithToken(`${API_BASE_URL}/cotizaciones`),
         ])
 
-      const transacciones = transaccionesResp.filter((t) => t.cuenta.id !== REPOSICION_ID)
+      const transacciones = transaccionesResp.filter((t) => !esCategoriaReposicion(t.categoria.descripcion))
       const cuentasPorCobrar = cuentasPorCobrarResp.filter((c) => c.estatus === "PAGADO")
       const cotizaciones = cotizacionesResp
 
@@ -216,12 +228,12 @@ const AdminBalance = () => {
       const graficoMensual = generarDatosGrafico(transacciones, filtros.tiempoGrafico)
 
       const acumuladoCuentas = categoriasResp.map((cat) => {
-        const cuentasFiltradas = cuentasResp.filter((c) => c.categoria.id === cat.id && c.id !== REPOSICION_ID)
+        const cuentasFiltradas = cuentasResp.filter((c) => c.categoria.id === cat.id && !esCategoriaReposicion(c.categoria.descripcion))
         const montoTotal = transacciones
           .filter(
             (t) =>
               t.categoria.id === cat.id &&
-              t.cuenta.id !== REPOSICION_ID &&
+              !esCategoriaReposicion(t.categoria.descripcion) &&
               (t.tipo === "INGRESO" ||
                 (t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))),
           )
@@ -239,7 +251,7 @@ const AdminBalance = () => {
           }
         }),
       )).filter(equipo => equipo.numeroEquipos > 0)
-      .sort((a, b) => new Date(a.fechaPago) - new Date(b.fechaPago))
+        .sort((a, b) => new Date(a.fechaPago) - new Date(b.fechaPago))
 
       setBalanceData({
         resumenContable: { totalIngresos, totalGastos, utilidadPerdida },
@@ -657,7 +669,7 @@ const AdminBalance = () => {
     (acc, cat) => {
       acc[cat.descripcion] = [
         "Todas",
-        ...cuentas.filter((c) => c.categoria.id === cat.id && c.id !== REPOSICION_ID).map((c) => c.nombre),
+        ...cuentas.filter((c) => c.categoria.id === cat.id && !esCategoriaReposicion(c.categoria.descripcion)).map((c) => c.nombre),
       ]
       return acc
     },
@@ -666,6 +678,7 @@ const AdminBalance = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       {isLoading && (
         <div className="adminbalance-loading">
@@ -860,6 +873,7 @@ const AdminBalance = () => {
           </section>
         </div>
       </main>
+      </div>
     </>
   )
 }

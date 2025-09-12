@@ -44,16 +44,6 @@ const fetchEmpresas = async () => {
   }
 };
 
-const fetchUsuarios = async () => {
-  try {
-    const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
-    return response.data || [];
-  } catch (error) {
-    console.error("Error fetching usuarios:", error);
-    return [];
-  }
-};
-
 const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
   useEffect(() => {
     if (isOpen) {
@@ -182,10 +172,7 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
             if (["rentas", "compra y activación de sim", "recargas de saldos"].includes(categoriaDesc)) {
               const empresas = await fetchEmpresas();
               cuentasAPI = empresas.map(emp => emp.nombre);
-            } else if (categoriaDesc === "comisiones") {
-              const usuarios = await fetchUsuarios();
-              cuentasAPI = usuarios.map(user => `${user.nombre} ${user.apellidos}`);
-            }
+            } 
           }
 
           const todasLasCuentas = [...cuentasForCat, ...cuentasAPI];
@@ -1108,6 +1095,7 @@ const AdminTransacciones = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       {isLoading && (
         <div className="transacciones-loading">
@@ -1323,6 +1311,7 @@ const AdminTransacciones = () => {
           item={modals.confirmarEliminacion.item}
         />
       </main>
+      </div>
     </>
   );
 };

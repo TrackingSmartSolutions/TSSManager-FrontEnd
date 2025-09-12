@@ -266,6 +266,7 @@ const ConfiguracionEmpresa = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header logoUrl={companyData.logoPreview} />
       {isLoading && (
         <div className="config-empresa-loading">
@@ -459,6 +460,7 @@ const ConfiguracionEmpresa = () => {
           </section>
         </div>
       </main>
+      </div>
     </>
   );
 };

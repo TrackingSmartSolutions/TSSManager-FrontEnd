@@ -340,6 +340,7 @@ const ConfiguracionAlmacenamiento = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       {isLoading && (
         <div className="config-almacenamiento-loading">
@@ -539,6 +540,7 @@ const ConfiguracionAlmacenamiento = () => {
           </section>
         </div>
       </main>
+      </div>
     </>
   )
 }

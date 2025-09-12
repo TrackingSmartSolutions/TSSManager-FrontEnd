@@ -395,6 +395,7 @@ const ConfiguracionPlantillas = () => {
 
   return (
     <>
+     <div className="page-with-header">
       <Header />
       {isLoading && (
         <div className="correo-plantillas-loading">
@@ -669,6 +670,7 @@ const ConfiguracionPlantillas = () => {
           </section>
         </div>
       </main>
+      </div>
     </>
   );
 };
