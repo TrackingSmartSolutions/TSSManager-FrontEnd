@@ -197,7 +197,7 @@ const numeroALetras = (numero) => {
 }
 
 // Modal para Agregar Comprobante de Pago
-const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta, categoriasIngreso }) => {
+const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
   const [formData, setFormData] = useState({
     montoPago: "",
     fechaPago: "",
@@ -207,6 +207,13 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta, categoriasIngreso }
   const [errors, setErrors] = useState({});
   const saldoPendiente = cuenta?.saldoPendiente || cuenta?.cantidadCobrar || 0;
   const [isLoading, setIsLoading] = useState(false);
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
+
+  const categoriasPermitidas = [
+    { id: 1, descripcion: "Ventas" },
+    { id: 2, descripcion: "Renta Mensual" },
+    { id: 25, descripcion: "Renta Anual" }
+  ];
 
   useEffect(() => {
     if (isOpen) {
@@ -216,6 +223,7 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta, categoriasIngreso }
         comprobantePago: null,
         categoriaId: "",
       });
+      setCategoriaSeleccionada("");
       setErrors({});
     }
   }, [isOpen, cuenta]);
@@ -224,6 +232,14 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta, categoriasIngreso }
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const handleCategoriaChange = (categoriaId) => {
+    setCategoriaSeleccionada(categoriaId);
+    setFormData((prev) => ({ ...prev, categoriaId: categoriaId }));
+    if (errors.categoriaId) {
+      setErrors((prev) => ({ ...prev, categoriaId: "" }));
     }
   };
 
@@ -267,7 +283,7 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta, categoriasIngreso }
 
     if (!formData.fechaPago) newErrors.fechaPago = "La fecha de pago es obligatoria";
     if (!formData.comprobantePago) newErrors.comprobantePago = "El comprobante de pago es obligatorio";
-    if (!formData.categoriaId) newErrors.categoriaId = "La categoría es obligatoria";
+    if (!categoriaSeleccionada) newErrors.categoriaId = "Debe seleccionar una categoría";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -373,20 +389,25 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta, categoriasIngreso }
         </div>
 
         <div className="cuentascobrar-form-group">
-          <label htmlFor="categoriaId">Categoría <span className="required"> *</span></label>
-          <select
-            id="categoriaId"
-            value={formData.categoriaId}
-            onChange={(e) => handleInputChange("categoriaId", e.target.value)}
-            className={`cuentascobrar-form-control ${errors.categoriaId ? "error" : ""}`}
-          >
-            <option value="">Seleccione una categoría</option>
-            {categoriasIngreso.map((categoria) => (
-              <option key={categoria.id} value={categoria.id}>
-                {categoria.descripcion}
-              </option>
+          <label>Categoría <span className="required"> *</span></label>
+          <div className="cuentascobrar-checkbox-group">
+            {categoriasPermitidas.map((categoria) => (
+              <div key={categoria.id} className="cuentascobrar-checkbox-item">
+                <input
+                  type="radio"
+                  id={`categoria-${categoria.id}`}
+                  name="categoria"
+                  value={categoria.id}
+                  checked={categoriaSeleccionada === categoria.id.toString()}
+                  onChange={() => handleCategoriaChange(categoria.id.toString())}
+                  className="cuentascobrar-radio-input"
+                />
+                <label htmlFor={`categoria-${categoria.id}`} className="cuentascobrar-radio-label">
+                  {categoria.descripcion}
+                </label>
+              </div>
             ))}
-          </select>
+          </div>
           {errors.categoriaId && <span className="cuentascobrar-error-message">{errors.categoriaId}</span>}
         </div>
 
@@ -1356,281 +1377,280 @@ const AdminCuentasCobrar = () => {
 
   return (
     <>
-     <div className="page-with-header">
-      <Header />
-      {isLoading && (
-        <div className="cuentascobrar-loading">
-          <div className="spinner"></div>
-          <p>Cargando datos de cuentas por cobrar...</p>
-        </div>
-      )}
-      <main className="cuentascobrar-main-content">
-        <div className="cuentascobrar-container">
-          <section className="cuentascobrar-sidebar">
-            <div className="cuentascobrar-sidebar-header">
-              <h3 className="cuentascobrar-sidebar-title">Administración</h3>
-            </div>
-            <div className="cuentascobrar-sidebar-menu">
-              {userRol === "ADMINISTRADOR" && (
-              <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("balance")}>
-                Balance
+      <div className="page-with-header">
+        <Header />
+        {isLoading && (
+          <div className="cuentascobrar-loading">
+            <div className="spinner"></div>
+            <p>Cargando datos de cuentas por cobrar...</p>
+          </div>
+        )}
+        <main className="cuentascobrar-main-content">
+          <div className="cuentascobrar-container">
+            <section className="cuentascobrar-sidebar">
+              <div className="cuentascobrar-sidebar-header">
+                <h3 className="cuentascobrar-sidebar-title">Administración</h3>
               </div>
-              )}
-              <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
-                Transacciones
+              <div className="cuentascobrar-sidebar-menu">
+                {userRol === "ADMINISTRADOR" && (
+                  <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("balance")}>
+                    Balance
+                  </div>
+                )}
+                <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
+                  Transacciones
+                </div>
+                <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("cotizaciones")}>
+                  Cotizaciones
+                </div>
+                <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("facturacion")}>
+                  Facturas/Notas
+                </div>
+                <div
+                  className="cuentascobrar-menu-item cuentascobrar-menu-item-active"
+                  onClick={() => handleMenuNavigation("cuentas-cobrar")}
+                >
+                  Cuentas por Cobrar
+                </div>
+                <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("cuentas-pagar")}>
+                  Cuentas por Pagar
+                </div>
+                <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>
+                  Caja chica
+                </div>
               </div>
-              <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("cotizaciones")}>
-                Cotizaciones
-              </div>
-              <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("facturacion")}>
-                Facturas/Notas
-              </div>
-              <div
-                className="cuentascobrar-menu-item cuentascobrar-menu-item-active"
-                onClick={() => handleMenuNavigation("cuentas-cobrar")}
-              >
-                Cuentas por Cobrar
-              </div>
-              <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("cuentas-pagar")}>
-                Cuentas por Pagar
-              </div>
-              <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>
-                Caja chica
-              </div>
-            </div>
-          </section>
+            </section>
 
-          <section className="cuentascobrar-content-panel">
-            <div className="cuentascobrar-header">
-              <div className="cuentascobrar-header-info">
-                <h3 className="cuentascobrar-page-title">Cuentas por Cobrar</h3>
-                <p className="cuentascobrar-subtitle">Gestión de cobros pendientes</p>
-              </div>
-            </div>
-
-            <div className="cuentascobrar-table-card">
-              <div className="cuentascobrar-table-header">
-                <h4 className="cuentascobrar-table-title">Cuentas por cobrar</h4>
-                <div className="cuentascobrar-filter-container">
-                  <button
-                    className="cuentascobrar-btn-orden"
-                    onClick={toggleOrdenFecha}
-                    title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'}`}
-                  >
-                    {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
-                  </button>
-                  <label htmlFor="filtroEstatus">Filtrar por estatus:</label>
-                  <select
-                    id="filtroEstatus"
-                    value={filtroEstatus}
-                    onChange={(e) => setFiltroEstatus(e.target.value)}
-                    className="cuentascobrar-filter-select"
-                  >
-                    <option value="Todas">Todas</option>
-                    <option value="PENDIENTE">Pendiente</option>
-                    <option value="VENCIDA">Vencida</option>
-                    <option value="EN_PROCESO">En Proceso</option>
-                    <option value="PAGADO">Pagado</option>
-                  </select>
+            <section className="cuentascobrar-content-panel">
+              <div className="cuentascobrar-header">
+                <div className="cuentascobrar-header-info">
+                  <h3 className="cuentascobrar-page-title">Cuentas por Cobrar</h3>
+                  <p className="cuentascobrar-subtitle">Gestión de cobros pendientes</p>
                 </div>
               </div>
 
-              <div className="cuentascobrar-table-container">
-                <table className="cuentascobrar-table">
-                  <thead className="cuentascobrar-table-header-fixed">
-                    <tr>
-                      <th>Folio</th>
-                      <th>Fecha de Pago</th>
-                      <th>Cliente</th>
-                      <th>Estatus</th>
-                      <th>Esquema</th>
-                      <th>Monto a Cobrar</th>
-                      <th>Concepto/s</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cuentasOrdenadas.length > 0 ? (
-                      cuentasOrdenadas.map((cuenta) => (
-                        <tr key={cuenta.id}>
-                          <td>{cuenta.folio}</td>
-                          <td>{cuenta.fechaPago}</td>
-                          <td>{cuenta.clienteNombre || cuenta.cliente}</td>
-                          <td>
-                            <span className={`cuentascobrar-estatus-badge ${getEstatusClass(cuenta.estatus)}`}>
-                              {cuenta.estatus}
-                            </span>
-                          </td>
-                          <td>{cuenta.esquema}</td>
-                          <td>
-                            <div className="cuentascobrar-monto-info">
-                              <div>{formatCurrency(cuenta.cantidadCobrar)}</div>
-                              {cuenta.montoPagado > 0 && (
-                                <div className="cuentascobrar-monto-detalle">
-                                  <small>Pagado: {formatCurrency(cuenta.montoPagado)}</small>
-                                  <small>Pendiente: {formatCurrency(cuenta.saldoPendiente)}</small>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="cuentascobrar-concepto-cell">
-                            {cuenta.conceptos.length > 1
-                              ? `${cuenta.conceptos.length} conceptos`
-                              : cuenta.conceptos[0]?.substring(0, 50) + "..."}
-                          </td>
-                          <td>
-                            <div className="cuentascobrar-actions">
-                              <button
-                                className="cuentascobrar-action-btn cuentascobrar-delete-btn"
-                                onClick={() => handleDeleteCuenta(cuenta)}
-                                title="Eliminar"
-                              >
-                                <img
-                                  src={deleteIcon || "/placeholder.svg"}
-                                  alt="Eliminar"
-                                  className="cuentascobrar-action-icon"
-                                />
-                              </button>
-                              {cuenta.estatus !== "PAGADO" && (
+              <div className="cuentascobrar-table-card">
+                <div className="cuentascobrar-table-header">
+                  <h4 className="cuentascobrar-table-title">Cuentas por cobrar</h4>
+                  <div className="cuentascobrar-filter-container">
+                    <button
+                      className="cuentascobrar-btn-orden"
+                      onClick={toggleOrdenFecha}
+                      title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'}`}
+                    >
+                      {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
+                    </button>
+                    <label htmlFor="filtroEstatus">Filtrar por estatus:</label>
+                    <select
+                      id="filtroEstatus"
+                      value={filtroEstatus}
+                      onChange={(e) => setFiltroEstatus(e.target.value)}
+                      className="cuentascobrar-filter-select"
+                    >
+                      <option value="Todas">Todas</option>
+                      <option value="PENDIENTE">Pendiente</option>
+                      <option value="VENCIDA">Vencida</option>
+                      <option value="EN_PROCESO">En Proceso</option>
+                      <option value="PAGADO">Pagado</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="cuentascobrar-table-container">
+                  <table className="cuentascobrar-table">
+                    <thead className="cuentascobrar-table-header-fixed">
+                      <tr>
+                        <th>Folio</th>
+                        <th>Fecha de Pago</th>
+                        <th>Cliente</th>
+                        <th>Estatus</th>
+                        <th>Esquema</th>
+                        <th>Monto a Cobrar</th>
+                        <th>Concepto/s</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cuentasOrdenadas.length > 0 ? (
+                        cuentasOrdenadas.map((cuenta) => (
+                          <tr key={cuenta.id}>
+                            <td>{cuenta.folio}</td>
+                            <td>{cuenta.fechaPago}</td>
+                            <td>{cuenta.clienteNombre || cuenta.cliente}</td>
+                            <td>
+                              <span className={`cuentascobrar-estatus-badge ${getEstatusClass(cuenta.estatus)}`}>
+                                {cuenta.estatus}
+                              </span>
+                            </td>
+                            <td>{cuenta.esquema}</td>
+                            <td>
+                              <div className="cuentascobrar-monto-info">
+                                <div>{formatCurrency(cuenta.cantidadCobrar)}</div>
+                                {cuenta.montoPagado > 0 && (
+                                  <div className="cuentascobrar-monto-detalle">
+                                    <small>Pagado: {formatCurrency(cuenta.montoPagado)}</small>
+                                    <small>Pendiente: {formatCurrency(cuenta.saldoPendiente)}</small>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                            <td className="cuentascobrar-concepto-cell">
+                              {cuenta.conceptos.length > 1
+                                ? `${cuenta.conceptos.length} conceptos`
+                                : cuenta.conceptos[0]?.substring(0, 50) + "..."}
+                            </td>
+                            <td>
+                              <div className="cuentascobrar-actions">
                                 <button
-                                  className="cuentascobrar-action-btn cuentascobrar-edit-btn"
-                                  onClick={() => openModal("editarCuenta", { cuenta })}
-                                  title="Editar cuenta"
+                                  className="cuentascobrar-action-btn cuentascobrar-delete-btn"
+                                  onClick={() => handleDeleteCuenta(cuenta)}
+                                  title="Eliminar"
                                 >
                                   <img
-                                    src={editIcon}
-                                    alt="Editar"
+                                    src={deleteIcon || "/placeholder.svg"}
+                                    alt="Eliminar"
                                     className="cuentascobrar-action-icon"
                                   />
                                 </button>
-                              )}
-                              {cuenta.estatus !== "PAGADO" && (
-                                <button
-                                  className="cuentascobrar-action-btn cuentascobrar-check-btn"
-                                  onClick={() => handleCheckMarcarCompletada(cuenta)}
-                                  title="Marcar como completado"
-                                >
-                                  <img
-                                    src={checkIcon || "/placeholder.svg"}
-                                    alt="Completar"
-                                    className="cuentascobrar-action-icon"
-                                  />
-                                </button>
-                              )}
-                              {cuenta.estatus === "PAGADO" &&
-                                cuenta.comprobantePagoUrl &&
-                                cuenta.comprobantePagoUrl !== "ERROR_UPLOAD" &&
-                                cuenta.comprobantePagoUrl !== "UPLOADING" && (
+                                {cuenta.estatus !== "PAGADO" && (
                                   <button
-                                    className="cuentascobrar-action-btn cuentascobrar-download-btn"
-                                    onClick={() => handleDescargarComprobante(cuenta)}
-                                    title="Descargar comprobante de pago"
+                                    className="cuentascobrar-action-btn cuentascobrar-edit-btn"
+                                    onClick={() => openModal("editarCuenta", { cuenta })}
+                                    title="Editar cuenta"
                                   >
                                     <img
-                                      src={downloadIcon || "/placeholder.svg"}
-                                      alt="Descargar"
+                                      src={editIcon}
+                                      alt="Editar"
                                       className="cuentascobrar-action-icon"
                                     />
                                   </button>
                                 )}
-                              <button
-                                className={`cuentascobrar-action-btn cuentascobrar-download-btn ${cuentasVinculadas.has(cuenta.id)
-                                  ? 'cuentascobrar-request-btn-vinculada'
-                                  : 'cuentascobrar-request-btn-disponible'
-                                  }`}
-                                onClick={async () => {
-                                  if (cuentasVinculadas.has(cuenta.id)) {
-                                    Swal.fire({
-                                      icon: "warning",
-                                      title: "Alerta",
-                                      text: "Ya se generó su solicitud de factura/nota",
-                                    });
-                                  } else {
-                                    openModal("crearSolicitud", { cuenta: cuenta });
+                                {cuenta.estatus !== "PAGADO" && (
+                                  <button
+                                    className="cuentascobrar-action-btn cuentascobrar-check-btn"
+                                    onClick={() => handleCheckMarcarCompletada(cuenta)}
+                                    title="Marcar como completado"
+                                  >
+                                    <img
+                                      src={checkIcon || "/placeholder.svg"}
+                                      alt="Completar"
+                                      className="cuentascobrar-action-icon"
+                                    />
+                                  </button>
+                                )}
+                                {cuenta.estatus === "PAGADO" &&
+                                  cuenta.comprobantePagoUrl &&
+                                  cuenta.comprobantePagoUrl !== "ERROR_UPLOAD" &&
+                                  cuenta.comprobantePagoUrl !== "UPLOADING" && (
+                                    <button
+                                      className="cuentascobrar-action-btn cuentascobrar-download-btn"
+                                      onClick={() => handleDescargarComprobante(cuenta)}
+                                      title="Descargar comprobante de pago"
+                                    >
+                                      <img
+                                        src={downloadIcon || "/placeholder.svg"}
+                                        alt="Descargar"
+                                        className="cuentascobrar-action-icon"
+                                      />
+                                    </button>
+                                  )}
+                                <button
+                                  className={`cuentascobrar-action-btn cuentascobrar-download-btn ${cuentasVinculadas.has(cuenta.id)
+                                    ? 'cuentascobrar-request-btn-vinculada'
+                                    : 'cuentascobrar-request-btn-disponible'
+                                    }`}
+                                  onClick={async () => {
+                                    if (cuentasVinculadas.has(cuenta.id)) {
+                                      Swal.fire({
+                                        icon: "warning",
+                                        title: "Alerta",
+                                        text: "Ya se generó su solicitud de factura/nota",
+                                      });
+                                    } else {
+                                      openModal("crearSolicitud", { cuenta: cuenta });
+                                    }
+                                  }}
+                                  title={
+                                    cuentasVinculadas.has(cuenta.id)
+                                      ? "Solicitud ya generada"
+                                      : "Generar Solicitud de Factura o Nota"
                                   }
-                                }}
-                                title={
-                                  cuentasVinculadas.has(cuenta.id)
-                                    ? "Solicitud ya generada"
-                                    : "Generar Solicitud de Factura o Nota"
-                                }
-                              >
-                                <img
-                                  src={requestIcon || "/placeholder.svg"}
-                                  alt="Emitir"
-                                  className="cuentascobrar-action-icon"
-                                />
-                              </button>
-                            </div>
+                                >
+                                  <img
+                                    src={requestIcon || "/placeholder.svg"}
+                                    alt="Emitir"
+                                    className="cuentascobrar-action-icon"
+                                  />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="8" className="cuentascobrar-no-data">
+                            {filtroEstatus === "Todas"
+                              ? "No hay cuentas por cobrar registradas"
+                              : `No hay cuentas por cobrar con estatus "${filtroEstatus}"`}
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="8" className="cuentascobrar-no-data">
-                          {filtroEstatus === "Todas"
-                            ? "No hay cuentas por cobrar registradas"
-                            : `No hay cuentas por cobrar con estatus "${filtroEstatus}"`}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          </section>
-        </div>
+            </section>
+          </div>
 
-        <SolicitudModal
-          isOpen={modals.crearSolicitud.isOpen}
-          onClose={() => closeModal("crearSolicitud")}
-          onSave={(savedSolicitud) => {
-            setSolicitudes((prev) => [...prev, savedSolicitud]);
-            const cuentaId = modals.crearSolicitud.cuenta?.id;
-            if (cuentaId) {
-              setCuentasVinculadas(prev => new Set([...prev, cuentaId]));
-            }
-            Swal.fire({
-              icon: "success",
-              title: "Éxito",
-              text: "Solicitud creada correctamente",
-            });
-            closeModal("crearSolicitud");
-          }}
-          cotizaciones={cotizaciones}
-          cuentasPorCobrar={cuentasPorCobrar}
-          emisores={emisores}
-          preloadedCotizacion={modals.crearSolicitud.cotizacion}
-          preloadedCuenta={modals.crearSolicitud.cuenta}
-        />
+          <SolicitudModal
+            isOpen={modals.crearSolicitud.isOpen}
+            onClose={() => closeModal("crearSolicitud")}
+            onSave={(savedSolicitud) => {
+              setSolicitudes((prev) => [...prev, savedSolicitud]);
+              const cuentaId = modals.crearSolicitud.cuenta?.id;
+              if (cuentaId) {
+                setCuentasVinculadas(prev => new Set([...prev, cuentaId]));
+              }
+              Swal.fire({
+                icon: "success",
+                title: "Éxito",
+                text: "Solicitud creada correctamente",
+              });
+              closeModal("crearSolicitud");
+            }}
+            cotizaciones={cotizaciones}
+            cuentasPorCobrar={cuentasPorCobrar}
+            emisores={emisores}
+            preloadedCotizacion={modals.crearSolicitud.cotizacion}
+            preloadedCuenta={modals.crearSolicitud.cuenta}
+          />
 
-        <ComprobanteModal
-          isOpen={modals.comprobante.isOpen}
-          onClose={() => closeModal("comprobante")}
-          onSave={handleMarcarPagada}
-          cuenta={modals.comprobante.cuenta}
-          categoriasIngreso={categoriasIngreso}
-        />
+          <ComprobanteModal
+            isOpen={modals.comprobante.isOpen}
+            onClose={() => closeModal("comprobante")}
+            onSave={handleMarcarPagada}
+            cuenta={modals.comprobante.cuenta}
+          />
 
-        <EditarCuentaModal
-          isOpen={modals.editarCuenta.isOpen}
-          onClose={() => closeModal("editarCuenta")}
-          onSave={(updatedCuenta) => {
-            setCuentasPorCobrar(prev =>
-              prev.map(c => c.id === updatedCuenta.id ? updatedCuenta : c)
-            );
-            closeModal("editarCuenta");
-          }}
-          cuenta={modals.editarCuenta.cuenta}
-        />
+          <EditarCuentaModal
+            isOpen={modals.editarCuenta.isOpen}
+            onClose={() => closeModal("editarCuenta")}
+            onSave={(updatedCuenta) => {
+              setCuentasPorCobrar(prev =>
+                prev.map(c => c.id === updatedCuenta.id ? updatedCuenta : c)
+              );
+              closeModal("editarCuenta");
+            }}
+            cuenta={modals.editarCuenta.cuenta}
+          />
 
-        <ConfirmarEliminacionModal
-          isOpen={modals.confirmarEliminacion.isOpen}
-          onClose={() => closeModal("confirmarEliminacion")}
-          onConfirm={handleConfirmDelete}
-          cuenta={modals.confirmarEliminacion.cuenta}
-        />
-      </main>
+          <ConfirmarEliminacionModal
+            isOpen={modals.confirmarEliminacion.isOpen}
+            onClose={() => closeModal("confirmarEliminacion")}
+            onConfirm={handleConfirmDelete}
+            cuenta={modals.confirmarEliminacion.cuenta}
+          />
+        </main>
       </div>
     </>
   );

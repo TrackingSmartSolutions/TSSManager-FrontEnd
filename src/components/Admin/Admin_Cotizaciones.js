@@ -14,13 +14,13 @@ import { API_BASE_URL } from "../Config/Config";
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token")
   const isFormData = options.body instanceof FormData
-  
+
   const headers = {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(!isFormData ? { "Content-Type": "application/json" } : {}),
     ...options.headers,
   }
-  
+
   const response = await fetch(url, { ...options, headers })
   if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`)
   return response
@@ -906,89 +906,150 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
 };
 
 const SubirArchivoModal = ({ isOpen, onClose, onDownload, cotizacion }) => {
-  const [archivo, setArchivo] = useState(null);
+  const [notasComerciales, setNotasComerciales] = useState(null);
+  const [fichaTecnica, setFichaTecnica] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (isOpen) {
-      setArchivo(null);
+      setNotasComerciales(null);
+      setFichaTecnica(null);
+      setErrors({});
     }
   }, [isOpen]);
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (tipo, e) => {
     const file = e.target.files[0];
-    if (file && file.type === 'application/pdf') {
-      setArchivo(file);
+    if (file && (file.type === 'application/pdf' || file.type === 'image/png')) {
+      if (tipo === 'notas') {
+        setNotasComerciales(file);
+      } else {
+        setFichaTecnica(file);
+      }
+      setErrors(prev => ({ ...prev, [tipo]: null }));
     } else {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'Solo se permiten archivos PDF'
+        text: 'Solo se permiten archivos PDF y PNG'
       });
       e.target.value = '';
     }
   };
 
-  const handleDownloadWithFile = async () => {
-  if (!archivo) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: 'Debe seleccionar un archivo PDF'
-    });
-    return;
-  }
+  const validateFiles = () => {
+    const newErrors = {};
+    
+    if ((notasComerciales && !fichaTecnica) || (!notasComerciales && fichaTecnica)) {
+      newErrors.general = 'Si subes un archivo, debes subir ambos: Notas Comerciales y Ficha Técnica';
+      setErrors(newErrors);
+      return false;
+    }
+    
+    return true;
+  };
 
-  setUploading(true);
-  const formData = new FormData();
-  formData.append('archivo', archivo);
+  const handleDownloadWithFiles = async () => {
+    if (!validateFiles()) return;
 
-  try {
-    await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacion.id}/upload-archivo`, {
-      method: 'POST',
-      body: formData,
-    });
+    setUploading(true);
+    const formData = new FormData();
+    
+    if (notasComerciales) {
+      formData.append('notasComerciales', notasComerciales);
+    }
+    if (fichaTecnica) {
+      formData.append('fichaTecnica', fichaTecnica);
+    }
 
-    await onDownload(cotizacion.id, true);
-    onClose();
-  } catch (error) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: 'Error al subir el archivo: ' + error.message
-    });
-  } finally {
-    setUploading(false);
-  }
-};
+    try {
+      await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacion.id}/upload-archivos`, {
+        method: 'POST',
+        body: formData,
+      });
 
-  const handleDownloadWithoutFile = async () => {
-    // Descargar solo la cotización
+      await onDownload(cotizacion.id, true);
+      onClose();
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al subir los archivos: ' + error.message
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDownloadWithoutFiles = async () => {
     await onDownload(cotizacion.id, false);
     onClose();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Descargar Cotización" size="md" closeOnOverlayClick={false}>
+    <Modal isOpen={isOpen} onClose={onClose} title="Descargar Cotización" size="lg" closeOnOverlayClick={false}>
       <div className="cotizaciones-form">
         <div className="cotizaciones-form-group">
           <p className="cotizaciones-modal-text">
-            ¿Deseas agregar un archivo PDF adicional a esta cotización?
+            ¿Deseas agregar archivos adicionales a esta cotización?
           </p>
+          {errors.general && (
+            <div className="cotizaciones-error-message">{errors.general}</div>
+          )}
+        </div>
+
+        {/* Advertencia de tamaños recomendados */}
+        <div className="cotizaciones-form-group">
+          <div className="cotizaciones-size-warning">
+            <h4 className="cotizaciones-warning-title">Recomendaciones para imágenes PNG:</h4>
+            <ul className="cotizaciones-warning-list">
+              <li><strong>Tamaño recomendado:</strong> 1240 x 1754 píxeles (proporción A4)</li>
+              <li><strong>Orientación:</strong> Vertical (portrait) preferentemente</li>
+            </ul>
+            <p className="cotizaciones-warning-note">
+              <strong>Nota:</strong> Las imágenes PNG se convertirán automáticamente a PDF y se ajustarán al tamaño de página A4.
+            </p>
+          </div>
         </div>
 
         <div className="cotizaciones-form-group">
-          <label>Seleccionar archivo PDF (opcional):</label>
+          <label>Notas Comerciales (PDF o PNG):</label>
           <input
             type="file"
-            accept=".pdf"
-            onChange={handleFileChange}
+            accept=".pdf,.png"
+            onChange={(e) => handleFileChange('notas', e)}
             className="cotizaciones-form-control"
           />
-          {archivo && (
-            <p className="cotizaciones-file-selected">
-              Archivo seleccionado: {archivo.name}
-            </p>
+          {notasComerciales && (
+            <div className="cotizaciones-file-info">
+              <p className="cotizaciones-file-selected">
+                <strong>Archivo seleccionado:</strong> {notasComerciales.name}
+              </p>
+              <p className="cotizaciones-file-details">
+                <strong>Tamaño:</strong> {(notasComerciales.size / 1024 / 1024).toFixed(2)} MB
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="cotizaciones-form-group">
+          <label>Ficha Técnica (PDF o PNG):</label>
+          <input
+            type="file"
+            accept=".pdf,.png"
+            onChange={(e) => handleFileChange('ficha', e)}
+            className="cotizaciones-form-control"
+          />
+          {fichaTecnica && (
+            <div className="cotizaciones-file-info">
+              <p className="cotizaciones-file-selected">
+                <strong>Archivo seleccionado:</strong> {fichaTecnica.name}
+              </p>
+              <p className="cotizaciones-file-details">
+                <strong>Tamaño:</strong> {(fichaTecnica.size / 1024 / 1024).toFixed(2)} MB
+              </p>
+            </div>
           )}
         </div>
 
@@ -1001,16 +1062,16 @@ const SubirArchivoModal = ({ isOpen, onClose, onDownload, cotizacion }) => {
             Cancelar
           </button>
           <button
-            onClick={handleDownloadWithoutFile}
+            onClick={handleDownloadWithoutFiles}
             className="cotizaciones-btn cotizaciones-btn-secondary"
             disabled={uploading}
           >
-            Descargar sin archivo
+            Descargar sin archivos
           </button>
           <button
-            onClick={handleDownloadWithFile}
+            onClick={handleDownloadWithFiles}
             className="cotizaciones-btn cotizaciones-btn-primary"
-            disabled={uploading}
+            disabled={uploading || (!notasComerciales && !fichaTecnica)}
           >
             {uploading ? 'Subiendo...' : 'Subir y descargar'}
           </button>
@@ -1268,10 +1329,10 @@ const AdminCotizaciones = () => {
     openModal("subirArchivo", { cotizacion: { id: cotizacionId } });
   };
 
-  const executeDownload = async (cotizacionId, incluirArchivo) => {
+  const executeDownload = async (cotizacionId, incluirArchivos) => {
     try {
       const response = await fetchWithToken(
-        `${API_BASE_URL}/cotizaciones/${cotizacionId}/download-pdf?incluirArchivo=${incluirArchivo}`,
+        `${API_BASE_URL}/cotizaciones/${cotizacionId}/download-pdf?incluirArchivos=${incluirArchivos}`,
         {
           method: 'GET',
           headers: { 'Accept': 'application/pdf' }

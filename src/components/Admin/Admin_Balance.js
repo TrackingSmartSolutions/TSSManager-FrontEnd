@@ -99,10 +99,16 @@ const AdminBalance = () => {
     }
   }
 
+  const parseLocalDate = (dateString) => {
+    if (!dateString) return null;
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   const generarDatosGrafico = (transacciones, tipoFiltro) => {
     const { inicio, fin, labels } = obtenerRangoFechas(tipoFiltro)
     const transaccionesFiltradas = transacciones.filter((t) => {
-      const fechaTransaccion = new Date(t.fechaPago)
+      const fechaTransaccion = parseLocalDate(t.fechaPago)
       return fechaTransaccion >= inicio && fechaTransaccion <= fin
     })
 
@@ -116,7 +122,7 @@ const AdminBalance = () => {
         const ingresos = transaccionesFiltradas
           .filter((t) => t.tipo === "INGRESO")
           .filter((t) => {
-            const fechaTransaccion = new Date(t.fechaPago)
+            const fechaTransaccion = parseLocalDate(t.fechaPago)
             return (
               fechaTransaccion.getDate() === dia &&
               fechaTransaccion.getMonth() === mesActual &&
@@ -127,7 +133,7 @@ const AdminBalance = () => {
         const gastos = transaccionesFiltradas
           .filter((t) => t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))
           .filter((t) => {
-            const fechaTransaccion = new Date(t.fechaPago)
+            const fechaTransaccion = parseLocalDate(t.fechaPago)
             return (
               fechaTransaccion.getDate() === dia &&
               fechaTransaccion.getMonth() === mesActual &&
@@ -149,14 +155,14 @@ const AdminBalance = () => {
         const ingresos = transaccionesFiltradas
           .filter((t) => t.tipo === "INGRESO")
           .filter((t) => {
-            const fechaTransaccion = new Date(t.fechaPago)
+            const fechaTransaccion = parseLocalDate(t.fechaPago)
             return fechaTransaccion.getMonth() === mes && fechaTransaccion.getFullYear() === añoActual
           })
           .reduce((sum, t) => sum + t.monto, 0)
         const gastos = transaccionesFiltradas
           .filter((t) => t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))
           .filter((t) => {
-            const fechaTransaccion = new Date(t.fechaPago)
+            const fechaTransaccion = parseLocalDate(t.fechaPago)
             return fechaTransaccion.getMonth() === mes && fechaTransaccion.getFullYear() === añoActual
           })
           .reduce((sum, t) => sum + t.monto, 0)
@@ -170,14 +176,14 @@ const AdminBalance = () => {
         const ingresos = transaccionesFiltradas
           .filter((t) => t.tipo === "INGRESO")
           .filter((t) => {
-            const fechaTransaccion = new Date(t.fechaPago)
+            const fechaTransaccion = parseLocalDate(t.fechaPago)
             return fechaTransaccion.getMonth() === i && fechaTransaccion.getFullYear() === añoActual
           })
           .reduce((sum, t) => sum + t.monto, 0)
         const gastos = transaccionesFiltradas
           .filter((t) => t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))
           .filter((t) => {
-            const fechaTransaccion = new Date(t.fechaPago)
+            const fechaTransaccion = parseLocalDate(t.fechaPago)
             return fechaTransaccion.getMonth() === i && fechaTransaccion.getFullYear() === añoActual
           })
           .reduce((sum, t) => sum + t.monto, 0)
@@ -191,11 +197,11 @@ const AdminBalance = () => {
         const año = añoActual - 4 + i
         const ingresos = transaccionesFiltradas
           .filter((t) => t.tipo === "INGRESO")
-          .filter((t) => new Date(t.fechaPago).getFullYear() === año)
+          .filter((t) => parseLocalDate(t.fechaPago).getFullYear() === año)
           .reduce((sum, t) => sum + t.monto, 0)
         const gastos = transaccionesFiltradas
           .filter((t) => t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))
-          .filter((t) => new Date(t.fechaPago).getFullYear() === año)
+          .filter((t) => parseLocalDate(t.fechaPago).getFullYear() === año)
           .reduce((sum, t) => sum + t.monto, 0)
         return { mes: labels[i], ingresos, gastos }
       })
@@ -229,9 +235,23 @@ const AdminBalance = () => {
 
       const acumuladoCuentas = []
 
+      // Agregar resumen por categoría
       categoriasResp.forEach((cat) => {
         if (esCategoriaReposicion(cat.descripcion)) return
 
+        const montoTotal = transacciones
+          .filter(
+            (t) =>
+              t.categoria.id === cat.id &&
+              !esCategoriaReposicion(t.categoria.descripcion) &&
+              (t.tipo === "INGRESO" ||
+                (t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))),
+          )
+          .reduce((sum, t) => sum + t.monto, 0)
+
+        acumuladoCuentas.push({ categoria: cat.descripcion, cuenta: "Todas", monto: montoTotal })
+
+        // Agregar detalle por cuenta
         const cuentasFiltradas = cuentasResp.filter((c) => c.categoria.id === cat.id && !esCategoriaReposicion(c.categoria.descripcion))
 
         cuentasFiltradas.forEach((cuenta) => {
@@ -825,7 +845,17 @@ const AdminBalance = () => {
                                 ac.categoria === filtros.categoriaSeleccionada,
                             )
                             .filter(
-                              (ac) => filtros.cuentaSeleccionada === "Todas" || ac.cuenta === filtros.cuentaSeleccionada,
+                              (ac) => {
+                                // Si está seleccionada "Todas" las categorías, solo mostrar totales de categoría (cuenta = "Todas")
+                                if (filtros.categoriaSeleccionada === "Todas") {
+                                  return ac.cuenta === "Todas";
+                                }
+                                // Si hay una categoría específica seleccionada, NO mostrar la fila de "Todas" y aplicar filtro de cuenta
+                                if (ac.cuenta === "Todas") {
+                                  return false;
+                                }
+                                return filtros.cuentaSeleccionada === "Todas" || ac.cuenta === filtros.cuentaSeleccionada;
+                              }
                             )
                             .map((ac, index) => (
                               <tr key={index}>
