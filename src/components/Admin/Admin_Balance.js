@@ -40,10 +40,17 @@ const AdminBalance = () => {
   })
   const [isLoading, setIsLoading] = useState(true)
   const [filtros, setFiltros] = useState({
-    tiempoGrafico: "Año",
+    añoSeleccionado: "Todos los años",
+    mesSeleccionado: "Todos los meses",
+    mostrarFiltroMes: false,
     cuentaSeleccionada: "Todas",
     categoriaSeleccionada: "Todas",
   })
+  const [añosDisponibles, setAñosDisponibles] = useState([])
+  const [mesesDisponibles] = useState([
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ])
   const [categorias, setCategorias] = useState([])
   const [cuentas, setCuentas] = useState([])
   const CATEGORIA_REPOSICION_NORMALIZADA = normalizarTexto("Reposición")
@@ -52,50 +59,45 @@ const AdminBalance = () => {
     return normalizarTexto(descripcionCategoria) === CATEGORIA_REPOSICION_NORMALIZADA
   }
 
-  const obtenerRangoFechas = (tipoFiltro) => {
-    const ahora = new Date()
-    const mesActual = ahora.getMonth()
-    const añoActual = ahora.getFullYear()
-    switch (tipoFiltro) {
-      case "Mes":
-        const diasEnMes = new Date(añoActual, mesActual + 1, 0).getDate()
-        return {
-          inicio: new Date(añoActual, mesActual, 1),
-          fin: new Date(añoActual, mesActual + 1, 0),
-          labels: Array.from({ length: diasEnMes }, (_, i) => `${i + 1}`),
-        }
-      case "Trimestre":
-        const mesInicio = Math.max(0, mesActual - 2)
-        return {
-          inicio: new Date(añoActual, mesInicio, 1),
-          fin: new Date(añoActual, mesActual + 1, 0),
-          labels: Array.from({ length: 3 }, (_, i) => {
-            const mes = mesInicio + i
-            return new Date(añoActual, mes, 1).toLocaleString("es-MX", { month: "long" })
-          }),
-        }
-      case "Año":
-        return {
-          inicio: new Date(añoActual, 0, 1),
-          fin: new Date(añoActual, 11, 31),
-          labels: Array.from({ length: 12 }, (_, i) => {
-            return new Date(añoActual, i, 1).toLocaleString("es-MX", { month: "long" })
-          }),
-        }
-      case "Histórico":
-        return {
-          inicio: new Date(añoActual - 4, 0, 1),
-          fin: new Date(añoActual, 11, 31),
-          labels: Array.from({ length: 5 }, (_, i) => (añoActual - 4 + i).toString()),
-        }
-      default:
-        return {
-          inicio: new Date(añoActual, 0, 1),
-          fin: new Date(añoActual, 11, 31),
-          labels: Array.from({ length: 12 }, (_, i) => {
-            return new Date(añoActual, i, 1).toLocaleString("es-MX", { month: "long" })
-          }),
-        }
+  const obtenerAñosConTransacciones = (transacciones) => {
+    const años = transacciones
+      .map(t => parseLocalDate(t.fechaPago)?.getFullYear())
+      .filter(año => año !== null && año !== undefined)
+      .filter((año, index, array) => array.indexOf(año) === index)
+      .sort((a, b) => a - b)
+
+    return años
+  }
+
+  const obtenerRangoFechas = (añoSeleccionado, mesSeleccionado) => {
+    if (añoSeleccionado === "Todos los años") {
+      // Mostrar por años desde el primer registro
+      return {
+        tipo: "años",
+        labels: añosDisponibles.map(año => año.toString())
+      }
+    } else if (mesSeleccionado === "Todos los meses") {
+      // Mostrar por meses del año seleccionado
+      const año = parseInt(añoSeleccionado)
+      return {
+        tipo: "meses",
+        año: año,
+        labels: Array.from({ length: 12 }, (_, i) => {
+          return new Date(año, i, 1).toLocaleString("es-MX", { month: "long" })
+        })
+      }
+    } else {
+      // Mostrar por días del mes seleccionado
+      const año = parseInt(añoSeleccionado)
+      const mesIndex = mesesDisponibles.indexOf(mesSeleccionado)
+      const diasEnMes = new Date(año, mesIndex + 1, 0).getDate()
+
+      return {
+        tipo: "días",
+        año: año,
+        mes: mesIndex,
+        labels: Array.from({ length: diasEnMes }, (_, i) => `${i + 1}`)
+      }
     }
   }
 
@@ -105,107 +107,75 @@ const AdminBalance = () => {
     return new Date(year, month - 1, day);
   };
 
-  const generarDatosGrafico = (transacciones, tipoFiltro) => {
-    const { inicio, fin, labels } = obtenerRangoFechas(tipoFiltro)
-    const transaccionesFiltradas = transacciones.filter((t) => {
-      const fechaTransaccion = parseLocalDate(t.fechaPago)
-      return fechaTransaccion >= inicio && fechaTransaccion <= fin
-    })
+  const generarDatosGrafico = (transacciones, añoSeleccionado, mesSeleccionado) => {
+    const { tipo, labels, año, mes } = obtenerRangoFechas(añoSeleccionado, mesSeleccionado)
 
-    if (tipoFiltro === "Mes") {
-      const ahora = new Date()
-      const mesActual = ahora.getMonth()
-      const añoActual = ahora.getFullYear()
-      const diasEnMes = new Date(añoActual, mesActual + 1, 0).getDate()
+    if (tipo === "años") {
+      return añosDisponibles.map(añoActual => {
+        const ingresos = transacciones
+          .filter(t => t.tipo === "INGRESO")
+          .filter(t => parseLocalDate(t.fechaPago)?.getFullYear() === añoActual)
+          .reduce((sum, t) => sum + t.monto, 0)
+
+        const gastos = transacciones
+          .filter(t => t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))
+          .filter(t => parseLocalDate(t.fechaPago)?.getFullYear() === añoActual)
+          .reduce((sum, t) => sum + t.monto, 0)
+
+        return { mes: añoActual.toString(), ingresos, gastos }
+      })
+    }
+
+    if (tipo === "meses") {
+      return Array.from({ length: 12 }, (_, i) => {
+        const ingresos = transacciones
+          .filter(t => t.tipo === "INGRESO")
+          .filter(t => {
+            const fechaTransaccion = parseLocalDate(t.fechaPago)
+            return fechaTransaccion?.getMonth() === i && fechaTransaccion?.getFullYear() === año
+          })
+          .reduce((sum, t) => sum + t.monto, 0)
+
+        const gastos = transacciones
+          .filter(t => t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))
+          .filter(t => {
+            const fechaTransaccion = parseLocalDate(t.fechaPago)
+            return fechaTransaccion?.getMonth() === i && fechaTransaccion?.getFullYear() === año
+          })
+          .reduce((sum, t) => sum + t.monto, 0)
+
+        return { mes: labels[i], ingresos, gastos }
+      })
+    }
+
+    if (tipo === "días") {
+      const diasEnMes = new Date(año, mes + 1, 0).getDate()
       return Array.from({ length: diasEnMes }, (_, i) => {
         const dia = i + 1
-        const ingresos = transaccionesFiltradas
-          .filter((t) => t.tipo === "INGRESO")
-          .filter((t) => {
+        const ingresos = transacciones
+          .filter(t => t.tipo === "INGRESO")
+          .filter(t => {
             const fechaTransaccion = parseLocalDate(t.fechaPago)
-            return (
-              fechaTransaccion.getDate() === dia &&
-              fechaTransaccion.getMonth() === mesActual &&
-              fechaTransaccion.getFullYear() === añoActual
-            )
+            return fechaTransaccion?.getDate() === dia &&
+              fechaTransaccion?.getMonth() === mes &&
+              fechaTransaccion?.getFullYear() === año
           })
           .reduce((sum, t) => sum + t.monto, 0)
-        const gastos = transaccionesFiltradas
-          .filter((t) => t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))
-          .filter((t) => {
+
+        const gastos = transacciones
+          .filter(t => t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))
+          .filter(t => {
             const fechaTransaccion = parseLocalDate(t.fechaPago)
-            return (
-              fechaTransaccion.getDate() === dia &&
-              fechaTransaccion.getMonth() === mesActual &&
-              fechaTransaccion.getFullYear() === añoActual
-            )
+            return fechaTransaccion?.getDate() === dia &&
+              fechaTransaccion?.getMonth() === mes &&
+              fechaTransaccion?.getFullYear() === año
           })
           .reduce((sum, t) => sum + t.monto, 0)
+
         return { mes: dia.toString(), ingresos, gastos }
       })
     }
 
-    if (tipoFiltro === "Trimestre") {
-      const ahora = new Date()
-      const mesActual = ahora.getMonth()
-      const añoActual = ahora.getFullYear()
-      const mesInicio = Math.max(0, mesActual - 2)
-      return Array.from({ length: 3 }, (_, i) => {
-        const mes = mesInicio + i
-        const ingresos = transaccionesFiltradas
-          .filter((t) => t.tipo === "INGRESO")
-          .filter((t) => {
-            const fechaTransaccion = parseLocalDate(t.fechaPago)
-            return fechaTransaccion.getMonth() === mes && fechaTransaccion.getFullYear() === añoActual
-          })
-          .reduce((sum, t) => sum + t.monto, 0)
-        const gastos = transaccionesFiltradas
-          .filter((t) => t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))
-          .filter((t) => {
-            const fechaTransaccion = parseLocalDate(t.fechaPago)
-            return fechaTransaccion.getMonth() === mes && fechaTransaccion.getFullYear() === añoActual
-          })
-          .reduce((sum, t) => sum + t.monto, 0)
-        return { mes: labels[i], ingresos, gastos }
-      })
-    }
-
-    if (tipoFiltro === "Año") {
-      const añoActual = new Date().getFullYear()
-      return Array.from({ length: 12 }, (_, i) => {
-        const ingresos = transaccionesFiltradas
-          .filter((t) => t.tipo === "INGRESO")
-          .filter((t) => {
-            const fechaTransaccion = parseLocalDate(t.fechaPago)
-            return fechaTransaccion.getMonth() === i && fechaTransaccion.getFullYear() === añoActual
-          })
-          .reduce((sum, t) => sum + t.monto, 0)
-        const gastos = transaccionesFiltradas
-          .filter((t) => t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))
-          .filter((t) => {
-            const fechaTransaccion = parseLocalDate(t.fechaPago)
-            return fechaTransaccion.getMonth() === i && fechaTransaccion.getFullYear() === añoActual
-          })
-          .reduce((sum, t) => sum + t.monto, 0)
-        return { mes: labels[i], ingresos, gastos }
-      })
-    }
-
-    if (tipoFiltro === "Histórico") {
-      const añoActual = new Date().getFullYear()
-      return Array.from({ length: 5 }, (_, i) => {
-        const año = añoActual - 4 + i
-        const ingresos = transaccionesFiltradas
-          .filter((t) => t.tipo === "INGRESO")
-          .filter((t) => parseLocalDate(t.fechaPago).getFullYear() === año)
-          .reduce((sum, t) => sum + t.monto, 0)
-        const gastos = transaccionesFiltradas
-          .filter((t) => t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))
-          .filter((t) => parseLocalDate(t.fechaPago).getFullYear() === año)
-          .reduce((sum, t) => sum + t.monto, 0)
-        return { mes: labels[i], ingresos, gastos }
-      })
-    }
     return []
   }
 
@@ -231,7 +201,10 @@ const AdminBalance = () => {
         .reduce((sum, t) => sum + t.monto, 0)
       const utilidadPerdida = totalIngresos - totalGastos
 
-      const graficoMensual = generarDatosGrafico(transacciones, filtros.tiempoGrafico)
+      const añosConTransacciones = obtenerAñosConTransacciones(transacciones)
+      setAñosDisponibles(añosConTransacciones)
+
+      const graficoMensual = generarDatosGrafico(transacciones, filtros.añoSeleccionado, filtros.mesSeleccionado)
 
       const acumuladoCuentas = []
 
@@ -303,11 +276,29 @@ const AdminBalance = () => {
   }
 
   useEffect(() => {
-    fetchData()
-  }, [filtros.tiempoGrafico])
+  fetchData()
+}, [filtros.añoSeleccionado, filtros.mesSeleccionado, añosDisponibles.length])
 
-  const handleFiltroTiempoChange = (nuevoFiltro) => {
-    setFiltros((prev) => ({ ...prev, tiempoGrafico: nuevoFiltro }))
+  const handleAñoChange = (nuevoAño) => {
+    if (nuevoAño === "Todos los años") {
+      setFiltros(prev => ({
+        ...prev,
+        añoSeleccionado: nuevoAño,
+        mesSeleccionado: "Todos los meses",
+        mostrarFiltroMes: false
+      }))
+    } else {
+      setFiltros(prev => ({
+        ...prev,
+        añoSeleccionado: nuevoAño,
+        mesSeleccionado: "Todos los meses",
+        mostrarFiltroMes: true
+      }))
+    }
+  }
+
+  const handleMesChange = (nuevoMes) => {
+    setFiltros(prev => ({ ...prev, mesSeleccionado: nuevoMes }))
   }
 
   const handleCuentaChange = (nuevaCuenta) => {
@@ -620,17 +611,12 @@ const AdminBalance = () => {
   }
 
   const obtenerTituloGrafico = () => {
-    switch (filtros.tiempoGrafico) {
-      case "Mes":
-        return `Balance del mes`
-      case "Trimestre":
-        return `Balance del trimestre`
-      case "Año":
-        return `Balance del año`
-      case "Histórico":
-        return `Balance histórico`
-      default:
-        return `Balance del año`
+    if (filtros.añoSeleccionado === "Todos los años") {
+      return "Balance por años"
+    } else if (filtros.mesSeleccionado === "Todos los meses") {
+      return `Balance del año ${filtros.añoSeleccionado}`
+    } else {
+      return `Balance de ${filtros.mesSeleccionado} ${filtros.añoSeleccionado}`
     }
   }
 
@@ -694,7 +680,6 @@ const AdminBalance = () => {
     }
   }
 
-  const opcionesTiempo = ["Mes", "Trimestre", "Año", "Histórico"]
   const cuentasPorCategoria = categorias
     .filter(cat => !esCategoriaReposicion(cat.descripcion))
     .reduce(
@@ -755,18 +740,37 @@ const AdminBalance = () => {
               <div className="adminbalance-header">
                 <h3 className="adminbalance-page-title">Balance</h3>
                 <div className="adminbalance-header-actions">
-                  <div className="adminbalance-filtro-tiempo">
-                    <select
-                      value={filtros.tiempoGrafico}
-                      onChange={(e) => handleFiltroTiempoChange(e.target.value)}
-                      className="adminbalance-filtro-select"
-                    >
-                      {opcionesTiempo.map((opcion) => (
-                        <option key={opcion} value={opcion}>
-                          {opcion}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="adminbalance-filtros-tiempo">
+                    <div className="adminbalance-filtro-año">
+                      <select
+                        value={filtros.añoSeleccionado}
+                        onChange={(e) => handleAñoChange(e.target.value)}
+                        className="adminbalance-filtro-select"
+                      >
+                        <option value="Todos los años">Todos los años</option>
+                        {añosDisponibles.map((año) => (
+                          <option key={año} value={año.toString()}>
+                            {año}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {filtros.mostrarFiltroMes && (
+                      <div className="adminbalance-filtro-mes">
+                        <select
+                          value={filtros.mesSeleccionado}
+                          onChange={(e) => handleMesChange(e.target.value)}
+                          className="adminbalance-filtro-select"
+                        >
+                          <option value="Todos los meses">Todos los meses</option>
+                          {mesesDisponibles.map((mes) => (
+                            <option key={mes} value={mes}>
+                              {mes}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

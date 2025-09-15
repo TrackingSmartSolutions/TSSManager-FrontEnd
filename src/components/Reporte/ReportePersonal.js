@@ -66,7 +66,7 @@ const ReportePersonal = () => {
             apellidos: userData.apellidos
           });
 
-          if (userRol === "ADMINISTRADOR"|| userRol === "GESTOR"){
+          if (userRol === "ADMINISTRADOR" || userRol === "GESTOR") {
             setSelectedUser(userData.nombre);
           }
         } catch (decodeError) {
@@ -88,7 +88,7 @@ const ReportePersonal = () => {
     const loadUsers = async () => {
       const userRol = localStorage.getItem("userRol");
 
-      if (userRol === "ADMINISTRADOR"|| userRol === "GESTOR") {
+      if (userRol === "ADMINISTRADOR" || userRol === "GESTOR") {
         try {
           const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
           const data = await response.json();
@@ -392,6 +392,25 @@ const ReportePersonal = () => {
         card.style.opacity = '1';
         card.style.animation = 'none';
       });
+      // Configurar ajuste de texto en la tabla
+      if (notesSectionRef.current.querySelector('.reporte-table')) {
+        notesSectionRef.current.querySelectorAll('.reporte-notas-cell').forEach(cell => {
+          cell.style.whiteSpace = 'normal';
+          cell.style.wordWrap = 'break-word';
+          cell.style.wordBreak = 'break-word';
+          cell.style.maxWidth = '200px';
+          cell.style.minHeight = 'auto';
+          cell.style.verticalAlign = 'top';
+        });
+
+        // También aplicar a otras celdas que puedan tener texto largo
+        notesSectionRef.current.querySelectorAll('td').forEach(cell => {
+          cell.style.whiteSpace = 'normal';
+          cell.style.wordWrap = 'break-word';
+          cell.style.padding = '8px';
+          cell.style.verticalAlign = 'top';
+        });
+      }
       notesSectionRef.current.style.backgroundColor = '#ffffff';
       notesSectionRef.current.style.opacity = '1';
       notesSectionRef.current.style.animation = 'none';
@@ -423,10 +442,27 @@ const ReportePersonal = () => {
         backgroundColor: null,
         useCORS: true,
         allowTaint: false,
-        scale: 3,
-        windowWidth: document.documentElement.offsetWidth,
+        scale: 2, // Reducir escala para mejor manejo de texto
+        windowWidth: 1200, // Ancho fijo para consistencia
         windowHeight: document.documentElement.offsetHeight,
         logging: true,
+        onclone: function (clonedDoc) {
+          // Asegurar que el texto se ajuste en el clon
+          const table = clonedDoc.querySelector('.reporte-table');
+          if (table) {
+            table.style.tableLayout = 'fixed';
+            table.style.width = '100%';
+
+            const cells = clonedDoc.querySelectorAll('.reporte-notas-cell');
+            cells.forEach(cell => {
+              cell.style.whiteSpace = 'normal';
+              cell.style.wordWrap = 'break-word';
+              cell.style.wordBreak = 'break-word';
+              cell.style.maxWidth = '200px';
+              cell.style.overflow = 'visible';
+            });
+          }
+        }
       });
 
       // Restaurar estilos originales
@@ -444,6 +480,15 @@ const ReportePersonal = () => {
           badge.style.backgroundColor = ''; // Restaurar al valor original del CSS
         });
       }
+      notesSectionRef.current.querySelectorAll('.reporte-notas-cell, td').forEach(cell => {
+        cell.style.whiteSpace = '';
+        cell.style.wordWrap = '';
+        cell.style.wordBreak = '';
+        cell.style.maxWidth = '';
+        cell.style.minHeight = '';
+        cell.style.verticalAlign = '';
+        cell.style.padding = '';
+      });
 
       // Crear el contenido del PDF
       const pdfContent = document.createElement("div");
@@ -466,7 +511,7 @@ const ReportePersonal = () => {
       pdfContent.innerHTML = `
       <h1 style="text-align: center;">Reporte de Actividades</h1>
       <p style="text-align: center; margin-bottom: 30px;">
-        Usuario: ${(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR")&& selectedUser ? selectedUser : `${currentUser.nombre} ${currentUser.apellidos}`} - Fecha: ${formatDate()}
+        Usuario: ${(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR") && selectedUser ? selectedUser : `${currentUser.nombre} ${currentUser.apellidos}`} - Fecha: ${formatDate()}
       </p>
       <div style="margin: 20px 0;">
         <h2>Gráficos de Actividades</h2>
@@ -541,117 +586,117 @@ const ReportePersonal = () => {
 
   return (
     <>
-     <div className="page-with-header">
-      <Header />
-      <main className="reporte-main-content">
-        <div className="reporte-container">
-          <div className="reporte-header">
-            <div className="reporte-header-info">
-              <h1 className="reporte-page-title">Reportes de actividad</h1>
-              <p className="reporte-subtitle">
-                {(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR") && selectedUser
-                  ? `${selectedUser} - ${formatDate()}`
-                  : `${currentUser.nombre} ${currentUser.apellidos} - ${formatDate()}`
-                }
-              </p>
+      <div className="page-with-header">
+        <Header />
+        <main className="reporte-main-content">
+          <div className="reporte-container">
+            <div className="reporte-header">
+              <div className="reporte-header-info">
+                <h1 className="reporte-page-title">Reportes de actividad</h1>
+                <p className="reporte-subtitle">
+                  {(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR") && selectedUser
+                    ? `${selectedUser} - ${formatDate()}`
+                    : `${currentUser.nombre} ${currentUser.apellidos} - ${formatDate()}`
+                  }
+                </p>
+              </div>
+              <div className="reporte-header-controls">
+                {(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR") && (
+                  <div className="reporte-user-filter">
+                    <label className="reporte-date-label">Usuario</label>
+                    <select
+                      value={selectedUser || ""}
+                      onChange={handleUserChange}
+                      className="reporte-user-select"
+                    >
+                      {users.map((user) => (
+                        <option key={user} value={user}>
+                          {user}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <div className="reporte-date-range-container">
+                  <label className="reporte-date-label">Rango de fecha</label>
+                  <div className="reporte-date-inputs">
+                    <input
+                      type="date"
+                      value={dateRange.startDate || ""}
+                      onChange={(e) => handleDateRangeChange("startDate", e.target.value)}
+                      className="reporte-date-input"
+                    />
+                    <span className="reporte-date-separator">-</span>
+                    <input
+                      type="date"
+                      value={dateRange.endDate || ""}
+                      onChange={(e) => handleDateRangeChange("endDate", e.target.value)}
+                      className="reporte-date-input"
+                    />
+                  </div>
+                </div>
+                <button className="reporte-btn reporte-btn-download" onClick={handleDownloadPDF}>
+                  <img src={downloadIcon} alt="Descargar" className="reporte-btn-icon" />
+                  Descargar PDF
+                </button>
+              </div>
             </div>
-            <div className="reporte-header-controls">
-              {(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR") && (
-                <div className="reporte-user-filter">
-                  <label className="reporte-date-label">Usuario</label>
-                  <select
-                    value={selectedUser || ""}
-                    onChange={handleUserChange}
-                    className="reporte-user-select"
-                  >
-                    {users.map((user) => (
-                      <option key={user} value={user}>
-                        {user}
-                      </option>
+
+            {loading && (
+              <div className="reporte-loading">
+                <div className="reporte-loading-spinner"></div>
+                <span>Cargando datos...</span>
+              </div>
+            )}
+
+            <div className="reporte-charts-section" ref={chartsSectionRef}>
+              <div className="reporte-chart-card">
+                <h3 className="reporte-chart-title">Actividades Realizadas</h3>
+                <div className="reporte-chart-subtitle">Actividades por Tipo</div>
+                <div style={{ position: 'relative', height: '300px' }}>
+                  <canvas id="activitiesChart"></canvas>
+                </div>
+              </div>
+              <div className="reporte-chart-card">
+                <h3 className="reporte-chart-title">Empresas Contactadas</h3>
+                <div style={{ position: 'relative', height: '300px' }}>
+                  <canvas id="companiesChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <div className="reporte-notes-section" ref={notesSectionRef}>
+              <div className="reporte-notes-header">
+                <h3 className="reporte-notes-title">Notas de interacciones</h3>
+              </div>
+              <div className="reporte-table-container">
+                <table className="reporte-table">
+                  <thead>
+                    <tr><th>Empresa</th><th>Respuesta</th><th>Interés</th><th>Notas</th></tr>
+                  </thead>
+                  <tbody>
+                    {notasData.map((nota, index) => (
+                      <tr key={index}>
+                        <td className="reporte-empresa-cell">{nota.empresa}</td>
+                        <td className="reporte-respuesta-cell">
+                          <span className={`reporte-badge reporte-respuesta-${nota.respuesta.toLowerCase()}`}>
+                            {nota.respuesta}
+                          </span>
+                        </td>
+                        <td className="reporte-interes-cell">
+                          <span className={`reporte-badge reporte-interes-${nota.interes.toLowerCase()}`}>
+                            {nota.interes}
+                          </span>
+                        </td>
+                        <td className="reporte-notas-cell">{nota.notas}</td>
+                      </tr>
                     ))}
-                  </select>
-                </div>
-              )}
-              <div className="reporte-date-range-container">
-                <label className="reporte-date-label">Rango de fecha</label>
-                <div className="reporte-date-inputs">
-                  <input
-                    type="date"
-                    value={dateRange.startDate || ""}
-                    onChange={(e) => handleDateRangeChange("startDate", e.target.value)}
-                    className="reporte-date-input"
-                  />
-                  <span className="reporte-date-separator">-</span>
-                  <input
-                    type="date"
-                    value={dateRange.endDate || ""}
-                    onChange={(e) => handleDateRangeChange("endDate", e.target.value)}
-                    className="reporte-date-input"
-                  />
-                </div>
-              </div>
-              <button className="reporte-btn reporte-btn-download" onClick={handleDownloadPDF}>
-                <img src={downloadIcon} alt="Descargar" className="reporte-btn-icon" />
-                Descargar PDF
-              </button>
-            </div>
-          </div>
-
-          {loading && (
-            <div className="reporte-loading">
-              <div className="reporte-loading-spinner"></div>
-              <span>Cargando datos...</span>
-            </div>
-          )}
-
-          <div className="reporte-charts-section" ref={chartsSectionRef}>
-            <div className="reporte-chart-card">
-              <h3 className="reporte-chart-title">Actividades Realizadas</h3>
-              <div className="reporte-chart-subtitle">Actividades por Tipo</div>
-              <div style={{ position: 'relative', height: '300px' }}>
-                <canvas id="activitiesChart"></canvas>
-              </div>
-            </div>
-            <div className="reporte-chart-card">
-              <h3 className="reporte-chart-title">Empresas Contactadas</h3>
-              <div style={{ position: 'relative', height: '300px' }}>
-                <canvas id="companiesChart"></canvas>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
-
-          <div className="reporte-notes-section" ref={notesSectionRef}>
-            <div className="reporte-notes-header">
-              <h3 className="reporte-notes-title">Notas de interacciones</h3>
-            </div>
-            <div className="reporte-table-container">
-              <table className="reporte-table">
-                <thead>
-                  <tr><th>Empresa</th><th>Respuesta</th><th>Interés</th><th>Notas</th></tr>
-                </thead>
-                <tbody>
-                  {notasData.map((nota, index) => (
-                    <tr key={index}>
-                      <td className="reporte-empresa-cell">{nota.empresa}</td>
-                      <td className="reporte-respuesta-cell">
-                        <span className={`reporte-badge reporte-respuesta-${nota.respuesta.toLowerCase()}`}>
-                          {nota.respuesta}
-                        </span>
-                      </td>
-                      <td className="reporte-interes-cell">
-                        <span className={`reporte-badge reporte-interes-${nota.interes.toLowerCase()}`}>
-                          {nota.interes}
-                        </span>
-                      </td>
-                      <td className="reporte-notas-cell">{nota.notas}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </main>
+        </main>
       </div>
     </>
   );
