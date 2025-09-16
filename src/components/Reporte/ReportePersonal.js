@@ -92,7 +92,8 @@ const ReportePersonal = () => {
         try {
           const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
           const data = await response.json();
-          const usersList = data.map(user => user.nombre);
+          const usersList = data.map(user => user.nombre.trim()); 
+          console.log("Lista de usuarios cargada:", usersList);
           setUsers(usersList);
         } catch (error) {
           console.error("ERROR al cargar usuarios:", error);
