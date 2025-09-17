@@ -760,6 +760,78 @@
   background-color: #545b62;
 }
 
+.facturacion-conceptos-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.facturacion-conceptos-section {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.facturacion-conceptos-section h4 {
+  margin: 0 0 10px 0;
+  color: #2954a3;
+  font-weight: 600;
+}
+
+.facturacion-conceptos-list {
+  max-height: 150px;
+  overflow-y: auto;
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.facturacion-concepto-item {
+  padding: 5px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.facturacion-concepto-item:last-child {
+  border-bottom: none;
+}
+
+.facturacion-conceptos-readonly {
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+  min-height: 40px;
+}
+
+.facturacion-textarea-conceptos {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.facturacion-textarea-conceptos:focus {
+  outline: none;
+  border-color: #2954a3;
+  box-shadow: 0 0 0 2px rgba(41, 84, 163, 0.2);
+}
+
+.facturacion-no-conceptos {
+  color: #6c757d;
+  font-style: italic;
+  margin: 0;
+}
+
+.facturacion-help-text {
+  color: #6c757d;
+  font-size: 12px;
+  margin-top: 5px;
+  display: block;
+}
+
 /* Diseño responsivo */
 @media (max-width: 1200px) {
   .facturacion-container {

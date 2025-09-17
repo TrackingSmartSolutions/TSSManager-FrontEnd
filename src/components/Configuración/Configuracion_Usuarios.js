@@ -591,15 +591,122 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, usuario }) => {
   )
 }
 
+// Modal de Reasignación de Tratos y Actividades
+const ReasignacionModal = ({ isOpen, onClose, onConfirm, usuario, usuariosActivos }) => {
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState("")
+  const [errors, setErrors] = useState({})
+  const [contadores, setContadores] = useState({ tratos: 0, actividades: 0 })
+  const [cargandoContadores, setCargandoContadores] = useState(false)
+
+  useEffect(() => {
+    if (isOpen && usuario) {
+      setUsuarioSeleccionado("")
+      setErrors({})
+      cargarContadores()
+    }
+  }, [isOpen, usuario])
+
+  const cargarContadores = async () => {
+    if (!usuario?.id) return
+    
+    setCargandoContadores(true)
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/auth/users/${usuario.id}/assignment-counts`)
+      const data = await response.json()
+      setContadores(data)
+    } catch (error) {
+      console.error("Error cargando contadores:", error)
+      setContadores({ tratos: 0, actividades: 0 })
+    } finally {
+      setCargandoContadores(false)
+    }
+  }
+
+  const handleConfirm = () => {
+    if (!usuarioSeleccionado) {
+      setErrors({ usuario: "Debe seleccionar un usuario" })
+      return
+    }
+    onConfirm(usuarioSeleccionado)
+    onClose()
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Reasignar tratos y actividades" size="md" closeOnOverlayClick={false}>
+      <div className="reasignacion-modal">
+        <div className="confirmation-content">
+          <p className="confirmation-message">
+            ¿A quién desea asignar los tratos y actividades de <strong>{usuario?.nombre} {usuario?.apellidos}</strong>?
+          </p>
+          
+          {/* Mostrar contadores */}
+          <div className="contadores-reasignacion">
+            {cargandoContadores ? (
+              <p>Cargando información...</p>
+            ) : (
+              <div className="contadores-info">
+                <div className="contador-item">
+                  <span className="contador-numero">{contadores.tratos}</span>
+                  <span className="contador-label">Tratos como propietario</span>
+                </div>
+                <div className="contador-item">
+                  <span className="contador-numero">{contadores.actividades}</span>
+                  <span className="contador-label">Actividades abiertas asignadas</span>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div className="modal-form-group">
+            <label htmlFor="usuarioDestino">
+              Seleccionar usuario <span className="required">*</span>
+            </label>
+            <select
+              id="usuarioDestino"
+              value={usuarioSeleccionado}
+              onChange={(e) => {
+                setUsuarioSeleccionado(e.target.value)
+                if (errors.usuario) {
+                  setErrors({ ...errors, usuario: "" })
+                }
+              }}
+              className={`modal-form-control ${errors.usuario ? "error" : ""}`}
+            >
+              <option value="">Seleccione un usuario</option>
+              {usuariosActivos.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.nombre} {u.apellidos} - {u.rol}
+                </option>
+              ))}
+            </select>
+            {errors.usuario && <span className="error-message">{errors.usuario}</span>}
+          </div>
+
+          <div className="modal-form-actions">
+            <button type="button" onClick={onClose} className="btn btn-cancel">
+              Cancelar
+            </button>
+            <button type="button" onClick={handleConfirm} className="btn btn-confirm">
+              Reasignar
+            </button>
+          </div>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
 // Componente Principal
 const ConfiguracionUsuarios = () => {
 
   const [usuarios, setUsuarios] = useState([]);
-  const [isLoading, setIsLoading] = useState(true); 
+  const [isLoading, setIsLoading] = useState(true);
+  const [usuariosActivos, setUsuariosActivos] = useState([]);
   const [modals, setModals] = useState({
     usuario: { isOpen: false, mode: "add", data: null },
     restablecerContrasena: { isOpen: false, data: null },
     confirmarEliminacion: { isOpen: false, data: null },
+    reasignacion: { isOpen: false, data: null },
   });
 
   useEffect(() => {
@@ -607,11 +714,11 @@ const ConfiguracionUsuarios = () => {
   }, []);
 
   const fetchData = async () => {
-     setIsLoading(true);
+    setIsLoading(true);
     try {
       const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
       const data = await response.json();
-      setUsuarios(data.map(user => ({
+      const usuariosData = data.map(user => ({
         id: user.id,
         nombre: user.nombre,
         apellidos: user.apellidos,
@@ -621,12 +728,17 @@ const ConfiguracionUsuarios = () => {
         estatus: user.estatus,
         fechaCreacion: user.fechaCreacion,
         fechaModificacion: user.fechaModificacion,
-      })));
+      }));
+
+      setUsuarios(usuariosData);
+
+      setUsuariosActivos(usuariosData.filter(u => u.estatus === "ACTIVO"));
+
     } catch (error) {
       Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los usuarios" });
-    }finally {
-    setIsLoading(false); 
-  }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const navigate = useNavigate()
@@ -662,27 +774,26 @@ const ConfiguracionUsuarios = () => {
     }
   }
 
-  const handleDeleteUser = (userId) => {
-    const user = usuarios.find((u) => u.id === userId)
-    if (user) {
-      openModal("confirmarEliminacion", "delete", user)
+  const handleToggleStatus = async (userId) => {
+    const usuario = usuarios.find((u) => u.id === userId)
+
+    if (usuario.estatus === "ACTIVO") {
+      // Si va a desactivar, abrir modal de reasignación
+      const usuariosDisponibles = usuariosActivos.filter(u => u.id !== userId)
+      if (usuariosDisponibles.length === 0) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No hay otros usuarios activos disponibles para reasignar los tratos y actividades.",
+        });
+        return;
+      }
+      openModal("reasignacion", "reassign", { usuario, usuariosDisponibles })
+    } else {
+      // Si va a activar, proceder normalmente
+      await ejecutarCambioEstatus(userId)
     }
   }
-
-  const handleToggleStatus = async (userId) => {
-    try {
-      const response = await fetchWithToken(`${API_BASE_URL}/auth/users/${userId}/status`, { method: 'PATCH' });
-      const updatedUser = await response.json();
-      setUsuarios(prev => prev.map(u => u.id === userId ? { ...u, estatus: updatedUser.estatus, fechaModificacion: updatedUser.fechaModificacion } : u));
-      Swal.fire({
-        icon: "success",
-        title: "Estado actualizado",
-        text: `El usuario ha sido ${updatedUser.estatus.toLowerCase()} correctamente.`,
-      });
-    } catch (error) {
-      Swal.fire({ icon: "error", title: "Error", text: error.message });
-    }
-  };
 
   const handleSaveUser = async (userData, mode) => {
     try {
@@ -768,135 +879,173 @@ const ConfiguracionUsuarios = () => {
     }
   };
 
-  const getStatusIcon = (estatus) => {
-    return estatus
-  }
+  const ejecutarCambioEstatus = async (userId, usuarioDestinoId = null) => {
+    try {
+      const url = usuarioDestinoId
+        ? `${API_BASE_URL}/auth/users/${userId}/status?reasignarA=${usuarioDestinoId}`
+        : `${API_BASE_URL}/auth/users/${userId}/status`;
+
+      const response = await fetchWithToken(url, { method: 'PATCH' });
+      const updatedUser = await response.json();
+
+      setUsuarios(prev => prev.map(u => u.id === userId ? {
+        ...u,
+        estatus: updatedUser.estatus,
+        fechaModificacion: updatedUser.fechaModificacion
+      } : u));
+
+      Swal.fire({
+        icon: "success",
+        title: "Estado actualizado",
+        text: usuarioDestinoId
+          ? `El usuario ha sido desactivado y sus tratos/actividades han sido reasignados correctamente.`
+          : `El usuario ha sido ${updatedUser.estatus.toLowerCase()} correctamente.`,
+      });
+    } catch (error) {
+      Swal.fire({ icon: "error", title: "Error", text: error.message });
+    }
+  };
+
+  const handleConfirmReasignacion = async (usuarioDestinoId) => {
+    const usuario = modals.reasignacion.data?.usuario;
+    if (!usuario) return;
+
+    await ejecutarCambioEstatus(usuario.id, usuarioDestinoId);
+    closeModal("reasignacion");
+  };
 
   return (
     <>
-     <div className="page-with-header">
-      <Header />
-      {isLoading && (
-      <div className="config-usuarios-loading">
-        <div className="spinner"></div>
-        <p>Cargando usuarios...</p>
-      </div>
-    )}
-      <div className="config-usuarios-config-header">
-        <h2 className="config-usuarios-config-title">Configuración</h2>
-        <nav className="config-usuarios-config-nav">
-          <div className="config-usuarios-nav-item" onClick={() => navigate("/configuracion_plantillas")}>
-            Plantillas de correo
+      <div className="page-with-header">
+        <Header />
+        {isLoading && (
+          <div className="config-usuarios-loading">
+            <div className="spinner"></div>
+            <p>Cargando usuarios...</p>
           </div>
-          <div className="config-usuarios-nav-item" onClick={() => navigate("/configuracion_admin_datos")}>
-            Administrador de datos
-          </div>
-          <div className="config-usuarios-nav-item" onClick={() => navigate("/configuracion_empresa")}>
-            Configuración de la empresa
-          </div>
-          <div className="config-usuarios-nav-item" onClick={() => navigate("/configuracion_almacenamiento")}>
-            Almacenamiento
-          </div>
-          <div className="config-usuarios-nav-item" onClick={() => navigate("/configuracion_copias_seguridad")}>
-            Copias de Seguridad
-          </div>
-          <div className="config-usuarios-nav-item config-usuarios-nav-item-active">Usuarios y roles</div>
-        </nav>
-      </div>
-
-      <main className="config-usuarios-main-content">
-        <div className="config-usuarios-container">
-          <section className="config-usuarios-section">
-            <div className="config-usuarios-section-header">
-              <h3 className="config-usuarios-section-title">Usuarios y roles</h3>
-              <button className="config-usuarios-btn config-usuarios-btn-add" onClick={handleAddUser}>
-                Agregar nuevo usuario
-              </button>
+        )}
+        <div className="config-usuarios-config-header">
+          <h2 className="config-usuarios-config-title">Configuración</h2>
+          <nav className="config-usuarios-config-nav">
+            <div className="config-usuarios-nav-item" onClick={() => navigate("/configuracion_plantillas")}>
+              Plantillas de correo
             </div>
-
-            <div className="config-usuarios-table-container">
-              <table className="config-usuarios-table">
-                <thead>
-                  <tr>
-                    <th>Nombre</th>
-                    <th>Apellidos</th>
-                    <th>Nombre de Usuario</th>
-                    <th>Correo Electrónico</th>
-                    <th>Rol</th>
-                    <th>Estatus</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {usuarios.map((usuario) => (
-                    <tr key={usuario.id}>
-                      <td>{usuario.nombre}</td>
-                      <td>{usuario.apellidos}</td>
-                      <td>{usuario.nombreUsuario}</td>
-                      <td>{usuario.correoElectronico}</td>
-                      <td>{usuario.rol}</td>
-                      <td>
-                        <div className="config-usuarios-status-cell">{usuario.estatus}</div>
-                      </td>
-                      <td>
-                        <div className="config-usuarios-action-buttons">
-                          <button
-                            className="config-usuarios-btn-action config-usuarios-edit"
-                            onClick={() => handleEditUser(usuario.id)}
-                            title="Editar usuario"
-                          >
-                            <img src={editIcon || "/placeholder.svg"} alt="Editar" />
-                          </button>
-                          <button
-                            className="config-usuarios-btn-action config-usuarios-toggle-status"
-                            onClick={() => handleToggleStatus(usuario.id)}
-                            title="Cambiar estatus"
-                          >
-                            <img
-                              src={usuario.estatus === "ACTIVO" ? inactiveUserIcon : activeUserIcon}
-                              alt={usuario.estatus === "ACTIVO" ? "Desactivar" : "Activar"}
-                              className="config-usuarios-toggle-icon"
-                            />
-                          </button>
-                          <button
-                            className="config-usuarios-btn-action config-usuarios-reset-password"
-                            onClick={() => handleResetPassword(usuario.id)}
-                            title="Restablecer contraseña"
-                          >
-                            <img src={restoreIcon || "/placeholder.svg"} alt="Restablecer contraseña" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="config-usuarios-nav-item" onClick={() => navigate("/configuracion_admin_datos")}>
+              Administrador de datos
             </div>
-          </section>
+            <div className="config-usuarios-nav-item" onClick={() => navigate("/configuracion_empresa")}>
+              Configuración de la empresa
+            </div>
+            <div className="config-usuarios-nav-item" onClick={() => navigate("/configuracion_almacenamiento")}>
+              Almacenamiento
+            </div>
+            <div className="config-usuarios-nav-item" onClick={() => navigate("/configuracion_copias_seguridad")}>
+              Copias de Seguridad
+            </div>
+            <div className="config-usuarios-nav-item config-usuarios-nav-item-active">Usuarios y roles</div>
+          </nav>
         </div>
-      </main>
 
-      <UsuarioModal
-        isOpen={modals.usuario.isOpen}
-        onClose={() => closeModal("usuario")}
-        onSave={handleSaveUser}
-        usuario={modals.usuario.data}
-        mode={modals.usuario.mode}
-      />
+        <main className="config-usuarios-main-content">
+          <div className="config-usuarios-container">
+            <section className="config-usuarios-section">
+              <div className="config-usuarios-section-header">
+                <h3 className="config-usuarios-section-title">Usuarios y roles</h3>
+                <button className="config-usuarios-btn config-usuarios-btn-add" onClick={handleAddUser}>
+                  Agregar nuevo usuario
+                </button>
+              </div>
 
-      <RestablecerContrasenaModal
-        isOpen={modals.restablecerContrasena.isOpen}
-        onClose={() => closeModal("restablecerContrasena")}
-        onSave={handleSavePassword}
-        usuario={modals.restablecerContrasena.data}
-      />
+              <div className="config-usuarios-table-container">
+                <table className="config-usuarios-table">
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Apellidos</th>
+                      <th>Nombre de Usuario</th>
+                      <th>Correo Electrónico</th>
+                      <th>Rol</th>
+                      <th>Estatus</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {usuarios.map((usuario) => (
+                      <tr key={usuario.id}>
+                        <td>{usuario.nombre}</td>
+                        <td>{usuario.apellidos}</td>
+                        <td>{usuario.nombreUsuario}</td>
+                        <td>{usuario.correoElectronico}</td>
+                        <td>{usuario.rol}</td>
+                        <td>
+                          <div className="config-usuarios-status-cell">{usuario.estatus}</div>
+                        </td>
+                        <td>
+                          <div className="config-usuarios-action-buttons">
+                            <button
+                              className="config-usuarios-btn-action config-usuarios-edit"
+                              onClick={() => handleEditUser(usuario.id)}
+                              title="Editar usuario"
+                            >
+                              <img src={editIcon || "/placeholder.svg"} alt="Editar" />
+                            </button>
+                            <button
+                              className="config-usuarios-btn-action config-usuarios-toggle-status"
+                              onClick={() => handleToggleStatus(usuario.id)}
+                              title="Cambiar estatus"
+                            >
+                              <img
+                                src={usuario.estatus === "ACTIVO" ? inactiveUserIcon : activeUserIcon}
+                                alt={usuario.estatus === "ACTIVO" ? "Desactivar" : "Activar"}
+                                className="config-usuarios-toggle-icon"
+                              />
+                            </button>
+                            <button
+                              className="config-usuarios-btn-action config-usuarios-reset-password"
+                              onClick={() => handleResetPassword(usuario.id)}
+                              title="Restablecer contraseña"
+                            >
+                              <img src={restoreIcon || "/placeholder.svg"} alt="Restablecer contraseña" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </main>
 
-      <ConfirmarEliminacionModal
-        isOpen={modals.confirmarEliminacion.isOpen}
-        onClose={() => closeModal("confirmarEliminacion")}
-        onConfirm={handleConfirmDelete}
-        usuario={modals.confirmarEliminacion.data}
-      />
+        <UsuarioModal
+          isOpen={modals.usuario.isOpen}
+          onClose={() => closeModal("usuario")}
+          onSave={handleSaveUser}
+          usuario={modals.usuario.data}
+          mode={modals.usuario.mode}
+        />
+
+        <RestablecerContrasenaModal
+          isOpen={modals.restablecerContrasena.isOpen}
+          onClose={() => closeModal("restablecerContrasena")}
+          onSave={handleSavePassword}
+          usuario={modals.restablecerContrasena.data}
+        />
+
+        <ConfirmarEliminacionModal
+          isOpen={modals.confirmarEliminacion.isOpen}
+          onClose={() => closeModal("confirmarEliminacion")}
+          onConfirm={handleConfirmDelete}
+          usuario={modals.confirmarEliminacion.data}
+        />
+        <ReasignacionModal
+          isOpen={modals.reasignacion.isOpen}
+          onClose={() => closeModal("reasignacion")}
+          onConfirm={handleConfirmReasignacion}
+          usuario={modals.reasignacion.data?.usuario}
+          usuariosActivos={modals.reasignacion.data?.usuariosDisponibles || []}
+        />
       </div>
     </>
   )

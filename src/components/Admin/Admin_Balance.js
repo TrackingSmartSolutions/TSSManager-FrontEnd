@@ -107,6 +107,29 @@ const AdminBalance = () => {
     return new Date(year, month - 1, day);
   };
 
+  const filtrarTransaccionesPorFecha = (transacciones, añoSeleccionado, mesSeleccionado) => {
+    return transacciones.filter(t => {
+      const fechaTransaccion = parseLocalDate(t.fechaPago)
+      if (!fechaTransaccion) return false
+
+      if (añoSeleccionado === "Todos los años") {
+        return true // No filtrar por fecha
+      }
+
+      const año = parseInt(añoSeleccionado)
+      if (fechaTransaccion.getFullYear() !== año) {
+        return false
+      }
+
+      if (mesSeleccionado === "Todos los meses") {
+        return true // Solo filtrar por año
+      }
+
+      const mesIndex = mesesDisponibles.indexOf(mesSeleccionado)
+      return fechaTransaccion.getMonth() === mesIndex
+    })
+  }
+
   const generarDatosGrafico = (transacciones, añoSeleccionado, mesSeleccionado) => {
     const { tipo, labels, año, mes } = obtenerRangoFechas(añoSeleccionado, mesSeleccionado)
 
@@ -206,13 +229,16 @@ const AdminBalance = () => {
 
       const graficoMensual = generarDatosGrafico(transacciones, filtros.añoSeleccionado, filtros.mesSeleccionado)
 
+      // Filtrar transacciones para la tabla de acumulado (respeta filtros de tiempo)
+      const transaccionesFiltradas = filtrarTransaccionesPorFecha(transacciones, filtros.añoSeleccionado, filtros.mesSeleccionado)
+
       const acumuladoCuentas = []
 
       // Agregar resumen por categoría
       categoriasResp.forEach((cat) => {
         if (esCategoriaReposicion(cat.descripcion)) return
 
-        const montoTotal = transacciones
+        const montoTotal = transaccionesFiltradas
           .filter(
             (t) =>
               t.categoria.id === cat.id &&
@@ -228,7 +254,7 @@ const AdminBalance = () => {
         const cuentasFiltradas = cuentasResp.filter((c) => c.categoria.id === cat.id && !esCategoriaReposicion(c.categoria.descripcion))
 
         cuentasFiltradas.forEach((cuenta) => {
-          const montoCuenta = transacciones
+          const montoCuenta = transaccionesFiltradas
             .filter(
               (t) =>
                 t.cuenta?.id === cuenta.id &&
@@ -247,10 +273,19 @@ const AdminBalance = () => {
       const equiposVendidos = (await Promise.all(
         cuentasPorCobrar.map(async (c) => {
           const cotizacion = cotizaciones.find((co) => co.id === c.cotizacionId)
+          let numeroEquipos = 0
+
+          if (cotizacion && cotizacion.unidades) {
+            // Solo contar unidades que tengan "Equipos" como unidad
+            numeroEquipos = cotizacion.unidades
+              .filter(unidad => unidad.unidad === "Equipos")
+              .reduce((sum, unidad) => sum + unidad.cantidad, 0)
+          }
+
           return {
             cliente: c.clienteNombre,
             fechaPago: c.fechaRealPago,
-            numeroEquipos: cotizacion ? cotizacion.cantidadTotal : 0,
+            numeroEquipos: numeroEquipos,
           }
         }),
       )).filter(equipo => equipo.numeroEquipos > 0)
@@ -276,8 +311,8 @@ const AdminBalance = () => {
   }
 
   useEffect(() => {
-  fetchData()
-}, [filtros.añoSeleccionado, filtros.mesSeleccionado, añosDisponibles.length])
+    fetchData()
+  }, [filtros.añoSeleccionado, filtros.mesSeleccionado, añosDisponibles.length])
 
   const handleAñoChange = (nuevoAño) => {
     if (nuevoAño === "Todos los años") {

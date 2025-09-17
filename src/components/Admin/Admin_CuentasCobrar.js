@@ -493,7 +493,7 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
   const [formData, setFormData] = useState({
     id: null,
     cotizacion: "",
-    fechaEmision: new Date().toLocaleDateString('en-CA'),
+    fechaEmision: new Date().toISOString().split('T')[0],
     metodoPago: "",
     formaPago: "",
     tipo: "",
@@ -584,7 +584,7 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
         setFormData({
           id: null,
           cotizacion: preloadedCotizacion.id,
-          fechaEmision: new Date().toLocaleDateString('en-CA'),
+          fechaEmision: new Date().toISOString().split('T')[0],
           metodoPago: "",
           formaPago: "",
           tipo: "",
@@ -611,7 +611,7 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
         setFormData({
           id: null,
           cotizacion: "",
-          fechaEmision: new Date().toLocaleDateString('en-CA'),
+          fechaEmision: new Date().toISOString().split('T')[0],
           metodoPago: "",
           formaPago: "",
           tipo: "",
