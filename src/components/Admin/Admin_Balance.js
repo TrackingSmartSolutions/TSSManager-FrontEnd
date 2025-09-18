@@ -225,7 +225,9 @@ const AdminBalance = () => {
       const utilidadPerdida = totalIngresos - totalGastos
 
       const añosConTransacciones = obtenerAñosConTransacciones(transacciones)
-      setAñosDisponibles(añosConTransacciones)
+      if (JSON.stringify(añosConTransacciones) !== JSON.stringify(añosDisponibles)) {
+        setAñosDisponibles(añosConTransacciones)
+      }
 
       const graficoMensual = generarDatosGrafico(transacciones, filtros.añoSeleccionado, filtros.mesSeleccionado)
 
@@ -289,6 +291,27 @@ const AdminBalance = () => {
           }
         }),
       )).filter(equipo => equipo.numeroEquipos > 0)
+        .filter(equipo => {
+          // Aplicar filtros de fecha usando la misma lógica que las transacciones
+          const fechaEquipo = parseLocalDate(equipo.fechaPago)
+          if (!fechaEquipo) return false
+
+          if (filtros.añoSeleccionado === "Todos los años") {
+            return true // No filtrar por fecha
+          }
+
+          const año = parseInt(filtros.añoSeleccionado)
+          if (fechaEquipo.getFullYear() !== año) {
+            return false
+          }
+
+          if (filtros.mesSeleccionado === "Todos los meses") {
+            return true // Solo filtrar por año
+          }
+
+          const mesIndex = mesesDisponibles.indexOf(filtros.mesSeleccionado)
+          return fechaEquipo.getMonth() === mesIndex
+        })
         .sort((a, b) => new Date(a.fechaPago) - new Date(b.fechaPago))
 
       setBalanceData({
@@ -312,6 +335,12 @@ const AdminBalance = () => {
 
   useEffect(() => {
     fetchData()
+  }, [])
+
+  useEffect(() => {
+    if (añosDisponibles.length > 0) {
+      fetchData()
+    }
   }, [filtros.añoSeleccionado, filtros.mesSeleccionado, añosDisponibles.length])
 
   const handleAñoChange = (nuevoAño) => {

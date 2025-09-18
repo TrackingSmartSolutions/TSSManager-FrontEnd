@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import "./ReportePersonal.css";
 import Header from "../Header/Header";
 import Swal from "sweetalert2";
@@ -22,7 +21,6 @@ const fetchWithToken = async (url, options = {}) => {
 };
 
 const ReportePersonal = () => {
-  const navigate = useNavigate();
   const [dateRange, setDateRange] = useState({
     startDate: null,
     endDate: null,
@@ -43,12 +41,13 @@ const ReportePersonal = () => {
 
   // Función para obtener la fecha actual en formato YYYY-MM-DD
   const getTodayDate = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+  const today = new Date();
+  const mexicoTime = new Date(today.toLocaleString("en-US", {timeZone: "America/Mexico_City"}));
+  const year = mexicoTime.getFullYear();
+  const month = String(mexicoTime.getMonth() + 1).padStart(2, '0');
+  const day = String(mexicoTime.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
   useEffect(() => {
     const loadCurrentUser = async () => {
