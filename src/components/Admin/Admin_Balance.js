@@ -225,7 +225,7 @@ const AdminBalance = () => {
       const utilidadPerdida = totalIngresos - totalGastos
 
       const añosConTransacciones = obtenerAñosConTransacciones(transacciones)
-      if (JSON.stringify(añosConTransacciones) !== JSON.stringify(añosDisponibles)) {
+      if (añosDisponibles.length === 0 || JSON.stringify(añosConTransacciones) !== JSON.stringify(añosDisponibles)) {
         setAñosDisponibles(añosConTransacciones)
       }
 
@@ -272,25 +272,36 @@ const AdminBalance = () => {
         })
       })
 
-      const equiposVendidos = (await Promise.all(
-        cuentasPorCobrar.map(async (c) => {
-          const cotizacion = cotizaciones.find((co) => co.id === c.cotizacionId)
-          let numeroEquipos = 0
+      const equiposVendidos = cuentasPorCobrar
+        .filter(cuenta => cuenta.numeroEquipos && cuenta.numeroEquipos > 0) // Usar el nuevo campo
+        .map(cuenta => ({
+          cliente: cuenta.clienteNombre,
+          fechaPago: cuenta.fechaRealPago,
+          numeroEquipos: cuenta.numeroEquipos, // Usar el nuevo campo directamente
+        }))
+        .filter(equipo => {
+          // Aplicar filtros de fecha
+          const fechaEquipo = parseLocalDate(equipo.fechaPago)
+          if (!fechaEquipo) return false
 
-          if (cotizacion && cotizacion.unidades) {
-            // Solo contar unidades que tengan "Equipos" como unidad
-            numeroEquipos = cotizacion.unidades
-              .filter(unidad => unidad.unidad === "Equipos")
-              .reduce((sum, unidad) => sum + unidad.cantidad, 0)
+          if (filtros.añoSeleccionado === "Todos los años") {
+            return true
           }
 
-          return {
-            cliente: c.clienteNombre,
-            fechaPago: c.fechaRealPago,
-            numeroEquipos: numeroEquipos,
+          const año = parseInt(filtros.añoSeleccionado)
+          if (fechaEquipo.getFullYear() !== año) {
+            return false
           }
-        }),
-      )).filter(equipo => equipo.numeroEquipos > 0)
+
+          if (filtros.mesSeleccionado === "Todos los meses") {
+            return true
+          }
+
+          const mesIndex = mesesDisponibles.indexOf(filtros.mesSeleccionado)
+          return fechaEquipo.getMonth() === mesIndex
+        })
+        .sort((a, b) => new Date(a.fechaPago) - new Date(b.fechaPago))
+
         .filter(equipo => {
           // Aplicar filtros de fecha usando la misma lógica que las transacciones
           const fechaEquipo = parseLocalDate(equipo.fechaPago)
@@ -334,11 +345,7 @@ const AdminBalance = () => {
   }
 
   useEffect(() => {
-    fetchData()
-  }, [])
-
-  useEffect(() => {
-    if (añosDisponibles.length > 0) {
+    if (añosDisponibles.length > 0 || (filtros.añoSeleccionado === "Todos los años" && añosDisponibles.length === 0)) {
       fetchData()
     }
   }, [filtros.añoSeleccionado, filtros.mesSeleccionado, añosDisponibles.length])

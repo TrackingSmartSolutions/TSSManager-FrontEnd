@@ -8,6 +8,7 @@ import notificationIcon from "../../assets/icons/notificaciones.png"
 import profilePlaceholder from "../../assets/icons/profile-placeholder.png"
 import dropdownIcon from "../../assets/icons/desplegable.png"
 import clockIcon from "../../assets/icons/clock.png"
+import notificationSound from "../../assets/sounds/notification.wav"
 
 
 // Cache global para el logo
@@ -145,6 +146,18 @@ const Header = ({ logoUrl }) => {
     }
   }
 
+  const playNotificationSound = () => {
+  try {
+    const audio = new Audio(notificationSound)
+    audio.volume = 0.3 // Volumen bajo para que no sea molesto
+    audio.play().catch(error => {
+      console.log("No se pudo reproducir el sonido de notificación:", error)
+    })
+  } catch (error) {
+    console.log("Error al crear audio:", error)
+  }
+}
+
   // Effect para cargar el logo solo una vez por sesión
   useEffect(() => {
     if (!logoFetchedRef.current) {
@@ -219,25 +232,31 @@ const Header = ({ logoUrl }) => {
   };
 
   // Función para obtener contador de no leídas
-  const obtenerContadorNoLeidas = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
+const obtenerContadorNoLeidas = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-      const response = await fetch(`${API_BASE_URL}/notificaciones/user/contador-no-leidas`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    const response = await fetch(`${API_BASE_URL}/notificaciones/user/contador-no-leidas`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      if (response.ok) {
-        const data = await response.json();
-        setCantidadNoLeidas(data.count);
+    if (response.ok) {
+      const data = await response.json();
+      const nuevaCantidad = data.count;
+      
+      if (nuevaCantidad > cantidadNoLeidas && cantidadNoLeidas !== 0) {
+        playNotificationSound();
       }
-    } catch (error) {
-      console.error("Error al obtener contador:", error);
+      
+      setCantidadNoLeidas(nuevaCantidad);
     }
-  };
+  } catch (error) {
+    console.error("Error al obtener contador:", error);
+  }
+};
 
   // Función para marcar como leída
   const marcarComoLeida = async (notificacionId) => {
@@ -326,18 +345,23 @@ const Header = ({ logoUrl }) => {
   };
 
   // Effect para cargar notificaciones
-  useEffect(() => {
-    obtenerNotificaciones();
-    obtenerContadorNoLeidas();
+useEffect(() => {
+  obtenerNotificaciones();
+  obtenerContadorNoLeidas();
 
-    // Actualizar cada 30 segundos
-    const intervalo = setInterval(() => {
-      obtenerContadorNoLeidas();
-    }, 30000);
+  const intervalo = setInterval(async () => {
+    const cantidadAnterior = cantidadNoLeidas;
+    await obtenerContadorNoLeidas();
+    
+    setTimeout(() => {
+      if (cantidadNoLeidas > cantidadAnterior && cantidadAnterior !== null) {
+        playNotificationSound();
+      }
+    }, 100); 
+  }, 30000);
 
-    return () => clearInterval(intervalo);
-  }, []);
-
+  return () => clearInterval(intervalo);
+}, [cantidadNoLeidas]); 
 
   // Maneja temporizador de inactividad
   useEffect(() => {

@@ -943,14 +943,49 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta }) => {
       setFormData({
         fechaPago: cuenta.fechaPago || "",
         cantidadCobrar: cuenta.cantidadCobrar || "",
-        conceptos: cuenta.conceptos || [],
+        conceptos: Array.isArray(cuenta.conceptos)
+          ? cuenta.conceptos
+          : (cuenta.conceptos ? cuenta.conceptos.split(", ") : []),
       });
       setErrors({});
     }
   }, [isOpen, cuenta]);
 
+  const handleAddConcepto = () => {
+    setFormData(prev => ({
+      ...prev,
+      conceptos: [...prev.conceptos, ""]
+    }));
+  };
+
+  const handleRemoveConcepto = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      conceptos: prev.conceptos.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleConceptoChange = (index, value) => {
+    setFormData(prev => ({
+      ...prev,
+      conceptos: prev.conceptos.map((concepto, i) =>
+        i === index ? value : concepto
+      )
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validación de conceptos
+    const conceptosValidos = formData.conceptos.filter(concepto => concepto.trim() !== "");
+    if (conceptosValidos.length === 0) {
+      setErrors(prev => ({ ...prev, conceptos: "Debe tener al menos un concepto válido" }));
+      return;
+    }
+
+    // Limpiar errores si la validación pasa
+    setErrors({});
     setIsLoading(true);
 
     try {
@@ -959,10 +994,11 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta }) => {
         body: JSON.stringify({
           fechaPago: formData.fechaPago,
           cantidadCobrar: parseFloat(formData.cantidadCobrar),
-          conceptos: formData.conceptos,
+          conceptos: conceptosValidos, // Enviar solo conceptos válidos (sin espacios vacíos)
         }),
         headers: { "Content-Type": "application/json" },
       });
+
       onSave(updatedCuenta);
       onClose();
       Swal.fire({
@@ -1001,6 +1037,40 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta }) => {
             onChange={(e) => setFormData(prev => ({ ...prev, cantidadCobrar: e.target.value }))}
             className="cuentascobrar-form-control"
           />
+        </div>
+
+        <div className="cuentascobrar-form-group">
+          <label>Conceptos <span className="required"> *</span></label>
+          <div className="cuentascobrar-conceptos-container">
+            {formData.conceptos.map((concepto, index) => (
+              <div key={index} className="cuentascobrar-concepto-item">
+                <input
+                  type="text"
+                  value={concepto}
+                  onChange={(e) => handleConceptoChange(index, e.target.value)}
+                  placeholder={`Concepto ${index + 1}`}
+                  className="cuentascobrar-form-control"
+                />
+                {formData.conceptos.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveConcepto(index)}
+                    className="cuentascobrar-btn-remove-concepto"
+                    title="Eliminar concepto"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={handleAddConcepto}
+              className="cuentascobrar-btn-add-concepto"
+            >
+              + Agregar Concepto
+            </button>
+          </div>
         </div>
 
         <div className="cuentascobrar-form-actions">
