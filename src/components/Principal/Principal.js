@@ -1456,11 +1456,11 @@ const Principal = () => {
 
   const [usuarios, setUsuarios] = useState([]);
   const [tratosPorFase, setTratosPorFase] = useState([]);
-  const [tratosPorUsuario, setTratosPorUsuario] = useState({
+  const [empresasPorUsuario, setEmpresasPorUsuario] = useState({
     labels: [],
     datasets: [
       {
-        label: "Tratos creados",
+        label: "Empresas creadas",
         data: [],
         backgroundColor: [
           "rgba(99, 102, 241, 0.8)",
@@ -1652,27 +1652,27 @@ const Principal = () => {
       }
     };
 
-    const fetchTratos = async () => {
-      try {
-        const url = `${API_BASE_URL}/tratos/contar-por-propietario`;
-        const response = await fetchWithToken(url);
-        const data = await response.json();
-        setTratosPorUsuario((prev) => ({
-          ...prev,
-          labels: data.map((t) => t.propietarioNombre),
-          datasets: [{ ...prev.datasets[0], data: data.map((t) => t.numeroUnidades) }],
-        }));
-      } catch (error) {
-        console.error("Error fetching tratos:", error);
-      }
-    };
+    const fetchEmpresas = async () => {
+  try {
+    const url = `${API_BASE_URL}/empresas/contar-por-propietario`;
+    const response = await fetchWithToken(url);
+    const data = await response.json();
+    setEmpresasPorUsuario((prev) => ({
+      ...prev,
+      labels: data.map((e) => e.propietarioNombre),
+      datasets: [{ ...prev.datasets[0], data: data.map((e) => e.numeroUnidades) }],
+    }));
+  } catch (error) {
+    console.error("Error fetching empresas:", error);
+  }
+};
 
     // Ejecutar todas las funciones de carga
     const loadInitialData = async () => {
       await Promise.all([
         fetchUsuarios(),
         fetchTratosPorFase(),
-        fetchTratos(),
+        fetchEmpresas(),
         fetchTareasPendientes()
       ]);
     };
@@ -1954,7 +1954,7 @@ const Principal = () => {
 
                 {userRol !== "EMPLEADO" && (
                   <div className="chart-section">
-                    <h3>Tratos Creados por Usuario</h3>
+                    <h3>Empresas Creadas por Usuario</h3>
                     <div className="chart-container">
                       {isLoadingUsuarios ? (
                         <div className="loading-spinner">
@@ -1962,7 +1962,7 @@ const Principal = () => {
                           <p>Cargando datos...</p>
                         </div>
                       ) : (
-                        <Doughnut data={tratosPorUsuario} options={usuariosOptions} id="usersChart" />
+                        <Doughnut data={empresasPorUsuario} options={usuariosOptions} id="usersChart" />
                       )}
                     </div>
                   </div>

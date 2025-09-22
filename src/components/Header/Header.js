@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useLocation } from "react-router-dom"
 import Swal from "sweetalert2"
 import "./Header.css"
 import { API_BASE_URL } from "../Config/Config";
@@ -26,9 +26,11 @@ const Header = ({ logoUrl }) => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
   const userName = localStorage.getItem("userName") || "Usuario"
   const userRol = localStorage.getItem("userRol") || "EMPLEADO"
-
+  const cantidadNoLeidasRef = useRef(0);
+  const primeraCargarRef = useRef(true); 
 
   // Estados para inactividad
   const [lastActivity, setLastActivity] = useState(Date.now())
@@ -147,16 +149,16 @@ const Header = ({ logoUrl }) => {
   }
 
   const playNotificationSound = () => {
-  try {
-    const audio = new Audio(notificationSound)
-    audio.volume = 0.3 // Volumen bajo para que no sea molesto
-    audio.play().catch(error => {
-      console.log("No se pudo reproducir el sonido de notificación:", error)
-    })
-  } catch (error) {
-    console.log("Error al crear audio:", error)
+    try {
+      const audio = new Audio(notificationSound)
+      audio.volume = 0.8
+      audio.play().catch(error => {
+        console.log("No se pudo reproducir el sonido de notificación:", error)
+      })
+    } catch (error) {
+      console.log("Error al crear audio:", error)
+    }
   }
-}
 
   // Effect para cargar el logo solo una vez por sesión
   useEffect(() => {
@@ -176,7 +178,6 @@ const Header = ({ logoUrl }) => {
 
   useEffect(() => {
     const handleLogoUpdate = () => {
-      // Reset error states when logo is updated
       logoCache.hasError = false
       logoErrorHandled.current = false
       fetchLogo(true);
@@ -184,6 +185,13 @@ const Header = ({ logoUrl }) => {
     window.addEventListener("logoUpdated", handleLogoUpdate);
     return () => window.removeEventListener("logoUpdated", handleLogoUpdate);
   }, []);
+
+  useEffect(() => {
+  const yaInicializado = sessionStorage.getItem("notificaciones_inicializadas");
+  if (yaInicializado) {
+    obtenerContadorNoLeidas(false); 
+  }
+}, [location.pathname]);
 
   // Función mejorada para manejar errores del logo
   const handleLogoError = (e) => {
@@ -232,25 +240,35 @@ const Header = ({ logoUrl }) => {
   };
 
   // Función para obtener contador de no leídas
-const obtenerContadorNoLeidas = async () => {
+  const obtenerContadorNoLeidas = async (debeReproducirSonido = true) => {
   try {
     const token = localStorage.getItem("token");
     if (!token) return;
 
+    const yaInicializado = sessionStorage.getItem("notificaciones_inicializadas");
+
     const response = await fetch(`${API_BASE_URL}/notificaciones/user/contador-no-leidas`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
 
     if (response.ok) {
       const data = await response.json();
       const nuevaCantidad = data.count;
-      
-      if (nuevaCantidad > cantidadNoLeidas && cantidadNoLeidas !== 0) {
+
+      // Solo reproducir sonido si ya se inicializó Y aumentó el contador Y se permite
+      if (yaInicializado && 
+          nuevaCantidad > cantidadNoLeidasRef.current && 
+          debeReproducirSonido) {
         playNotificationSound();
+        console.log('🔊 Sonido reproducido - nueva notificación detectada');
       }
-      
+
+      if (!yaInicializado) {
+        sessionStorage.setItem("notificaciones_inicializadas", "true");
+        console.log('📱 Sistema inicializado con', nuevaCantidad, 'notificaciones');
+      }
+
+      cantidadNoLeidasRef.current = nuevaCantidad;
       setCantidadNoLeidas(nuevaCantidad);
     }
   } catch (error) {
@@ -345,23 +363,20 @@ const obtenerContadorNoLeidas = async () => {
   };
 
   // Effect para cargar notificaciones
-useEffect(() => {
-  obtenerNotificaciones();
-  obtenerContadorNoLeidas();
+  useEffect(() => {
+    const inicializar = async () => {
+      await obtenerNotificaciones();
+      await obtenerContadorNoLeidas();
+    };
 
-  const intervalo = setInterval(async () => {
-    const cantidadAnterior = cantidadNoLeidas;
-    await obtenerContadorNoLeidas();
-    
-    setTimeout(() => {
-      if (cantidadNoLeidas > cantidadAnterior && cantidadAnterior !== null) {
-        playNotificationSound();
-      }
-    }, 100); 
-  }, 30000);
+    inicializar();
 
-  return () => clearInterval(intervalo);
-}, [cantidadNoLeidas]); 
+    const intervalo = setInterval(() => {
+      obtenerContadorNoLeidas();
+    }, 30000);
+
+    return () => clearInterval(intervalo);
+  }, []);
 
   // Maneja temporizador de inactividad
   useEffect(() => {
@@ -430,6 +445,15 @@ useEffect(() => {
       handleRouteChange()
     }
   }, [navigate])
+
+  useEffect(() => {
+    const handleFocus = () => {
+      obtenerContadorNoLeidas()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [])
 
   // Cierra modales al hacer clic fuera
   useEffect(() => {
