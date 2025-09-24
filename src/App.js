@@ -28,6 +28,7 @@ import Calendario from './components/Calendario/Calendario';
 import GoogleDriveCallback from './components/Configuración/GoogleDriveCallback';
 import DashboardMetricas from './components/Dashboard Metricas/DashboardMetricas';
 import EquiposCreditosPlataforma from './components/Equipos/Equipos_CreditosPlataforma';
+import ConfiguracionGestionSectoresPlataformas from './components/Configuración/Configuracion_GestionSectoresPlataformas';
 
 function App() {
   return (
@@ -63,6 +64,7 @@ function App() {
         <Route path="/calendario" element={<Calendario />} />
         <Route path="/google-drive-callback" element={<GoogleDriveCallback />} />
         <Route path="/metricas_generales" element={<DashboardMetricas />}/>
+        <Route path='/configuracion_gestion_sectores_plataformas' element={<ConfiguracionGestionSectoresPlataformas />}/>
       </Routes>
     </Router>
   );

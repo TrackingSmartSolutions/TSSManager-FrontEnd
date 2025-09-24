@@ -369,6 +369,12 @@ const ConfiguracionAlmacenamiento = () => {
           <div className="config-almacenamiento-nav-item" onClick={() => navigate("/configuracion_usuarios")}>
             Usuarios y roles
           </div>
+          <div
+            className="correo-plantillas-nav-item"
+            onClick={() => navigate("/configuracion_gestion_sectores_plataformas")}
+          >
+            Sectores y plataformas
+          </div>
         </nav>
       </div>
 

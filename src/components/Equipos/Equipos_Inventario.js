@@ -84,10 +84,11 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
     tipo: "ALMACEN",
     estatus: "INACTIVO",
     tipoActivacion: "ANUAL",
-    plataforma: "TRACK_SOLID",
+    plataforma: "",
     creditosUsados: 0,
   });
   const [errors, setErrors] = useState({});
+  const [plataformas, setPlataformas] = useState([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -102,7 +103,7 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
           tipo: equipo.tipo || "ALMACEN",
           estatus: equipo.estatus || "INACTIVO",
           tipoActivacion: equipo.tipoActivacion || "ANUAL",
-          plataforma: equipo.plataforma || "TRACK_SOLID",
+          plataforma: equipo.plataforma?.id || "",
           creditosUsados: equipo.creditosUsados || 0,
         });
         if (equipo.clienteId === null && equipo.clienteDefault) {
@@ -122,7 +123,7 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
           tipo: "ALMACEN",
           estatus: "INACTIVO",
           tipoActivacion: "ANUAL",
-          plataforma: "TRACK_SOLID",
+          plataforma: " ",
           creditosUsados: 0,
         });
       }
@@ -140,6 +141,20 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
       }
     }
   }, [formData.modeloId, formData.imei, equipo, modelos]);
+
+  useEffect(() => {
+    const fetchPlataformas = async () => {
+      try {
+        const response = await fetchWithToken(`${API_BASE_URL}/plataformas`);
+        const data = await response.json();
+        setPlataformas(data);
+      } catch (error) {
+        console.error('Error loading plataformas:', error);
+      }
+    };
+
+    fetchPlataformas();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -346,10 +361,10 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
             onChange={handleInputChange}
             className="inventario-form-control"
           >
-            <option value="TRACK_SOLID">Track Solid</option>
-            <option value="WHATSGPS">Whats GPS</option>
-            <option value="TRACKERKING">Trackerking</option>
-            <option value="JOINTCLOUD">Joint Cloud</option>
+            <option value="">Seleccione una plataforma</option>
+            {plataformas.map((p) => (
+              <option key={p.id} value={p.id}>{p.nombrePlataforma}</option>
+            ))}
           </select>
         </div>
 
@@ -413,7 +428,10 @@ const DetallesEquipoModal = ({ isOpen, onClose, equipo, modelos, proveedores, cl
           <div className="inventario-detalle-item"><label>Tipo Activación:</label><span>{equipo.tipoActivacion || "N/A"}</span></div>
           <div className="inventario-detalle-item"><label>Fecha activación:</label><span>{formatDate(equipo.fechaActivacion)}</span></div>
           <div className="inventario-detalle-item"><label>Fecha expiración:</label><span>{formatDate(equipo.fechaExpiracion)}</span></div>
-          <div className="inventario-detalle-item"><label>Plataforma:</label><span>{equipo.plataforma || "N/A"}</span></div>
+          <div className="inventario-detalle-item">
+            <label>Plataforma:</label>
+            <span>{equipo.plataforma?.nombrePlataforma || "N/A"}</span>
+          </div>
           <div className="inventario-detalle-item"><label>SIM Referenciada:</label><span>{equipo.simReferenciada ? sims.find(s => s.id === equipo.simReferenciada.id)?.numero : "N/A"}</span></div>
           <div className="inventario-detalle-item">
             <label>Créditos usados:</label>
@@ -709,39 +727,34 @@ const EquiposInventario = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSaveEquipo = (equipoData) => {
-    if (isSaving) return;
-    setIsSaving(true);
+  if (isSaving) return;
+  setIsSaving(true);
 
-    fetchData()
-      .then(() => {
-        setEquipos((prev) =>
-          equipoData.id
-            ? prev.map((e) => (e.id === equipoData.id ? equipoData : e))
-            : [...prev, equipoData]
-        );
-
-        // Notificar a otros componentes sobre la actualización
-        if (window.notifyEquiposUpdate) {
-          window.notifyEquiposUpdate();
-        }
-
-        Swal.fire({
-          icon: "success",
-          title: "Éxito",
-          text: equipoData.id ? "Equipo actualizado correctamente" : "Equipo agregado correctamente",
-        });
-      })
-      .catch((error) => {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: error.message,
-        });
-      })
-      .finally(() => {
-        setIsSaving(false);
+  fetchData()
+    .then(() => {
+      setEquipos((prev) =>
+        equipoData.id
+          ? prev.map((e) => (e.id === equipoData.id ? equipoData : e))
+          : [...prev, equipoData]
+      );
+      
+      Swal.fire({
+        icon: "success",
+        title: "Éxito",
+        text: equipoData.id ? "Equipo actualizado correctamente" : "Equipo agregado correctamente",
       });
-  };
+    })
+    .catch((error) => {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.message,
+      });
+    })
+    .finally(() => {
+      setIsSaving(false);
+    });
+};
 
   const handleDeleteEquipo = () => {
     const equipoId = modals.confirmDelete.equipo?.id;
@@ -802,199 +815,199 @@ const EquiposInventario = () => {
 
   return (
     <>
-     <div className="page-with-header">
-      <Header />
-      {isLoading && (
-        <div className="inventario-loading">
-          <div className="spinner"></div>
-          <p>Cargando inventario de equipos...</p>
-        </div>
-      )}
-      <main className="inventario-main-content">
-        <div className="inventario-container">
-          <section className="inventario-sidebar">
-            <div className="inventario-sidebar-header">
-              <h3 className="inventario-sidebar-title">Equipos</h3>
-            </div>
-            <div className="inventario-sidebar-menu">
-              <div className="inventario-menu-item" onClick={() => handleMenuNavigation("estatus-plataforma")}>Estatus plataforma</div>
-              <div className="inventario-menu-item" onClick={() => handleMenuNavigation("modelos")}>Modelos</div>
-              <div className="inventario-menu-item" onClick={() => handleMenuNavigation("proveedores")}>Proveedores</div>
-              <div className="inventario-menu-item inventario-menu-item-active" onClick={() => handleMenuNavigation("inventario")}>Inventario de equipos</div>
-              <div className="inventario-menu-item" onClick={() => handleMenuNavigation("sim")}>SIM</div>
-              <div
-                className="creditosplataforma-menu-item"
-                onClick={() => handleMenuNavigation("creditos-plataforma")}
-              >
-                Créditos Plataformas
+      <div className="page-with-header">
+        <Header />
+        {isLoading && (
+          <div className="inventario-loading">
+            <div className="spinner"></div>
+            <p>Cargando inventario de equipos...</p>
+          </div>
+        )}
+        <main className="inventario-main-content">
+          <div className="inventario-container">
+            <section className="inventario-sidebar">
+              <div className="inventario-sidebar-header">
+                <h3 className="inventario-sidebar-title">Equipos</h3>
               </div>
-            </div>
-          </section>
-
-          <section className="inventario-content-panel">
-            <div className="inventario-header">
-              <h3 className="inventario-page-title">Inventario de equipos</h3>
-              <p className="inventario-subtitle">Gestión de inventario de equipos</p>
-            </div>
-
-            <div className="inventario-chart-card">
-              <div className="inventario-chart-container">
-                <Bar data={chartData} options={chartOptions} />
+              <div className="inventario-sidebar-menu">
+                <div className="inventario-menu-item" onClick={() => handleMenuNavigation("estatus-plataforma")}>Estatus plataforma</div>
+                <div className="inventario-menu-item" onClick={() => handleMenuNavigation("modelos")}>Modelos</div>
+                <div className="inventario-menu-item" onClick={() => handleMenuNavigation("proveedores")}>Proveedores</div>
+                <div className="inventario-menu-item inventario-menu-item-active" onClick={() => handleMenuNavigation("inventario")}>Inventario de equipos</div>
+                <div className="inventario-menu-item" onClick={() => handleMenuNavigation("sim")}>SIM</div>
+                <div
+                  className="creditosplataforma-menu-item"
+                  onClick={() => handleMenuNavigation("creditos-plataforma")}
+                >
+                  Créditos Plataformas
+                </div>
               </div>
-            </div>
+            </section>
 
-            <div className="inventario-table-card">
-              <div className="inventario-table-header">
-                <h4 className="inventario-table-title">Inventario de Equipos</h4>
-                <div className="inventario-table-controls">
-                  <select value={filterTipo} onChange={(e) => setFilterTipo(e.target.value)} className="inventario-filter-select">
-                    {tipoFilterOptions.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
+            <section className="inventario-content-panel">
+              <div className="inventario-header">
+                <h3 className="inventario-page-title">Inventario de equipos</h3>
+                <p className="inventario-subtitle">Gestión de inventario de equipos</p>
+              </div>
 
-                  <input
-                    type="text"
-                    value={filterNombre}
-                    onChange={(e) => setFilterNombre(e.target.value)}
-                    placeholder="Buscar por nombre o IMEI..."
-                    className="inventario-filter-input"
-                  />
-
-                  <select value={filterCliente} onChange={(e) => setFilterCliente(e.target.value)} className="inventario-filter-select">
-                    {clienteFilterOptions.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                  <button className="inventario-btn inventario-btn-primary" onClick={() => openModal("form", { equipo: null })}>Agregar equipo</button>
+              <div className="inventario-chart-card">
+                <div className="inventario-chart-container">
+                  <Bar data={chartData} options={chartOptions} />
                 </div>
               </div>
 
-              <div className="inventario-table-container">
-                <table className="inventario-table">
-                  <thead>
-                    <tr>
-                      <th>IMEI</th>
-                      <th>Nombre</th>
-                      <th>Cliente</th>
-                      <th>Tipo</th>
-                      <th>Estatus</th>
-                      <th>SIM</th>
-                      <th>Créditos</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredEquipos.length > 0 ? (
-                      filteredEquipos.map((equipo) => (
-                        <tr key={equipo.id}>
-                          <td>{equipo.imei}</td>
-                          <td>{equipo.nombre}</td>
-                          <td>
-                            {equipo.clienteId ? (
-                              clientes.find(c => c.id === equipo.clienteId)?.nombre || equipo.clienteId
-                            ) : equipo.clienteDefault ? (
-                              equipo.clienteDefault
-                            ) : (
-                              "N/A"
-                            )}
-                          </td>
-                          <td>{equipo.tipo}</td>
-                          <td>
-                            <span className={`inventario-status-badge inventario-status-${isExpired(equipo) ? "expirado" : equipo.estatus?.toLowerCase()}`}>
-                              {isExpired(equipo) ? "Expirado" : equipo.estatus}
-                            </span>
-                          </td>
-                          <td>{equipo.simReferenciada ? sims.find(s => s.id === equipo.simReferenciada.id)?.numero : "N/A"}</td>
-                          <td>{equipo.creditosUsados || 0}</td>
-                          <td>
-                            <div className="inventario-action-buttons">
-                              <button className="inventario-btn-action inventario-edit" onClick={() => openModal("form", { equipo })} title="Editar">
-                                <img src={editIcon || "/placeholder.svg"} alt="Editar" />
-                              </button>
-                              <button className="inventario-btn-action inventario-delete" onClick={() => {
-                                const hasSimVinculada = equipo.simReferenciada !== null;
-                                openModal("confirmDelete", { equipo, hasSimVinculada });
-                              }} title="Eliminar">
-                                <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
-                              </button>
-                              <button className="inventario-btn-action inventario-details" onClick={() => openModal("detalles", { equipo })} title="Detalles">
-                                <img src={detailsIcon || "/placeholder.svg"} alt="Detalles" />
-                              </button>
-                              {equipo.estatus === "INACTIVO" && (
-                                <button className="inventario-btn inventario-btn-activate" onClick={() => handleActivateEquipo(equipo.id)} title="Activar">
-                                  <img src={activateIcon || "/placeholder.svg"} alt="Activar" className="inventario-action-icon" /> Activar
-                                </button>
-                              )}
-                              {(needsRenewal(equipo) || isExpired(equipo)) && equipo.estatus === "ACTIVO" && (
-                                <button className="inventario-btn inventario-btn-renew" onClick={() => handleRenewEquipo(equipo.id)} title="Renovar">
-                                  <img src={renewIcon || "/placeholder.svg"} alt="Renovar" className="inventario-action-icon" /> Renovar
-                                </button>
-                              )}
-                              {getDaysUntilExpiration(equipo) && (
-                                <div className="inventario-expiration-alert" title={`Expira en ${getDaysUntilExpiration(equipo)} días`}>
-                                  <span className="inventario-expiration-count">{getDaysUntilExpiration(equipo)}d</span>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
+              <div className="inventario-table-card">
+                <div className="inventario-table-header">
+                  <h4 className="inventario-table-title">Inventario de Equipos</h4>
+                  <div className="inventario-table-controls">
+                    <select value={filterTipo} onChange={(e) => setFilterTipo(e.target.value)} className="inventario-filter-select">
+                      {tipoFilterOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+
+                    <input
+                      type="text"
+                      value={filterNombre}
+                      onChange={(e) => setFilterNombre(e.target.value)}
+                      placeholder="Buscar por nombre o IMEI..."
+                      className="inventario-filter-input"
+                    />
+
+                    <select value={filterCliente} onChange={(e) => setFilterCliente(e.target.value)} className="inventario-filter-select">
+                      {clienteFilterOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                    <button className="inventario-btn inventario-btn-primary" onClick={() => openModal("form", { equipo: null })}>Agregar equipo</button>
+                  </div>
+                </div>
+
+                <div className="inventario-table-container">
+                  <table className="inventario-table">
+                    <thead>
                       <tr>
-                        <td colSpan="8" className="inventario-no-data">No se encontraron equipos</td>
+                        <th>IMEI</th>
+                        <th>Nombre</th>
+                        <th>Cliente</th>
+                        <th>Tipo</th>
+                        <th>Estatus</th>
+                        <th>SIM</th>
+                        <th>Créditos</th>
+                        <th>Acciones</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {filteredEquipos.length > 0 ? (
+                        filteredEquipos.map((equipo) => (
+                          <tr key={equipo.id}>
+                            <td>{equipo.imei}</td>
+                            <td>{equipo.nombre}</td>
+                            <td>
+                              {equipo.clienteId ? (
+                                clientes.find(c => c.id === equipo.clienteId)?.nombre || equipo.clienteId
+                              ) : equipo.clienteDefault ? (
+                                equipo.clienteDefault
+                              ) : (
+                                "N/A"
+                              )}
+                            </td>
+                            <td>{equipo.tipo}</td>
+                            <td>
+                              <span className={`inventario-status-badge inventario-status-${isExpired(equipo) ? "expirado" : equipo.estatus?.toLowerCase()}`}>
+                                {isExpired(equipo) ? "Expirado" : equipo.estatus}
+                              </span>
+                            </td>
+                            <td>{equipo.simReferenciada ? sims.find(s => s.id === equipo.simReferenciada.id)?.numero : "N/A"}</td>
+                            <td>{equipo.creditosUsados || 0}</td>
+                            <td>
+                              <div className="inventario-action-buttons">
+                                <button className="inventario-btn-action inventario-edit" onClick={() => openModal("form", { equipo })} title="Editar">
+                                  <img src={editIcon || "/placeholder.svg"} alt="Editar" />
+                                </button>
+                                <button className="inventario-btn-action inventario-delete" onClick={() => {
+                                  const hasSimVinculada = equipo.simReferenciada !== null;
+                                  openModal("confirmDelete", { equipo, hasSimVinculada });
+                                }} title="Eliminar">
+                                  <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
+                                </button>
+                                <button className="inventario-btn-action inventario-details" onClick={() => openModal("detalles", { equipo })} title="Detalles">
+                                  <img src={detailsIcon || "/placeholder.svg"} alt="Detalles" />
+                                </button>
+                                {equipo.estatus === "INACTIVO" && (
+                                  <button className="inventario-btn inventario-btn-activate" onClick={() => handleActivateEquipo(equipo.id)} title="Activar">
+                                    <img src={activateIcon || "/placeholder.svg"} alt="Activar" className="inventario-action-icon" /> Activar
+                                  </button>
+                                )}
+                                {(needsRenewal(equipo) || isExpired(equipo)) && equipo.estatus === "ACTIVO" && (
+                                  <button className="inventario-btn inventario-btn-renew" onClick={() => handleRenewEquipo(equipo.id)} title="Renovar">
+                                    <img src={renewIcon || "/placeholder.svg"} alt="Renovar" className="inventario-action-icon" /> Renovar
+                                  </button>
+                                )}
+                                {getDaysUntilExpiration(equipo) && (
+                                  <div className="inventario-expiration-alert" title={`Expira en ${getDaysUntilExpiration(equipo)} días`}>
+                                    <span className="inventario-expiration-count">{getDaysUntilExpiration(equipo)}d</span>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="8" className="inventario-no-data">No se encontraron equipos</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          </section>
-        </div>
+            </section>
+          </div>
 
-        <EquipoFormModal
-          isOpen={modals.form.isOpen}
-          onClose={() => closeModal("form")}
-          onSave={handleSaveEquipo}
-          equipo={modals.form.equipo}
-          modelos={modelos}
-          proveedores={proveedores}
-          clientes={clientes}
-          equipos={equipos}
-        />
+          <EquipoFormModal
+            isOpen={modals.form.isOpen}
+            onClose={() => closeModal("form")}
+            onSave={handleSaveEquipo}
+            equipo={modals.form.equipo}
+            modelos={modelos}
+            proveedores={proveedores}
+            clientes={clientes}
+            equipos={equipos}
+          />
 
-        <DetallesEquipoModal
-          isOpen={modals.detalles.isOpen}
-          onClose={() => closeModal("detalles")}
-          equipo={modals.detalles.equipo}
-          modelos={modelos}
-          proveedores={proveedores}
-          clientes={clientes}
-          sims={sims}
-        />
+          <DetallesEquipoModal
+            isOpen={modals.detalles.isOpen}
+            onClose={() => closeModal("detalles")}
+            equipo={modals.detalles.equipo}
+            modelos={modelos}
+            proveedores={proveedores}
+            clientes={clientes}
+            sims={sims}
+          />
 
-        <ConfirmarEliminacionModal
-          isOpen={modals.confirmDelete.isOpen}
-          onClose={() => closeModal("confirmDelete")}
-          onConfirm={handleDeleteEquipo}
-          equipo={modals.confirmDelete.equipo}
-          hasSimVinculada={modals.confirmDelete.hasSimVinculada}
-        />
+          <ConfirmarEliminacionModal
+            isOpen={modals.confirmDelete.isOpen}
+            onClose={() => closeModal("confirmDelete")}
+            onConfirm={handleDeleteEquipo}
+            equipo={modals.confirmDelete.equipo}
+            hasSimVinculada={modals.confirmDelete.hasSimVinculada}
+          />
 
-        <ConfirmarActivacionModal
-          isOpen={modals.confirmActivate.isOpen}
-          onClose={() => closeModal("confirmActivate")}
-          onConfirm={handleConfirmActivateEquipo}
-          equipo={modals.confirmActivate.equipo}
-        />
+          <ConfirmarActivacionModal
+            isOpen={modals.confirmActivate.isOpen}
+            onClose={() => closeModal("confirmActivate")}
+            onConfirm={handleConfirmActivateEquipo}
+            equipo={modals.confirmActivate.equipo}
+          />
 
-        <CreditosModal
-          isOpen={modals.creditos.isOpen}
-          onClose={() => closeModal("creditos")}
-          onConfirm={handleConfirmWithCreditos}
-          titulo={modals.creditos.tipo === "activar" ? "Activar equipo" : "Renovar equipo"}
-        />
-      </main>
+          <CreditosModal
+            isOpen={modals.creditos.isOpen}
+            onClose={() => closeModal("creditos")}
+            onConfirm={handleConfirmWithCreditos}
+            titulo={modals.creditos.tipo === "activar" ? "Activar equipo" : "Renovar equipo"}
+          />
+        </main>
       </div>
     </>
   );

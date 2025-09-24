@@ -4457,7 +4457,8 @@ const DetallesTrato = () => {
           ingresosEsperados: tratoData.ingresosEsperados ? `$${tratoData.ingresosEsperados.toFixed(2)}` : "",
           numeroUnidades: tratoData.numeroUnidades || "",
           sitioWeb: tratoData.sitioWeb || "",
-          sector: tratoData.sector || "",
+          sector: tratoData.sectorNombre || tratoData.sector || "",
+          sectorNombre: tratoData.sectorNombre || "",
           fechaCreacion: tratoData.fechaCreacion ? new Date(tratoData.fechaCreacion).toLocaleDateString() : "",
           fechaCierre: tratoData.fechaCierre ? new Date(tratoData.fechaCierre).toLocaleDateString() : "",
           fase: tratoData.fase || "",
@@ -5048,739 +5049,739 @@ const DetallesTrato = () => {
 
   return (
     <>
-     <div className="page-with-header">
-      <Header />
-      <main className="main-content">
-        <div className="detalles-trato-container">
-          {/* Header con navegación */}
-          <div className="detalles-header">
-            <div className="header-navigation">
-              <button onClick={handleVolver} className="btn-volver">
-                ←
+      <div className="page-with-header">
+        <Header />
+        <main className="main-content">
+          <div className="detalles-trato-container">
+            {/* Header con navegación */}
+            <div className="detalles-header">
+              <div className="header-navigation">
+                <button onClick={handleVolver} className="btn-volver">
+                  ←
+                </button>
+                <h1 className="trato-titulo">{trato.nombre}</h1>
+              </div>
+              <button onClick={handleEditarTrato} className="btn-editar-trato">
+                Editar trato
               </button>
-              <h1 className="trato-titulo">{trato.nombre}</h1>
             </div>
-            <button onClick={handleEditarTrato} className="btn-editar-trato">
-              Editar trato
-            </button>
-          </div>
 
-          {/* Breadcrumb de fases */}
-          <div className="fases-breadcrumb">
-            <div className="fecha-inicio">
-              <span>INICIO</span>
-              <span className="fecha">{trato.fechaCreacion}</span>
-            </div>
-            <div className="fases-container">
-              {trato.fases.map((fase, index) => (
-                <button
-                  key={index}
-                  className={`fase-item ${trato.fase === fase.nombre ? 'actual' : ''}`}
-                  onClick={() => handleCambiarFase(fase.nombre)}
-                >
-                  <span>{fase.nombre.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}</span>
-                </button>
-              ))}
-            </div>
-            <div className="fecha-final">
-              <span>FINAL</span>
-              <span className="fecha">{trato.fechaCierre}</span>
-              <div className="iconos-estado">
-                <button
-                  className={`btn-estado ganado ${trato.fase === 'CERRADO_GANADO' ? 'activo' : ''}`}
-                  onClick={() => handleCambiarFase('CERRADO_GANADO')}
-                >
-                  <img src={checkIcon || "/placeholder.svg"} alt="Marcar como ganado" />
-                </button>
-                <button
-                  className={`btn-estado perdido ${trato.fase === 'CERRADO_PERDIDO' ? 'activo' : ''}`}
-                  onClick={() => handleCambiarFase('CERRADO_PERDIDO')}
-                >
-                  <img src={closeIcon || "/placeholder.svg"} alt="Marcar como perdido" />
-                </button>
+            {/* Breadcrumb de fases */}
+            <div className="fases-breadcrumb">
+              <div className="fecha-inicio">
+                <span>INICIO</span>
+                <span className="fecha">{trato.fechaCreacion}</span>
+              </div>
+              <div className="fases-container">
+                {trato.fases.map((fase, index) => (
+                  <button
+                    key={index}
+                    className={`fase-item ${trato.fase === fase.nombre ? 'actual' : ''}`}
+                    onClick={() => handleCambiarFase(fase.nombre)}
+                  >
+                    <span>{fase.nombre.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="fecha-final">
+                <span>FINAL</span>
+                <span className="fecha">{trato.fechaCierre}</span>
+                <div className="iconos-estado">
+                  <button
+                    className={`btn-estado ganado ${trato.fase === 'CERRADO_GANADO' ? 'activo' : ''}`}
+                    onClick={() => handleCambiarFase('CERRADO_GANADO')}
+                  >
+                    <img src={checkIcon || "/placeholder.svg"} alt="Marcar como ganado" />
+                  </button>
+                  <button
+                    className={`btn-estado perdido ${trato.fase === 'CERRADO_PERDIDO' ? 'activo' : ''}`}
+                    onClick={() => handleCambiarFase('CERRADO_PERDIDO')}
+                  >
+                    <img src={closeIcon || "/placeholder.svg"} alt="Marcar como perdido" />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Persona de contacto */}
-          {trato.contacto && (
-            <div className="seccion persona-contacto">
+            {/* Persona de contacto */}
+            {trato.contacto && (
+              <div className="seccion persona-contacto">
+                <div className="seccion-header">
+                  <h2>Persona de contacto</h2>
+                  {['ENVIO_DE_INFORMACION', 'RESPUESTA_POR_CORREO'].includes(trato.fase) && (
+                    <label className="checkbox-container">
+                      <input
+                        type="checkbox"
+                        checked={correosSeguimientoActivo}
+                        onChange={handleCorreosSeguimientoChange}
+                        disabled={cargandoCorreos}
+                      />
+                      <span>
+                        {cargandoCorreos ? 'Procesando...' : 'Mandar emails de seguimiento'}
+                      </span>
+                    </label>
+                  )}
+                </div>
+                <div className="contacto-info">
+                  <div className="contacto-avatar">
+                    <div className="avatar-circle">
+                      <span>{(trato.contacto.nombre || "").charAt(0) || "C"}</span>
+                    </div>
+                    <span className="contacto-nombre">{trato.contacto.nombre || "Sin contacto"}</span>
+                  </div>
+                  <div className="contacto-detalles">
+                    <div className="contacto-item">
+                      <button
+                        className="btn-contacto telefono"
+                        onClick={() => handleLlamarContacto(trato.contacto.telefono || "")}
+                        title="Llamar"
+                      >
+                        <img src={phoneIcon || "/placeholder.svg"} alt="Teléfono" className="contacto-icon" />
+                      </button>
+                      <span>{trato.contacto.telefono || "N/A"}</span>
+                    </div>
+                    <div className="contacto-item">
+                      <button
+                        className="btn-contacto whatsapp"
+                        onClick={() => handleWhatsAppContacto(trato.contacto.whatsapp || "")}
+                        title="Enviar WhatsApp"
+                      >
+                        <img src={whatsappIcon || "/placeholder.svg"} alt="WhatsApp" className="contacto-icon" />
+                      </button>
+                      <span>{trato.contacto.whatsapp || "N/A"}</span>
+                    </div>
+                    <div className="contacto-item">
+                      <img src={emailIcon || "/placeholder.svg"} alt="Email" className="contacto-icon" />
+                      <span>{trato.contacto.email || "N/A"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Detalles del trato */}
+            <div className="seccion detalles-trato">
+              <h2>Detalles del trato</h2>
+              <div className="detalles-grid">
+                <div className="detalle-item">
+                  <label>Propietario trato</label>
+                  <span>{trato.propietario}</span>
+                </div>
+                <div className="detalle-item">
+                  <label>Número de trato</label>
+                  <span>{trato.numeroTrato}</span>
+                </div>
+                <div className="detalle-item">
+                  <label>Nombre Empresa</label>
+                  <button
+                    onClick={handleVerEmpresa}
+                    className="empresa-link"
+                    disabled={!trato.empresaId}
+                  >
+                    {trato.nombreEmpresa}
+                  </button>
+                </div>
+                <div className="detalle-item">
+                  <label>Descripción</label>
+                  <span>{trato.descripcion}</span>
+                </div>
+                <div className="detalle-item">
+                  <label>Domicilio de la empresa</label>
+                  <span>{trato.domicilio}</span>
+                </div>
+                <div className="detalle-item">
+                  <label>Ingresos esperados</label>
+                  <span>{trato.ingresosEsperados}</span>
+                </div>
+                <div className="detalle-item">
+                  <label>Sitio web</label>
+                  <a href={trato.sitioWeb} target="_blank" rel="noopener noreferrer">
+                    {trato.sitioWeb}
+                  </a>
+                </div>
+                <div className="detalle-item">
+                  <label>Sector</label>
+                  <span>{trato.sectorNombre || trato.sector || "Sin sector"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Notas */}
+            <div className="seccion notas">
               <div className="seccion-header">
-                <h2>Persona de contacto</h2>
-                {['ENVIO_DE_INFORMACION', 'RESPUESTA_POR_CORREO'].includes(trato.fase) && (
-                  <label className="checkbox-container">
-                    <input
-                      type="checkbox"
-                      checked={correosSeguimientoActivo}
-                      onChange={handleCorreosSeguimientoChange}
-                      disabled={cargandoCorreos}
-                    />
-                    <span>
-                      {cargandoCorreos ? 'Procesando...' : 'Mandar emails de seguimiento'}
-                    </span>
-                  </label>
-                )}
+                <h2>Notas</h2>
               </div>
-              <div className="contacto-info">
-                <div className="contacto-avatar">
-                  <div className="avatar-circle">
-                    <span>{(trato.contacto.nombre || "").charAt(0) || "C"}</span>
-                  </div>
-                  <span className="contacto-nombre">{trato.contacto.nombre || "Sin contacto"}</span>
-                </div>
-                <div className="contacto-detalles">
-                  <div className="contacto-item">
-                    <button
-                      className="btn-contacto telefono"
-                      onClick={() => handleLlamarContacto(trato.contacto.telefono || "")}
-                      title="Llamar"
-                    >
-                      <img src={phoneIcon || "/placeholder.svg"} alt="Teléfono" className="contacto-icon" />
-                    </button>
-                    <span>{trato.contacto.telefono || "N/A"}</span>
-                  </div>
-                  <div className="contacto-item">
-                    <button
-                      className="btn-contacto whatsapp"
-                      onClick={() => handleWhatsAppContacto(trato.contacto.whatsapp || "")}
-                      title="Enviar WhatsApp"
-                    >
-                      <img src={whatsappIcon || "/placeholder.svg"} alt="WhatsApp" className="contacto-icon" />
-                    </button>
-                    <span>{trato.contacto.whatsapp || "N/A"}</span>
-                  </div>
-                  <div className="contacto-item">
-                    <img src={emailIcon || "/placeholder.svg"} alt="Email" className="contacto-icon" />
-                    <span>{trato.contacto.email || "N/A"}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+              <div className="agregar-nota">
+                <textarea
+                  placeholder="Agregar una nota (Alt + Enter para nueva línea, Enter para guardar)"
+                  value={nuevaNota}
+                  onChange={(e) => setNuevaNota(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && e.altKey) {
+                      // Alt + Enter: insertar salto de línea
+                      const textarea = e.target;
+                      const start = textarea.selectionStart;
+                      const end = textarea.selectionEnd;
+                      const newValue = nuevaNota.substring(0, start) + '\n' + nuevaNota.substring(end);
+                      setNuevaNota(newValue);
 
-          {/* Detalles del trato */}
-          <div className="seccion detalles-trato">
-            <h2>Detalles del trato</h2>
-            <div className="detalles-grid">
-              <div className="detalle-item">
-                <label>Propietario trato</label>
-                <span>{trato.propietario}</span>
-              </div>
-              <div className="detalle-item">
-                <label>Número de trato</label>
-                <span>{trato.numeroTrato}</span>
-              </div>
-              <div className="detalle-item">
-                <label>Nombre Empresa</label>
-                <button
-                  onClick={handleVerEmpresa}
-                  className="empresa-link"
-                  disabled={!trato.empresaId}
-                >
-                  {trato.nombreEmpresa}
-                </button>
-              </div>
-              <div className="detalle-item">
-                <label>Descripción</label>
-                <span>{trato.descripcion}</span>
-              </div>
-              <div className="detalle-item">
-                <label>Domicilio de la empresa</label>
-                <span>{trato.domicilio}</span>
-              </div>
-              <div className="detalle-item">
-                <label>Ingresos esperados</label>
-                <span>{trato.ingresosEsperados}</span>
-              </div>
-              <div className="detalle-item">
-                <label>Sitio web</label>
-                <a href={trato.sitioWeb} target="_blank" rel="noopener noreferrer">
-                  {trato.sitioWeb}
-                </a>
-              </div>
-              <div className="detalle-item">
-                <label>Sector</label>
-                <span>{trato.sector}</span>
-              </div>
-            </div>
-          </div>
+                      // Mantener la posición del cursor después del salto de línea
+                      setTimeout(() => {
+                        textarea.selectionStart = textarea.selectionEnd = start + 1;
+                      }, 0);
 
-          {/* Notas */}
-          <div className="seccion notas">
-            <div className="seccion-header">
-              <h2>Notas</h2>
-            </div>
-            <div className="agregar-nota">
-              <textarea
-                placeholder="Agregar una nota (Alt + Enter para nueva línea, Enter para guardar)"
-                value={nuevaNota}
-                onChange={(e) => setNuevaNota(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && e.altKey) {
-                    // Alt + Enter: insertar salto de línea
-                    const textarea = e.target;
-                    const start = textarea.selectionStart;
-                    const end = textarea.selectionEnd;
-                    const newValue = nuevaNota.substring(0, start) + '\n' + nuevaNota.substring(end);
-                    setNuevaNota(newValue);
+                      e.preventDefault();
+                    } else if (e.key === "Enter" && !e.altKey) {
+                      // Solo Enter: guardar nota
+                      e.preventDefault();
+                      handleAgregarNota();
+                    }
+                  }}
+                  className="input-nota"
+                  rows={3}
+                />
+              </div>
+              <div className="notas-lista">
+                {(() => {
+                  const LIMITE_NOTAS = 5;
+                  const notasAMostrar = mostrarTodasLasNotas
+                    ? trato.notas
+                    : trato.notas.slice(0, LIMITE_NOTAS);
+                  const notasOcultas = trato.notas.length - LIMITE_NOTAS;
 
-                    // Mantener la posición del cursor después del salto de línea
-                    setTimeout(() => {
-                      textarea.selectionStart = textarea.selectionEnd = start + 1;
-                    }, 0);
+                  return (
+                    <>
+                      {notasAMostrar.map((nota) => (
+                        <div key={nota.id} className="nota-item">
+                          <div className="nota-avatar">
+                            <span>{(nota.autor || "U").charAt(0)}</span>
+                          </div>
+                          <div className="nota-contenido">
+                            {editingNoteId === nota.id ? (
+                              <div className="edit-nota-container">
+                                <textarea
+                                  value={editingNoteText}
+                                  onChange={(e) => setEditingNoteText(e.target.value)}
+                                  className="input-nota-edit"
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter" && e.altKey) {
+                                      // Alt + Enter: insertar salto de línea
+                                      const textarea = e.target;
+                                      const start = textarea.selectionStart;
+                                      const end = textarea.selectionEnd;
+                                      const newValue = editingNoteText.substring(0, start) + '\n' + editingNoteText.substring(end);
+                                      setEditingNoteText(newValue);
 
-                    e.preventDefault();
-                  } else if (e.key === "Enter" && !e.altKey) {
-                    // Solo Enter: guardar nota
-                    e.preventDefault();
-                    handleAgregarNota();
-                  }
-                }}
-                className="input-nota"
-                rows={3}
-              />
-            </div>
-            <div className="notas-lista">
-              {(() => {
-                const LIMITE_NOTAS = 5;
-                const notasAMostrar = mostrarTodasLasNotas
-                  ? trato.notas
-                  : trato.notas.slice(0, LIMITE_NOTAS);
-                const notasOcultas = trato.notas.length - LIMITE_NOTAS;
+                                      // Mantener la posición del cursor después del salto de línea
+                                      setTimeout(() => {
+                                        textarea.selectionStart = textarea.selectionEnd = start + 1;
+                                      }, 0);
 
-                return (
-                  <>
-                    {notasAMostrar.map((nota) => (
-                      <div key={nota.id} className="nota-item">
-                        <div className="nota-avatar">
-                          <span>{(nota.autor || "U").charAt(0)}</span>
-                        </div>
-                        <div className="nota-contenido">
-                          {editingNoteId === nota.id ? (
-                            <div className="edit-nota-container">
-                              <textarea
-                                value={editingNoteText}
-                                onChange={(e) => setEditingNoteText(e.target.value)}
-                                className="input-nota-edit"
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter" && e.altKey) {
-                                    // Alt + Enter: insertar salto de línea
-                                    const textarea = e.target;
-                                    const start = textarea.selectionStart;
-                                    const end = textarea.selectionEnd;
-                                    const newValue = editingNoteText.substring(0, start) + '\n' + editingNoteText.substring(end);
-                                    setEditingNoteText(newValue);
-
-                                    // Mantener la posición del cursor después del salto de línea
-                                    setTimeout(() => {
-                                      textarea.selectionStart = textarea.selectionEnd = start + 1;
-                                    }, 0);
-
-                                    e.preventDefault();
-                                  } else if (e.key === "Enter" && !e.altKey) {
-                                    // Solo Enter: guardar nota
-                                    e.preventDefault();
-                                    handleSaveEditNota(nota.id);
-                                  } else if (e.key === "Escape") {
-                                    handleCancelEditNota();
-                                  }
-                                }}
-                                autoFocus
-                                rows={3}
-                              />
-                              <div className="edit-nota-actions">
-                                <button onClick={() => handleSaveEditNota(nota.id)} className="btn-save-nota">
-                                  Guardar
-                                </button>
-                                <button onClick={handleCancelEditNota} className="btn-cancel-nota">
-                                  Cancelar
-                                </button>
+                                      e.preventDefault();
+                                    } else if (e.key === "Enter" && !e.altKey) {
+                                      // Solo Enter: guardar nota
+                                      e.preventDefault();
+                                      handleSaveEditNota(nota.id);
+                                    } else if (e.key === "Escape") {
+                                      handleCancelEditNota();
+                                    }
+                                  }}
+                                  autoFocus
+                                  rows={3}
+                                />
+                                <div className="edit-nota-actions">
+                                  <button onClick={() => handleSaveEditNota(nota.id)} className="btn-save-nota">
+                                    Guardar
+                                  </button>
+                                  <button onClick={handleCancelEditNota} className="btn-cancel-nota">
+                                    Cancelar
+                                  </button>
+                                </div>
                               </div>
+                            ) : (
+                              <>
+                                <div>
+                                  {(nota.texto || '')
+                                    .replace(/\\n/g, '\n')
+                                    .split('\n')
+                                    .map((linea, index) => (
+                                      <p key={index} style={{ margin: '0', lineHeight: '1.4' }}>
+                                        {linea || '\u00A0'}
+                                      </p>
+                                    ))}
+                                </div>
+                                <span className="nota-fecha">Creado por {nota.autor} el {nota.fecha}</span>
+                                {nota.editadoPor && (
+                                  <span className="nota-editado">
+                                    Editado por {nota.editadoPor} el {nota.fechaEdicion}
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </div>
+                          {editingNoteId !== nota.id && (
+                            <div className="nota-acciones">
+                              <button onClick={() => handleEditarNota(nota.id)} className="btn-editar-nota">
+                                <img src={editIcon || "/placeholder.svg"} alt="Editar" />
+                              </button>
+                              <button onClick={() => handleEliminarNota(nota.id)} className="btn-eliminar-nota">
+                                <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
+                              </button>
                             </div>
-                          ) : (
-                            <>
-                              <div>
-                                {(nota.texto || '')
-                                  .replace(/\\n/g, '\n')
-                                  .split('\n')
-                                  .map((linea, index) => (
-                                    <p key={index} style={{ margin: '0', lineHeight: '1.4' }}>
-                                      {linea || '\u00A0'}
-                                    </p>
-                                  ))}
-                              </div>
-                              <span className="nota-fecha">Creado por {nota.autor} el {nota.fecha}</span>
-                              {nota.editadoPor && (
-                                <span className="nota-editado">
-                                  Editado por {nota.editadoPor} el {nota.fechaEdicion}
-                                </span>
-                              )}
-                            </>
                           )}
                         </div>
-                        {editingNoteId !== nota.id && (
-                          <div className="nota-acciones">
-                            <button onClick={() => handleEditarNota(nota.id)} className="btn-editar-nota">
-                              <img src={editIcon || "/placeholder.svg"} alt="Editar" />
-                            </button>
-                            <button onClick={() => handleEliminarNota(nota.id)} className="btn-eliminar-nota">
-                              <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                      ))}
 
-                    {/* Botón para mostrar/ocultar notas adicionales */}
-                    {trato.notas.length > LIMITE_NOTAS && (
-                      <div className="ver-mas-notas-container">
-                        <button
-                          onClick={() => setMostrarTodasLasNotas(!mostrarTodasLasNotas)}
-                          className="btn-ver-mas-notas"
-                        >
-                          {mostrarTodasLasNotas
-                            ? "Mostrar menos notas"
-                            : `Ver todas las notas (${notasOcultas} más)`}
-                        </button>
-                      </div>
-                    )}
+                      {/* Botón para mostrar/ocultar notas adicionales */}
+                      {trato.notas.length > LIMITE_NOTAS && (
+                        <div className="ver-mas-notas-container">
+                          <button
+                            onClick={() => setMostrarTodasLasNotas(!mostrarTodasLasNotas)}
+                            className="btn-ver-mas-notas"
+                          >
+                            {mostrarTodasLasNotas
+                              ? "Mostrar menos notas"
+                              : `Ver todas las notas (${notasOcultas} más)`}
+                          </button>
+                        </div>
+                      )}
 
-                    {/* Mensaje cuando no hay notas */}
-                    {trato.notas.length === 0 && (
-                      <div className="no-notas">
-                        <p>No hay notas agregadas aún.</p>
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-          </div>
-
-          {/* Actividades abiertas */}
-          <div className="seccion actividades-abiertas">
-            <div className="seccion-header">
-              <h2>Actividades abiertas</h2>
-              <button onClick={() => handleAgregarActividad("actividad")} className="btn-agregar">
-                <img src={addIcon || "/placeholder.svg"} alt="Agregar" />
-              </button>
-            </div>
-            <div className="actividades-grid">
-              <div className="actividad-columna">
-                <div className="columna-header">
-                  <img src={taskIcon || "/placeholder.svg"} alt="Tareas" />
-                  <span>Tareas abiertas</span>
-                </div>
-                <div className="actividades-lista">
-                  {trato.actividadesAbiertas.tareas.length === 0 ? (
-                    <p className="no-actividades">No se encontraron registros</p>
-                  ) : (
-                    trato.actividadesAbiertas.tareas.map((tarea) => (
-                      <div key={tarea.id} className="actividad-item tarea">
-                        <h4>{`Tarea con ${tarea.nombreContacto}`}</h4>
-                        <div className="actividad-detalles">
-                          <span>Tipo: {tarea.subtipoTarea || "Sin tipo"}</span>
-                          <span>Fecha límite: {tarea.fecha || "Sin fecha"}</span>
-                          <span>Finalidad: {tarea.finalidad || "Sin finalidad"}</span>
-                          <span>Notas: {tarea.notas || "Sin notas"}</span>
-                          <span>Asignado a: {tarea.asignadoA || "Sin asignado"}</span>
+                      {/* Mensaje cuando no hay notas */}
+                      {trato.notas.length === 0 && (
+                        <div className="no-notas">
+                          <p>No hay notas agregadas aún.</p>
                         </div>
-                        <div className="actividad-badges">
-                          <button
-                            className="badge completada clickeable"
-                            onClick={() => handleCompletarActividad(tarea.id, "tarea")}
-                          >
-                            Completar
-                          </button>
-                          <button
-                            className="badge reprogramar clickeable"
-                            onClick={() => handleReprogramarActividad(tarea.id, "tarea")}
-                          >
-                            Reprogramar
-                          </button>
-                          <button
-                            className="badge eliminar clickeable"
-                            onClick={() => handleEliminarActividad(tarea.id, "tarea")}
-                            title="Eliminar tarea"
-                          >
-                            <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
-                            Eliminar
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-              <div className="actividad-columna">
-                <div className="columna-header">
-                  <img src={callIcon || "/placeholder.svg"} alt="Llamadas" />
-                  <span>Llamadas abiertas</span>
-                </div>
-                <div className="actividades-lista">
-                  {trato.actividadesAbiertas.llamadas.length === 0 ? (
-                    <p className="no-actividades">No se encontraron registros</p>
-                  ) : (
-                    trato.actividadesAbiertas.llamadas.map((llamada) => (
-                      <div key={llamada.id} className="actividad-item llamada">
-                        <h4>{`Llamada con ${llamada.nombreContacto}`}</h4>
-                        <div className="actividad-detalles">
-                          <span>Fecha: {llamada.fecha || "Sin fecha"}</span>
-                          <span>Hora: {llamada.hora || "Sin hora"}</span>
-                          <span>Asignado a: {llamada.asignadoA || "Sin asignado"}</span>
-                        </div>
-                        <div className="actividad-badges">
-                          <button
-                            className="badge completada clickeable"
-                            onClick={() => handleCompletarActividad(llamada.id, "llamada")}
-                          >
-                            Completar
-                          </button>
-                          <button
-                            className="badge reprogramar clickeable"
-                            onClick={() => handleReprogramarActividad(llamada.id, "llamada")}
-                          >
-                            Reprogramar
-                          </button>
-                          <button
-                            className="badge eliminar clickeable"
-                            onClick={() => handleEliminarActividad(llamada.id, "llamada")}
-                            title="Eliminar llamada"
-                          >
-                            <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
-                            Eliminar
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-              <div className="actividad-columna">
-                <div className="columna-header">
-                  <img src={meetingIcon || "/placeholder.svg"} alt="Reuniones" />
-                  <span>Reuniones abiertas</span>
-                </div>
-                <div className="actividades-lista">
-                  {trato.actividadesAbiertas.reuniones.length === 0 ? (
-                    <p className="no-actividades">No se encontraron registros</p>
-                  ) : (
-                    trato.actividadesAbiertas.reuniones.map((reunion) => (
-                      <div key={reunion.id} className="actividad-item reunion">
-                        <h4>{`Reunión con ${reunion.nombreContacto}`}</h4>
-                        <div className="actividad-detalles">
-                          <span>Fecha: {reunion.fecha || "Sin fecha"}</span>
-                          <span>Hora inicio: {reunion.hora || "Sin hora"}</span>
-                          <span>
-                            Modalidad: {reunion.modalidad}
-                            {reunion.modalidad === "PRESENCIAL" && reunion.lugarReunion && ` - Lugar: ${reunion.lugarReunion}`}
-                            {reunion.modalidad === "VIRTUAL" && reunion.enlaceReunion && ` - Enlace: ${reunion.enlaceReunion}`}
-                          </span>
-                          <span>Asignado a: {reunion.asignadoA || "Sin asignado"}</span>
-                        </div>
-                        <div className="actividad-badges">
-                          <button
-                            className="badge completada clickeable"
-                            onClick={() => handleCompletarActividad(reunion.id, "reunion")}
-                          >
-                            Completar
-                          </button>
-                          <button
-                            className="badge reprogramar clickeable"
-                            onClick={() => handleReprogramarActividad(reunion.id, "reunion")}
-                          >
-                            Reprogramar
-                          </button>
-                          <button
-                            className="badge eliminar clickeable"
-                            onClick={() => handleEliminarActividad(reunion.id, "reunion")}
-                            title="Eliminar reunión"
-                          >
-                            <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
-                            Eliminar
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </div>
-          </div>
 
-          {/* Historial de interacciones */}
-          <div className="seccion historial-interacciones">
-            <div className="seccion-header">
-              <h2>Historial de interacciones</h2>
-              <button onClick={() => openModal('agregarInteraccion', { tratoId: trato.id })} className="btn-agregar">
-                <img src={addIcon || "/placeholder.svg"} alt="Agregar" />
-              </button>
-            </div>
-            <div className="historial-tabla">
-              <div className="tabla-header">
-                <div className="header-cell">Fecha</div>
-                <div className="header-cell">Responsable</div>
-                <div className="header-cell">Tipo</div>
-                <div className="header-cell">Medio</div>
-                <div className="header-cell">Resultado</div>
-                <div className="header-cell">Interés</div>
-                <div className="header-cell">Notas</div>
-                <div className="header-cell">Acciones</div>
+            {/* Actividades abiertas */}
+            <div className="seccion actividades-abiertas">
+              <div className="seccion-header">
+                <h2>Actividades abiertas</h2>
+                <button onClick={() => handleAgregarActividad("actividad")} className="btn-agregar">
+                  <img src={addIcon || "/placeholder.svg"} alt="Agregar" />
+                </button>
               </div>
-              <div className="tabla-body">
-                {trato.historialInteracciones && trato.historialInteracciones.length > 0 ? (
-                  trato.historialInteracciones.map((interaccion) => {
-                    // Mapeo para los íconos de Resultado
-                    const resultadoIcono = {
-                      POSITIVO: '✅',
-                      NEGATIVO: '❌',
-                      'Sin resultado': '—',
-                    }[interaccion.resultado] || '—';
-
-                    // Mapeo para los íconos de Interés
-                    const interesIcono = {
-                      ALTO: '🟢',
-                      MEDIO: '🟡',
-                      BAJO: '🔴',
-                      'Sin interés': '—',
-                    }[interaccion.interes] || '—';
-
-                    return (
-                      <div key={interaccion.id} className="tabla-row">
-                        <div className="cell">
-                          <div className="fecha-hora">
-                            <span className="fecha">{interaccion.fecha}</span>
-                            <span className="hora">{interaccion.hora}</span>
-                          </div>
-                        </div>
-                        <div className="cell">{interaccion.responsable}</div>
-                        <div className="cell">
-                          <span className={`tipo-badge ${interaccion.tipo.toLowerCase()}`}>
-                            {interaccion.tipo}
-                          </span>
-                        </div>
-                        <div className="cell">{interaccion.medio}</div>
-                        <div className="cell">
-                          <span className={`resultado-badge ${interaccion.resultado ? interaccion.resultado.toLowerCase() : 'sin-resultado'}`}>
-                            {resultadoIcono}
-                          </span>
-                        </div>
-                        <div className="cell">
-                          <span className={`interes-badge ${interaccion.interes}`}>
-                            {interesIcono}
-                          </span>
-                        </div>
-                        <div className="cell notas-cell">{interaccion.notas}</div>
-                        <div className="cell">
-                          <button
-                            onClick={() => handleEditarInteraccion(interaccion)}
-                            className="btn-editar-interaccion"
-                            title="Editar interacción"
-                          >
-                            <img src={editIcon} alt="Editar" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="tabla-row">
-                    <div className="cell-empty" colSpan="7">
-                      <p className="no-actividades">No se encontraron registros</p>
-                    </div>
+              <div className="actividades-grid">
+                <div className="actividad-columna">
+                  <div className="columna-header">
+                    <img src={taskIcon || "/placeholder.svg"} alt="Tareas" />
+                    <span>Tareas abiertas</span>
                   </div>
+                  <div className="actividades-lista">
+                    {trato.actividadesAbiertas.tareas.length === 0 ? (
+                      <p className="no-actividades">No se encontraron registros</p>
+                    ) : (
+                      trato.actividadesAbiertas.tareas.map((tarea) => (
+                        <div key={tarea.id} className="actividad-item tarea">
+                          <h4>{`Tarea con ${tarea.nombreContacto}`}</h4>
+                          <div className="actividad-detalles">
+                            <span>Tipo: {tarea.subtipoTarea || "Sin tipo"}</span>
+                            <span>Fecha límite: {tarea.fecha || "Sin fecha"}</span>
+                            <span>Finalidad: {tarea.finalidad || "Sin finalidad"}</span>
+                            <span>Notas: {tarea.notas || "Sin notas"}</span>
+                            <span>Asignado a: {tarea.asignadoA || "Sin asignado"}</span>
+                          </div>
+                          <div className="actividad-badges">
+                            <button
+                              className="badge completada clickeable"
+                              onClick={() => handleCompletarActividad(tarea.id, "tarea")}
+                            >
+                              Completar
+                            </button>
+                            <button
+                              className="badge reprogramar clickeable"
+                              onClick={() => handleReprogramarActividad(tarea.id, "tarea")}
+                            >
+                              Reprogramar
+                            </button>
+                            <button
+                              className="badge eliminar clickeable"
+                              onClick={() => handleEliminarActividad(tarea.id, "tarea")}
+                              title="Eliminar tarea"
+                            >
+                              <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
+                              Eliminar
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+                <div className="actividad-columna">
+                  <div className="columna-header">
+                    <img src={callIcon || "/placeholder.svg"} alt="Llamadas" />
+                    <span>Llamadas abiertas</span>
+                  </div>
+                  <div className="actividades-lista">
+                    {trato.actividadesAbiertas.llamadas.length === 0 ? (
+                      <p className="no-actividades">No se encontraron registros</p>
+                    ) : (
+                      trato.actividadesAbiertas.llamadas.map((llamada) => (
+                        <div key={llamada.id} className="actividad-item llamada">
+                          <h4>{`Llamada con ${llamada.nombreContacto}`}</h4>
+                          <div className="actividad-detalles">
+                            <span>Fecha: {llamada.fecha || "Sin fecha"}</span>
+                            <span>Hora: {llamada.hora || "Sin hora"}</span>
+                            <span>Asignado a: {llamada.asignadoA || "Sin asignado"}</span>
+                          </div>
+                          <div className="actividad-badges">
+                            <button
+                              className="badge completada clickeable"
+                              onClick={() => handleCompletarActividad(llamada.id, "llamada")}
+                            >
+                              Completar
+                            </button>
+                            <button
+                              className="badge reprogramar clickeable"
+                              onClick={() => handleReprogramarActividad(llamada.id, "llamada")}
+                            >
+                              Reprogramar
+                            </button>
+                            <button
+                              className="badge eliminar clickeable"
+                              onClick={() => handleEliminarActividad(llamada.id, "llamada")}
+                              title="Eliminar llamada"
+                            >
+                              <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
+                              Eliminar
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+                <div className="actividad-columna">
+                  <div className="columna-header">
+                    <img src={meetingIcon || "/placeholder.svg"} alt="Reuniones" />
+                    <span>Reuniones abiertas</span>
+                  </div>
+                  <div className="actividades-lista">
+                    {trato.actividadesAbiertas.reuniones.length === 0 ? (
+                      <p className="no-actividades">No se encontraron registros</p>
+                    ) : (
+                      trato.actividadesAbiertas.reuniones.map((reunion) => (
+                        <div key={reunion.id} className="actividad-item reunion">
+                          <h4>{`Reunión con ${reunion.nombreContacto}`}</h4>
+                          <div className="actividad-detalles">
+                            <span>Fecha: {reunion.fecha || "Sin fecha"}</span>
+                            <span>Hora inicio: {reunion.hora || "Sin hora"}</span>
+                            <span>
+                              Modalidad: {reunion.modalidad}
+                              {reunion.modalidad === "PRESENCIAL" && reunion.lugarReunion && ` - Lugar: ${reunion.lugarReunion}`}
+                              {reunion.modalidad === "VIRTUAL" && reunion.enlaceReunion && ` - Enlace: ${reunion.enlaceReunion}`}
+                            </span>
+                            <span>Asignado a: {reunion.asignadoA || "Sin asignado"}</span>
+                          </div>
+                          <div className="actividad-badges">
+                            <button
+                              className="badge completada clickeable"
+                              onClick={() => handleCompletarActividad(reunion.id, "reunion")}
+                            >
+                              Completar
+                            </button>
+                            <button
+                              className="badge reprogramar clickeable"
+                              onClick={() => handleReprogramarActividad(reunion.id, "reunion")}
+                            >
+                              Reprogramar
+                            </button>
+                            <button
+                              className="badge eliminar clickeable"
+                              onClick={() => handleEliminarActividad(reunion.id, "reunion")}
+                              title="Eliminar reunión"
+                            >
+                              <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
+                              Eliminar
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Historial de interacciones */}
+            <div className="seccion historial-interacciones">
+              <div className="seccion-header">
+                <h2>Historial de interacciones</h2>
+                <button onClick={() => openModal('agregarInteraccion', { tratoId: trato.id })} className="btn-agregar">
+                  <img src={addIcon || "/placeholder.svg"} alt="Agregar" />
+                </button>
+              </div>
+              <div className="historial-tabla">
+                <div className="tabla-header">
+                  <div className="header-cell">Fecha</div>
+                  <div className="header-cell">Responsable</div>
+                  <div className="header-cell">Tipo</div>
+                  <div className="header-cell">Medio</div>
+                  <div className="header-cell">Resultado</div>
+                  <div className="header-cell">Interés</div>
+                  <div className="header-cell">Notas</div>
+                  <div className="header-cell">Acciones</div>
+                </div>
+                <div className="tabla-body">
+                  {trato.historialInteracciones && trato.historialInteracciones.length > 0 ? (
+                    trato.historialInteracciones.map((interaccion) => {
+                      // Mapeo para los íconos de Resultado
+                      const resultadoIcono = {
+                        POSITIVO: '✅',
+                        NEGATIVO: '❌',
+                        'Sin resultado': '—',
+                      }[interaccion.resultado] || '—';
+
+                      // Mapeo para los íconos de Interés
+                      const interesIcono = {
+                        ALTO: '🟢',
+                        MEDIO: '🟡',
+                        BAJO: '🔴',
+                        'Sin interés': '—',
+                      }[interaccion.interes] || '—';
+
+                      return (
+                        <div key={interaccion.id} className="tabla-row">
+                          <div className="cell">
+                            <div className="fecha-hora">
+                              <span className="fecha">{interaccion.fecha}</span>
+                              <span className="hora">{interaccion.hora}</span>
+                            </div>
+                          </div>
+                          <div className="cell">{interaccion.responsable}</div>
+                          <div className="cell">
+                            <span className={`tipo-badge ${interaccion.tipo.toLowerCase()}`}>
+                              {interaccion.tipo}
+                            </span>
+                          </div>
+                          <div className="cell">{interaccion.medio}</div>
+                          <div className="cell">
+                            <span className={`resultado-badge ${interaccion.resultado ? interaccion.resultado.toLowerCase() : 'sin-resultado'}`}>
+                              {resultadoIcono}
+                            </span>
+                          </div>
+                          <div className="cell">
+                            <span className={`interes-badge ${interaccion.interes}`}>
+                              {interesIcono}
+                            </span>
+                          </div>
+                          <div className="cell notas-cell">{interaccion.notas}</div>
+                          <div className="cell">
+                            <button
+                              onClick={() => handleEditarInteraccion(interaccion)}
+                              className="btn-editar-interaccion"
+                              title="Editar interacción"
+                            >
+                              <img src={editIcon} alt="Editar" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="tabla-row">
+                      <div className="cell-empty" colSpan="7">
+                        <p className="no-actividades">No se encontraron registros</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Correos electrónicos */}
+            <div className="seccion correos-electronicos">
+              <div className="seccion-header">
+                <h2>Correos electrónicos</h2>
+                <button onClick={() => handleAgregarCorreo()} className="btn-agregar">
+                  <img src={addIcon || "/placeholder.svg"} alt="Agregar" />
+                </button>
+              </div>
+              <div className="correos-contenido">
+                {emailRecords.length > 0 ? (
+                  emailRecords.map((email) => (
+                    <div key={email.id} className="email-item">
+                      <div className="email-header">
+                        <div className="email-destinatario">
+                          {email.destinatario.includes(',')
+                            ? `${email.destinatario.split(',').length} destinatarios: ${email.destinatario}`
+                            : email.destinatario
+                          }
+                        </div>
+                        <div className="email-fecha">
+                          {new Date(email.fechaEnvio).toLocaleString()}
+                        </div>
+                      </div>
+
+                      <div className="email-asunto">
+                        <span className="email-asunto-label">Asunto</span>
+                        <div className="email-asunto-texto">{email.asunto}</div>
+                      </div>
+
+                      <div className="email-cuerpo">
+                        <span className="email-cuerpo-label">Mensaje</span>
+                        <div
+                          className="email-cuerpo-texto"
+                          dangerouslySetInnerHTML={{ __html: email.cuerpo }}
+                        />
+                      </div>
+
+                      {email.archivosAdjuntos && (
+                        <div className="email-adjuntos">
+                          <span className="email-adjuntos-label">Archivos adjuntos</span>
+                          <div className="email-adjuntos-lista">
+                            {email.archivosAdjuntos.split(",").join(", ")}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="email-footer">
+                        <div className="email-status">Enviado</div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="no-actividades">No se encontraron registros</p>
                 )}
               </div>
             </div>
           </div>
+        </main>
 
-          {/* Correos electrónicos */}
-          <div className="seccion correos-electronicos">
-            <div className="seccion-header">
-              <h2>Correos electrónicos</h2>
-              <button onClick={() => handleAgregarCorreo()} className="btn-agregar">
-                <img src={addIcon || "/placeholder.svg"} alt="Agregar" />
-              </button>
-            </div>
-            <div className="correos-contenido">
-              {emailRecords.length > 0 ? (
-                emailRecords.map((email) => (
-                  <div key={email.id} className="email-item">
-                    <div className="email-header">
-                      <div className="email-destinatario">
-                        {email.destinatario.includes(',')
-                          ? `${email.destinatario.split(',').length} destinatarios: ${email.destinatario}`
-                          : email.destinatario
-                        }
-                      </div>
-                      <div className="email-fecha">
-                        {new Date(email.fechaEnvio).toLocaleString()}
-                      </div>
-                    </div>
+        {/* Modales */}
+        <EditarTratoModal
+          isOpen={modals.editarTrato.isOpen}
+          onClose={() => closeModal("editarTrato")}
+          onSave={handleSaveEditarTrato}
+          trato={trato}
+          users={users}
+          companies={companies}
+        />
 
-                    <div className="email-asunto">
-                      <span className="email-asunto-label">Asunto</span>
-                      <div className="email-asunto-texto">{email.asunto}</div>
-                    </div>
+        <SeleccionarActividadModal
+          isOpen={modals.seleccionarActividad.isOpen}
+          onClose={() => closeModal("seleccionarActividad")}
+          onSelectActivity={handleSelectActivity}
+        />
 
-                    <div className="email-cuerpo">
-                      <span className="email-cuerpo-label">Mensaje</span>
-                      <div
-                        className="email-cuerpo-texto"
-                        dangerouslySetInnerHTML={{ __html: email.cuerpo }}
-                      />
-                    </div>
+        <SeleccionarActividadModal
+          isOpen={modals.crearNuevaActividad.isOpen}
+          onClose={() => closeModal("crearNuevaActividad")}
+          onSelectActivity={handleSelectActivity}
+        />
 
-                    {email.archivosAdjuntos && (
-                      <div className="email-adjuntos">
-                        <span className="email-adjuntos-label">Archivos adjuntos</span>
-                        <div className="email-adjuntos-lista">
-                          {email.archivosAdjuntos.split(",").join(", ")}
-                        </div>
-                      </div>
-                    )}
+        <ProgramarLlamadaModal
+          isOpen={modals.programarLlamada.isOpen}
+          onClose={() => closeModal("programarLlamada")}
+          onSave={(data) => handleSaveActividad(data, "llamada")}
+          tratoId={modals.programarLlamada.tratoId}
+          users={users}
+          creatorId={modals.programarLlamada.creatorId}
+        />
 
-                    <div className="email-footer">
-                      <div className="email-status">Enviado</div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="no-actividades">No se encontraron registros</p>
-              )}
-            </div>
-          </div>
-        </div>
-      </main>
+        <ProgramarLlamadaModal
+          isOpen={modals.programarLlamada.isOpen}
+          loading={modals.programarLlamada.loading}
+          onClose={() => closeModal("programarLlamada")}
+          onSave={(data) => handleSaveActividad(data, "llamada")}
+          tratoId={modals.programarLlamada.tratoId}
+          users={users}
+          creatorId={modals.programarLlamada.creatorId}
+        />
 
-      {/* Modales */}
-      <EditarTratoModal
-        isOpen={modals.editarTrato.isOpen}
-        onClose={() => closeModal("editarTrato")}
-        onSave={handleSaveEditarTrato}
-        trato={trato}
-        users={users}
-        companies={companies}
-      />
+        <ProgramarReunionModal
+          isOpen={modals.programarReunion.isOpen}
+          loading={modals.programarReunion.loading}
+          onClose={() => closeModal("programarReunion")}
+          onSave={(data) => handleSaveActividad(data, "reunion")}
+          tratoId={modals.programarReunion.tratoId}
+          users={users}
+          creatorId={modals.programarReunion.creatorId}
+        />
 
-      <SeleccionarActividadModal
-        isOpen={modals.seleccionarActividad.isOpen}
-        onClose={() => closeModal("seleccionarActividad")}
-        onSelectActivity={handleSelectActivity}
-      />
+        <ProgramarTareaModal
+          isOpen={modals.programarTarea.isOpen}
+          loading={modals.programarTarea.loading}
+          onClose={() => closeModal("programarTarea")}
+          onSave={(data) => handleSaveActividad(data, "tarea")}
+          tratoId={modals.programarTarea.tratoId}
+          users={users}
+          creatorId={modals.programarTarea.creatorId}
+        />
 
-      <SeleccionarActividadModal
-        isOpen={modals.crearNuevaActividad.isOpen}
-        onClose={() => closeModal("crearNuevaActividad")}
-        onSelectActivity={handleSelectActivity}
-      />
+        <ReprogramarLlamadaModal
+          isOpen={modals.reprogramarLlamada.isOpen}
+          onClose={() => closeModal("reprogramarLlamada")}
+          onSave={(data) => handleSaveReprogramar(data, "llamada", modals.reprogramarLlamada.contactos || [])}
+          actividad={modals.reprogramarLlamada.actividad}
+        />
 
-      <ProgramarLlamadaModal
-        isOpen={modals.programarLlamada.isOpen}
-        onClose={() => closeModal("programarLlamada")}
-        onSave={(data) => handleSaveActividad(data, "llamada")}
-        tratoId={modals.programarLlamada.tratoId}
-        users={users}
-        creatorId={modals.programarLlamada.creatorId}
-      />
+        <ReprogramarReunionModal
+          isOpen={modals.reprogramarReunion.isOpen}
+          onClose={() => closeModal("reprogramarReunion")}
+          onSave={(data) => handleSaveReprogramar(data, "reunion", modals.reprogramarReunion.contactos || [])}
+          actividad={modals.reprogramarReunion.actividad}
+        />
 
-      <ProgramarLlamadaModal
-        isOpen={modals.programarLlamada.isOpen}
-        loading={modals.programarLlamada.loading}
-        onClose={() => closeModal("programarLlamada")}
-        onSave={(data) => handleSaveActividad(data, "llamada")}
-        tratoId={modals.programarLlamada.tratoId}
-        users={users}
-        creatorId={modals.programarLlamada.creatorId}
-      />
+        <ReprogramarTareaModal
+          isOpen={modals.reprogramarTarea.isOpen}
+          onClose={() => closeModal("reprogramarTarea")}
+          onSave={(data) => handleSaveReprogramar(data, "tarea", modals.reprogramarTarea.contactos || [])}
+          actividad={modals.reprogramarTarea.actividad}
+        />
 
-      <ProgramarReunionModal
-        isOpen={modals.programarReunion.isOpen}
-        loading={modals.programarReunion.loading}
-        onClose={() => closeModal("programarReunion")}
-        onSave={(data) => handleSaveActividad(data, "reunion")}
-        tratoId={modals.programarReunion.tratoId}
-        users={users}
-        creatorId={modals.programarReunion.creatorId}
-      />
+        <CompletarActividadModal
+          isOpen={modals.completarActividad.isOpen}
+          loading={modals.completarActividad.loading}
+          onClose={() => closeModal("completarActividad")}
+          onSave={(data, tipo) => handleSaveCompletarActividad(data, tipo)}
+          actividad={modals.completarActividad.actividad}
+          tratoId={params.id}
+          contactos={modals.completarActividad.contactos || []}
+          openModal={openModal}
+          esEdicion={modals.completarActividad.esEdicion}
+        />
 
-      <ProgramarTareaModal
-        isOpen={modals.programarTarea.isOpen}
-        loading={modals.programarTarea.loading}
-        onClose={() => closeModal("programarTarea")}
-        onSave={(data) => handleSaveActividad(data, "tarea")}
-        tratoId={modals.programarTarea.tratoId}
-        users={users}
-        creatorId={modals.programarTarea.creatorId}
-      />
+        <AgregarInteraccionModal
+          {...modals.agregarInteraccion.props}
+          isOpen={modals.agregarInteraccion.isOpen}
+          onClose={() => closeModal('agregarInteraccion')}
+          onSave={handleSaveAgregarInteraccion}
+          tratoId={params.id}
+          onCreateActivity={() => {
+            closeModal('agregarInteraccion');
+            openModal('seleccionarActividad', { tratoId: params.id });
+          }}
+        />
 
-      <ReprogramarLlamadaModal
-        isOpen={modals.reprogramarLlamada.isOpen}
-        onClose={() => closeModal("reprogramarLlamada")}
-        onSave={(data) => handleSaveReprogramar(data, "llamada", modals.reprogramarLlamada.contactos || [])}
-        actividad={modals.reprogramarLlamada.actividad}
-      />
+        <CrearCorreoModal
+          isOpen={modals.crearCorreo.isOpen}
+          onClose={() => closeModal("crearCorreo")}
+          onSave={() => {
+            const loadEmails = async () => {
+              const emailResponse = await fetchWithToken(`${API_BASE_URL}/correos/trato/${params.id}`);
+              const emailData = await emailResponse.json();
+              setEmailRecords(emailData);
+            };
+            loadEmails();
+          }}
+          tratoId={params.id}
+          openModal={openModal}
+          closeModal={closeModal}
+        />
 
-      <ReprogramarReunionModal
-        isOpen={modals.reprogramarReunion.isOpen}
-        onClose={() => closeModal("reprogramarReunion")}
-        onSave={(data) => handleSaveReprogramar(data, "reunion", modals.reprogramarReunion.contactos || [])}
-        actividad={modals.reprogramarReunion.actividad}
-      />
-
-      <ReprogramarTareaModal
-        isOpen={modals.reprogramarTarea.isOpen}
-        onClose={() => closeModal("reprogramarTarea")}
-        onSave={(data) => handleSaveReprogramar(data, "tarea", modals.reprogramarTarea.contactos || [])}
-        actividad={modals.reprogramarTarea.actividad}
-      />
-
-      <CompletarActividadModal
-        isOpen={modals.completarActividad.isOpen}
-        loading={modals.completarActividad.loading}
-        onClose={() => closeModal("completarActividad")}
-        onSave={(data, tipo) => handleSaveCompletarActividad(data, tipo)}
-        actividad={modals.completarActividad.actividad}
-        tratoId={params.id}
-        contactos={modals.completarActividad.contactos || []}
-        openModal={openModal}
-        esEdicion={modals.completarActividad.esEdicion}
-      />
-
-      <AgregarInteraccionModal
-        {...modals.agregarInteraccion.props}
-        isOpen={modals.agregarInteraccion.isOpen}
-        onClose={() => closeModal('agregarInteraccion')}
-        onSave={handleSaveAgregarInteraccion}
-        tratoId={params.id}
-        onCreateActivity={() => {
-          closeModal('agregarInteraccion');
-          openModal('seleccionarActividad', { tratoId: params.id });
-        }}
-      />
-
-      <CrearCorreoModal
-        isOpen={modals.crearCorreo.isOpen}
-        onClose={() => closeModal("crearCorreo")}
-        onSave={() => {
-          const loadEmails = async () => {
-            const emailResponse = await fetchWithToken(`${API_BASE_URL}/correos/trato/${params.id}`);
-            const emailData = await emailResponse.json();
-            setEmailRecords(emailData);
-          };
-          loadEmails();
-        }}
-        tratoId={params.id}
-        openModal={openModal}
-        closeModal={closeModal}
-      />
-
-      <SeleccionarPlantillaModal
-        isOpen={modals.seleccionarPlantilla.isOpen}
-        onClose={() => closeModal("seleccionarPlantilla")}
-        onSelectTemplate={modals.seleccionarPlantilla.onSelectTemplate}
-        plantillas={modals.seleccionarPlantilla.plantillas || []}
-      />
+        <SeleccionarPlantillaModal
+          isOpen={modals.seleccionarPlantilla.isOpen}
+          onClose={() => closeModal("seleccionarPlantilla")}
+          onSelectTemplate={modals.seleccionarPlantilla.onSelectTemplate}
+          plantillas={modals.seleccionarPlantilla.plantillas || []}
+        />
       </div>
     </>
   )

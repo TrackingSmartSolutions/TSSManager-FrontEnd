@@ -12,14 +12,26 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token");
+  console.log("Token enviado:", token); // Para depurar
+
   const headers = {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
-  const response = await fetch(url, { ...options, headers });
-  if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`);
-  return response;
+
+  try {
+    const response = await fetch(url, { ...options, headers });
+    if (!response.ok) {
+      const errorText = await response.text(); // Obtener el cuerpo del error
+      console.error(`Error en la solicitud: ${response.status} - ${response.statusText} - ${errorText}`);
+      throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText} - ${errorText}`);
+    }
+    return response;
+  } catch (error) {
+    console.error("Error en fetch:", error);
+    throw error;
+  }
 };
 
 const useCountdown = (targetTime) => {
@@ -136,12 +148,12 @@ const CheckEquiposSidePanel = ({
     TRACKERKING: "TrackerKing",
     TRACK_SOLID: "Track Solid",
     WHATSGPS: "WhatsGPS",
-    JOINTCLOUD: "JointCloud"
-
+    JOINTCLOUD: "JointCloud",
   };
 
   const fixedPlatforms = ["TRACKERKING", "TRACK_SOLID", "WHATSGPS", "JOINTCLOUD"];
-  const dynamicPlatforms = [...new Set(equipos.map(e => e.plataforma))].filter(p => p && !fixedPlatforms.includes(p));
+  const dynamicPlatforms = [...new Set(equipos.map(e => e.plataforma?.nombrePlataforma))]
+    .filter(p => p && !fixedPlatforms.includes(p));
   const plataformas = ["Todos", ...fixedPlatforms, ...dynamicPlatforms];
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -211,11 +223,14 @@ const CheckEquiposSidePanel = ({
   }, [countdown, lastCheckTime, isOpen, refreshEquipos]);
 
   const filteredEquipos = equipos
-    .filter((equipo) => selectedPlatform === "Todos" || equipo.plataforma === selectedPlatform)
+    .filter(
+      (equipo) =>
+        selectedPlatform === "Todos" ||
+        equipo.plataforma?.nombrePlataforma === selectedPlatform
+    )
     .sort((a, b) => {
-      // Ordena por nombre del equipo alfabéticamente
-      const nombreA = a.nombre ? a.nombre.toLowerCase() : '';
-      const nombreB = b.nombre ? b.nombre.toLowerCase() : '';
+      const nombreA = a.nombre ? a.nombre.toLowerCase() : "";
+      const nombreB = b.nombre ? b.nombre.toLowerCase() : "";
       return nombreA.localeCompare(nombreB);
     });
 
@@ -1147,193 +1162,193 @@ const EquiposEstatusPlataforma = () => {
 
   return (
     <>
-     <div className="page-with-header">
-      <Header />
-      {isLoading && (
-        <div className="estatusplataforma-loading">
-          <div className="spinner"></div>
-          <p>Cargando datos de equipos...</p>
-        </div>
-      )}
-      <main className="estatusplataforma-main-content">
-        <div className="estatusplataforma-container">
-          <section className="estatusplataforma-sidebar">
-            <div className="estatusplataforma-sidebar-header">
-              <h3 className="estatusplataforma-sidebar-title">Equipos</h3>
-            </div>
-            <div className="estatusplataforma-sidebar-menu">
-              <div
-                className="estatusplataforma-menu-item estatusplataforma-menu-item-active"
-                onClick={() => handleMenuNavigation("estatus-plataforma")}
-              >
-                Estatus plataforma
+      <div className="page-with-header">
+        <Header />
+        {isLoading && (
+          <div className="estatusplataforma-loading">
+            <div className="spinner"></div>
+            <p>Cargando datos de equipos...</p>
+          </div>
+        )}
+        <main className="estatusplataforma-main-content">
+          <div className="estatusplataforma-container">
+            <section className="estatusplataforma-sidebar">
+              <div className="estatusplataforma-sidebar-header">
+                <h3 className="estatusplataforma-sidebar-title">Equipos</h3>
               </div>
-              <div className="estatusplataforma-menu-item" onClick={() => handleMenuNavigation("modelos")}>
-                Modelos
-              </div>
-              <div className="estatusplataforma-menu-item" onClick={() => handleMenuNavigation("proveedores")}>
-                Proveedores
-              </div>
-              <div className="estatusplataforma-menu-item" onClick={() => handleMenuNavigation("inventario")}>
-                Inventario de equipos
-              </div>
-              <div className="estatusplataforma-menu-item" onClick={() => handleMenuNavigation("sim")}>
-                SIM
-              </div>
-              <div
-                className="creditosplataforma-menu-item"
-                onClick={() => handleMenuNavigation("creditos-plataforma")}
-              >
-                Créditos Plataformas
-              </div>
-            </div>
-          </section>
-
-          <section className="estatusplataforma-content-panel">
-            <div className="estatusplataforma-header">
-              <h3 className="estatusplataforma-page-title">Estatus plataforma</h3>
-              <div className="estatusplataforma-header-actions">
-                <button className="estatusplataforma-btn estatusplataforma-btn-primary" onClick={handleCheckEquipos}>
-                  Check equipos
-                </button>
-              </div>
-            </div>
-
-            <p className="estatusplataforma-subtitle">Monitoreo de equipos por cliente</p>
-
-            {equiposData.fechaUltimoCheck && (
-              <p className="estatusplataforma-data-date">
-                Datos actualizados: {formatDateTime(equiposData.fechaUltimoCheck)}
-              </p>
-            )}
-
-            <div className="estatusplataforma-charts-grid">
-              <div className="estatusplataforma-chart-card">
-                <h4 className="estatusplataforma-chart-title">Estatus de equipos por cliente</h4>
+              <div className="estatusplataforma-sidebar-menu">
                 <div
-                  id="estatusClienteChart"
-                  className="estatusplataforma-chart-container"
-                  style={{
-                    height: '450px',
-                    minHeight: '450px',
-                    width: '100%'
-                  }}
+                  className="estatusplataforma-menu-item estatusplataforma-menu-item-active"
+                  onClick={() => handleMenuNavigation("estatus-plataforma")}
                 >
-                  <Bar data={estatusClienteChartData} options={estatusClienteChartOptions} />
+                  Estatus plataforma
+                </div>
+                <div className="estatusplataforma-menu-item" onClick={() => handleMenuNavigation("modelos")}>
+                  Modelos
+                </div>
+                <div className="estatusplataforma-menu-item" onClick={() => handleMenuNavigation("proveedores")}>
+                  Proveedores
+                </div>
+                <div className="estatusplataforma-menu-item" onClick={() => handleMenuNavigation("inventario")}>
+                  Inventario de equipos
+                </div>
+                <div className="estatusplataforma-menu-item" onClick={() => handleMenuNavigation("sim")}>
+                  SIM
+                </div>
+                <div
+                  className="creditosplataforma-menu-item"
+                  onClick={() => handleMenuNavigation("creditos-plataforma")}
+                >
+                  Créditos Plataformas
                 </div>
               </div>
+            </section>
 
-              <div className="estatusplataforma-chart-card">
-                <h4 className="estatusplataforma-chart-title">Equipos por Plataforma</h4>
-                <div id="plataformaChart" className="estatusplataforma-chart-container">
-                  <Bar data={plataformaChartData} options={plataformaChartOptions} />
-                </div>
-              </div>
-            </div>
-
-            <div className="estatusplataforma-table-card">
-              <h4 className="estatusplataforma-table-title">Equipos Offline</h4>
-              <div className="estatusplataforma-table-container">
-                <table className="estatusplataforma-table">
-                  <thead>
-                    <tr>
-                      <th>Cliente</th>
-                      <th>Nombre</th>
-                      <th>Plataforma</th>
-                      <th>Reportando</th>
-                      <th>Motivo de no Reporte</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {equiposData.equiposOffline.length > 0 ? (
-                      equiposData.equiposOffline.slice(0, visibleRows).map((equipo, index) => (
-                        <tr key={index}>
-                          <td>{equipo.cliente}</td>
-                          <td>{equipo.nombre}</td>
-                          <td>{equipo.plataforma}</td>
-                          <td>
-                            <span className="estatusplataforma-status-cross">✗</span>
-                          </td>
-                          <td>{equipo.motivo}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="5" className="estatusplataforma-no-data">
-                          No hay equipos offline
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Botón para cargar más registros */}
-              {equiposData.equiposOffline.length > visibleRows && (
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  padding: '20px',
-                  borderTop: '1px solid #e5e7eb'
-                }}>
-                  <button
-                    onClick={() => setVisibleRows(prev => prev + 50)}
-                    style={{
-                      padding: '10px 24px',
-                      backgroundColor: '#3b82f6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
-                  >
-                    Cargar más ({equiposData.equiposOffline.length - visibleRows} registros restantes)
+            <section className="estatusplataforma-content-panel">
+              <div className="estatusplataforma-header">
+                <h3 className="estatusplataforma-page-title">Estatus plataforma</h3>
+                <div className="estatusplataforma-header-actions">
+                  <button className="estatusplataforma-btn estatusplataforma-btn-primary" onClick={handleCheckEquipos}>
+                    Check equipos
                   </button>
                 </div>
+              </div>
+
+              <p className="estatusplataforma-subtitle">Monitoreo de equipos por cliente</p>
+
+              {equiposData.fechaUltimoCheck && (
+                <p className="estatusplataforma-data-date">
+                  Datos actualizados: {formatDateTime(equiposData.fechaUltimoCheck)}
+                </p>
               )}
-            </div>
 
-            <div className="estatusplataforma-pdf-button-container">
-              <button className="estatusplataforma-btn estatusplataforma-btn-pdf" onClick={handleGeneratePDF}>
-                Crear PDF
-              </button>
-            </div>
-          </section>
-        </div>
+              <div className="estatusplataforma-charts-grid">
+                <div className="estatusplataforma-chart-card">
+                  <h4 className="estatusplataforma-chart-title">Estatus de equipos por cliente</h4>
+                  <div
+                    id="estatusClienteChart"
+                    className="estatusplataforma-chart-container"
+                    style={{
+                      height: '450px',
+                      minHeight: '450px',
+                      width: '100%'
+                    }}
+                  >
+                    <Bar data={estatusClienteChartData} options={estatusClienteChartOptions} />
+                  </div>
+                </div>
 
-        <CheckEquiposSidePanel
-          isOpen={modals.checkEquipos.isOpen}
-          onClose={() => closeModal("checkEquipos")}
-          equipos={equiposData.equiposParaCheck}
-          equiposData={equiposData}
-          setModals={setModals}
-          closeModal={closeModal}
-          fetchData={fetchData}
-          onSaveChecklist={handleSaveChecklist}
-          lastCheckTime={lastCheckTime}
-          setLastCheckTime={setLastCheckTime}
-        />
+                <div className="estatusplataforma-chart-card">
+                  <h4 className="estatusplataforma-chart-title">Equipos por Plataforma</h4>
+                  <div id="plataformaChart" className="estatusplataforma-chart-container">
+                    <Bar data={plataformaChartData} options={plataformaChartOptions} />
+                  </div>
+                </div>
+              </div>
 
-        <ConfirmarCambioEstatusModal
-          isOpen={modals.confirmarCambio.isOpen}
-          onClose={() => closeModal("confirmarCambio")}
-          onConfirm={modals.confirmarCambio.onConfirm}
-          equipoNombre={modals.confirmarCambio.equipoNombre}
-          nuevoEstatus={modals.confirmarCambio.nuevoEstatus}
-          motivo={modals.confirmarCambio.motivo}
-          onMotivoChange={(motivo) =>
-            setModals((prev) => ({
-              ...prev,
-              confirmarCambio: { ...prev.confirmarCambio, motivo },
-            }))
-          }
-        />
-      </main>
+              <div className="estatusplataforma-table-card">
+                <h4 className="estatusplataforma-table-title">Equipos Offline</h4>
+                <div className="estatusplataforma-table-container">
+                  <table className="estatusplataforma-table">
+                    <thead>
+                      <tr>
+                        <th>Cliente</th>
+                        <th>Nombre</th>
+                        <th>Plataforma</th>
+                        <th>Reportando</th>
+                        <th>Motivo de no Reporte</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {equiposData.equiposOffline.length > 0 ? (
+                        equiposData.equiposOffline.slice(0, visibleRows).map((equipo, index) => (
+                          <tr key={index}>
+                            <td>{equipo.cliente}</td>
+                            <td>{equipo.nombre}</td>
+                            <td>{equipo.plataforma}</td>
+                            <td>
+                              <span className="estatusplataforma-status-cross">✗</span>
+                            </td>
+                            <td>{equipo.motivo}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="5" className="estatusplataforma-no-data">
+                            No hay equipos offline
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Botón para cargar más registros */}
+                {equiposData.equiposOffline.length > visibleRows && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    padding: '20px',
+                    borderTop: '1px solid #e5e7eb'
+                  }}>
+                    <button
+                      onClick={() => setVisibleRows(prev => prev + 50)}
+                      style={{
+                        padding: '10px 24px',
+                        backgroundColor: '#3b82f6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+                    >
+                      Cargar más ({equiposData.equiposOffline.length - visibleRows} registros restantes)
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="estatusplataforma-pdf-button-container">
+                <button className="estatusplataforma-btn estatusplataforma-btn-pdf" onClick={handleGeneratePDF}>
+                  Crear PDF
+                </button>
+              </div>
+            </section>
+          </div>
+
+          <CheckEquiposSidePanel
+            isOpen={modals.checkEquipos.isOpen}
+            onClose={() => closeModal("checkEquipos")}
+            equipos={equiposData.equiposParaCheck}
+            equiposData={equiposData}
+            setModals={setModals}
+            closeModal={closeModal}
+            fetchData={fetchData}
+            onSaveChecklist={handleSaveChecklist}
+            lastCheckTime={lastCheckTime}
+            setLastCheckTime={setLastCheckTime}
+          />
+
+          <ConfirmarCambioEstatusModal
+            isOpen={modals.confirmarCambio.isOpen}
+            onClose={() => closeModal("confirmarCambio")}
+            onConfirm={modals.confirmarCambio.onConfirm}
+            equipoNombre={modals.confirmarCambio.equipoNombre}
+            nuevoEstatus={modals.confirmarCambio.nuevoEstatus}
+            motivo={modals.confirmarCambio.motivo}
+            onMotivoChange={(motivo) =>
+              setModals((prev) => ({
+                ...prev,
+                confirmarCambio: { ...prev.confirmarCambio, motivo },
+              }))
+            }
+          />
+        </main>
       </div>
     </>
   );

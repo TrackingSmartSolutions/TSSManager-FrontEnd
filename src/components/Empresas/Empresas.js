@@ -2,12 +2,14 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useParams } from 'react-router-dom';
 import "./Empresas.css"
+import "./MapModal.css"
 import Header from "../Header/Header"
 import editIcon from "../../assets/icons/editar.png"
 import deleteIcon from "../../assets/icons/eliminar.png"
 import detailsIcon from "../../assets/icons/lupa.png"
 import { NuevoTratoModal } from '../Tratos/Tratos';
 import { API_BASE_URL } from "../Config/Config"
+import MapModal from './MapModal';
 import Swal from "sweetalert2"
 import stringSimilarity from "string-similarity";
 
@@ -77,198 +79,32 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
     nombre: "",
     estatus: "POR_CONTACTAR",
     sitioWeb: "",
-    sector: "",
+    sectorId: null,
     domicilioFisico: "",
     domicilioFiscal: "",
     rfc: "",
     razonSocial: "",
     regimenFiscal: "",
     propietarioId: null,
+    latitud: null,
+    longitud: null,
   });
 
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
-  const [sectorSearch, setSectorSearch] = useState("")
-  const [showSectorDropdown, setShowSectorDropdown] = useState(false)
+  const [mapModal, setMapModal] = useState({ isOpen: false });
+  const [sectores, setSectores] = useState([])
 
-  // Reemplazar el sectorMap actual con:
-  const sectorMap = {
-    // SECTOR PRIMARIO
-    AGRICULTURA_CULTIVOS: "(11) Agricultura - Cultivos y horticultura",
-    AGRICULTURA_GANADERIA: "(11) Agricultura - Ganadería y avicultura",
-    AGRICULTURA_FORESTAL: "(11) Agricultura - Forestal y silvicultura",
-    AGRICULTURA_PESCA: "(11) Agricultura - Pesca y acuacultura",
-
-    // MINERÍA
-    MINERIA_PETROLEO: "(21) Minería - Petróleo y gas",
-    MINERIA_MINERALES: "(21) Minería - Minerales metálicos",
-    MINERIA_NO_METALICOS: "(21) Minería - Minerales no metálicos",
-    MINERIA_CARBON: "(21) Minería - Carbón y otros",
-
-    // ENERGÍA Y SERVICIOS PÚBLICOS  
-    ENERGIA_ELECTRICA: "(22) Energía - Generación eléctrica",
-    ENERGIA_GAS: "(22) Energía - Suministro de gas",
-    ENERGIA_AGUA: "(22) Energía - Suministro de agua",
-    ENERGIA_RENOVABLE: "(22) Energía - Renovables",
-
-    // CONSTRUCCIÓN
-    CONSTRUCCION_EDIFICACION: "(23) Construcción - Edificación residencial",
-    CONSTRUCCION_INDUSTRIAL: "(23) Construcción - Obras industriales",
-    CONSTRUCCION_INFRAESTRUCTURA: "(23) Construcción - Infraestructura",
-    CONSTRUCCION_ESPECIALIZADA: "(23) Construcción - Trabajos especializados",
-
-    // MANUFACTURA
-    MANUFACTURA_ALIMENTOS: "(31) Manufactura - Alimentos y bebidas",
-    MANUFACTURA_TEXTIL: "(31) Manufactura - Textil y confección",
-    MANUFACTURA_MADERA: "(31) Manufactura - Madera y muebles",
-    MANUFACTURA_PAPEL: "(31) Manufactura - Papel e impresión",
-    MANUFACTURA_QUIMICA: "(32) Manufactura - Química y petroquímica",
-    MANUFACTURA_PLASTICOS: "(32) Manufactura - Plásticos y caucho",
-    MANUFACTURA_MINERALES: "(32) Manufactura - Productos minerales no metálicos",
-    MANUFACTURA_METAL_BASIC: "(33) Manufactura - Industrias metálicas básicas",
-    MANUFACTURA_METAL_PROD: "(33) Manufactura - Productos metálicos",
-    MANUFACTURA_MAQUINARIA: "(33) Manufactura - Maquinaria y equipo",
-    MANUFACTURA_ELECTRONICA: "(33) Manufactura - Electrónica y computación",
-    MANUFACTURA_ELECTRICA: "(33) Manufactura - Equipo eléctrico",
-    MANUFACTURA_TRANSPORTE: "(33) Manufactura - Equipo de transporte",
-    MANUFACTURA_OTROS: "(33) Manufactura - Otras industrias",
-
-    // COMERCIO AL POR MAYOR
-    COMERCIO_MAYOR_AGRICOLA: "(43) Comercio mayoreo - Productos agrícolas",
-    COMERCIO_MAYOR_ALIMENTOS: "(43) Comercio mayoreo - Alimentos procesados",
-    COMERCIO_MAYOR_BEBIDAS: "(43) Comercio mayoreo - Bebidas y tabaco",
-    COMERCIO_MAYOR_TEXTIL: "(43) Comercio mayoreo - Textiles y vestido",
-    COMERCIO_MAYOR_FARMACEUTICO: "(43) Comercio mayoreo - Productos farmacéuticos",
-    COMERCIO_MAYOR_QUIMICOS: "(43) Comercio mayoreo - Productos químicos",
-    COMERCIO_MAYOR_PETROLEO: "(43) Comercio mayoreo - Productos de petróleo",
-    COMERCIO_MAYOR_MATERIALES: "(43) Comercio mayoreo - Materiales construcción",
-    COMERCIO_MAYOR_MAQUINARIA: "(43) Comercio mayoreo - Maquinaria y equipo",
-    COMERCIO_MAYOR_ELECTRONICA: "(43) Comercio mayoreo - Electrónicos",
-    COMERCIO_MAYOR_VEHICULOS: "(43) Comercio mayoreo - Vehículos y refacciones",
-    COMERCIO_MAYOR_MUEBLES: "(43) Comercio mayoreo - Muebles y enseres",
-    COMERCIO_MAYOR_OTROS: "(43) Comercio mayoreo - Otros productos",
-
-    // COMERCIO AL POR MENOR
-    COMERCIO_MENOR_ALIMENTOS: "(46) Comercio menudeo - Alimentos y bebidas",
-    COMERCIO_MENOR_ABARROTES: "(46) Comercio menudeo - Abarrotes y ultramarinos",
-    COMERCIO_MENOR_FARMACIA: "(46) Comercio menudeo - Farmacias",
-    COMERCIO_MENOR_COMBUSTIBLES: "(46) Comercio menudeo - Combustibles",
-    COMERCIO_MENOR_VESTIDO: "(46) Comercio menudeo - Ropa y calzado",
-    COMERCIO_MENOR_MUEBLES: "(46) Comercio menudeo - Muebles y electrodomésticos",
-    COMERCIO_MENOR_ELECTRONICA: "(46) Comercio menudeo - Electrónicos",
-    COMERCIO_MENOR_FERRETERIA: "(46) Comercio menudeo - Ferretería y materiales",
-    COMERCIO_MENOR_VEHICULOS: "(46) Comercio menudeo - Vehículos automotores",
-    COMERCIO_MENOR_REFACCIONES: "(46) Comercio menudeo - Refacciones y accesorios",
-    COMERCIO_MENOR_DEPARTAMENTAL: "(46) Comercio menudeo - Tiendas departamentales",
-    COMERCIO_MENOR_OTROS: "(46) Comercio menudeo - Otros productos",
-
-    // TRANSPORTE Y LOGÍSTICA
-    TRANSPORTE_AEREO: "(48) Transporte - Aéreo",
-    TRANSPORTE_FERROVIARIO: "(48) Transporte - Ferroviario",
-    TRANSPORTE_MARITIMO: "(48) Transporte - Marítimo",
-    TRANSPORTE_TERRESTRE_CARGA: "(48) Transporte - Terrestre de carga",
-    TRANSPORTE_TERRESTRE_PASAJE: "(49) Transporte - Terrestre de pasajeros",
-    TRANSPORTE_TURISTICO: "(49) Transporte - Turístico",
-    TRANSPORTE_CORREOS: "(49) Servicios - Correos y paquetería",
-    TRANSPORTE_ALMACENAMIENTO: "(49) Servicios - Almacenamiento",
-
-    // MEDIOS E INFORMACIÓN
-    MEDIOS_EDITORIALES: "(51) Medios - Industrias editoriales",
-    MEDIOS_AUDIOVISUAL: "(51) Medios - Industrias audiovisuales",
-    MEDIOS_RADIO_TV: "(51) Medios - Radio y televisión",
-    MEDIOS_TELECOMUNICACIONES: "(51) Medios - Telecomunicaciones",
-    MEDIOS_PROCESAMIENTO_DATOS: "(51) Medios - Procesamiento de datos",
-    MEDIOS_OTROS: "(51) Medios - Otros servicios información",
-
-    // SERVICIOS FINANCIEROS
-    FINANCIERO_BANCA: "(52) Financiero - Instituciones bancarias",
-    FINANCIERO_VALORES: "(52) Financiero - Actividades bursátiles",
-    FINANCIERO_SEGUROS: "(52) Financiero - Seguros y fianzas",
-    FINANCIERO_PENSIONES: "(52) Financiero - Fondos y pensiones",
-    FINANCIERO_OTROS: "(52) Financiero - Otros servicios financieros",
-
-    // INMOBILIARIO Y ALQUILER
-    INMOBILIARIO_COMPRAVENTA: "(53) Inmobiliario - Compraventa de inmuebles",
-    INMOBILIARIO_ALQUILER: "(53) Inmobiliario - Alquiler de inmuebles",
-    INMOBILIARIO_MAQUINARIA: "(53) Servicios - Alquiler de maquinaria",
-    INMOBILIARIO_VEHICULOS: "(53) Servicios - Alquiler de vehículos",
-    INMOBILIARIO_OTROS: "(53) Servicios - Alquiler de otros bienes",
-
-    // SERVICIOS PROFESIONALES
-    PROFESIONAL_JURIDICOS: "(54) Profesional - Servicios jurídicos",
-    PROFESIONAL_CONTABLES: "(54) Profesional - Servicios contables",
-    PROFESIONAL_ARQUITECTURA: "(54) Profesional - Arquitectura e ingeniería",
-    PROFESIONAL_DISENO: "(54) Profesional - Diseño especializado",
-    PROFESIONAL_CONSULTORIA: "(54) Profesional - Consultoría",
-    PROFESIONAL_INVESTIGACION: "(54) Profesional - Investigación científica",
-    PROFESIONAL_PUBLICIDAD: "(54) Profesional - Publicidad y marketing",
-    PROFESIONAL_VETERINARIOS: "(54) Profesional - Servicios veterinarios",
-    PROFESIONAL_OTROS: "(54) Profesional - Otros servicios técnicos",
-
-    // CORPORATIVOS
-    CORPORATIVO_HOLDING: "(55) Corporativo - Tenencia de acciones",
-    CORPORATIVO_MATRIZ: "(55) Corporativo - Casas matrices",
-
-    // APOYO A NEGOCIOS
-    APOYO_EMPLEO: "(56) Apoyo - Servicios de empleo",
-    APOYO_ADMINISTRATIVO: "(56) Apoyo - Servicios administrativos",
-    APOYO_SEGURIDAD: "(56) Apoyo - Servicios de seguridad",
-    APOYO_LIMPIEZA: "(56) Apoyo - Servicios de limpieza",
-    APOYO_PAISAJISMO: "(56) Apoyo - Jardinería y paisajismo",
-    APOYO_VIAJES: "(56) Apoyo - Agencias de viajes",
-    APOYO_INVESTIGACION: "(56) Apoyo - Servicios de investigación",
-    APOYO_DESECHOS: "(56) Apoyo - Manejo de desechos",
-    APOYO_OTROS: "(56) Apoyo - Otros servicios",
-
-    // EDUCACIÓN
-    EDUCACION_PREESCOLAR: "(61) Educación - Preescolar",
-    EDUCACION_PRIMARIA: "(61) Educación - Primaria",
-    EDUCACION_SECUNDARIA: "(61) Educación - Secundaria",
-    EDUCACION_MEDIA_SUPERIOR: "(61) Educación - Media superior",
-    EDUCACION_SUPERIOR: "(61) Educación - Superior",
-    EDUCACION_POSGRADO: "(61) Educación - Posgrado",
-    EDUCACION_TECNICA: "(61) Educación - Técnica y capacitación",
-    EDUCACION_OTROS: "(61) Educación - Otros servicios educativos",
-
-    // SALUD
-    SALUD_HOSPITALES: "(62) Salud - Servicios hospitalarios",
-    SALUD_AMBULATORIOS: "(62) Salud - Servicios ambulatorios",
-    SALUD_ASISTENCIA_SOCIAL: "(62) Salud - Servicios de asistencia social",
-
-    // ESPARCIMIENTO
-    ESPARCIMIENTO_ARTISTICOS: "(71) Esparcimiento - Servicios artísticos",
-    ESPARCIMIENTO_DEPORTIVOS: "(71) Esparcimiento - Servicios deportivos",
-    ESPARCIMIENTO_RECREATIVOS: "(71) Esparcimiento - Servicios recreativos",
-    ESPARCIMIENTO_MUSEOS: "(71) Esparcimiento - Museos y sitios históricos",
-    ESPARCIMIENTO_OTROS: "(71) Esparcimiento - Otros servicios",
-
-    // ALOJAMIENTO Y ALIMENTOS
-    ALOJAMIENTO_HOTELES: "(72) Alojamiento - Hoteles y moteles",
-    ALOJAMIENTO_TEMPORAL: "(72) Alojamiento - Otros alojamientos",
-    ALIMENTOS_RESTAURANTES: "(72) Alimentos - Restaurantes con servicio",
-    ALIMENTOS_LIMITADO: "(72) Alimentos - Establecimientos con servicio limitado",
-    ALIMENTOS_PREPARACION: "(72) Alimentos - Servicios de preparación",
-
-    // OTROS SERVICIOS
-    OTROS_REPARACION: "(81) Otros - Reparación y mantenimiento",
-    OTROS_PERSONALES: "(81) Otros - Servicios personales",
-    OTROS_RELIGIOSOS: "(81) Otros - Organizaciones religiosas",
-    OTROS_CIVICAS: "(81) Otros - Organizaciones cívicas",
-    OTROS_PROFESIONALES: "(81) Otros - Organizaciones profesionales",
-    OTROS_LABORALES: "(81) Otros - Organizaciones laborales",
-    OTROS_POLITICAS: "(81) Otros - Organizaciones políticas",
-
-    // GUBERNAMENTAL
-    GUBERNAMENTAL_FEDERAL: "(93) Gubernamental - Órganos legislativos federales",
-    GUBERNAMENTAL_ESTATAL: "(93) Gubernamental - Órganos legislativos estatales",
-    GUBERNAMENTAL_MUNICIPAL: "(93) Gubernamental - Órganos legislativos municipales",
-    GUBERNAMENTAL_JUSTICIA: "(93) Gubernamental - Impartición de justicia",
-    GUBERNAMENTAL_SEGURIDAD: "(93) Gubernamental - Seguridad nacional",
-    GUBERNAMENTAL_OTROS: "(93) Gubernamental - Otras actividades",
-
-    // PARTICULAR
-    PARTICULAR: "(99) Particular"
-  };
+  const fetchSectores = async () => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/sectores`)
+      if (!response.ok) throw new Error("Error al cargar sectores")
+      const data = await response.json()
+      setSectores(data)
+    } catch (error) {
+      console.error("Error al cargar sectores:", error)
+    }
+  }
 
   const regimenFiscalOptions = [
     { clave: "605", descripcion: "Sueldos y Salarios e Ingresos Asimilados a Salarios" },
@@ -295,10 +131,6 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
     { clave: "NO_APLICA", descripcion: "No aplica" },
   ]
 
-  const sectores = Object.entries(sectorMap)
-    .map(([value, label]) => ({ value, label }))
-    .sort((a, b) => b.label.localeCompare(a.label, 'es', { sensitivity: 'base' }))
-
   const estatusOptions = [
     { value: "POR_CONTACTAR", label: "Por Contactar" },
     { value: "EN_PROCESO", label: "En Proceso" },
@@ -313,33 +145,39 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
         nombre: empresa.nombre || "",
         estatus: empresa.estatus || "POR_CONTACTAR",
         sitioWeb: empresa.sitioWeb || "",
-        sector: empresa.sector || "",
+        sectorId: empresa.sectorId || null,
         domicilioFisico: empresa.domicilioFisico || "",
         domicilioFiscal: empresa.domicilioFiscal || "",
         rfc: empresa.rfc || "XAXX010101000",
         razonSocial: empresa.razonSocial || "",
         regimenFiscal: empresa.regimenFiscal || "",
         propietarioId: empresa.propietario?.id || null,
+        latitud: empresa.latitud || null,
+        longitud: empresa.longitud || null,
       });
-      setSectorSearch(empresa?.sector ? sectorMap[empresa.sector] || "" : "");
-      setShowSectorDropdown(false);
     } else {
       setFormData({
         nombre: "",
         estatus: "POR_CONTACTAR",
         sitioWeb: "",
-        sector: "",
+        sectorId: null,
         domicilioFisico: "",
         domicilioFiscal: "",
         rfc: "XAXX010101000",
         razonSocial: "",
         regimenFiscal: "",
         propietarioId: null,
+        latitud: null,
+        longitud: null,
       });
-      setSectorSearch("");
     }
     setErrors({});
   }, [empresa, mode, isOpen]);
+
+  useEffect(() => {
+    fetchSectores()
+  }, [])
+
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -390,6 +228,14 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
       } catch (error) {
         newErrors.sitioWeb = "Este campo debe ser una URL válida (ej. https://ejemplo.com)";
       }
+
+      if (formData.latitud !== null && (isNaN(formData.latitud) || formData.latitud < -90 || formData.latitud > 90)) {
+        newErrors.latitud = "La latitud debe estar entre -90 y 90 grados";
+      }
+
+      if (formData.longitud !== null && (isNaN(formData.longitud) || formData.longitud < -180 || formData.longitud > 180)) {
+        newErrors.longitud = "La longitud debe estar entre -180 y 180 grados";
+      }
     }
 
     // Validaciones para estatus CLIENTE
@@ -425,6 +271,16 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleMapLocationSelect = (locationData) => {
+    handleInputChange("domicilioFisico", locationData.address);
+    handleInputChange("latitud", locationData.latitude);
+    handleInputChange("longitud", locationData.longitude);
+    setMapModal({ isOpen: false });
+  };
+
+  const showCoordinateFields = formData.domicilioFisico && formData.domicilioFisico.trim();
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -456,12 +312,14 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
       nombre: formData.nombre,
       estatus: formData.estatus,
       sitioWeb: formData.sitioWeb || null,
-      sector: formData.sector || null,
+      sectorId: formData.sectorId || null,
       domicilioFisico: formattedDomicilioFisico,
       domicilioFiscal: formData.domicilioFiscal || null,
       rfc: formData.rfc || null,
       razonSocial: formData.razonSocial || null,
       regimenFiscal: formData.regimenFiscal || null,
+      latitud: formData.latitud || null,
+      longitud: formData.longitud || null,
       ...(mode === "edit" && { propietarioId: formData.propietarioId || null }),
     };
 
@@ -597,104 +455,80 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
           </div>
 
           <div className="modal-form-group">
-            <label htmlFor="sector">Sector</label>
-            <div className="autocomplete-container" style={{ position: 'relative' }}>
-              <input
-                type="text"
-                id="sector"
-                value={sectorSearch}
-                onChange={(e) => {
-                  setSectorSearch(e.target.value)
-                  setShowSectorDropdown(true)
-                  if (!e.target.value) {
-                    handleInputChange("sector", "")
-                  }
-                }}
-                onFocus={() => setShowSectorDropdown(true)}
-                onBlur={() => setTimeout(() => setShowSectorDropdown(false), 200)}
-                className="modal-form-control"
-                placeholder="Buscar o seleccionar sector..."
-                style={{ paddingRight: '30px' }}
-              />
-              <div
-                style={{
-                  position: 'absolute',
-                  right: '0',
-                  top: '0',
-                  bottom: '0',
-                  width: '30px',
-                  pointerEvents: 'none',
-                  background: 'url("data:image/svg+xml;charset=US-ASCII,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 4 5\'><path fill=\'%23666\' d=\'M2 0L0 2h4zm0 5L0 3h4z\'/></svg>") no-repeat center',
-                  backgroundSize: '12px'
-                }}
-              />
-              {showSectorDropdown && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  backgroundColor: 'white',
-                  border: '1px solid #ccc',
-                  borderTop: 'none',
-                  maxHeight: '200px',
-                  overflowY: 'auto',
-                  zIndex: 1000
-                }}>
-                  {sectores
-                    .filter(sector => {
-                      if (!sectorSearch) return true;
-                      const isExactMatch = sectores.some(s => s.label === sectorSearch);
-                      if (isExactMatch) return true;
-                      return sector.label.toLowerCase().includes(sectorSearch.toLowerCase());
-                    })
-                    .slice(0, sectorSearch ? 10 : sectores.length)
-                    .map((sector) => (
-                      <div
-                        key={sector.value}
-                        onClick={() => {
-                          handleInputChange("sector", sector.value)
-                          setSectorSearch(sector.label)
-                          setShowSectorDropdown(false)
-                        }}
-                        style={{
-                          padding: '8px 12px',
-                          cursor: 'pointer',
-                          borderBottom: '1px solid #eee',
-                          fontSize: '12px'
-                        }}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
-                      >
-                        {sector.label}
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
+            <label htmlFor="sectorId">Sector</label>
+            <select
+              id="sectorId"
+              value={formData.sectorId || ""}
+              onChange={(e) => handleInputChange("sectorId", e.target.value ? Number(e.target.value) : null)}
+              className="modal-form-control"
+            >
+              <option value="">Seleccionar sector...</option>
+              {sectores.map((sector) => (
+                <option key={sector.id} value={sector.id}>
+                  {sector.nombreSector}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
         <div className="modal-form-row">
           <div className="modal-form-group full-width">
-            <label htmlFor="domicilioFisico">
-              Domicilio Físico
-            </label>
-            <input
-              type="text"
-              id="domicilioFisico"
-              value={formData.domicilioFisico}
-              onChange={(e) => handleInputChange("domicilioFisico", e.target.value)}
-              className={`modal-form-control ${errors.domicilioFisico ? "error" : ""}`}
-              placeholder="Ej: Elefante 175, Villa Magna, 37208 León de los Aldama, Guanajuato, México"
-            />
+            <label htmlFor="domicilioFisico">Domicilio Físico</label>
+            <div className="address-input-container">
+              <input
+                type="text"
+                id="domicilioFisico"
+                value={formData.domicilioFisico}
+                onChange={(e) => handleInputChange("domicilioFisico", e.target.value)}
+                className={`modal-form-control address-input ${errors.domicilioFisico ? "error" : ""}`}
+                placeholder="Ej: Elefante 175, Villa Magna, 37208 León de los Aldama, Guanajuato, México"
+              />
+              <button
+                type="button"
+                onClick={() => setMapModal({ isOpen: true })}
+                className="btn btn-map"
+                title="Buscar en mapa"
+              >
+                Buscar en mapa
+              </button>
+            </div>
             <small className="help-text">
-              Por favor, usa el formato: Calle y Número, Colonia, Código Postal, Ciudad, Estado, País. Evita detalles como "Local
-              X" o "Depto. Y" para una mejor precisión en el mapa.
+              Por favor, usa el formato: Calle y Número, Colonia, Código Postal, Ciudad, Estado, País.
+              Puedes usar el botón "Buscar en mapa" para seleccionar la ubicación exacta.
             </small>
             {errors.domicilioFisico && <span className="error-message">{errors.domicilioFisico}</span>}
           </div>
         </div>
+
+        {showCoordinateFields && (
+          <div className="modal-form-row">
+            <div className="modal-form-group">
+              <label htmlFor="latitud">Latitud</label>
+              <input
+                type="number"
+                id="latitud"
+                value={formData.latitud || ''}
+                onChange={(e) => handleInputChange("latitud", e.target.value ? parseFloat(e.target.value) : null)}
+                className="modal-form-control"
+                placeholder="21.1269"
+                step="any"
+              />
+            </div>
+            <div className="modal-form-group">
+              <label htmlFor="longitud">Longitud</label>
+              <input
+                type="number"
+                id="longitud"
+                value={formData.longitud || ''}
+                onChange={(e) => handleInputChange("longitud", e.target.value ? parseFloat(e.target.value) : null)}
+                className="modal-form-control"
+                placeholder="-101.6968"
+                step="any"
+              />
+            </div>
+          </div>
+        )}
 
         {isCliente && (
           <>
@@ -786,6 +620,12 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
           </button>
         </div>
       </form>
+      <MapModal
+        isOpen={mapModal.isOpen}
+        onClose={() => setMapModal({ isOpen: false })}
+        onLocationSelect={handleMapLocationSelect}
+        initialAddress={formData.domicilioFisico}
+      />
     </Modal>
   )
 }
@@ -1194,7 +1034,7 @@ const ContactoModal = ({
 };
 
 // Modal de Detalles de Empresa
-const DetallesEmpresaModal = ({ isOpen, onClose, empresa }) => {
+const DetallesEmpresaModal = ({ isOpen, onClose, empresa, sectores }) => {
   if (!empresa) return null
 
   const formatDate = (dateString) => {
@@ -1218,184 +1058,15 @@ const DetallesEmpresaModal = ({ isOpen, onClose, empresa }) => {
     CLIENTE: "Cliente",
   }
 
-  // Reemplazar el sectorMap actual con:
-  const sectorMap = {
-    // SECTOR PRIMARIO
-    AGRICULTURA_CULTIVOS: "(11) Agricultura - Cultivos y horticultura",
-    AGRICULTURA_GANADERIA: "(11) Agricultura - Ganadería y avicultura",
-    AGRICULTURA_FORESTAL: "(11) Agricultura - Forestal y silvicultura",
-    AGRICULTURA_PESCA: "(11) Agricultura - Pesca y acuacultura",
-
-    // MINERÍA
-    MINERIA_PETROLEO: "(21) Minería - Petróleo y gas",
-    MINERIA_MINERALES: "(21) Minería - Minerales metálicos",
-    MINERIA_NO_METALICOS: "(21) Minería - Minerales no metálicos",
-    MINERIA_CARBON: "(21) Minería - Carbón y otros",
-
-    // ENERGÍA Y SERVICIOS PÚBLICOS  
-    ENERGIA_ELECTRICA: "(22) Energía - Generación eléctrica",
-    ENERGIA_GAS: "(22) Energía - Suministro de gas",
-    ENERGIA_AGUA: "(22) Energía - Suministro de agua",
-    ENERGIA_RENOVABLE: "(22) Energía - Renovables",
-
-    // CONSTRUCCIÓN
-    CONSTRUCCION_EDIFICACION: "(23) Construcción - Edificación residencial",
-    CONSTRUCCION_INDUSTRIAL: "(23) Construcción - Obras industriales",
-    CONSTRUCCION_INFRAESTRUCTURA: "(23) Construcción - Infraestructura",
-    CONSTRUCCION_ESPECIALIZADA: "(23) Construcción - Trabajos especializados",
-
-    // MANUFACTURA
-    MANUFACTURA_ALIMENTOS: "(31) Manufactura - Alimentos y bebidas",
-    MANUFACTURA_TEXTIL: "(31) Manufactura - Textil y confección",
-    MANUFACTURA_MADERA: "(31) Manufactura - Madera y muebles",
-    MANUFACTURA_PAPEL: "(31) Manufactura - Papel e impresión",
-    MANUFACTURA_QUIMICA: "(32) Manufactura - Química y petroquímica",
-    MANUFACTURA_PLASTICOS: "(32) Manufactura - Plásticos y caucho",
-    MANUFACTURA_MINERALES: "(32) Manufactura - Productos minerales no metálicos",
-    MANUFACTURA_METAL_BASIC: "(33) Manufactura - Industrias metálicas básicas",
-    MANUFACTURA_METAL_PROD: "(33) Manufactura - Productos metálicos",
-    MANUFACTURA_MAQUINARIA: "(33) Manufactura - Maquinaria y equipo",
-    MANUFACTURA_ELECTRONICA: "(33) Manufactura - Electrónica y computación",
-    MANUFACTURA_ELECTRICA: "(33) Manufactura - Equipo eléctrico",
-    MANUFACTURA_TRANSPORTE: "(33) Manufactura - Equipo de transporte",
-    MANUFACTURA_OTROS: "(33) Manufactura - Otras industrias",
-
-    // COMERCIO AL POR MAYOR
-    COMERCIO_MAYOR_AGRICOLA: "(43) Comercio mayoreo - Productos agrícolas",
-    COMERCIO_MAYOR_ALIMENTOS: "(43) Comercio mayoreo - Alimentos procesados",
-    COMERCIO_MAYOR_BEBIDAS: "(43) Comercio mayoreo - Bebidas y tabaco",
-    COMERCIO_MAYOR_TEXTIL: "(43) Comercio mayoreo - Textiles y vestido",
-    COMERCIO_MAYOR_FARMACEUTICO: "(43) Comercio mayoreo - Productos farmacéuticos",
-    COMERCIO_MAYOR_QUIMICOS: "(43) Comercio mayoreo - Productos químicos",
-    COMERCIO_MAYOR_PETROLEO: "(43) Comercio mayoreo - Productos de petróleo",
-    COMERCIO_MAYOR_MATERIALES: "(43) Comercio mayoreo - Materiales construcción",
-    COMERCIO_MAYOR_MAQUINARIA: "(43) Comercio mayoreo - Maquinaria y equipo",
-    COMERCIO_MAYOR_ELECTRONICA: "(43) Comercio mayoreo - Electrónicos",
-    COMERCIO_MAYOR_VEHICULOS: "(43) Comercio mayoreo - Vehículos y refacciones",
-    COMERCIO_MAYOR_MUEBLES: "(43) Comercio mayoreo - Muebles y enseres",
-    COMERCIO_MAYOR_OTROS: "(43) Comercio mayoreo - Otros productos",
-
-    // COMERCIO AL POR MENOR
-    COMERCIO_MENOR_ALIMENTOS: "(46) Comercio menudeo - Alimentos y bebidas",
-    COMERCIO_MENOR_ABARROTES: "(46) Comercio menudeo - Abarrotes y ultramarinos",
-    COMERCIO_MENOR_FARMACIA: "(46) Comercio menudeo - Farmacias",
-    COMERCIO_MENOR_COMBUSTIBLES: "(46) Comercio menudeo - Combustibles",
-    COMERCIO_MENOR_VESTIDO: "(46) Comercio menudeo - Ropa y calzado",
-    COMERCIO_MENOR_MUEBLES: "(46) Comercio menudeo - Muebles y electrodomésticos",
-    COMERCIO_MENOR_ELECTRONICA: "(46) Comercio menudeo - Electrónicos",
-    COMERCIO_MENOR_FERRETERIA: "(46) Comercio menudeo - Ferretería y materiales",
-    COMERCIO_MENOR_VEHICULOS: "(46) Comercio menudeo - Vehículos automotores",
-    COMERCIO_MENOR_REFACCIONES: "(46) Comercio menudeo - Refacciones y accesorios",
-    COMERCIO_MENOR_DEPARTAMENTAL: "(46) Comercio menudeo - Tiendas departamentales",
-    COMERCIO_MENOR_OTROS: "(46) Comercio menudeo - Otros productos",
-
-    // TRANSPORTE Y LOGÍSTICA
-    TRANSPORTE_AEREO: "(48) Transporte - Aéreo",
-    TRANSPORTE_FERROVIARIO: "(48) Transporte - Ferroviario",
-    TRANSPORTE_MARITIMO: "(48) Transporte - Marítimo",
-    TRANSPORTE_TERRESTRE_CARGA: "(48) Transporte - Terrestre de carga",
-    TRANSPORTE_TERRESTRE_PASAJE: "(49) Transporte - Terrestre de pasajeros",
-    TRANSPORTE_TURISTICO: "(49) Transporte - Turístico",
-    TRANSPORTE_CORREOS: "(49) Servicios - Correos y paquetería",
-    TRANSPORTE_ALMACENAMIENTO: "(49) Servicios - Almacenamiento",
-
-    // MEDIOS E INFORMACIÓN
-    MEDIOS_EDITORIALES: "(51) Medios - Industrias editoriales",
-    MEDIOS_AUDIOVISUAL: "(51) Medios - Industrias audiovisuales",
-    MEDIOS_RADIO_TV: "(51) Medios - Radio y televisión",
-    MEDIOS_TELECOMUNICACIONES: "(51) Medios - Telecomunicaciones",
-    MEDIOS_PROCESAMIENTO_DATOS: "(51) Medios - Procesamiento de datos",
-    MEDIOS_OTROS: "(51) Medios - Otros servicios información",
-
-    // SERVICIOS FINANCIEROS
-    FINANCIERO_BANCA: "(52) Financiero - Instituciones bancarias",
-    FINANCIERO_VALORES: "(52) Financiero - Actividades bursátiles",
-    FINANCIERO_SEGUROS: "(52) Financiero - Seguros y fianzas",
-    FINANCIERO_PENSIONES: "(52) Financiero - Fondos y pensiones",
-    FINANCIERO_OTROS: "(52) Financiero - Otros servicios financieros",
-
-    // INMOBILIARIO Y ALQUILER
-    INMOBILIARIO_COMPRAVENTA: "(53) Inmobiliario - Compraventa de inmuebles",
-    INMOBILIARIO_ALQUILER: "(53) Inmobiliario - Alquiler de inmuebles",
-    INMOBILIARIO_MAQUINARIA: "(53) Servicios - Alquiler de maquinaria",
-    INMOBILIARIO_VEHICULOS: "(53) Servicios - Alquiler de vehículos",
-    INMOBILIARIO_OTROS: "(53) Servicios - Alquiler de otros bienes",
-
-    // SERVICIOS PROFESIONALES
-    PROFESIONAL_JURIDICOS: "(54) Profesional - Servicios jurídicos",
-    PROFESIONAL_CONTABLES: "(54) Profesional - Servicios contables",
-    PROFESIONAL_ARQUITECTURA: "(54) Profesional - Arquitectura e ingeniería",
-    PROFESIONAL_DISENO: "(54) Profesional - Diseño especializado",
-    PROFESIONAL_CONSULTORIA: "(54) Profesional - Consultoría",
-    PROFESIONAL_INVESTIGACION: "(54) Profesional - Investigación científica",
-    PROFESIONAL_PUBLICIDAD: "(54) Profesional - Publicidad y marketing",
-    PROFESIONAL_VETERINARIOS: "(54) Profesional - Servicios veterinarios",
-    PROFESIONAL_OTROS: "(54) Profesional - Otros servicios técnicos",
-
-    // CORPORATIVOS
-    CORPORATIVO_HOLDING: "(55) Corporativo - Tenencia de acciones",
-    CORPORATIVO_MATRIZ: "(55) Corporativo - Casas matrices",
-
-    // APOYO A NEGOCIOS
-    APOYO_EMPLEO: "(56) Apoyo - Servicios de empleo",
-    APOYO_ADMINISTRATIVO: "(56) Apoyo - Servicios administrativos",
-    APOYO_SEGURIDAD: "(56) Apoyo - Servicios de seguridad",
-    APOYO_LIMPIEZA: "(56) Apoyo - Servicios de limpieza",
-    APOYO_PAISAJISMO: "(56) Apoyo - Jardinería y paisajismo",
-    APOYO_VIAJES: "(56) Apoyo - Agencias de viajes",
-    APOYO_INVESTIGACION: "(56) Apoyo - Servicios de investigación",
-    APOYO_DESECHOS: "(56) Apoyo - Manejo de desechos",
-    APOYO_OTROS: "(56) Apoyo - Otros servicios",
-
-    // EDUCACIÓN
-    EDUCACION_PREESCOLAR: "(61) Educación - Preescolar",
-    EDUCACION_PRIMARIA: "(61) Educación - Primaria",
-    EDUCACION_SECUNDARIA: "(61) Educación - Secundaria",
-    EDUCACION_MEDIA_SUPERIOR: "(61) Educación - Media superior",
-    EDUCACION_SUPERIOR: "(61) Educación - Superior",
-    EDUCACION_POSGRADO: "(61) Educación - Posgrado",
-    EDUCACION_TECNICA: "(61) Educación - Técnica y capacitación",
-    EDUCACION_OTROS: "(61) Educación - Otros servicios educativos",
-
-    // SALUD
-    SALUD_HOSPITALES: "(62) Salud - Servicios hospitalarios",
-    SALUD_AMBULATORIOS: "(62) Salud - Servicios ambulatorios",
-    SALUD_ASISTENCIA_SOCIAL: "(62) Salud - Servicios de asistencia social",
-
-    // ESPARCIMIENTO
-    ESPARCIMIENTO_ARTISTICOS: "(71) Esparcimiento - Servicios artísticos",
-    ESPARCIMIENTO_DEPORTIVOS: "(71) Esparcimiento - Servicios deportivos",
-    ESPARCIMIENTO_RECREATIVOS: "(71) Esparcimiento - Servicios recreativos",
-    ESPARCIMIENTO_MUSEOS: "(71) Esparcimiento - Museos y sitios históricos",
-    ESPARCIMIENTO_OTROS: "(71) Esparcimiento - Otros servicios",
-
-    // ALOJAMIENTO Y ALIMENTOS
-    ALOJAMIENTO_HOTELES: "(72) Alojamiento - Hoteles y moteles",
-    ALOJAMIENTO_TEMPORAL: "(72) Alojamiento - Otros alojamientos",
-    ALIMENTOS_RESTAURANTES: "(72) Alimentos - Restaurantes con servicio",
-    ALIMENTOS_LIMITADO: "(72) Alimentos - Establecimientos con servicio limitado",
-    ALIMENTOS_PREPARACION: "(72) Alimentos - Servicios de preparación",
-
-    // OTROS SERVICIOS
-    OTROS_REPARACION: "(81) Otros - Reparación y mantenimiento",
-    OTROS_PERSONALES: "(81) Otros - Servicios personales",
-    OTROS_RELIGIOSOS: "(81) Otros - Organizaciones religiosas",
-    OTROS_CIVICAS: "(81) Otros - Organizaciones cívicas",
-    OTROS_PROFESIONALES: "(81) Otros - Organizaciones profesionales",
-    OTROS_LABORALES: "(81) Otros - Organizaciones laborales",
-    OTROS_POLITICAS: "(81) Otros - Organizaciones políticas",
-
-    // GUBERNAMENTAL
-    GUBERNAMENTAL_FEDERAL: "(93) Gubernamental - Órganos legislativos federales",
-    GUBERNAMENTAL_ESTATAL: "(93) Gubernamental - Órganos legislativos estatales",
-    GUBERNAMENTAL_MUNICIPAL: "(93) Gubernamental - Órganos legislativos municipales",
-    GUBERNAMENTAL_JUSTICIA: "(93) Gubernamental - Impartición de justicia",
-    GUBERNAMENTAL_SEGURIDAD: "(93) Gubernamental - Seguridad nacional",
-    GUBERNAMENTAL_OTROS: "(93) Gubernamental - Otras actividades"
-  };
-
   const getStatusText = (status) => statusMap[status] || status
-  const getSectorText = (sector) => sectorMap[sector] || sector || "N/A"
+  const getSectorText = (sectorId, sectorNombre) => {
+    if (sectorNombre) return sectorNombre;
+    if (sectorId && sectores.length > 0) {
+      const sector = sectores.find(s => s.id === sectorId);
+      return sector ? sector.nombreSector : "N/A";
+    }
+    return "N/A";
+  }
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Detalles Empresa" size="lg" closeOnOverlayClick={false}>
@@ -1430,7 +1101,7 @@ const DetallesEmpresaModal = ({ isOpen, onClose, empresa }) => {
           </div>
           <div className="detalle-item">
             <label>Sector:</label>
-            <span>{getSectorText(empresa.sector)}</span>
+            <span>{getSectorText(empresa.sectorId, empresa.sectorNombre)}</span>
           </div>
           <div className="detalle-item full-width">
             <label>Domicilio Físico:</label>
@@ -1654,6 +1325,7 @@ const Empresas = () => {
   })
 
   const [tratos, setTratos] = useState([]);
+  const [sectores, setSectores] = useState([])
 
   const statusMap = {
     POR_CONTACTAR: "Por Contactar",
@@ -1662,181 +1334,6 @@ const Empresas = () => {
     PERDIDO: "Perdido",
     CLIENTE: "Cliente",
   }
-
-  const sectorMap = {
-    // SECTOR PRIMARIO
-    AGRICULTURA_CULTIVOS: "(11) Agricultura - Cultivos y horticultura",
-    AGRICULTURA_GANADERIA: "(11) Agricultura - Ganadería y avicultura",
-    AGRICULTURA_FORESTAL: "(11) Agricultura - Forestal y silvicultura",
-    AGRICULTURA_PESCA: "(11) Agricultura - Pesca y acuacultura",
-
-    // MINERÍA
-    MINERIA_PETROLEO: "(21) Minería - Petróleo y gas",
-    MINERIA_MINERALES: "(21) Minería - Minerales metálicos",
-    MINERIA_NO_METALICOS: "(21) Minería - Minerales no metálicos",
-    MINERIA_CARBON: "(21) Minería - Carbón y otros",
-
-    // ENERGÍA Y SERVICIOS PÚBLICOS  
-    ENERGIA_ELECTRICA: "(22) Energía - Generación eléctrica",
-    ENERGIA_GAS: "(22) Energía - Suministro de gas",
-    ENERGIA_AGUA: "(22) Energía - Suministro de agua",
-    ENERGIA_RENOVABLE: "(22) Energía - Renovables",
-
-    // CONSTRUCCIÓN
-    CONSTRUCCION_EDIFICACION: "(23) Construcción - Edificación residencial",
-    CONSTRUCCION_INDUSTRIAL: "(23) Construcción - Obras industriales",
-    CONSTRUCCION_INFRAESTRUCTURA: "(23) Construcción - Infraestructura",
-    CONSTRUCCION_ESPECIALIZADA: "(23) Construcción - Trabajos especializados",
-
-    // MANUFACTURA
-    MANUFACTURA_ALIMENTOS: "(31) Manufactura - Alimentos y bebidas",
-    MANUFACTURA_TEXTIL: "(31) Manufactura - Textil y confección",
-    MANUFACTURA_MADERA: "(31) Manufactura - Madera y muebles",
-    MANUFACTURA_PAPEL: "(31) Manufactura - Papel e impresión",
-    MANUFACTURA_QUIMICA: "(32) Manufactura - Química y petroquímica",
-    MANUFACTURA_PLASTICOS: "(32) Manufactura - Plásticos y caucho",
-    MANUFACTURA_MINERALES: "(32) Manufactura - Productos minerales no metálicos",
-    MANUFACTURA_METAL_BASIC: "(33) Manufactura - Industrias metálicas básicas",
-    MANUFACTURA_METAL_PROD: "(33) Manufactura - Productos metálicos",
-    MANUFACTURA_MAQUINARIA: "(33) Manufactura - Maquinaria y equipo",
-    MANUFACTURA_ELECTRONICA: "(33) Manufactura - Electrónica y computación",
-    MANUFACTURA_ELECTRICA: "(33) Manufactura - Equipo eléctrico",
-    MANUFACTURA_TRANSPORTE: "(33) Manufactura - Equipo de transporte",
-    MANUFACTURA_OTROS: "(33) Manufactura - Otras industrias",
-
-    // COMERCIO AL POR MAYOR
-    COMERCIO_MAYOR_AGRICOLA: "(43) Comercio mayoreo - Productos agrícolas",
-    COMERCIO_MAYOR_ALIMENTOS: "(43) Comercio mayoreo - Alimentos procesados",
-    COMERCIO_MAYOR_BEBIDAS: "(43) Comercio mayoreo - Bebidas y tabaco",
-    COMERCIO_MAYOR_TEXTIL: "(43) Comercio mayoreo - Textiles y vestido",
-    COMERCIO_MAYOR_FARMACEUTICO: "(43) Comercio mayoreo - Productos farmacéuticos",
-    COMERCIO_MAYOR_QUIMICOS: "(43) Comercio mayoreo - Productos químicos",
-    COMERCIO_MAYOR_PETROLEO: "(43) Comercio mayoreo - Productos de petróleo",
-    COMERCIO_MAYOR_MATERIALES: "(43) Comercio mayoreo - Materiales construcción",
-    COMERCIO_MAYOR_MAQUINARIA: "(43) Comercio mayoreo - Maquinaria y equipo",
-    COMERCIO_MAYOR_ELECTRONICA: "(43) Comercio mayoreo - Electrónicos",
-    COMERCIO_MAYOR_VEHICULOS: "(43) Comercio mayoreo - Vehículos y refacciones",
-    COMERCIO_MAYOR_MUEBLES: "(43) Comercio mayoreo - Muebles y enseres",
-    COMERCIO_MAYOR_OTROS: "(43) Comercio mayoreo - Otros productos",
-
-    // COMERCIO AL POR MENOR
-    COMERCIO_MENOR_ALIMENTOS: "(46) Comercio menudeo - Alimentos y bebidas",
-    COMERCIO_MENOR_ABARROTES: "(46) Comercio menudeo - Abarrotes y ultramarinos",
-    COMERCIO_MENOR_FARMACIA: "(46) Comercio menudeo - Farmacias",
-    COMERCIO_MENOR_COMBUSTIBLES: "(46) Comercio menudeo - Combustibles",
-    COMERCIO_MENOR_VESTIDO: "(46) Comercio menudeo - Ropa y calzado",
-    COMERCIO_MENOR_MUEBLES: "(46) Comercio menudeo - Muebles y electrodomésticos",
-    COMERCIO_MENOR_ELECTRONICA: "(46) Comercio menudeo - Electrónicos",
-    COMERCIO_MENOR_FERRETERIA: "(46) Comercio menudeo - Ferretería y materiales",
-    COMERCIO_MENOR_VEHICULOS: "(46) Comercio menudeo - Vehículos automotores",
-    COMERCIO_MENOR_REFACCIONES: "(46) Comercio menudeo - Refacciones y accesorios",
-    COMERCIO_MENOR_DEPARTAMENTAL: "(46) Comercio menudeo - Tiendas departamentales",
-    COMERCIO_MENOR_OTROS: "(46) Comercio menudeo - Otros productos",
-
-    // TRANSPORTE Y LOGÍSTICA
-    TRANSPORTE_AEREO: "(48) Transporte - Aéreo",
-    TRANSPORTE_FERROVIARIO: "(48) Transporte - Ferroviario",
-    TRANSPORTE_MARITIMO: "(48) Transporte - Marítimo",
-    TRANSPORTE_TERRESTRE_CARGA: "(48) Transporte - Terrestre de carga",
-    TRANSPORTE_TERRESTRE_PASAJE: "(49) Transporte - Terrestre de pasajeros",
-    TRANSPORTE_TURISTICO: "(49) Transporte - Turístico",
-    TRANSPORTE_CORREOS: "(49) Servicios - Correos y paquetería",
-    TRANSPORTE_ALMACENAMIENTO: "(49) Servicios - Almacenamiento",
-
-    // MEDIOS E INFORMACIÓN
-    MEDIOS_EDITORIALES: "(51) Medios - Industrias editoriales",
-    MEDIOS_AUDIOVISUAL: "(51) Medios - Industrias audiovisuales",
-    MEDIOS_RADIO_TV: "(51) Medios - Radio y televisión",
-    MEDIOS_TELECOMUNICACIONES: "(51) Medios - Telecomunicaciones",
-    MEDIOS_PROCESAMIENTO_DATOS: "(51) Medios - Procesamiento de datos",
-    MEDIOS_OTROS: "(51) Medios - Otros servicios información",
-
-    // SERVICIOS FINANCIEROS
-    FINANCIERO_BANCA: "(52) Financiero - Instituciones bancarias",
-    FINANCIERO_VALORES: "(52) Financiero - Actividades bursátiles",
-    FINANCIERO_SEGUROS: "(52) Financiero - Seguros y fianzas",
-    FINANCIERO_PENSIONES: "(52) Financiero - Fondos y pensiones",
-    FINANCIERO_OTROS: "(52) Financiero - Otros servicios financieros",
-
-    // INMOBILIARIO Y ALQUILER
-    INMOBILIARIO_COMPRAVENTA: "(53) Inmobiliario - Compraventa de inmuebles",
-    INMOBILIARIO_ALQUILER: "(53) Inmobiliario - Alquiler de inmuebles",
-    INMOBILIARIO_MAQUINARIA: "(53) Servicios - Alquiler de maquinaria",
-    INMOBILIARIO_VEHICULOS: "(53) Servicios - Alquiler de vehículos",
-    INMOBILIARIO_OTROS: "(53) Servicios - Alquiler de otros bienes",
-
-    // SERVICIOS PROFESIONALES
-    PROFESIONAL_JURIDICOS: "(54) Profesional - Servicios jurídicos",
-    PROFESIONAL_CONTABLES: "(54) Profesional - Servicios contables",
-    PROFESIONAL_ARQUITECTURA: "(54) Profesional - Arquitectura e ingeniería",
-    PROFESIONAL_DISENO: "(54) Profesional - Diseño especializado",
-    PROFESIONAL_CONSULTORIA: "(54) Profesional - Consultoría",
-    PROFESIONAL_INVESTIGACION: "(54) Profesional - Investigación científica",
-    PROFESIONAL_PUBLICIDAD: "(54) Profesional - Publicidad y marketing",
-    PROFESIONAL_VETERINARIOS: "(54) Profesional - Servicios veterinarios",
-    PROFESIONAL_OTROS: "(54) Profesional - Otros servicios técnicos",
-
-    // CORPORATIVOS
-    CORPORATIVO_HOLDING: "(55) Corporativo - Tenencia de acciones",
-    CORPORATIVO_MATRIZ: "(55) Corporativo - Casas matrices",
-
-    // APOYO A NEGOCIOS
-    APOYO_EMPLEO: "(56) Apoyo - Servicios de empleo",
-    APOYO_ADMINISTRATIVO: "(56) Apoyo - Servicios administrativos",
-    APOYO_SEGURIDAD: "(56) Apoyo - Servicios de seguridad",
-    APOYO_LIMPIEZA: "(56) Apoyo - Servicios de limpieza",
-    APOYO_PAISAJISMO: "(56) Apoyo - Jardinería y paisajismo",
-    APOYO_VIAJES: "(56) Apoyo - Agencias de viajes",
-    APOYO_INVESTIGACION: "(56) Apoyo - Servicios de investigación",
-    APOYO_DESECHOS: "(56) Apoyo - Manejo de desechos",
-    APOYO_OTROS: "(56) Apoyo - Otros servicios",
-
-    // EDUCACIÓN
-    EDUCACION_PREESCOLAR: "(61) Educación - Preescolar",
-    EDUCACION_PRIMARIA: "(61) Educación - Primaria",
-    EDUCACION_SECUNDARIA: "(61) Educación - Secundaria",
-    EDUCACION_MEDIA_SUPERIOR: "(61) Educación - Media superior",
-    EDUCACION_SUPERIOR: "(61) Educación - Superior",
-    EDUCACION_POSGRADO: "(61) Educación - Posgrado",
-    EDUCACION_TECNICA: "(61) Educación - Técnica y capacitación",
-    EDUCACION_OTROS: "(61) Educación - Otros servicios educativos",
-
-    // SALUD
-    SALUD_HOSPITALES: "(62) Salud - Servicios hospitalarios",
-    SALUD_AMBULATORIOS: "(62) Salud - Servicios ambulatorios",
-    SALUD_ASISTENCIA_SOCIAL: "(62) Salud - Servicios de asistencia social",
-
-    // ESPARCIMIENTO
-    ESPARCIMIENTO_ARTISTICOS: "(71) Esparcimiento - Servicios artísticos",
-    ESPARCIMIENTO_DEPORTIVOS: "(71) Esparcimiento - Servicios deportivos",
-    ESPARCIMIENTO_RECREATIVOS: "(71) Esparcimiento - Servicios recreativos",
-    ESPARCIMIENTO_MUSEOS: "(71) Esparcimiento - Museos y sitios históricos",
-    ESPARCIMIENTO_OTROS: "(71) Esparcimiento - Otros servicios",
-
-    // ALOJAMIENTO Y ALIMENTOS
-    ALOJAMIENTO_HOTELES: "(72) Alojamiento - Hoteles y moteles",
-    ALOJAMIENTO_TEMPORAL: "(72) Alojamiento - Otros alojamientos",
-    ALIMENTOS_RESTAURANTES: "(72) Alimentos - Restaurantes con servicio",
-    ALIMENTOS_LIMITADO: "(72) Alimentos - Establecimientos con servicio limitado",
-    ALIMENTOS_PREPARACION: "(72) Alimentos - Servicios de preparación",
-
-    // OTROS SERVICIOS
-    OTROS_REPARACION: "(81) Otros - Reparación y mantenimiento",
-    OTROS_PERSONALES: "(81) Otros - Servicios personales",
-    OTROS_RELIGIOSOS: "(81) Otros - Organizaciones religiosas",
-    OTROS_CIVICAS: "(81) Otros - Organizaciones cívicas",
-    OTROS_PROFESIONALES: "(81) Otros - Organizaciones profesionales",
-    OTROS_LABORALES: "(81) Otros - Organizaciones laborales",
-    OTROS_POLITICAS: "(81) Otros - Organizaciones políticas",
-
-    // GUBERNAMENTAL
-    GUBERNAMENTAL_FEDERAL: "(93) Gubernamental - Órganos legislativos federales",
-    GUBERNAMENTAL_ESTATAL: "(93) Gubernamental - Órganos legislativos estatales",
-    GUBERNAMENTAL_MUNICIPAL: "(93) Gubernamental - Órganos legislativos municipales",
-    GUBERNAMENTAL_JUSTICIA: "(93) Gubernamental - Impartición de justicia",
-    GUBERNAMENTAL_SEGURIDAD: "(93) Gubernamental - Seguridad nacional",
-    GUBERNAMENTAL_OTROS: "(93) Gubernamental - Otras actividades"
-  };
 
   const estatusOptions = [
     { value: "POR_CONTACTAR", label: "Por Contactar" },
@@ -1927,12 +1424,24 @@ const Empresas = () => {
     return matchesName && matchesStatus && matchesDateRange;
   });
 
+  const fetchSectores = async () => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/sectores`)
+      if (!response.ok) throw new Error("Error al cargar sectores")
+      const data = await response.json()
+      setSectores(data)
+    } catch (error) {
+      console.error("Error al cargar sectores:", error)
+    }
+  }
+
   const cargarDatosIniciales = async () => {
     setIsLoading(true)
     try {
       await Promise.all([
         fetchUsers(),
-        fetchAllCompanies()
+        fetchAllCompanies(),
+        fetchSectores()
       ])
     } catch (error) {
       console.error('Error al cargar datos iniciales:', error)
@@ -2371,360 +1880,361 @@ const Empresas = () => {
 
   return (
     <>
-     <div className="page-with-header"> 
-      <Header />
-      {isLoading && (
-        <div className="empresas-loading">
-          <div className="spinner"></div>
-          <p>Cargando empresas...</p>
-        </div>
-      )}
-      <main className="main-content">
-        <div className="empresas-container">
-          <section className="companies-panel">
-            <div className="panel-header">
-              <button className="btn btn-add" onClick={handleAddCompany}>
-                Agregar empresa
-              </button>
-            </div>
-
-            <div className="search-section">
-              <div className="search-filter-row">
-                <div className="search-input-container">
-                  <input
-                    type="text"
-                    placeholder="Buscar nombre de la empresa"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="search-input"
-                  />
-                </div>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="filter-select"
-                >
-                  <option value="">Todas</option>
-                  {estatusOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+      <div className="page-with-header">
+        <Header />
+        {isLoading && (
+          <div className="empresas-loading">
+            <div className="spinner"></div>
+            <p>Cargando empresas...</p>
+          </div>
+        )}
+        <main className="main-content">
+          <div className="empresas-container">
+            <section className="companies-panel">
+              <div className="panel-header">
+                <button className="btn btn-add" onClick={handleAddCompany}>
+                  Agregar empresa
+                </button>
               </div>
-              <div className="date-filter-row">
-                <div className="date-filter-container">
-                  <DatePicker
-                    selectsRange={true}
-                    startDate={startDate}
-                    endDate={endDate}
-                    onChange={(update) => {
-                      setDateRange(update);
-                    }}
-                    placeholderText="Seleccionar un rango de fechas de creación"
-                    className="date-picker-input"
-                    dateFormat="dd/MM/yyyy"
-                    isClearable={true}
-                  />
-                </div>
-              </div>
-            </div>
 
-            <div className="companies-list">
-              {filteredCompanies.map((company) => (
-                <div
-                  key={company.id}
-                  className={`company-item ${selectedCompany?.id === company.id ? "selected" : ""} ${companiesWithoutDeals.has(company.id) ? "no-deals" : ""
-                    }`}
-                  onClick={() => handleCompanySelect(company)}
-                >
-                  <div className="company-info">
-                    <h3>{company.nombre || "N/A"}</h3>
-                    <div
-                      className="status-indicator"
-                      style={{ backgroundColor: company.statusColor || "#87CEEB" }}
-                    ></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="company-details-panel">
-            {selectedCompany ? (
-              <>
-                <div className="company-form">
-                  <div className="form-header">
-                    <h3>Datos de la Empresa</h3>
-                    <div className="form-actions">
-                      <button className="btn btn-add" onClick={handleEditCompany}>
-                        Editar empresa
-                      </button>
-                      <button className="btn btn-details" onClick={handleCompanyDetails} title="Detalles empresa">
-                        <img src={detailsIcon || "/placeholder.svg"} alt="Detalles" className="btn-icon" />
-                        Detalles
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Nombre de la empresa</label>
-                      <input type="text" value={selectedCompany.nombre || "N/A"} className="form-control" readOnly />
-                    </div>
-                    <div className="form-group">
-                      <label>Estatus</label>
-                      <input
-                        type="text"
-                        value={getStatusText(selectedCompany.estatus)}
-                        className="form-control"
-                        readOnly
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label>Sitio web</label>
+              <div className="search-section">
+                <div className="search-filter-row">
+                  <div className="search-input-container">
                     <input
                       type="text"
-                      value={selectedCompany.sitioWeb || "N/A"}
-                      className="form-control clickable"
-                      readOnly
-                      onClick={() => {
-                        if (selectedCompany.sitioWeb) {
-                          window.open(selectedCompany.sitioWeb, "_blank", "noopener,noreferrer");
-                        }
-                      }}
+                      placeholder="Buscar nombre de la empresa"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="search-input"
                     />
                   </div>
-                  <div className="form-row">
-                    <div className="form-group address-group">
-                      <label>Domicilio</label>
-                      <input
-                        type="text"
-                        value={selectedCompany.domicilioFisico || "Sin domicilio"}
-                        className="form-control"
-                        readOnly
-                      />
-                      <button className="btn btn-ver-en-el-mapa" onClick={handleViewMap} title="Ver en el mapa">
-                        Ver en el mapa
-                      </button>
-                    </div>
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="filter-select"
+                  >
+                    <option value="">Todas</option>
+                    {estatusOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="date-filter-row">
+                  <div className="date-filter-container">
+                    <DatePicker
+                      selectsRange={true}
+                      startDate={startDate}
+                      endDate={endDate}
+                      onChange={(update) => {
+                        setDateRange(update);
+                      }}
+                      placeholderText="Seleccionar un rango de fechas de creación"
+                      className="date-picker-input"
+                      dateFormat="dd/MM/yyyy"
+                      isClearable={true}
+                    />
                   </div>
                 </div>
+              </div>
 
-                <div className="contacts-section">
-                  <div className="contacts-header">
-                    <button className="btn btn-new-contact" onClick={handleAddContact}>
-                      Nuevo contacto
-                    </button>
+              <div className="companies-list">
+                {filteredCompanies.map((company) => (
+                  <div
+                    key={company.id}
+                    className={`company-item ${selectedCompany?.id === company.id ? "selected" : ""} ${companiesWithoutDeals.has(company.id) ? "no-deals" : ""
+                      }`}
+                    onClick={() => handleCompanySelect(company)}
+                  >
+                    <div className="company-info">
+                      <h3>{company.nombre || "N/A"}</h3>
+                      <div
+                        className="status-indicator"
+                        style={{ backgroundColor: company.statusColor || "#87CEEB" }}
+                      ></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
 
-                    <div className="contacts-search-row">
-                      <div className="contacts-search">
-                        <label>Nombre del contacto:</label>
+            <section className="company-details-panel">
+              {selectedCompany ? (
+                <>
+                  <div className="company-form">
+                    <div className="form-header">
+                      <h3>Datos de la Empresa</h3>
+                      <div className="form-actions">
+                        <button className="btn btn-add" onClick={handleEditCompany}>
+                          Editar empresa
+                        </button>
+                        <button className="btn btn-details" onClick={handleCompanyDetails} title="Detalles empresa">
+                          <img src={detailsIcon || "/placeholder.svg"} alt="Detalles" className="btn-icon" />
+                          Detalles
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Nombre de la empresa</label>
+                        <input type="text" value={selectedCompany.nombre || "N/A"} className="form-control" readOnly />
+                      </div>
+                      <div className="form-group">
+                        <label>Estatus</label>
                         <input
                           type="text"
-                          placeholder="Ingresa el nombre del contacto"
-                          value={contactSearch}
-                          onChange={(e) => setContactSearch(e.target.value)}
-                          className="search-input small"
+                          value={getStatusText(selectedCompany.estatus)}
+                          className="form-control"
+                          readOnly
                         />
                       </div>
+                    </div>
 
-                      <div className="contacts-filter">
-                        <label>Rol:</label>
-                        <select
-                          value={contactRole}
-                          onChange={(e) => setContactRole(e.target.value)}
-                          className="filter-select small"
-                        >
-                          <option value="">Todas</option>
-                          {rolesOptions.map((rol) => (
-                            <option key={rol} value={rol}>
-                              {rol.charAt(0) + rol.slice(1).toLowerCase()}
-                            </option>
-                          ))}
-                        </select>
+                    <div className="form-group">
+                      <label>Sitio web</label>
+                      <input
+                        type="text"
+                        value={selectedCompany.sitioWeb || "N/A"}
+                        className="form-control clickable"
+                        readOnly
+                        onClick={() => {
+                          if (selectedCompany.sitioWeb) {
+                            window.open(selectedCompany.sitioWeb, "_blank", "noopener,noreferrer");
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="form-row">
+                      <div className="form-group address-group">
+                        <label>Domicilio</label>
+                        <input
+                          type="text"
+                          value={selectedCompany.domicilioFisico || "Sin domicilio"}
+                          className="form-control"
+                          readOnly
+                        />
+                        <button className="btn btn-ver-en-el-mapa" onClick={handleViewMap} title="Ver en el mapa">
+                          Ver en el mapa
+                        </button>
                       </div>
                     </div>
                   </div>
 
-                  <div className="contacts-table-container">
-                    <table className="contacts-table">
-                      <thead>
-                        <tr>
-                          <th>No.</th>
-                          <th>Nombre del contacto</th>
-                          <th>Teléfono</th>
-                          <th>Correo electrónico</th>
-                          <th>Rol</th>
-                          <th>Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredContacts.length > 0 ? (
-                          filteredContacts.map((contact, index) => (
-                            <tr key={contact.id}>
-                              <td>{index + 1}</td>
-                              <td>{contact.nombre || "N/A"}</td>
-                              <td>{contact.telefonos?.[0]?.telefono || "N/A"}</td>
-                              <td>{contact.correos?.[0]?.correo || "N/A"}</td>
-                              <td>
-                                {contact.rol ? contact.rol.charAt(0) + contact.rol.slice(1).toLowerCase() : "N/A"}
-                              </td>
-                              <td>
-                                <div className="action-buttons">
-                                  <button
-                                    className="btn-action edit"
-                                    onClick={() => handleEditContact(contact.id)}
-                                    title="Editar"
-                                  >
-                                    <img src={editIcon || "/placeholder.svg"} alt="Editar" />
-                                  </button>
-                                  <button
-                                    className="btn-action delete"
-                                    onClick={() => handleDeleteContact(contact.id)}
-                                    title="Eliminar"
-                                  >
-                                    <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
-                                  </button>
-                                  <button
-                                    className="btn-action details"
-                                    onClick={() => handleContactDetails(contact.id)}
-                                    title="Detalles"
-                                  >
-                                    <img src={detailsIcon || "/placeholder.svg"} alt="Detalles" />
-                                  </button>
-                                </div>
+                  <div className="contacts-section">
+                    <div className="contacts-header">
+                      <button className="btn btn-new-contact" onClick={handleAddContact}>
+                        Nuevo contacto
+                      </button>
+
+                      <div className="contacts-search-row">
+                        <div className="contacts-search">
+                          <label>Nombre del contacto:</label>
+                          <input
+                            type="text"
+                            placeholder="Ingresa el nombre del contacto"
+                            value={contactSearch}
+                            onChange={(e) => setContactSearch(e.target.value)}
+                            className="search-input small"
+                          />
+                        </div>
+
+                        <div className="contacts-filter">
+                          <label>Rol:</label>
+                          <select
+                            value={contactRole}
+                            onChange={(e) => setContactRole(e.target.value)}
+                            className="filter-select small"
+                          >
+                            <option value="">Todas</option>
+                            {rolesOptions.map((rol) => (
+                              <option key={rol} value={rol}>
+                                {rol.charAt(0) + rol.slice(1).toLowerCase()}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="contacts-table-container">
+                      <table className="contacts-table">
+                        <thead>
+                          <tr>
+                            <th>No.</th>
+                            <th>Nombre del contacto</th>
+                            <th>Teléfono</th>
+                            <th>Correo electrónico</th>
+                            <th>Rol</th>
+                            <th>Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredContacts.length > 0 ? (
+                            filteredContacts.map((contact, index) => (
+                              <tr key={contact.id}>
+                                <td>{index + 1}</td>
+                                <td>{contact.nombre || "N/A"}</td>
+                                <td>{contact.telefonos?.[0]?.telefono || "N/A"}</td>
+                                <td>{contact.correos?.[0]?.correo || "N/A"}</td>
+                                <td>
+                                  {contact.rol ? contact.rol.charAt(0) + contact.rol.slice(1).toLowerCase() : "N/A"}
+                                </td>
+                                <td>
+                                  <div className="action-buttons">
+                                    <button
+                                      className="btn-action edit"
+                                      onClick={() => handleEditContact(contact.id)}
+                                      title="Editar"
+                                    >
+                                      <img src={editIcon || "/placeholder.svg"} alt="Editar" />
+                                    </button>
+                                    <button
+                                      className="btn-action delete"
+                                      onClick={() => handleDeleteContact(contact.id)}
+                                      title="Eliminar"
+                                    >
+                                      <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
+                                    </button>
+                                    <button
+                                      className="btn-action details"
+                                      onClick={() => handleContactDetails(contact.id)}
+                                      title="Detalles"
+                                    >
+                                      <img src={detailsIcon || "/placeholder.svg"} alt="Detalles" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan="6" className="no-data">
+                                No se encontraron contactos
                               </td>
                             </tr>
-                          ))
-                        ) : (
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div className="tratos-section">
+                    <div className="tratos-header">
+                      <h3>Tratos de la Empresa</h3>
+                      <button
+                        className="btn btn-add"
+                        onClick={handleCrearTratoDesdeEmpresa}
+                        disabled={!selectedCompany}
+                      >
+                        Crear Trato
+                      </button>
+                    </div>
+                    <div className="tratos-table-container">
+                      <table className="tratos-table">
+                        <thead>
                           <tr>
-                            <td colSpan="6" className="no-data">
-                              No se encontraron contactos
-                            </td>
+                            <th>No. Trato</th>
+                            <th>Nombre del Trato</th>
+                            <th>Nombre del Contacto</th>
+                            <th>Propietario</th>
+                            <th>Fase</th>
+                            <th>Fecha de Cierre</th>
                           </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                <div className="tratos-section">
-                  <div className="tratos-header">
-                    <h3>Tratos de la Empresa</h3>
-                    <button
-                      className="btn btn-add"
-                      onClick={handleCrearTratoDesdeEmpresa}
-                      disabled={!selectedCompany}
-                    >
-                      Crear Trato
-                    </button>
-                  </div>
-                  <div className="tratos-table-container">
-                    <table className="tratos-table">
-                      <thead>
-                        <tr>
-                          <th>No. Trato</th>
-                          <th>Nombre del Trato</th>
-                          <th>Nombre del Contacto</th>
-                          <th>Propietario</th>
-                          <th>Fase</th>
-                          <th>Fecha de Cierre</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {tratos.length > 0 ? (
-                          tratos.map((trato, index) => (
-                            <tr
-                              key={trato.id}
-                              onClick={() => handleTratoClick(trato.id)}
-                              style={{ cursor: 'pointer' }}
-                              className="trato-row-clickable"
-                            >
-                              <td>{trato.noTrato || index + 1}</td>
-                              <td>{trato.nombre || "N/A"}</td>
-                              <td>{trato.contacto?.nombre || "N/A"}</td>
-                              <td>{trato.propietarioNombre || "N/A"}</td>
-                              <td>{trato.fase || "N/A"}</td>
-                              <td>
-                                {trato.fechaCierre
-                                  ? new Date(trato.fechaCierre).toLocaleDateString("es-MX")
-                                  : "N/A"}
+                        </thead>
+                        <tbody>
+                          {tratos.length > 0 ? (
+                            tratos.map((trato, index) => (
+                              <tr
+                                key={trato.id}
+                                onClick={() => handleTratoClick(trato.id)}
+                                style={{ cursor: 'pointer' }}
+                                className="trato-row-clickable"
+                              >
+                                <td>{trato.noTrato || index + 1}</td>
+                                <td>{trato.nombre || "N/A"}</td>
+                                <td>{trato.contacto?.nombre || "N/A"}</td>
+                                <td>{trato.propietarioNombre || "N/A"}</td>
+                                <td>{trato.fase || "N/A"}</td>
+                                <td>
+                                  {trato.fechaCierre
+                                    ? new Date(trato.fechaCierre).toLocaleDateString("es-MX")
+                                    : "N/A"}
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan="6" className="no-data">
+                                No se encontraron tratos para esta empresa
                               </td>
                             </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan="6" className="no-data">
-                              No se encontraron tratos para esta empresa
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
+                </>
+              ) : (
+                <div className="no-selection">
+                  <p>Selecciona una empresa para ver sus detalles</p>
                 </div>
-              </>
-            ) : (
-              <div className="no-selection">
-                <p>Selecciona una empresa para ver sus detalles</p>
-              </div>
-            )}
-          </section>
-        </div>
+              )}
+            </section>
+          </div>
 
-        <EmpresaModal
-          isOpen={modals.empresa.isOpen}
-          onClose={() => closeModal("empresa")}
-          onSave={handleSaveEmpresa}
-          empresa={modals.empresa.data}
-          mode={modals.empresa.mode}
-          onCompanyCreated={handleCompanyCreated}
-          users={users}
-          hasTratos={modals.empresa.hasTratos}
-          existingCompanies={modals.empresa.existingCompanies}
-        />
+          <EmpresaModal
+            isOpen={modals.empresa.isOpen}
+            onClose={() => closeModal("empresa")}
+            onSave={handleSaveEmpresa}
+            empresa={modals.empresa.data}
+            mode={modals.empresa.mode}
+            onCompanyCreated={handleCompanyCreated}
+            users={users}
+            hasTratos={modals.empresa.hasTratos}
+            existingCompanies={modals.empresa.existingCompanies}
+          />
 
-        <ContactoModal
-          isOpen={modals.contacto.isOpen}
-          onClose={() => closeModal("contacto")}
-          onSave={handleSaveContacto}
-          contacto={modals.contacto.data}
-          empresaId={modals.contacto.data?.empresaId}
-          empresaNombre={modals.contacto.data?.empresaNombre}
-          mode={modals.contacto.mode}
-          isInitialContact={modals.contacto.isInitialContact}
-          users={users}
-        />
+          <ContactoModal
+            isOpen={modals.contacto.isOpen}
+            onClose={() => closeModal("contacto")}
+            onSave={handleSaveContacto}
+            contacto={modals.contacto.data}
+            empresaId={modals.contacto.data?.empresaId}
+            empresaNombre={modals.contacto.data?.empresaNombre}
+            mode={modals.contacto.mode}
+            isInitialContact={modals.contacto.isInitialContact}
+            users={users}
+          />
 
-        <DetallesEmpresaModal
-          isOpen={modals.detallesEmpresa.isOpen}
-          onClose={() => closeModal("detallesEmpresa")}
-          empresa={modals.detallesEmpresa.data}
-        />
+          <DetallesEmpresaModal
+            isOpen={modals.detallesEmpresa.isOpen}
+            onClose={() => closeModal("detallesEmpresa")}
+            empresa={modals.detallesEmpresa.data}
+            sectores={sectores}
+          />
 
-        <DetallesContactoModal
-          isOpen={modals.detallesContacto.isOpen}
-          onClose={() => closeModal("detallesContacto")}
-          contacto={modals.detallesContacto.data}
-        />
+          <DetallesContactoModal
+            isOpen={modals.detallesContacto.isOpen}
+            onClose={() => closeModal("detallesContacto")}
+            contacto={modals.detallesContacto.data}
+          />
 
-        <ConfirmarEliminacionModal
-          isOpen={modals.confirmarEliminacion.isOpen}
-          onClose={() => closeModal("confirmarEliminacion")}
-          onConfirm={handleConfirmDeleteContact}
-          contacto={modals.confirmarEliminacion.data}
-          isLastContact={modals.confirmarEliminacion.isLastContact}
-        />
+          <ConfirmarEliminacionModal
+            isOpen={modals.confirmarEliminacion.isOpen}
+            onClose={() => closeModal("confirmarEliminacion")}
+            onConfirm={handleConfirmDeleteContact}
+            contacto={modals.confirmarEliminacion.data}
+            isLastContact={modals.confirmarEliminacion.isLastContact}
+          />
 
-        <NuevoTratoModal
-          isOpen={modals.nuevoTrato.isOpen}
-          onClose={() => closeModal("nuevoTrato")}
-          onSave={handleSaveNuevoTrato}
-          empresaPreseleccionada={modals.nuevoTrato.empresaPreseleccionada}
-        />
-      </main>
+          <NuevoTratoModal
+            isOpen={modals.nuevoTrato.isOpen}
+            onClose={() => closeModal("nuevoTrato")}
+            onSave={handleSaveNuevoTrato}
+            empresaPreseleccionada={modals.nuevoTrato.empresaPreseleccionada}
+          />
+        </main>
       </div>
     </>
   )
