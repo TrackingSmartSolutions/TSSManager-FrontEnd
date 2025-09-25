@@ -151,10 +151,9 @@ const CheckEquiposSidePanel = ({
     JOINTCLOUD: "JointCloud",
   };
 
-  const fixedPlatforms = ["TRACKERKING", "TRACK_SOLID", "WHATSGPS", "JOINTCLOUD"];
-  const dynamicPlatforms = [...new Set(equipos.map(e => e.plataforma?.nombrePlataforma))]
-    .filter(p => p && !fixedPlatforms.includes(p));
-  const plataformas = ["Todos", ...fixedPlatforms, ...dynamicPlatforms];
+  const allPlatforms = [...new Set(equipos.map(e => e.plataforma?.nombrePlataforma))]
+    .filter(p => p && p.trim() !== "");
+  const plataformas = ["Todos", ...allPlatforms.sort()];
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const nextCheckTime = lastCheckTime ? lastCheckTime + (6 * 60 * 60 * 1000) : null;

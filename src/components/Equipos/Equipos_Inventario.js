@@ -727,34 +727,34 @@ const EquiposInventario = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSaveEquipo = (equipoData) => {
-  if (isSaving) return;
-  setIsSaving(true);
+    if (isSaving) return;
+    setIsSaving(true);
 
-  fetchData()
-    .then(() => {
-      setEquipos((prev) =>
-        equipoData.id
-          ? prev.map((e) => (e.id === equipoData.id ? equipoData : e))
-          : [...prev, equipoData]
-      );
-      
-      Swal.fire({
-        icon: "success",
-        title: "Éxito",
-        text: equipoData.id ? "Equipo actualizado correctamente" : "Equipo agregado correctamente",
+    fetchData()
+      .then(() => {
+        setEquipos((prev) =>
+          equipoData.id
+            ? prev.map((e) => (e.id === equipoData.id ? equipoData : e))
+            : [...prev, equipoData]
+        );
+
+        Swal.fire({
+          icon: "success",
+          title: "Éxito",
+          text: equipoData.id ? "Equipo actualizado correctamente" : "Equipo agregado correctamente",
+        });
+      })
+      .catch((error) => {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.message,
+        });
+      })
+      .finally(() => {
+        setIsSaving(false);
       });
-    })
-    .catch((error) => {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.message,
-      });
-    })
-    .finally(() => {
-      setIsSaving(false);
-    });
-};
+  };
 
   const handleDeleteEquipo = () => {
     const equipoId = modals.confirmDelete.equipo?.id;
@@ -926,7 +926,10 @@ const EquiposInventario = () => {
                                   <img src={editIcon || "/placeholder.svg"} alt="Editar" />
                                 </button>
                                 <button className="inventario-btn-action inventario-delete" onClick={() => {
-                                  const hasSimVinculada = equipo.simReferenciada !== null;
+                                  // Verifica si realmente tiene una SIM vinculada
+                                  const hasSimVinculada = equipo.simReferenciada &&
+                                    equipo.simReferenciada.id &&
+                                    equipo.simReferenciada.id !== null;
                                   openModal("confirmDelete", { equipo, hasSimVinculada });
                                 }} title="Eliminar">
                                   <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
