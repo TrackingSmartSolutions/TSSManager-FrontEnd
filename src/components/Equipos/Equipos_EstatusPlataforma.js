@@ -593,7 +593,9 @@ const EquiposEstatusPlataforma = () => {
 
       setEquiposData({
         estatusPorCliente: dashboardData.estatusPorCliente || [],
-        equiposPorPlataforma: dashboardData.equiposPorPlataforma || [],
+        equiposPorPlataforma: (dashboardData.equiposPorPlataforma || []).filter(item =>
+          item.plataforma && item.plataforma.trim() !== "" && item.plataforma !== "Sin Plataforma"
+        ),
         equiposOffline: dashboardData.equiposOffline || [],
         equiposPorMotivo: processEquiposPorMotivo(dashboardData.equiposOffline || []),
         equiposParaCheck: dashboardData.equiposParaCheck || [],
