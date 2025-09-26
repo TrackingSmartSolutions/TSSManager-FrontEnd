@@ -123,8 +123,7 @@
 .reporte-calendar-icon {
   width: 16px;
   height: 16px;
-  filter: brightness(0) saturate(100%) invert(44%) sepia(7%) saturate(1102%) hue-rotate(169deg) brightness(96%)
-    contrast(88%);
+  filter: brightness(0) saturate(100%) invert(44%) sepia(7%) saturate(1102%) hue-rotate(169deg) brightness(96%) contrast(88%);
 }
 
 /* Botones */
@@ -195,6 +194,7 @@
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -511,13 +511,66 @@
   flex-wrap: wrap;
 }
 
+.reporte-chart-card:nth-child(2) {
+  min-height: 450px;
+  overflow: hidden;
+}
+
+.reporte-chart-companies-container {
+  height: 400px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.reporte-chart-companies-scroll {
+  height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px;
+}
+
+.reporte-companies-chart-canvas {
+  width: 100% !important;
+  min-height: 400px;
+  display: block;
+}
+
+.reporte-companies-chart-many {
+  font-size: 10px !important;
+}
+
+.reporte-chart-companies-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.reporte-chart-companies-scroll::-webkit-scrollbar-track {
+  background: var(--reporte-border-color);
+  border-radius: 3px;
+}
+
+.reporte-chart-companies-scroll::-webkit-scrollbar-thumb {
+  background: var(--reporte-secondary-color);
+  border-radius: 3px;
+}
+
+.reporte-chart-companies-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--reporte-primary-color);
+}
+
+/* Para Firefox */
+.reporte-chart-companies-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--reporte-secondary-color) var(--reporte-border-color);
+}
+
 @media (max-width: 768px) {
   .reporte-header-controls {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
   }
-  
+
   .reporte-user-filter {
     min-width: auto;
   }
@@ -582,6 +635,21 @@
   .reporte-table td {
     padding: var(--reporte-spacing-sm);
   }
+  .reporte-chart-card:nth-child(2) {
+    min-height: 350px;
+  }
+  
+  .reporte-chart-companies-container {
+    height: 300px;
+  }
+  
+  .reporte-chart-companies-scroll {
+    height: 300px;
+  }
+  
+  .reporte-companies-chart-canvas {
+    min-height: 300px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -622,6 +690,23 @@
   .reporte-table td {
     padding: var(--reporte-spacing-xs);
   }
+
+    .reporte-chart-card:nth-child(2) {
+    min-height: 300px;
+  }
+  
+  .reporte-chart-companies-container,
+  .reporte-chart-companies-scroll {
+    height: 250px;
+  }
+  
+  .reporte-companies-chart-canvas {
+    min-height: 250px;
+  }
+  
+  .reporte-chart-companies-scroll {
+    padding-right: 4px;
+  }
 }
 
 /* Animaciones */
@@ -630,6 +715,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -653,6 +739,7 @@
   from {
     height: 0;
   }
+
   to {
     height: var(--final-height, 100%);
   }
@@ -662,6 +749,7 @@
   from {
     width: 0;
   }
+
   to {
     width: var(--final-width, 100%);
   }
@@ -669,6 +757,7 @@
 
 /* Ajustes para impresión */
 @media print {
+
   .reporte-header-controls,
   .reporte-notes-header .reporte-btn {
     display: none;
@@ -698,5 +787,15 @@
   .reporte-table th,
   .reporte-table td {
     padding: var(--reporte-spacing-xs);
+  }
+  .reporte-chart-companies-container,
+  .reporte-chart-companies-scroll {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  
+  .reporte-companies-chart-canvas {
+    min-height: auto !important;
+    height: auto !important;
   }
 }

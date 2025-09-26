@@ -330,38 +330,65 @@ const ReportePersonal = () => {
               responsive: true,
               maintainAspectRatio: false,
               indexAxis: "y",
+              layout: {
+                padding: {
+                  top: 10,
+                  bottom: 10,
+                  left: 10,
+                  right: 10
+                }
+              },
               scales: {
                 x: {
-                  beginAtZero: true
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: 'Número de Interacciones'
+                  }
                 },
                 y: {
                   ticks: {
                     maxRotation: 0,
                     minRotation: 0,
-                    autoSkip: false, // Fuerza mostrar todas las etiquetas
+                    autoSkip: false,
+                    font: {
+                      size: empresasData.length > 20 ? 10 : 12
+                    },
                     callback: function (value, index) {
                       const label = this.getLabelForValue(value);
-                      // Trunca nombres largos
-                      return label.length > 20 ? label.substring(0, 20) + '...' : label;
+                      return label.length > 25 ? label.substring(0, 25) + '...' : label;
                     }
+                  },
+                  title: {
+                    display: true,
+                    text: 'Empresas'
                   }
                 }
               },
               plugins: {
                 legend: {
-                  display: true
+                  display: true,
+                  position: 'top'
                 },
                 tooltip: {
                   callbacks: {
                     title: function (tooltipItems) {
-                      // Muestra el nombre completo en el tooltip
                       return labels[tooltipItems[0].dataIndex];
+                    },
+                    label: function (context) {
+                      return `Interacciones: ${context.parsed.x}`;
                     }
                   }
                 }
               }
-            },
+            }
           });
+          if (companiesChartRef.current && empresasData.length > 0) {
+            const canvas = document.getElementById("companiesChart");
+            const minHeight = Math.max(400, empresasData.length * 25);
+            canvas.style.height = `${minHeight}px`;
+            companiesChartRef.current.resize();
+          }
         } catch (error) {
           console.error("Error creando gráfico de empresas:", error);
         }
@@ -825,11 +852,20 @@ const ReportePersonal = () => {
               </div>
               <div className="reporte-chart-card">
                 <h3 className="reporte-chart-title">Empresas Contactadas</h3>
-                <div style={{
-                  position: 'relative',
-                  height: `${Math.max(300, empresasData.length * 25)}px`
-                }}>
-                  <canvas id="companiesChart"></canvas>
+                <div style={{ position: 'relative', height: '400px', width: '100%' }}>
+                  <div style={{
+                    height: '400px',
+                    overflowY: empresasData.length > 15 ? 'auto' : 'hidden',
+                    overflowX: 'hidden'
+                  }}>
+                    <canvas
+                      id="companiesChart"
+                      style={{
+                        minHeight: `${Math.max(400, empresasData.length * 25)}px`,
+                        width: '100%'
+                      }}
+                    ></canvas>
+                  </div>
                 </div>
               </div>
             </div>

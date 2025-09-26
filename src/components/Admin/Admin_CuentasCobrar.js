@@ -1127,13 +1127,17 @@ const AdminCuentasCobrar = () => {
           fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/emisores`),
           fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/categorias-ingreso`),
         ]);
+
         setClientes(clientesData);
         setCuentasPorCobrar(cuentasData);
         setCotizaciones(cotizacionesData);
         setEmisores(emisoresData);
         setCategoriasIngreso(categoriasIngresoData);
 
-        await verificarVinculaciones(cuentasData);
+        const vinculacionesData = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/vinculaciones`);
+        const cuentasVinculadasIds = new Set(vinculacionesData.idsVinculadas);
+        setCuentasVinculadas(cuentasVinculadasIds);
+
       } catch (error) {
         Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos" });
       } finally {
@@ -1143,22 +1147,6 @@ const AdminCuentasCobrar = () => {
     fetchData();
   }, []);
 
-  const verificarVinculaciones = async (cuentas) => {
-    const vinculacionesPromises = cuentas.map(async (cuenta) => {
-      try {
-        const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/check-vinculada`);
-        return { id: cuenta.id, vinculada: response.vinculada };
-      } catch (error) {
-        return { id: cuenta.id, vinculada: false };
-      }
-    });
-
-    const vinculaciones = await Promise.all(vinculacionesPromises);
-    const cuentasVinculadasIds = new Set(
-      vinculaciones.filter(v => v.vinculada).map(v => v.id)
-    );
-    setCuentasVinculadas(cuentasVinculadasIds);
-  };
 
   useEffect(() => {
     const actualizarEstatus = () => {

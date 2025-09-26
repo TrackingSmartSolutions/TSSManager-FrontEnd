@@ -247,19 +247,29 @@
 
 .modelos-card-image {
   width: 100%;
-  height: 180px;
-  background-color: #f8f9fa;
+  height: 200px;
+  background-color: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  border-bottom: 1px solid var(--modelos-border-light);
+}
+
+.modelos-card-image:hover .modelos-image {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
 }
 
 .modelos-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background-color: transparent; 
+  padding: 8px;
+  transition: transform 0.3s ease;
 }
+
 
 .modelos-no-image {
   display: flex;
