@@ -41,13 +41,13 @@ const ReportePersonal = () => {
 
   // Función para obtener la fecha actual en formato YYYY-MM-DD
   const getTodayDate = () => {
-  const today = new Date();
-  const mexicoTime = new Date(today.toLocaleString("en-US", {timeZone: "America/Mexico_City"}));
-  const year = mexicoTime.getFullYear();
-  const month = String(mexicoTime.getMonth() + 1).padStart(2, '0');
-  const day = String(mexicoTime.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
+    const today = new Date();
+    const mexicoTime = new Date(today.toLocaleString("en-US", { timeZone: "America/Mexico_City" }));
+    const year = mexicoTime.getFullYear();
+    const month = String(mexicoTime.getMonth() + 1).padStart(2, '0');
+    const day = String(mexicoTime.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   useEffect(() => {
     const loadCurrentUser = async () => {
@@ -91,7 +91,7 @@ const ReportePersonal = () => {
         try {
           const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
           const data = await response.json();
-          const usersList = data.map(user => user.nombre.trim()); 
+          const usersList = data.map(user => user.nombre.trim());
           console.log("Lista de usuarios cargada:", usersList);
           setUsers(usersList);
         } catch (error) {
@@ -330,7 +330,36 @@ const ReportePersonal = () => {
               responsive: true,
               maintainAspectRatio: false,
               indexAxis: "y",
-              scales: { x: { beginAtZero: true } },
+              scales: {
+                x: {
+                  beginAtZero: true
+                },
+                y: {
+                  ticks: {
+                    maxRotation: 0,
+                    minRotation: 0,
+                    autoSkip: false, // Fuerza mostrar todas las etiquetas
+                    callback: function (value, index) {
+                      const label = this.getLabelForValue(value);
+                      // Trunca nombres largos
+                      return label.length > 20 ? label.substring(0, 20) + '...' : label;
+                    }
+                  }
+                }
+              },
+              plugins: {
+                legend: {
+                  display: true
+                },
+                tooltip: {
+                  callbacks: {
+                    title: function (tooltipItems) {
+                      // Muestra el nombre completo en el tooltip
+                      return labels[tooltipItems[0].dataIndex];
+                    }
+                  }
+                }
+              }
             },
           });
         } catch (error) {
@@ -375,97 +404,46 @@ const ReportePersonal = () => {
       Swal.fire({
         icon: "info",
         title: "Generando reporte",
-        text: "Descargando reporte en PDF...",
+        text: "Creando reporte en PDF...",
         showConfirmButton: false,
       });
 
-      // Guardar estilos originales y aplicar ajustes temporales
       const originalChartCardStyle = chartsSectionRef.current.querySelector('.reporte-chart-card')?.style.backgroundColor;
       const originalNotesSectionStyle = notesSectionRef.current.style.backgroundColor;
       const originalTableStyle = notesSectionRef.current.querySelector('.reporte-table')?.style.backgroundColor;
       const originalOpacity = chartsSectionRef.current.style.opacity;
       const originalAnimation = chartsSectionRef.current.style.animation;
 
-      // Aplicar fondo sólido y desactivar animaciones/opacidad
       chartsSectionRef.current.querySelectorAll('.reporte-chart-card').forEach(card => {
         card.style.backgroundColor = '#ffffff';
         card.style.opacity = '1';
         card.style.animation = 'none';
       });
-      // Configurar ajuste de texto en la tabla
+
       if (notesSectionRef.current.querySelector('.reporte-table')) {
-        notesSectionRef.current.querySelectorAll('.reporte-notas-cell').forEach(cell => {
+        notesSectionRef.current.querySelectorAll('.reporte-notas-cell, td').forEach(cell => {
           cell.style.whiteSpace = 'normal';
           cell.style.wordWrap = 'break-word';
           cell.style.wordBreak = 'break-word';
           cell.style.maxWidth = '200px';
-          cell.style.minHeight = 'auto';
           cell.style.verticalAlign = 'top';
-        });
-
-        // También aplicar a otras celdas que puedan tener texto largo
-        notesSectionRef.current.querySelectorAll('td').forEach(cell => {
-          cell.style.whiteSpace = 'normal';
-          cell.style.wordWrap = 'break-word';
           cell.style.padding = '8px';
-          cell.style.verticalAlign = 'top';
         });
       }
+
       notesSectionRef.current.style.backgroundColor = '#ffffff';
       notesSectionRef.current.style.opacity = '1';
       notesSectionRef.current.style.animation = 'none';
+
       if (notesSectionRef.current.querySelector('.reporte-table')) {
         notesSectionRef.current.querySelector('.reporte-table').style.backgroundColor = '#ffffff';
         notesSectionRef.current.querySelector('.reporte-table').style.opacity = '1';
-        notesSectionRef.current.querySelectorAll('.reporte-badge').forEach(badge => {
-          badge.style.backgroundColor = badge.style.backgroundColor.replace(/rgba\((.*?),\s*0\.\d+\)/, 'rgb($1)');
-        });
       }
 
-      // Forzar redibujo de los gráficos
       if (activitiesChartRef.current) activitiesChartRef.current.resize();
       if (companiesChartRef.current) companiesChartRef.current.resize();
-      await new Promise(resolve => setTimeout(resolve, 100)); // Pequeño delay para redibujo
+      await new Promise(resolve => setTimeout(resolve, 150));
 
-      // Capturar las secciones como imágenes
-      const chartsCanvas = await html2canvas(chartsSectionRef.current, {
-        backgroundColor: null,
-        useCORS: true,
-        allowTaint: false,
-        scale: 3,
-        windowWidth: document.documentElement.offsetWidth,
-        windowHeight: document.documentElement.offsetHeight,
-        logging: true,
-      });
-
-      const notesCanvas = await html2canvas(notesSectionRef.current, {
-        backgroundColor: null,
-        useCORS: true,
-        allowTaint: false,
-        scale: 2, // Reducir escala para mejor manejo de texto
-        windowWidth: 1200, // Ancho fijo para consistencia
-        windowHeight: document.documentElement.offsetHeight,
-        logging: true,
-        onclone: function (clonedDoc) {
-          // Asegurar que el texto se ajuste en el clon
-          const table = clonedDoc.querySelector('.reporte-table');
-          if (table) {
-            table.style.tableLayout = 'fixed';
-            table.style.width = '100%';
-
-            const cells = clonedDoc.querySelectorAll('.reporte-notas-cell');
-            cells.forEach(cell => {
-              cell.style.whiteSpace = 'normal';
-              cell.style.wordWrap = 'break-word';
-              cell.style.wordBreak = 'break-word';
-              cell.style.maxWidth = '200px';
-              cell.style.overflow = 'visible';
-            });
-          }
-        }
-      });
-
-      // Restaurar estilos originales
       chartsSectionRef.current.querySelectorAll('.reporte-chart-card').forEach(card => {
         card.style.backgroundColor = originalChartCardStyle || '';
         card.style.opacity = originalOpacity || '';
@@ -476,103 +454,291 @@ const ReportePersonal = () => {
       notesSectionRef.current.style.animation = originalAnimation || '';
       if (notesSectionRef.current.querySelector('.reporte-table')) {
         notesSectionRef.current.querySelector('.reporte-table').style.backgroundColor = originalTableStyle || '';
-        notesSectionRef.current.querySelectorAll('.reporte-badge').forEach(badge => {
-          badge.style.backgroundColor = ''; // Restaurar al valor original del CSS
-        });
       }
       notesSectionRef.current.querySelectorAll('.reporte-notas-cell, td').forEach(cell => {
         cell.style.whiteSpace = '';
         cell.style.wordWrap = '';
         cell.style.wordBreak = '';
         cell.style.maxWidth = '';
-        cell.style.minHeight = '';
         cell.style.verticalAlign = '';
         cell.style.padding = '';
       });
 
-      // Crear el contenido del PDF
-      const pdfContent = document.createElement("div");
-      pdfContent.style.cssText = `
-      padding: 20px;
-      font-family: Arial, sans-serif;
-      background: #ffffff;
-      width: 800px;
-      color: #333;
-    `;
-
-      const chartsImg = document.createElement("img");
-      chartsImg.src = chartsCanvas.toDataURL("image/png");
-      chartsImg.style.cssText = "width: 100%; margin: 20px 0;";
-
-      const notesImg = document.createElement("img");
-      notesImg.src = notesCanvas.toDataURL("image/png");
-      notesImg.style.cssText = "width: 100%; margin: 20px 0;";
-
-      pdfContent.innerHTML = `
-      <h1 style="text-align: center;">Reporte de Actividades</h1>
-      <p style="text-align: center; margin-bottom: 30px;">
-        Usuario: ${(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR") && selectedUser ? selectedUser : `${currentUser.nombre} ${currentUser.apellidos}`} - Fecha: ${formatDate()}
-      </p>
-      <div style="margin: 20px 0;">
-        <h2>Gráficos de Actividades</h2>
-      </div>
-    `;
-      pdfContent.appendChild(chartsImg);
-
-      const notesTitle = document.createElement("h2");
-      notesTitle.textContent = "Notas de Interacciones";
-      notesTitle.style.marginTop = "30px";
-      pdfContent.appendChild(notesTitle);
-      pdfContent.appendChild(notesImg);
-
-      // Agregar al DOM temporalmente
-      document.body.appendChild(pdfContent);
-      pdfContent.style.position = "absolute";
-      pdfContent.style.left = "-9999px";
-
-      // Esperar a que las imágenes se carguen
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Capturar el contenido final
-      const finalCanvas = await html2canvas(pdfContent, {
-        backgroundColor: '#ffffff',
-        useCORS: true,
-        allowTaint: false,
-        scale: 3,
-      });
-
-      document.body.removeChild(pdfContent);
-
-      // Generar el PDF
-      const imgData = finalCanvas.toDataURL("image/png");
       const { jsPDF } = await import("jspdf");
-      const doc = new jsPDF();
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const contentWidth = pageWidth - (margin * 2);
 
-      const imgProps = doc.getImageProperties(imgData);
-      const pdfWidth = doc.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      const primaryBlue = [37, 99, 235]; // #2563eb
+      const darkBlue = [30, 64, 175]; // #1e40af  
+      const lightBlue = [239, 246, 255]; // #eff6ff
+      const textDark = [31, 41, 55]; // #1f2937
+      const textGray = [107, 114, 128]; // #6b7280
+      const borderGray = [229, 231, 235]; // #e5e7eb
 
-      if (pdfHeight > doc.internal.pageSize.getHeight()) {
-        const maxHeight = doc.internal.pageSize.getHeight();
-        const adjustedWidth = (imgProps.width * maxHeight) / imgProps.height;
-        doc.addImage(imgData, "PNG", (pdfWidth - adjustedWidth) / 2, 0, adjustedWidth, maxHeight);
-      } else {
-        doc.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      const addHeader = (pageNum = 1) => {
+        doc.setDrawColor(...primaryBlue);
+        doc.setLineWidth(3);
+        doc.line(margin, 15, pageWidth - margin, 15);
+
+        doc.setTextColor(...textDark);
+        doc.setFontSize(20);
+        doc.setFont("helvetica", "bold");
+        doc.text("Reporte de Actividades", margin, 25);
+
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...textGray);
+        const userInfo = `${(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR") && selectedUser ? selectedUser : `${currentUser.nombre} ${currentUser.apellidos}`}`;
+        doc.text(userInfo, margin, 32);
+
+        const currentDate = new Date().toLocaleDateString('es-MX', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        doc.text(currentDate, pageWidth - margin - doc.getTextWidth(currentDate), 32);
+
+        // Período
+        const period = `${formatDate(dateRange.startDate)} - ${formatDate(dateRange.endDate)}`;
+        doc.text(period, margin, 38);
+
+        doc.setFontSize(9);
+        doc.text(`${pageNum}`, pageWidth - margin - 5, pageHeight - 10);
+      };
+
+      addHeader(1);
+      let currentY = 50;
+
+      let activitiesImgData = null;
+      let companiesImgData = null;
+
+      const activitiesCanvas = document.getElementById("activitiesChart");
+      const companiesCanvas = document.getElementById("companiesChart");
+
+      if (activitiesCanvas) {
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        const scale = 2;
+
+        tempCanvas.width = activitiesCanvas.width * scale;
+        tempCanvas.height = activitiesCanvas.height * scale;
+        tempCtx.scale(scale, scale);
+        tempCtx.drawImage(activitiesCanvas, 0, 0);
+
+        activitiesImgData = tempCanvas.toDataURL("image/png", 1.0);
       }
 
-      doc.save(`Reporte_Actividades_${dateRange.startDate || getTodayDate()}_${dateRange.endDate || getTodayDate()}.pdf`);
+      if (companiesCanvas) {
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        const scale = 2;
+
+        tempCanvas.width = companiesCanvas.width * scale;
+        tempCanvas.height = companiesCanvas.height * scale;
+        tempCtx.scale(scale, scale);
+        tempCtx.drawImage(companiesCanvas, 0, 0);
+
+        companiesImgData = tempCanvas.toDataURL("image/png", 1.0);
+      }
+
+      const totalActividades = actividadesData.reduce((sum, item) => sum + (item.value || 0), 0);
+      const totalEmpresas = empresasData.length;
+      const totalNotas = notasData.length;
+
+      doc.setFillColor(...lightBlue);
+      doc.roundedRect(margin, currentY, contentWidth, 25, 2, 2, 'F');
+      doc.setDrawColor(...borderGray);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(margin, currentY, contentWidth, 25, 2, 2, 'S');
+
+      doc.setTextColor(...textDark);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("Resumen", margin + 8, currentY + 8);
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Actividades: ${totalActividades}`, margin + 8, currentY + 16);
+      doc.text(`Empresas: ${totalEmpresas}`, margin + 60, currentY + 16);
+      doc.text(`Interacciones: ${totalNotas}`, margin + 110, currentY + 16);
+
+      currentY += 35;
+
+      if (activitiesImgData) {
+        // Título de sección
+        doc.setTextColor(...primaryBlue);
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text("Actividades", margin, currentY);
+
+        currentY += 10;
+
+        // Gráfico con borde sutil
+        const chartHeight = 70;
+        doc.setDrawColor(...borderGray);
+        doc.setLineWidth(0.5);
+        doc.rect(margin, currentY, contentWidth, chartHeight);
+        doc.addImage(activitiesImgData, "PNG", margin + 1, currentY + 1, contentWidth - 2, chartHeight - 2);
+
+        currentY += chartHeight + 10;
+      }
+
+      if (companiesImgData) {
+        // Verificar espacio
+        const companiesChartHeight = 70;
+        if (currentY + companiesChartHeight + 20 > pageHeight - 30) {
+          doc.addPage();
+          addHeader(2);
+          currentY = 50;
+        }
+
+        // Título de sección
+        doc.setTextColor(...primaryBlue);
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text("Empresas Contactadas", margin, currentY);
+
+        currentY += 10;
+
+        // Gráfico con borde sutil
+        doc.setDrawColor(...borderGray);
+        doc.setLineWidth(0.5);
+        doc.rect(margin, currentY, contentWidth, companiesChartHeight);
+        doc.addImage(companiesImgData, "PNG", margin + 1, currentY + 1, contentWidth - 2, companiesChartHeight - 2);
+      }
+
+      // PÁGINAS DE TABLA: Interacciones
+      if (notasData.length > 0) {
+        doc.addPage();
+        let pageNum = doc.internal.getNumberOfPages();
+        addHeader(pageNum);
+
+        currentY = 50;
+
+        // Título de sección
+        doc.setTextColor(...primaryBlue);
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text("Detalle de Interacciones", margin, currentY);
+
+        currentY += 15;
+
+        // Configuración de tabla limpia
+        const rowHeight = 20;
+        const headerHeight = 10;
+        const colWidths = [45, 35, 35, 55];
+        const headers = ["Empresa", "Respuesta", "Interés", "Observaciones"];
+
+        // Header de tabla
+        const drawTableHeader = (yPosition) => {
+          doc.setFillColor(...primaryBlue);
+          doc.rect(margin, yPosition, contentWidth, headerHeight, 'F');
+
+          doc.setTextColor(255, 255, 255);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(10);
+
+          let currentX = margin + 3;
+          headers.forEach((header, index) => {
+            doc.text(header, currentX, yPosition + 7);
+            currentX += colWidths[index];
+          });
+
+          return yPosition + headerHeight;
+        };
+
+        currentY = drawTableHeader(currentY);
+
+        // Filas de datos
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+
+        notasData.forEach((nota, index) => {
+          const notasText = nota.notas || "";
+          const notasLines = doc.splitTextToSize(notasText, colWidths[3] - 6);
+          const requiredHeight = Math.max(rowHeight, notasLines.length * 3 + 8);
+
+          // Nueva página si es necesario
+          if (currentY + requiredHeight > pageHeight - 30) {
+            doc.addPage();
+            pageNum = doc.internal.getNumberOfPages();
+            addHeader(pageNum);
+            currentY = 50;
+
+            doc.setTextColor(...primaryBlue);
+            doc.setFontSize(14);
+            doc.setFont("helvetica", "bold");
+            doc.text("Detalle de Interacciones (cont.)", margin, currentY);
+            currentY += 15;
+
+            currentY = drawTableHeader(currentY);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(9);
+          }
+
+          // Fila alternada
+          if (index % 2 === 0) {
+            doc.setFillColor(248, 250, 252);
+            doc.rect(margin, currentY, contentWidth, requiredHeight, 'F');
+          }
+
+          // Borde de fila
+          doc.setDrawColor(...borderGray);
+          doc.setLineWidth(0.3);
+          doc.rect(margin, currentY, contentWidth, requiredHeight);
+
+          // Contenido
+          let currentX = margin + 3;
+          const rowData = [
+            nota.empresa || "",
+            nota.respuesta || "",
+            nota.interes || "",
+            notasText
+          ];
+
+          doc.setTextColor(...textDark);
+
+          rowData.forEach((cellData, cellIndex) => {
+            const maxWidth = colWidths[cellIndex] - 6;
+
+            if (cellIndex === 3) { // Observaciones
+              const lines = doc.splitTextToSize(cellData, maxWidth);
+              lines.forEach((line, lineIndex) => {
+                doc.text(line, currentX, currentY + 6 + (lineIndex * 3));
+              });
+            } else {
+              const lines = doc.splitTextToSize(cellData, maxWidth);
+              doc.text(lines[0] || "", currentX, currentY + (requiredHeight / 2) + 1);
+            }
+
+            currentX += colWidths[cellIndex];
+          });
+
+          currentY += requiredHeight;
+        });
+      }
+
+      const userInfo = `${(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR") && selectedUser ? selectedUser : `${currentUser.nombre} ${currentUser.apellidos}`}`;
+      const fileName = `Reporte_${userInfo.replace(/\s+/g, '_')}_${dateRange.startDate || getTodayDate()}_${dateRange.endDate || getTodayDate()}.pdf`;
+      doc.save(fileName);
 
       Swal.fire({
         icon: "success",
-        title: "Descargado",
-        text: "Reporte PDF generado exitosamente"
+        title: "Reporte generado",
+        text: "PDF descargado exitosamente",
+        confirmButtonColor: '#2563eb'
       });
+
     } catch (error) {
       console.error("Error generando PDF:", error);
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "No se pudo descargar el PDF: " + error.message
+        text: "No se pudo generar el reporte: " + error.message,
+        confirmButtonColor: '#dc2626'
       });
     } finally {
       setLoading(false);
@@ -659,7 +825,10 @@ const ReportePersonal = () => {
               </div>
               <div className="reporte-chart-card">
                 <h3 className="reporte-chart-title">Empresas Contactadas</h3>
-                <div style={{ position: 'relative', height: '300px' }}>
+                <div style={{
+                  position: 'relative',
+                  height: `${Math.max(300, empresasData.length * 25)}px`
+                }}>
                   <canvas id="companiesChart"></canvas>
                 </div>
               </div>

@@ -551,6 +551,7 @@ const EquiposInventario = () => {
   const [filterTipo, setFilterTipo] = useState("");
   const [filterCliente, setFilterCliente] = useState("");
   const [filterNombre, setFilterNombre] = useState("");
+  const [filterEstatus, setFilterEstatus] = useState("");
   const debouncedFilterNombre = useDebounce(filterNombre, 300);
   const [isLoading, setIsLoading] = useState(true);
   const [modals, setModals] = useState({
@@ -581,6 +582,13 @@ const EquiposInventario = () => {
     ...clientes
       .map(cliente => ({ value: cliente.id, label: cliente.nombre }))
       .sort((a, b) => a.label.localeCompare(b.label))
+  ];
+
+  const estatusFilterOptions = [
+    { value: "", label: "Todos los estatus" },
+    { value: "ACTIVO", label: "Activo" },
+    { value: "INACTIVO", label: "Inactivo" },
+    { value: "EXPIRADO", label: "Expirado" },
   ];
 
   useEffect(() => {
@@ -668,19 +676,6 @@ const EquiposInventario = () => {
     });
   };
 
-  const filteredEquipos = useMemo(() => {
-    return equipos.filter((equipo) => {
-      const matchesTipo = !filterTipo || equipo.tipo === filterTipo;
-      const matchesCliente = !filterCliente ||
-        (equipo.clienteId && equipo.clienteId.toString() === filterCliente) ||
-        (equipo.clienteDefault && equipo.clienteDefault === filterCliente);
-      const matchesNombre = !debouncedFilterNombre ||
-        equipo.nombre?.toLowerCase().includes(debouncedFilterNombre.toLowerCase()) ||
-        equipo.imei?.includes(debouncedFilterNombre);
-      return matchesTipo && matchesCliente && matchesNombre;
-    });
-  }, [equipos, filterTipo, filterCliente, debouncedFilterNombre]);
-
   const needsRenewal = useCallback((equipo) => {
     if (!equipo.fechaExpiracion || equipo.estatus !== "ACTIVO") return false;
     const today = new Date();
@@ -693,7 +688,7 @@ const EquiposInventario = () => {
     if (!equipo.fechaExpiracion) return false;
     const today = new Date();
     const expirationDate = new Date(equipo.fechaExpiracion);
-    return expirationDate < today;
+    return expirationDate < today || equipo.estatus === "EXPIRADO";
   }, []);
 
   const getDaysUntilExpiration = useCallback((equipo) => {
@@ -703,6 +698,23 @@ const EquiposInventario = () => {
     const daysUntilExpiration = Math.ceil((expirationDate - today) / (1000 * 60 * 60 * 24));
     return daysUntilExpiration <= 30 && daysUntilExpiration > 0 ? daysUntilExpiration : null;
   }, []);
+
+  const filteredEquipos = useMemo(() => {
+    return equipos.filter((equipo) => {
+      const matchesTipo = !filterTipo || equipo.tipo === filterTipo;
+      const matchesCliente = !filterCliente ||
+        (equipo.clienteId && equipo.clienteId.toString() === filterCliente) ||
+        (equipo.clienteDefault && equipo.clienteDefault === filterCliente);
+      const matchesNombre = !debouncedFilterNombre ||
+        equipo.nombre?.toLowerCase().includes(debouncedFilterNombre.toLowerCase()) ||
+        equipo.imei?.includes(debouncedFilterNombre);
+
+      const equipoEstatus = isExpired(equipo) ? "EXPIRADO" : equipo.estatus;
+      const matchesEstatus = !filterEstatus || equipoEstatus === filterEstatus;
+
+      return matchesTipo && matchesCliente && matchesNombre && matchesEstatus;
+    });
+  }, [equipos, filterTipo, filterCliente, debouncedFilterNombre, filterEstatus, isExpired]);
 
   const openModal = (modalType, data = {}) => {
     setModals((prev) => ({ ...prev, [modalType]: { isOpen: true, ...data } }));
@@ -879,6 +891,12 @@ const EquiposInventario = () => {
                         <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
                     </select>
+
+                    <select value={filterEstatus} onChange={(e) => setFilterEstatus(e.target.value)} className="inventario-filter-select">
+                      {estatusFilterOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
                     <button className="inventario-btn inventario-btn-primary" onClick={() => openModal("form", { equipo: null })}>Agregar equipo</button>
                   </div>
                 </div>
@@ -942,7 +960,7 @@ const EquiposInventario = () => {
                                     <img src={activateIcon || "/placeholder.svg"} alt="Activar" className="inventario-action-icon" /> Activar
                                   </button>
                                 )}
-                                {(needsRenewal(equipo) || isExpired(equipo)) && equipo.estatus === "ACTIVO" && (
+                                {(needsRenewal(equipo) || isExpired(equipo) || equipo.estatus === "EXPIRADO") && (
                                   <button className="inventario-btn inventario-btn-renew" onClick={() => handleRenewEquipo(equipo.id)} title="Renovar">
                                     <img src={renewIcon || "/placeholder.svg"} alt="Renovar" className="inventario-action-icon" /> Renovar
                                   </button>

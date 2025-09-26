@@ -979,30 +979,20 @@ const EquiposSim = () => {
     fetchCriticalData();
   }, []);
 
-  const fetchAllSimsForCounting = async () => {
-    try {
-      const response = await fetchWithToken(`${API_BASE_URL}/sims`);
-      const allSimsData = await response.json();
-      setAllSims(allSimsData);
-    } catch (error) {
-      console.error("Error loading all SIMs for counting:", error);
-      setAllSims([]);
-    }
-  };
-
   const fetchCriticalData = async () => {
-    try {
-      setIsLoading(true);
-      await fetchAllGroups();
-      await fetchAllSimsForCounting();
-      await fetchSims();
-    } catch (error) {
-      console.error("Error loading critical data:", error);
-      Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos críticos" });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  try {
+    setIsLoading(true);
+    await Promise.all([
+      fetchAllGroups(),
+      fetchSims() 
+    ]);
+  } catch (error) {
+    console.error("Error loading critical data:", error);
+    Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos críticos" });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchSims();
@@ -1017,48 +1007,110 @@ const EquiposSim = () => {
   }, []);
 
   const fetchSims = async () => {
-    try {
-      setIsLoading(true);
+  try {
+    setIsLoading(true);
 
-      const params = new URLSearchParams();
-      if (filterGrupo) params.append('grupo', filterGrupo);
-      if (filterNumero) params.append('numero', filterNumero);
+    const params = new URLSearchParams();
+    if (filterGrupo) params.append('grupo', filterGrupo);
+    if (filterNumero) params.append('numero', filterNumero);
 
-      const response = await fetchWithToken(`${API_BASE_URL}/sims/filtered?${params.toString()}`);
-      const simsData = await response.json();
+    const response = await fetchWithToken(`${API_BASE_URL}/sims/filtered?${params.toString()}`);
+    const simsData = await response.json();
 
-      const simsWithEquipo = simsData.map((sim) => ({
-        ...sim,
-        equipo: sim.equipoNombre ? {
-          nombre: sim.equipoNombre,
-          imei: sim.equipoImei
-        } : null,
-      }));
+    const simsWithEquipo = simsData.map((sim) => ({
+      ...sim,
+      equipo: sim.equipoNombre ? {
+        nombre: sim.equipoNombre,
+        imei: sim.equipoImei
+      } : null,
+      ultimoSaldoRegistrado: "Cargando..." // Placeholder inicial
+    }));
 
-      setSims(simsWithEquipo);
+    setSims(simsWithEquipo);
 
-      const nuevasAlertas = new Set(alertasSaldo);
-      const simsParaVerificar = simsWithEquipo
-        .filter(s => s.tarifa === "POR_SEGUNDO")
-        .slice(0, 20);
+    // Cargar saldos en background sin bloquear la UI
+    loadSaldosInBackground(simsWithEquipo);
 
-      for (const sim of simsParaVerificar) {
-        if (!alertasSaldo.has(sim.id)) {
-          const tieneCaida = await verificarCaidaSaldo(sim.id, sim.numero);
-          if (tieneCaida) {
-            nuevasAlertas.add(sim.id);
+  } catch (error) {
+    console.error("Error loading SIMs:", error);
+    Swal.fire({ icon: "error", title: "Error", text: "Error al cargar SIMs" });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const loadSaldosInBackground = async (simsToLoad) => {
+  const batchSize = 10;
+  
+  for (let i = 0; i < simsToLoad.length; i += batchSize) {
+    const batch = simsToLoad.slice(i, i + batchSize);
+    
+    await Promise.all(batch.map(async (sim) => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/sims/${sim.id}/ultimo-saldo`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(localStorage.getItem("token") ? { Authorization: `Bearer ${localStorage.getItem("token")}` } : {}),
+          },
+        });
+        
+        let saldoText = "Sin registros";
+        
+        if (response.ok && response.status !== 204) {
+          const saldoData = await response.json();
+          
+          // Para tarifa POR_SEGUNDO
+          if (sim.tarifa === "POR_SEGUNDO") {
+            // Si existe el campo saldoActual en la respuesta
+            if ('saldoActual' in saldoData) {
+              saldoText = `$${saldoData.saldoActual || 0}`;
+            }
+            // Si no existe el campo, significa que es null en BD
+            else {
+              saldoText = "$0";
+            }
+          } 
+          // Para tarifa SIN_LIMITE o M2M_GLOBAL_15
+          else if (sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") {
+            // Si existe el campo datos en la respuesta
+            if ('datos' in saldoData) {
+              saldoText = `${saldoData.datos || 0} MB`;
+            }
+            // Si no existe el campo, significa que es null en BD
+            else {
+              saldoText = "0 MB";
+            }
           }
+        } else if (response.status === 204) {
+          // HTTP 204 No Content significa que no hay registros
+          saldoText = "Sin registros";
+        } else if (!response.ok) {
+          // Solo si realmente hay un error (no 204)
+          console.error(`Error ${response.status} for SIM ${sim.id}`);
+          saldoText = "Error";
         }
+        
+        setSims(prevSims => 
+          prevSims.map(s => 
+            s.id === sim.id ? { ...s, ultimoSaldoRegistrado: saldoText } : s
+          )
+        );
+      } catch (error) {
+        console.error(`Error loading saldo for SIM ${sim.id}:`, error);
+        setSims(prevSims => 
+          prevSims.map(s => 
+            s.id === sim.id ? { ...s, ultimoSaldoRegistrado: "Error" } : s
+          )
+        );
       }
-      setAlertasSaldo(nuevasAlertas);
-
-    } catch (error) {
-      console.error("Error loading SIMs:", error);
-      Swal.fire({ icon: "error", title: "Error", text: "Error al cargar SIMs" });
-    } finally {
-      setIsLoading(false);
+    }));
+    
+    // Pequeña pausa entre batches
+    if (i + batchSize < simsToLoad.length) {
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
-  };
+  }
+};
 
   const fetchAllGroups = async () => {
     try {
@@ -1074,17 +1126,6 @@ const EquiposSim = () => {
     await fetchCriticalData();
   };
 
-  const validateNumeroAsync = async (numero, excludeId = null) => {
-    try {
-      const params = excludeId ? `?excludeId=${excludeId}` : '';
-      const response = await fetchWithToken(`${API_BASE_URL}/sims/validar-numero/${numero}${params}`);
-      const data = await response.json();
-      return data.disponible;
-    } catch (error) {
-      console.error("Error validating numero:", error);
-      return true;
-    }
-  };
 
   const openModal = async (modalType, data = {}) => {
     if (modalType === 'form') {
@@ -1283,31 +1324,7 @@ const EquiposSim = () => {
     return className;
   };
 
-  const verificarCaidaSaldo = async (simId, simNumero) => {
-    try {
-      const response = await fetchWithToken(`${API_BASE_URL}/sims/${simId}/historial`);
-      const historial = await response.json();
-
-      if (historial.length < 2) return false;
-
-      const historialOrdenado = historial
-        .filter(h => h.saldoActual !== null)
-        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-
-      if (historialOrdenado.length < 2) return false;
-
-      const ultimoSaldo = parseFloat(historialOrdenado[0].saldoActual);
-      const penultimoSaldo = parseFloat(historialOrdenado[1].saldoActual);
-
-      // Verificar caída de $5 o más
-      const diferencia = penultimoSaldo - ultimoSaldo;
-      return diferencia >= 5;
-
-    } catch (error) {
-      console.error("Error verificando caída de saldo:", error);
-      return false;
-    }
-  };
+  
 
   const aprobarAlertaSaldo = (simId) => {
     setAlertasSaldo(prev => {

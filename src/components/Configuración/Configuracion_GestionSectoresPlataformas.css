@@ -182,8 +182,17 @@
 /* Tabla */
 .sectores-plataformas-table-container {
     overflow-x: auto;
+    overflow-y: auto; 
+    max-height: 500px; 
     border: 1px solid var(--sectores-plataformas-border-color);
     border-radius: var(--sectores-plataformas-border-radius-sm);
+}
+
+.sectores-plataformas-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #f8f9fa; 
 }
 
 .sectores-plataformas-table {

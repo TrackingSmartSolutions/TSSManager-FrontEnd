@@ -93,7 +93,11 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
   const [mapModal, setMapModal] = useState({ isOpen: false });
+  const [isAddressEditable, setIsAddressEditable] = useState(false);
   const [sectores, setSectores] = useState([])
+  const [sectorSearch, setSectorSearch] = useState("");
+  const [showSectorDropdown, setShowSectorDropdown] = useState(false);
+  const [filteredSectores, setFilteredSectores] = useState([]);
 
   const fetchSectores = async () => {
     try {
@@ -155,6 +159,9 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
         latitud: empresa.latitud || null,
         longitud: empresa.longitud || null,
       });
+      const selectedSector = sectores.find(s => s.id === empresa.sectorId);
+      setSectorSearch(selectedSector ? selectedSector.nombreSector : "");
+      setIsAddressEditable(!!empresa.domicilioFisico);
     } else {
       setFormData({
         nombre: "",
@@ -170,13 +177,27 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
         latitud: null,
         longitud: null,
       });
+      setSectorSearch("");
+      setIsAddressEditable(false);
     }
     setErrors({});
-  }, [empresa, mode, isOpen]);
+    setShowSectorDropdown(false);
+  }, [empresa, mode, isOpen, sectores]);
 
   useEffect(() => {
     fetchSectores()
   }, [])
+
+  useEffect(() => {
+    if (sectorSearch.trim() === "") {
+      setFilteredSectores(sectores);
+    } else {
+      const filtered = sectores.filter(sector =>
+        sector.nombreSector.toLowerCase().includes(sectorSearch.toLowerCase())
+      );
+      setFilteredSectores(filtered);
+    }
+  }, [sectorSearch, sectores]);
 
 
   const handleInputChange = (field, value) => {
@@ -184,6 +205,31 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
+  };
+
+  const handleSectorInputChange = (value) => {
+    setSectorSearch(value);
+    setShowSectorDropdown(true);
+
+    if (value.trim() === "") {
+      handleInputChange("sectorId", null);
+    }
+  };
+
+  const handleSectorSelect = (sector) => {
+    setSectorSearch(sector.nombreSector);
+    handleInputChange("sectorId", sector.id);
+    setShowSectorDropdown(false);
+  };
+
+  const handleSectorInputFocus = () => {
+    setShowSectorDropdown(true);
+  };
+
+  const handleSectorInputBlur = () => {
+    setTimeout(() => {
+      setShowSectorDropdown(false);
+    }, 150);
   };
 
   const validateForm = () => {
@@ -275,6 +321,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
     handleInputChange("domicilioFisico", locationData.address);
     handleInputChange("latitud", locationData.latitude);
     handleInputChange("longitud", locationData.longitude);
+    setIsAddressEditable(true);
     setMapModal({ isOpen: false });
   };
 
@@ -456,19 +503,39 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
 
           <div className="modal-form-group">
             <label htmlFor="sectorId">Sector</label>
-            <select
-              id="sectorId"
-              value={formData.sectorId || ""}
-              onChange={(e) => handleInputChange("sectorId", e.target.value ? Number(e.target.value) : null)}
-              className="modal-form-control"
-            >
-              <option value="">Seleccionar sector...</option>
-              {sectores.map((sector) => (
-                <option key={sector.id} value={sector.id}>
-                  {sector.nombreSector}
-                </option>
-              ))}
-            </select>
+            <div className="autocomplete-container">
+              <input
+                type="text"
+                id="sectorSearch"
+                value={sectorSearch}
+                onChange={(e) => handleSectorInputChange(e.target.value)}
+                onFocus={handleSectorInputFocus}
+                onBlur={handleSectorInputBlur}
+                className="modal-form-control"
+                placeholder="Buscar sector..."
+                autoComplete="off"
+              />
+              {showSectorDropdown && filteredSectores.length > 0 && (
+                <div className="autocomplete-dropdown">
+                  {filteredSectores.map((sector) => (
+                    <div
+                      key={sector.id}
+                      className="autocomplete-option"
+                      onClick={() => handleSectorSelect(sector)}
+                    >
+                      {sector.nombreSector}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {showSectorDropdown && sectorSearch.trim() !== "" && filteredSectores.length === 0 && (
+                <div className="autocomplete-dropdown">
+                  <div className="autocomplete-no-results">
+                    No se encontraron sectores
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -482,7 +549,17 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
                 value={formData.domicilioFisico}
                 onChange={(e) => handleInputChange("domicilioFisico", e.target.value)}
                 className={`modal-form-control address-input ${errors.domicilioFisico ? "error" : ""}`}
-                placeholder="Ej: Elefante 175, Villa Magna, 37208 León de los Aldama, Guanajuato, México"
+                placeholder={isAddressEditable ? "Ej: Elefante 175, Villa Magna, 37208 León de los Aldama, Guanajuato, México" : "Buscar dirección"}
+                readOnly={!isAddressEditable}
+                style={{
+                  backgroundColor: isAddressEditable ? 'white' : '#f8f9fa',
+                  cursor: isAddressEditable ? 'text' : 'pointer'
+                }}
+                onClick={() => {
+                  if (!isAddressEditable) {
+                    setMapModal({ isOpen: true });
+                  }
+                }}
               />
               <button
                 type="button"
@@ -494,8 +571,10 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
               </button>
             </div>
             <small className="help-text">
-              Por favor, usa el formato: Calle y Número, Colonia, Código Postal, Ciudad, Estado, País.
-              Puedes usar el botón "Buscar en mapa" para seleccionar la ubicación exacta.
+              {isAddressEditable
+                ? "Puedes editar la dirección o usar el botón \"Buscar en mapa\" para seleccionar una nueva ubicación."
+                : "Haz clic en el campo o en \"Buscar en mapa\" para seleccionar una dirección."
+              }
             </small>
             {errors.domicilioFisico && <span className="error-message">{errors.domicilioFisico}</span>}
           </div>
@@ -1617,13 +1696,13 @@ const Empresas = () => {
   }
 
   const handleViewMap = () => {
-    if (selectedCompany?.domicilioFisico) {
+    if (selectedCompany?.latitud && selectedCompany?.longitud) {
       navigate("/mapa", { state: { companies, selectedCompany } })
     } else {
       Swal.fire({
         icon: "warning",
         title: "Advertencia",
-        text: "La empresa seleccionada no tiene un domicilio físico registrado.",
+        text: "La empresa seleccionada no tiene coordenadas de ubicación registradas.",
       })
     }
   }
