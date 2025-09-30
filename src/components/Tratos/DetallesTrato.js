@@ -136,7 +136,6 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     nombreContacto: "",
     fecha: "",
     horaInicio: "",
-    finalidad: "",
   });
   const [errors, setErrors] = useState({});
   const [contactos, setContactos] = useState([]);
@@ -160,7 +159,6 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             nombreContacto: trato.contacto?.id || "",
             fecha: "",
             horaInicio: "",
-            finalidad: "",
           });
           setErrors({});
           if (trato.empresaId) fetchContactos(trato.empresaId);
@@ -213,7 +211,6 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
       newErrors.horaInicio = "La hora no puede ser en el pasado";
     }
     if (!formData.horaInicio.trim()) newErrors.horaInicio = "Este campo es obligatorio";
-    if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -289,7 +286,6 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
       contactoId: parseInt(formData.nombreContacto, 10),
       fechaLimite: formData.fecha,
       horaInicio: horaInicio,
-      finalidad: formData.finalidad
     };
 
     try {
@@ -385,32 +381,6 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             <span className="error-message">{conflictoHorario}</span>
           </div>
         )}
-
-        <div className="modal-form-group">
-          <label htmlFor="finalidad">Finalidad: <span className="required">*</span></label>
-          <div className="modal-select-wrapper">
-            <select
-              id="finalidad"
-              value={formData.finalidad}
-              onChange={(e) => handleInputChange("finalidad", e.target.value)}
-              className={`modal-form-control ${errors.finalidad ? "error" : ""}`}
-            >
-              <option value="">Ninguna seleccionada</option>
-              <option value="CLASIFICACION">Clasificación</option>
-              <option value="PRIMER_CONTACTO">Primer Contacto</option>
-              <option value="SEGUIMIENTO">Seguimiento</option>
-              <option value="REUNION">Reunión</option>
-              <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
-              <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
-              <option value="CERRADO_GANADO">Cerrado Ganado</option>
-              <option value="RESPUESTA_POR_CORREO">Respuesta por Correo</option>
-              <option value="INTERES_FUTURO">Interés Futuro</option>
-              <option value="CERRADO_PERDIDO">Cerrado Perdido</option>
-            </select>
-            <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
-          </div>
-          {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
-        </div>
         <div className="modal-form-actions">
           <button type="button" onClick={onClose} className="btn btn-secondary">Cancelar</button>
           <button type="submit" className="btn btn-primary">Agregar llamada</button>
@@ -429,7 +399,6 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     horaInicio: "",
     duracion: "00:30",
     modalidad: "VIRTUAL",
-    finalidad: "",
     lugarReunion: "",
     medio: "",
     enlaceReunion: "",
@@ -463,7 +432,6 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             horaInicio: "",
             duracion: "00:30",
             modalidad: "VIRTUAL",
-            finalidad: "",
             lugarReunion: "",
             medio: "",
             enlaceReunion: "",
@@ -553,7 +521,6 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
       newErrors.lugarReunion = "Lugar es obligatorio para reuniones presenciales";
     if (formData.modalidad === "VIRTUAL" && !formData.medio.trim())
       newErrors.medio = "Medio es obligatorio para reuniones virtuales";
-    if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -635,7 +602,6 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
       horaInicio: horaInicio,
       duracion: duracionStr,
       modalidad: formData.modalidad,
-      finalidad: formData.finalidad,
       lugarReunion: formData.modalidad === "PRESENCIAL" ? formData.lugarReunion : null,
       medio: formData.modalidad === "VIRTUAL" ? formData.medio : null,
       enlaceReunion: formData.modalidad === "VIRTUAL" ? formData.enlaceReunion : null
@@ -823,30 +789,6 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             )}
           </>
         )}
-        <div className="modal-form-group">
-          <label htmlFor="finalidad">Finalidad: <span className="required">*</span></label>
-          <div className="modal-select-wrapper">
-            <select
-              id="finalidad"
-              value={formData.finalidad}
-              onChange={(e) => handleInputChange("finalidad", e.target.value)}
-              className={`modal-form-control ${errors.finalidad ? "error" : ""}`}
-            >
-              <option value="">Ninguna seleccionada</option>
-              <option value="CLASIFICACION">Clasificación</option>
-              <option value="PRIMER_CONTACTO">Primer Contacto</option>
-              <option value="REUNION">Reunión</option>
-              <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
-              <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
-              <option value="CERRADO_GANADO">Cerrado Ganado</option>
-              <option value="RESPUESTA_POR_CORREO">Respuesta por Correo</option>
-              <option value="INTERES_FUTURO">Interés Futuro</option>
-              <option value="CERRADO_PERDIDO">Cerrado Perdido</option>
-            </select>
-            <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
-          </div>
-          {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
-        </div>
         <div className="modal-form-actions">
           <div className="modal-form-actions">
             <button type="button" onClick={onClose} className="btn btn-secondary" disabled={isLoading}>
@@ -891,7 +833,6 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
     nombreContacto: "",
     fechaLimite: "",
     tipo: "",
-    finalidad: "",
     notas: ""
   });
   const [errors, setErrors] = useState({});
@@ -916,7 +857,6 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
             nombreContacto: trato.contacto?.id || "",
             fechaLimite: "",
             tipo: "",
-            finalidad: "",
             notas: ""
           });
           setErrors({});
@@ -964,7 +904,6 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
     if (!formData.fechaLimite.trim()) newErrors.fechaLimite = "Este campo es obligatorio";
     else if (formData.fechaLimite < currentDate) newErrors.fechaLimite = "La fecha no puede ser en el pasado";
     if (!formData.tipo.trim()) newErrors.tipo = "Este campo es obligatorio";
-    if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -980,7 +919,6 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
       contactoId: formData.nombreContacto,
       fechaLimite: formData.fechaLimite,
       subtipoTarea: formData.tipo.toUpperCase(),
-      finalidad: formData.finalidad,
       notas: formData.notas
     };
 
@@ -1082,31 +1020,6 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
           </div>
           {errors.tipo && <span className="error-message">{errors.tipo}</span>}
         </div>
-        <div className="modal-form-group">
-          <label htmlFor="finalidad">Finalidad: <span className="required">*</span></label>
-          <div className="modal-select-wrapper">
-            <select
-              id="finalidad"
-              value={formData.finalidad}
-              onChange={(e) => handleInputChange("finalidad", e.target.value)}
-              className={`modal-form-control ${errors.finalidad ? "error" : ""}`}
-            >
-              <option value="">Ninguna seleccionada</option>
-              <option value="CLASIFICACION">Clasificación</option>
-              <option value="PRIMER_CONTACTO">Primer Contacto</option>
-              <option value="SEGUIMIENTO">Seguimiento</option>
-              <option value="REUNION">Reunión</option>
-              <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
-              <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
-              <option value="CERRADO_GANADO">Cerrado Ganado</option>
-              <option value="RESPUESTA_POR_CORREO">Respuesta por Correo</option>
-              <option value="INTERES_FUTURO">Interés Futuro</option>
-              <option value="CERRADO_PERDIDO">Cerrado Perdido</option>
-            </select>
-            <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
-          </div>
-          {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
-        </div>
 
         <div className="modal-form-group">
           <label htmlFor="notas">Notas:</label>
@@ -1135,7 +1048,6 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
     nombreContactoId: "",
     nuevaFecha: "",
     nuevaHora: "",
-    finalidad: "",
   });
   const [errors, setErrors] = useState({});
   const [contactos, setContactos] = useState([]);
@@ -1190,7 +1102,6 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
             nombreContactoId: actividad.contactoId || "",
             nuevaFecha: nuevaFecha,
             nuevaHora: nuevaHora,
-            finalidad: actividad.finalidad || "",
           });
         } catch (error) {
           Swal.fire({
@@ -1227,7 +1138,6 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
     else if (formData.nuevaFecha === currentDate && formData.nuevaHora < currentTime) {
       newErrors.nuevaHora = "La hora no puede ser en el pasado";
     }
-    if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     if (!formData.asignadoAId) newErrors.asignadoAId = "Este campo es obligatorio";
     if (!formData.nombreContactoId) newErrors.nombreContactoId = "Este campo es obligatorio";
     if (conflictoHorario) {
@@ -1270,7 +1180,6 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
       contactoId: parseInt(formData.nombreContactoId, 10),
       fechaLimite: formData.nuevaFecha,
       horaInicio: `${formData.nuevaHora}:00`,
-      finalidad: formData.finalidad,
       estado: "Reprogramada",
     };
 
@@ -1371,31 +1280,6 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
           </div>
         )}
 
-        <div className="modal-form-group">
-          <label htmlFor="finalidad">Finalidad: <span className="required">*</span></label>
-          <div className="modal-select-wrapper">
-            <select
-              id="finalidad"
-              value={formData.finalidad}
-              onChange={(e) => handleInputChange("finalidad", e.target.value)}
-              className={`modal-form-control ${errors.finalidad ? "error" : ""}`}
-            >
-              <option value="">Seleccionar finalidad</option>
-              <option value="CLASIFICACION">Clasificación</option>
-              <option value="PRIMER_CONTACTO">Primer Contacto</option>
-              <option value="SEGUIMIENTO">Seguimiento</option>
-              <option value="REUNION">Reunión</option>
-              <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
-              <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
-              <option value="CERRADO_GANADO">Cerrado Ganado</option>
-              <option value="RESPUESTA_POR_CORREO">Respuesta por Correo</option>
-              <option value="INTERES_FUTURO">Interés Futuro</option>
-              <option value="CERRADO_PERDIDO">Cerrado Perdido</option>
-            </select>
-            <img src={deploy} alt="Desplegar" className="deploy-icon" />
-          </div>
-          {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
-        </div>
         <div className="modal-form-actions">
           <button type="button" onClick={onClose} className="btn btn-secondary">Cancelar</button>
           <button type="submit" className="btn btn-primary">Confirmar cambios</button>
@@ -1415,7 +1299,6 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
     duracion: "00:30",
     modalidad: "",
     medio: "",
-    finalidad: "",
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -1464,7 +1347,6 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
             duracion: duracionCompleta,
             modalidad: actividad.modalidad || "",
             medio: actividad.medio || "",
-            finalidad: actividad.finalidad || "",
             lugarReunion: initialLugarReunion,
             enlaceReunion: initialEnlace,
           });
@@ -1523,7 +1405,6 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
       newErrors.lugarReunion = "Lugar es obligatorio para reuniones presenciales";
     if (formData.modalidad === "VIRTUAL" && !formData.medio.trim())
       newErrors.medio = "Medio es obligatorio para reuniones virtuales";
-    if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -1576,7 +1457,6 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
       medio: formData.modalidad === "VIRTUAL" ? formData.medio : null,
       lugarReunion: formData.modalidad === "PRESENCIAL" ? formData.lugarReunion : null,
       enlaceReunion: formData.modalidad === "VIRTUAL" ? formData.enlaceReunion : null,
-      finalidad: formData.finalidad,
       estado: "Reprogramada",
     };
 
@@ -1765,30 +1645,6 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
             />
           </div>
         )}
-        <div className="modal-form-group">
-          <label htmlFor="finalidad">Finalidad: <span className="required">*</span></label>
-          <div className="modal-select-wrapper">
-            <select
-              id="finalidad"
-              value={formData.finalidad}
-              onChange={(e) => handleInputChange("finalidad", e.target.value)}
-              className={`modal-form-control ${errors.finalidad ? "error" : ""}`}
-            >
-              <option value="">Seleccionar finalidad</option>
-              <option value="CLASIFICACION">Clasificación</option>
-              <option value="PRIMER_CONTACTO">Primer Contacto</option>
-              <option value="REUNION">Reunión</option>
-              <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
-              <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
-              <option value="CERRADO_GANADO">Cerrado Ganado</option>
-              <option value="RESPUESTA_POR_CORREO">Respuesta por Correo</option>
-              <option value="INTERES_FUTURO">Interés Futuro</option>
-              <option value="CERRADO_PERDIDO">Cerrado Perdido</option>
-            </select>
-            <img src={deploy} alt="Desplegar" className="deploy-icon" />
-          </div>
-          {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
-        </div>
         <div className="modal-form-actions">
           <div className="modal-form-actions">
             <button type="button" onClick={onClose} className="btn btn-secondary" disabled={isLoading}>
@@ -1833,7 +1689,6 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
     nombreContactoId: "",
     nuevaFechaLimite: "",
     tipo: "",
-    finalidad: "",
     notas: ""
   });
   const [errors, setErrors] = useState({});
@@ -1879,7 +1734,6 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
               ? actividad.subtipoTarea.charAt(0).toUpperCase() +
               actividad.subtipoTarea.slice(1).toLowerCase()
               : "",
-            finalidad: actividad.finalidad || "",
             notas: actividad.notas || ""
           });
         } catch (error) {
@@ -1905,7 +1759,6 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
     if (!formData.nuevaFechaLimite.trim()) newErrors.nuevaFechaLimite = "Este campo es obligatorio";
     else if (formData.nuevaFechaLimite < currentDate) newErrors.nuevaFechaLimite = "La fecha no puede ser en el pasado";
     if (!formData.tipo.trim()) newErrors.tipo = "Este campo es obligatorio";
-    if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -1922,7 +1775,6 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
       contactoId: parseInt(formData.nombreContactoId, 10),
       fechaLimite: formData.nuevaFechaLimite,
       subtipoTarea: formData.tipo.toUpperCase(),
-      finalidad: formData.finalidad,
       estado: "Reprogramada",
       notas: formData.notas
     };
@@ -2029,31 +1881,6 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
           </div>
           {errors.tipo && <span className="error-message">{errors.tipo}</span>}
         </div>
-        <div className="modal-form-group">
-          <label htmlFor="finalidad">Finalidad: <span className="required">*</span></label>
-          <div className="modal-select-wrapper">
-            <select
-              id="finalidad"
-              value={formData.finalidad}
-              onChange={(e) => handleInputChange("finalidad", e.target.value)}
-              className={`modal-form-control ${errors.finalidad ? "error" : ""}`}
-            >
-              <option value="">Seleccionar finalidad</option>
-              <option value="CLASIFICACION">Clasificación</option>
-              <option value="PRIMER_CONTACTO">Primer Contacto</option>
-              <option value="SEGUIMIENTO">Seguimiento</option>
-              <option value="REUNION">Reunión</option>
-              <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
-              <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
-              <option value="CERRADO_GANADO">Cerrado Ganado</option>
-              <option value="RESPUESTA_POR_CORREO">Respuesta por Correo</option>
-              <option value="INTERES_FUTURO">Interés Futuro</option>
-              <option value="CERRADO_PERDIDO">Cerrado Perdido</option>
-            </select>
-            <img src={deploy} alt="Desplegar" className="deploy-icon" />
-          </div>
-          {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
-        </div>
 
         <div className="modal-form-group">
           <label htmlFor="notas">Notas:</label>
@@ -2158,7 +1985,6 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
         medio: formData.medio || null,
         enlaceReunion: actividad.enlaceReunion || null,
         subtipoTarea: actividad.subtipoTarea || null,
-        finalidad: actividad.finalidad || null,
         estatus: esEdicion ? actividad.estatus : 'CERRADA',
         respuesta: formData.respuesta.toUpperCase(),
         interes: formData.interes.toUpperCase(),
@@ -3910,7 +3736,12 @@ const DetallesTrato = () => {
   const navigate = useNavigate()
   const [trato, setTrato] = useState({
     nombre: "",
-    contacto: { nombre: "", telefono: "", whatsapp: "", email: "" },
+    contacto: {
+      nombre: "",
+      telefonos: [],
+      correos: [],
+      whatsapp: ""
+    },
     propietario: "",
     numeroTrato: "",
     nombreEmpresa: "",
@@ -4056,7 +3887,8 @@ const DetallesTrato = () => {
   // Función para activar/desactivar correos de seguimiento
   const toggleCorreosSeguimiento = async (tratoId, activar) => {
     if (activar) {
-      if (!trato.contacto?.email || trato.contacto.email.trim() === '' || trato.contacto.email === 'N/A') {
+      if (!trato.contacto?.correos || trato.contacto.correos.length === 0 || 
+    !trato.contacto.correos.some(c => c.correo && c.correo.trim() !== '')) {
         // Revertir el estado del checkbox
         setCorreosSeguimientoActivo(false);
 
@@ -4384,7 +4216,12 @@ const DetallesTrato = () => {
         setTrato(prev => ({
           ...updatedData,
           propietario: propietarioNombre,
-          contacto: updatedData.contacto || { nombre: "", telefono: "", whatsapp: "", email: "" },
+          contacto: {
+            nombre: updatedData.contacto?.nombre || "",
+            telefonos: updatedData.contacto?.telefonos || [],
+            correos: updatedData.contacto?.correos || [],
+            whatsapp: updatedData.contacto?.whatsapp || ""
+          },
           ingresosEsperados: updatedData.ingresosEsperados ? `$${updatedData.ingresosEsperados.toFixed(2)}` : "",
           fechaCreacion: updatedData.fechaCreacion ? new Date(updatedData.fechaCreacion).toLocaleDateString() : "",
           fechaCierre: updatedData.fechaCierre ? new Date(updatedData.fechaCierre).toLocaleDateString() : "",
@@ -4447,7 +4284,12 @@ const DetallesTrato = () => {
         setTrato({
           id: tratoData.id || "",
           nombre: tratoData.nombre || "",
-          contacto: tratoData.contacto || { nombre: "", telefono: "", whatsapp: "", email: "" },
+          contacto: {
+            nombre: tratoData.contacto?.nombre || "",
+            telefonos: tratoData.contacto?.telefonos || [],
+            correos: tratoData.contacto?.correos || [],
+            whatsapp: tratoData.contacto?.whatsapp || ""
+          },
           propietario: propietarioNombre,
           numeroTrato: tratoData.noTrato || "",
           nombreEmpresa: tratoData.empresaNombre || "",
@@ -4542,7 +4384,6 @@ const DetallesTrato = () => {
             enlaceReunion: actividad.enlaceReunion || null,
             tipo: actividad.tipo === "TAREA" ? "TAREA" : actividad.tipo || "Sin tipo",
             subtipoTarea: actividad.subtipoTarea || null,
-            finalidad: actividad.finalidad || "Sin finalidad",
           };
         };
 
@@ -5130,30 +4971,54 @@ const DetallesTrato = () => {
                     <span className="contacto-nombre">{trato.contacto.nombre || "Sin contacto"}</span>
                   </div>
                   <div className="contacto-detalles">
-                    <div className="contacto-item">
-                      <button
-                        className="btn-contacto telefono"
-                        onClick={() => handleLlamarContacto(trato.contacto.telefono || "")}
-                        title="Llamar"
-                      >
+                    {/* Teléfonos */}
+                    {trato.contacto.telefonos && trato.contacto.telefonos.length > 0 ? (
+                      trato.contacto.telefonos.map((tel, index) => (
+                        <div key={`tel-${index}`} className="contacto-item">
+                          <button
+                            className="btn-contacto telefono"
+                            onClick={() => handleLlamarContacto(tel.telefono)}
+                            title="Llamar"
+                          >
+                            <img src={phoneIcon || "/placeholder.svg"} alt="Teléfono" className="contacto-icon" />
+                          </button>
+                          <span>{tel.telefono}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="contacto-item">
                         <img src={phoneIcon || "/placeholder.svg"} alt="Teléfono" className="contacto-icon" />
-                      </button>
-                      <span>{trato.contacto.telefono || "N/A"}</span>
-                    </div>
-                    <div className="contacto-item">
-                      <button
-                        className="btn-contacto whatsapp"
-                        onClick={() => handleWhatsAppContacto(trato.contacto.whatsapp || "")}
-                        title="Enviar WhatsApp"
-                      >
-                        <img src={whatsappIcon || "/placeholder.svg"} alt="WhatsApp" className="contacto-icon" />
-                      </button>
-                      <span>{trato.contacto.whatsapp || "N/A"}</span>
-                    </div>
-                    <div className="contacto-item">
-                      <img src={emailIcon || "/placeholder.svg"} alt="Email" className="contacto-icon" />
-                      <span>{trato.contacto.email || "N/A"}</span>
-                    </div>
+                        <span>N/A</span>
+                      </div>
+                    )}
+
+                    {trato.contacto.whatsapp && (
+                      <div className="contacto-item">
+                        <button
+                          className="btn-contacto whatsapp"
+                          onClick={() => handleWhatsAppContacto(trato.contacto.whatsapp)}
+                          title="Enviar WhatsApp"
+                        >
+                          <img src={whatsappIcon || "/placeholder.svg"} alt="WhatsApp" className="contacto-icon" />
+                        </button>
+                        <span>{trato.contacto.whatsapp}</span>
+                      </div>
+                    )}
+
+                    {/* Correos */}
+                    {trato.contacto.correos && trato.contacto.correos.length > 0 ? (
+                      trato.contacto.correos.map((correo, index) => (
+                        <div key={`correo-${index}`} className="contacto-item">
+                          <img src={emailIcon || "/placeholder.svg"} alt="Email" className="contacto-icon" />
+                          <span>{correo.correo}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="contacto-item">
+                        <img src={emailIcon || "/placeholder.svg"} alt="Email" className="contacto-icon" />
+                        <span>N/A</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -5382,7 +5247,6 @@ const DetallesTrato = () => {
                           <div className="actividad-detalles">
                             <span>Tipo: {tarea.subtipoTarea || "Sin tipo"}</span>
                             <span>Fecha límite: {tarea.fecha || "Sin fecha"}</span>
-                            <span>Finalidad: {tarea.finalidad || "Sin finalidad"}</span>
                             <span>Notas: {tarea.notas || "Sin notas"}</span>
                             <span>Asignado a: {tarea.asignadoA || "Sin asignado"}</span>
                           </div>

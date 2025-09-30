@@ -344,7 +344,6 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     nombreContacto: "",
     fecha: "",
     horaInicio: "",
-    finalidad: "",
   });
   const [errors, setErrors] = useState({});
   const [contactos, setContactos] = useState([]);
@@ -357,7 +356,6 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
         nombreContacto: "",
         fecha: "",
         horaInicio: "",
-        finalidad: "",
       }));
       setErrors({});
     }
@@ -404,7 +402,6 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
       newErrors.horaInicio = "La hora no puede ser en el pasado";
     }
     if (!formData.horaInicio.trim()) newErrors.horaInicio = "Este campo es obligatorio";
-    if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -422,7 +419,6 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
       contactoId: formData.nombreContacto,
       fechaLimite: formData.fecha,
       horaInicio: horaInicio,
-      finalidad: formData.finalidad,
     };
 
     try {
@@ -513,32 +509,6 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
           {errors.horaInicio && <span className="error-message">{errors.horaInicio}</span>}
         </div>
 
-        <div className="modal-form-group">
-          <label htmlFor="finalidad">Finalidad: <span className="required">*</span></label>
-          <div className="modal-select-wrapper">
-            <select
-              id="finalidad"
-              value={formData.finalidad}
-              onChange={(e) => handleInputChange("finalidad", e.target.value)}
-              className={`modal-form-control ${errors.finalidad ? "error" : ""}`}
-            >
-              <option value="">Ninguna seleccionada</option>
-              <option value="CLASIFICACION">Clasificación</option>
-              <option value="PRIMER_CONTACTO">Primer Contacto</option>
-              <option value="SEGUIMIENTO">Seguimiento</option>
-              <option value="REUNION">Reunión</option>
-              <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
-              <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
-              <option value="CERRADO_GANADO">Cerrado Ganado</option>
-              <option value="RESPUESTA_POR_CORREO">Respuesta por Correo</option>
-              <option value="INTERES_FUTURO">Interés Futuro</option>
-              <option value="CERRADO_PERDIDO">Cerrado Perdido</option>
-            </select>
-            <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
-          </div>
-          {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
-        </div>
-
         <div className="modal-form-actions">
           <button type="button" onClick={onClose} className="btn btn-secondary">Cancelar</button>
           <button type="submit" className="btn btn-primary">Agregar llamada</button>
@@ -557,7 +527,6 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     horaInicio: "",
     duracion: "00:30",
     modalidad: "VIRTUAL",
-    finalidad: "",
     lugarReunion: "",
     medio: "",
     enlaceReunion: "",
@@ -581,7 +550,6 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
         duracionMinutos: "",
         duracionSegundos: "",
         modalidad: "VIRTUAL",
-        finalidad: "",
         lugarReunion: "",
         medio: "",
         enlaceReunion: "",
@@ -674,7 +642,6 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
       newErrors.lugarReunion = "Lugar es obligatorio para reuniones presenciales";
     if (formData.modalidad === "VIRTUAL" && !formData.medio.trim())
       newErrors.medio = "Medio es obligatorio para reuniones virtuales";
-    if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -697,7 +664,6 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
       horaInicio: horaInicio,
       duracion: duracionStr,
       modalidad: formData.modalidad,
-      finalidad: formData.finalidad,
       lugarReunion: formData.modalidad === "PRESENCIAL" ? formData.lugarReunion : null,
       medio: formData.modalidad === "VIRTUAL" ? formData.medio : null,
       enlaceReunion: formData.modalidad === "VIRTUAL" ? formData.enlaceReunion : null,
@@ -879,31 +845,6 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
           </>
         )}
 
-        <div className="modal-form-group">
-          <label htmlFor="finalidad">Finalidad: <span className="required">*</span></label>
-          <div className="modal-select-wrapper">
-            <select
-              id="finalidad"
-              value={formData.finalidad}
-              onChange={(e) => handleInputChange("finalidad", e.target.value)}
-              className={`modal-form-control ${errors.finalidad ? "error" : ""}`}
-            >
-              <option value="">Ninguna seleccionada</option>
-              <option value="CLASIFICACION">Clasificación</option>
-              <option value="PRIMER_CONTACTO">Primer Contacto</option>
-              <option value="REUNION">Reunión</option>
-              <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
-              <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
-              <option value="CERRADO_GANADO">Cerrado Ganado</option>
-              <option value="RESPUESTA_POR_CORREO">Respuesta por Correo</option>
-              <option value="INTERES_FUTURO">Interés Futuro</option>
-              <option value="CERRADO_PERDIDO">Cerrado Perdido</option>
-            </select>
-            <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
-          </div>
-          {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
-        </div>
-
         <div className="modal-form-actions">
           <div className="modal-form-actions">
             <button type="button" onClick={onClose} className="btn btn-secondary" disabled={isLoading}>
@@ -949,7 +890,6 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
     nombreContacto: "",
     fechaLimite: "",
     tipo: "",
-    finalidad: "",
     notas: ""
   });
   const [errors, setErrors] = useState({});
@@ -963,7 +903,6 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
         nombreContacto: "",
         fechaLimite: "",
         tipo: "",
-        finalidad: "",
         notas: ""
       }));
       setErrors({});
@@ -1005,7 +944,6 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
     if (!formData.fechaLimite.trim()) newErrors.fechaLimite = "Este campo es obligatorio";
     else if (formData.fechaLimite < currentDate) newErrors.fechaLimite = "La fecha no puede ser en el pasado";
     if (!formData.tipo.trim()) newErrors.tipo = "Este campo es obligatorio";
-    if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -1021,7 +959,6 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
       contactoId: formData.nombreContacto,
       fechaLimite: formData.fechaLimite,
       subtipoTarea: formData.tipo.toUpperCase(),
-      finalidad: formData.finalidad,
       notas: formData.notas
     };
 
@@ -1125,32 +1062,6 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
             </button>
           </div>
           {errors.tipo && <span className="error-message">{errors.tipo}</span>}
-        </div>
-
-        <div className="modal-form-group">
-          <label htmlFor="finalidad">Finalidad: <span className="required">*</span></label>
-          <div className="modal-select-wrapper">
-            <select
-              id="finalidad"
-              value={formData.finalidad}
-              onChange={(e) => handleInputChange("finalidad", e.target.value)}
-              className={`modal-form-control ${errors.finalidad ? "error" : ""}`}
-            >
-              <option value="">Ninguna seleccionada</option>
-              <option value="CLASIFICACION">Clasificación</option>
-              <option value="PRIMER_CONTACTO">Primer Contacto</option>
-              <option value="SEGUIMIENTO">Seguimiento</option>
-              <option value="REUNION">Reunión</option>
-              <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
-              <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
-              <option value="CERRADO_GANADO">Cerrado Ganado</option>
-              <option value="RESPUESTA_POR_CORREO">Respuesta por Correo</option>
-              <option value="INTERES_FUTURO">Interés Futuro</option>
-              <option value="CERRADO_PERDIDO">Cerrado Perdido</option>
-            </select>
-            <img src={deploy || "/placeholder.svg"} alt="Desplegar" className="deploy-icon" />
-          </div>
-          {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
         </div>
 
         <div className="modal-form-group">

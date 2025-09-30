@@ -825,6 +825,12 @@ const EquiposInventario = () => {
     scales: { y: { beginAtZero: true, ticks: { stepSize: 10 } } },
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(`${dateString}T00:00:00-06:00`);
+    return date.toLocaleDateString("es-MX", { timeZone: "America/Mexico_City" });
+  };
+
   return (
     <>
       <div className="page-with-header">
@@ -905,13 +911,13 @@ const EquiposInventario = () => {
                   <table className="inventario-table">
                     <thead>
                       <tr>
-                        <th>IMEI</th>
                         <th>Nombre</th>
                         <th>Cliente</th>
                         <th>Tipo</th>
                         <th>Estatus</th>
                         <th>SIM</th>
                         <th>Créditos</th>
+                        <th>Fecha de Expiración</th>
                         <th>Acciones</th>
                       </tr>
                     </thead>
@@ -919,7 +925,6 @@ const EquiposInventario = () => {
                       {filteredEquipos.length > 0 ? (
                         filteredEquipos.map((equipo) => (
                           <tr key={equipo.id}>
-                            <td>{equipo.imei}</td>
                             <td>{equipo.nombre}</td>
                             <td>
                               {equipo.clienteId ? (
@@ -938,13 +943,22 @@ const EquiposInventario = () => {
                             </td>
                             <td>{equipo.simReferenciada ? sims.find(s => s.id === equipo.simReferenciada.id)?.numero : "N/A"}</td>
                             <td>{equipo.creditosUsados || 0}</td>
+                             <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span>{formatDate(equipo.fechaExpiracion)}</span>
+                                {getDaysUntilExpiration(equipo) && (
+                                  <div className="inventario-expiration-alert" title={`Expira en ${getDaysUntilExpiration(equipo)} días`}>
+                                    <span className="inventario-expiration-count">{getDaysUntilExpiration(equipo)}d</span>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
                             <td>
                               <div className="inventario-action-buttons">
                                 <button className="inventario-btn-action inventario-edit" onClick={() => openModal("form", { equipo })} title="Editar">
                                   <img src={editIcon || "/placeholder.svg"} alt="Editar" />
                                 </button>
                                 <button className="inventario-btn-action inventario-delete" onClick={() => {
-                                  // Verifica si realmente tiene una SIM vinculada
                                   const hasSimVinculada = equipo.simReferenciada &&
                                     equipo.simReferenciada.id &&
                                     equipo.simReferenciada.id !== null;
@@ -964,11 +978,6 @@ const EquiposInventario = () => {
                                   <button className="inventario-btn inventario-btn-renew" onClick={() => handleRenewEquipo(equipo.id)} title="Renovar">
                                     <img src={renewIcon || "/placeholder.svg"} alt="Renovar" className="inventario-action-icon" /> Renovar
                                   </button>
-                                )}
-                                {getDaysUntilExpiration(equipo) && (
-                                  <div className="inventario-expiration-alert" title={`Expira en ${getDaysUntilExpiration(equipo)} días`}>
-                                    <span className="inventario-expiration-count">{getDaysUntilExpiration(equipo)}d</span>
-                                  </div>
                                 )}
                               </div>
                             </td>

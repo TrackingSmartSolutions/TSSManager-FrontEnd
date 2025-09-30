@@ -274,12 +274,18 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
       } catch (error) {
         newErrors.sitioWeb = "Este campo debe ser una URL válida (ej. https://ejemplo.com)";
       }
+    }
 
-      if (formData.latitud !== null && (isNaN(formData.latitud) || formData.latitud < -90 || formData.latitud > 90)) {
+    if (formData.latitud !== null && formData.latitud !== '') {
+      const lat = parseFloat(formData.latitud);
+      if (isNaN(lat) || lat < -90 || lat > 90) {
         newErrors.latitud = "La latitud debe estar entre -90 y 90 grados";
       }
+    }
 
-      if (formData.longitud !== null && (isNaN(formData.longitud) || formData.longitud < -180 || formData.longitud > 180)) {
+    if (formData.longitud !== null && formData.longitud !== '') {
+      const lng = parseFloat(formData.longitud);
+      if (isNaN(lng) || lng < -180 || lng > 180) {
         newErrors.longitud = "La longitud debe estar entre -180 y 180 grados";
       }
     }
@@ -325,7 +331,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
     setMapModal({ isOpen: false });
   };
 
-  const showCoordinateFields = formData.domicilioFisico && formData.domicilioFisico.trim();
+  const showCoordinateFields = mode === "edit" || (formData.domicilioFisico && formData.domicilioFisico.trim());
 
 
   const handleSubmit = async (e) => {

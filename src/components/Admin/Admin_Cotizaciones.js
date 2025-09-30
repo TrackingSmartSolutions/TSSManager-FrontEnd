@@ -253,7 +253,7 @@ const NuevoConceptoModal = ({ isOpen, onClose, onSave, concepto }) => {
         unidad: formData.unidad,
         concepto: formData.concepto,
         precioUnitario: Number.parseFloat(formData.precioUnitario),
-        descuento: Number.parseFloat(formData.descuento),
+         descuento: Number.parseFloat(formData.descuento) || 0,
         importeTotal: calculateImporteTotal(),
       };
       onSave(conceptoData);
@@ -1228,7 +1228,7 @@ const AdminCotizaciones = () => {
             unidad: c.unidad,
             concepto: c.concepto,
             precioUnitario: c.precioUnitario,
-            descuento: c.descuento,
+             descuento: c.descuento ?? 0,
             importeTotal: c.importeTotal,
           })),
           empresaData: cotizacionData.empresaData,

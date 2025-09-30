@@ -84,7 +84,6 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
     nombreContactoId: "",
     nuevaFecha: "",
     nuevaHora: "",
-    finalidad: "",
   });
   const [errors, setErrors] = useState({});
   const [contactos, setContactos] = useState([]);
@@ -139,7 +138,6 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
             nombreContactoId: actividad.contactoId || "",
             nuevaFecha: nuevaFecha,
             nuevaHora: nuevaHora,
-            finalidad: actividad.finalidad || "",
           });
         } catch (error) {
           Swal.fire({
@@ -168,7 +166,6 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
     else if (formData.nuevaFecha === currentDate && formData.nuevaHora && formData.nuevaHora < currentTime)
       newErrors.nuevaHora = "La hora no puede ser en el pasado";
     if (!formData.nuevaHora.trim()) newErrors.nuevaHora = "Este campo es obligatorio";
-    if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     if (!formData.asignadoAId) newErrors.asignadoAId = "Este campo es obligatorio";
     if (!formData.nombreContactoId) newErrors.nombreContactoId = "Este campo es obligatorio";
     setErrors(newErrors);
@@ -187,7 +184,6 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
       contactoId: parseInt(formData.nombreContactoId, 10),
       fechaLimite: formData.nuevaFecha,
       horaInicio: `${formData.nuevaHora}:00`,
-      finalidad: formData.finalidad,
       estado: "Reprogramada",
     };
 
@@ -281,31 +277,6 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
           />
           {errors.nuevaHora && <span className="error-message">{errors.nuevaHora}</span>}
         </div>
-        <div className="modal-form-group">
-          <label htmlFor="finalidad">Finalidad: <span className="required">*</span></label>
-          <div className="modal-select-wrapper">
-            <select
-              id="finalidad"
-              value={formData.finalidad}
-              onChange={(e) => handleInputChange("finalidad", e.target.value)}
-              className={`modal-form-control ${errors.finalidad ? "error" : ""}`}
-            >
-              <option value="">Seleccionar finalidad</option>
-              <option value="CLASIFICACION">Clasificación</option>
-              <option value="PRIMER_CONTACTO">Primer Contacto</option>
-              <option value="SEGUIMIENTO">Seguimiento</option>
-              <option value="REUNION">Reunión</option>
-              <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
-              <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
-              <option value="CERRADO_GANADO">Cerrado Ganado</option>
-              <option value="RESPUESTA_POR_CORREO">Respuesta por Correo</option>
-              <option value="INTERES_FUTURO">Interés Futuro</option>
-              <option value="CERRADO_PERDIDO">Cerrado Perdido</option>
-            </select>
-            <img src={deploy} alt="Desplegar" className="deploy-icon" />
-          </div>
-          {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
-        </div>
         <div className="modal-form-actions">
           <button type="button" onClick={onClose} className="btn btn-secondary">Cancelar</button>
           <button type="submit" className="btn btn-primary">Confirmar cambios</button>
@@ -325,7 +296,6 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
     duracion: "00:30",
     modalidad: "",
     medio: "",
-    finalidad: "",
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -373,7 +343,6 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
             duracionSegundos: seconds || "",
             modalidad: actividad.modalidad || "",
             medio: actividad.medio || "",
-            finalidad: actividad.finalidad || "",
             lugarReunion: initialLugarReunion,
             enlaceReunion: initialEnlace,
           });
@@ -425,7 +394,6 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
       newErrors.lugarReunion = "Lugar es obligatorio para reuniones presenciales";
     if (formData.modalidad === "VIRTUAL" && !formData.medio.trim())
       newErrors.medio = "Medio es obligatorio para reuniones virtuales";
-    if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -451,7 +419,6 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
       medio: formData.modalidad === "VIRTUAL" ? formData.medio : null,
       lugarReunion: formData.modalidad === "PRESENCIAL" ? formData.lugarReunion : null,
       enlaceReunion: formData.modalidad === "VIRTUAL" ? formData.enlaceReunion : null,
-      finalidad: formData.finalidad,
       estado: "Reprogramada",
     };
 
@@ -626,30 +593,6 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
             />
           </div>
         )}
-        <div className="modal-form-group">
-          <label htmlFor="finalidad">Finalidad: <span className="required">*</span></label>
-          <div className="modal-select-wrapper">
-            <select
-              id="finalidad"
-              value={formData.finalidad}
-              onChange={(e) => handleInputChange("finalidad", e.target.value)}
-              className={`modal-form-control ${errors.finalidad ? "error" : ""}`}
-            >
-              <option value="">Seleccionar finalidad</option>
-              <option value="CLASIFICACION">Clasificación</option>
-              <option value="PRIMER_CONTACTO">Primer Contacto</option>
-              <option value="REUNION">Reunión</option>
-              <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
-              <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
-              <option value="CERRADO_GANADO">Cerrado Ganado</option>
-              <option value="RESPUESTA_POR_CORREO">Respuesta por Correo</option>
-              <option value="INTERES_FUTURO">Interés Futuro</option>
-              <option value="CERRADO_PERDIDO">Cerrado Perdido</option>
-            </select>
-            <img src={deploy} alt="Desplegar" className="deploy-icon" />
-          </div>
-          {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
-        </div>
         <div className="modal-form-actions">
           <div className="modal-form-actions">
             <button type="button" onClick={onClose} className="btn btn-secondary" disabled={isLoading}>
@@ -695,7 +638,6 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
     nombreContactoId: "",
     nuevaFechaLimite: "",
     tipo: "",
-    finalidad: "",
     notas: ""
   });
   const [errors, setErrors] = useState({});
@@ -741,7 +683,6 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
               ? actividad.subtipoTarea.charAt(0).toUpperCase() +
               actividad.subtipoTarea.slice(1).toLowerCase()
               : "",
-            finalidad: actividad.finalidad || "",
             notas: actividad.notas || ""
           });
         } catch (error) {
@@ -767,7 +708,6 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
     if (!formData.nuevaFechaLimite.trim()) newErrors.nuevaFechaLimite = "Este campo es obligatorio";
     else if (formData.nuevaFechaLimite < currentDate) newErrors.nuevaFechaLimite = "La fecha no puede ser en el pasado";
     if (!formData.tipo.trim()) newErrors.tipo = "Este campo es obligatorio";
-    if (!formData.finalidad.trim()) newErrors.finalidad = "Este campo es obligatorio";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -784,7 +724,6 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
       contactoId: parseInt(formData.nombreContactoId, 10),
       fechaLimite: formData.nuevaFechaLimite,
       subtipoTarea: formData.tipo.toUpperCase(),
-      finalidad: formData.finalidad,
       estado: "Reprogramada",
       notas: formData.notas
     };
@@ -892,31 +831,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
           </div>
           {errors.tipo && <span className="error-message">{errors.tipo}</span>}
         </div>
-        <div className="modal-form-group">
-          <label htmlFor="finalidad">Finalidad: <span className="required">*</span></label>
-          <div className="modal-select-wrapper">
-            <select
-              id="finalidad"
-              value={formData.finalidad}
-              onChange={(e) => handleInputChange("finalidad", e.target.value)}
-              className={`modal-form-control ${errors.finalidad ? "error" : ""}`}
-            >
-              <option value="">Seleccionar finalidad</option>
-              <option value="CLASIFICACION">Clasificación</option>
-              <option value="PRIMER_CONTACTO">Primer Contacto</option>
-              <option value="REUNION">Reunión</option>
-              <option value="COTIZACION_PROPUESTA_PRACTICA">Cotización Propuesta/Práctica</option>
-              <option value="NEGOCIACION_REVISION">Negociación/Revisión</option>
-              <option value="CERRADO_GANADO">Cerrado Ganado</option>
-              <option value="RESPUESTA_POR_CORREO">Respuesta por Correo</option>
-              <option value="INTERES_FUTURO">Interés Futuro</option>
-              <option value="CERRADO_PERDIDO">Cerrado Perdido</option>
-            </select>
-            <img src={deploy} alt="Desplegar" className="deploy-icon" />
-          </div>
-          {errors.finalidad && <span className="error-message">{errors.finalidad}</span>}
-        </div>
-
+    
         <div className="modal-form-group">
           <label htmlFor="notas">Notas:</label>
           <textarea
@@ -1022,7 +937,6 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
         medio: formData.medio || null,
         enlaceReunion: actividad.enlaceReunion || null,
         subtipoTarea: actividad.subtipoTarea || null,
-        finalidad: actividad.finalidad || null,
         estatus: 'CERRADA',
         respuesta: formData.respuesta.toUpperCase(),
         interes: formData.interes.toUpperCase(),
