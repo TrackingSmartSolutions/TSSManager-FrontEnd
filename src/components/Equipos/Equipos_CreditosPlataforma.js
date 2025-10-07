@@ -381,7 +381,7 @@ const EquiposCreditosPlataforma = () => {
                           <span className="creditosplataforma-saldo-icon">⚡</span>
                         </div>
                         <div className="creditosplataforma-subtipo">
-                          <span>Vitalicia: {creditosData.saldosPorPlataforma?.WHATSGPS_VITALICIA || 0}</span>
+                          <span>Integraciones: {creditosData.saldosPorPlataforma?.WHATSGPS_VITALICIA || 0}</span>
                           <span className="creditosplataforma-saldo-icon">⚡</span>
                         </div>
                       </div>
