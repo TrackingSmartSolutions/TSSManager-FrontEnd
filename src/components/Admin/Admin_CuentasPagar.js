@@ -69,8 +69,14 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
   });
   const [errors, setErrors] = useState({});
 
-  // Verificar si es una cuenta de créditos plataforma
-  const esCuentaCreditos = cuenta?.transaccion?.categoria?.descripcion?.toLowerCase().includes("créditos plataforma");
+  // Verificar si es una cuenta de créditos plataforma o licencias
+  const esCuentaCreditos = cuenta?.transaccion?.categoria?.descripcion?.toLowerCase().includes("créditos plataforma") ||
+    cuenta?.transaccion?.categoria?.descripcion?.toLowerCase().includes("licencias");
+
+  // Determinar si es una plataforma de licencias
+  const esLicencia = cuenta?.transaccion?.cuenta?.nombre?.toLowerCase().includes("fulltrack") ||
+    cuenta?.transaccion?.cuenta?.nombre?.toLowerCase().includes("f/basic") ||
+    cuenta?.transaccion?.cuenta?.nombre?.toLowerCase().includes("fbasic");
 
   useEffect(() => {
     if (isOpen && cuenta) {
@@ -179,10 +185,12 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
           {errors.montoPago && <span className="cuentaspagar-error-message">{errors.montoPago}</span>}
         </div>
 
-        {/* Campo de cantidad de créditos solo para cuentas de créditos plataforma */}
         {esCuentaCreditos && (
           <div className="cuentaspagar-form-group">
-            <label htmlFor="cantidadCreditos">Cantidad de Créditos Comprados <span className="required"> *</span></label>
+            <label htmlFor="cantidadCreditos">
+              {esLicencia ? "Cantidad de Licencias Compradas" : "Cantidad de Créditos Comprados"}
+              <span className="required"> *</span>
+            </label>
             <input
               type="number"
               id="cantidadCreditos"
@@ -191,11 +199,14 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
               value={formData.cantidadCreditos}
               onChange={(e) => handleInputChange("cantidadCreditos", e.target.value)}
               className={`cuentaspagar-form-control ${errors.cantidadCreditos ? "error" : ""}`}
-              placeholder="Ej: 100"
+              placeholder={esLicencia ? "Ej: 10 licencias" : "Ej: 100 créditos"}
             />
             {errors.cantidadCreditos && <span className="cuentaspagar-error-message">{errors.cantidadCreditos}</span>}
             <small className="cuentaspagar-help-text">
-              Especifica cuántos créditos se compraron con este pago
+              {esLicencia
+                ? "Especifica cuántas licencias se compraron con este pago"
+                : "Especifica cuántos créditos se compraron con este pago"
+              }
             </small>
           </div>
         )}
@@ -484,7 +495,7 @@ const RegenerarModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
 // Componente Principal
 const AdminCuentasPagar = () => {
   const navigate = useNavigate();
-  const userRol = localStorage.getItem("userRol") 
+  const userRol = localStorage.getItem("userRol")
   const [cuentasPagar, setCuentasPagar] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filtroEstatus, setFiltroEstatus] = useState("Todas");
@@ -901,276 +912,276 @@ const AdminCuentasPagar = () => {
 
   return (
     <>
-     <div className="page-with-header">
-      <Header />
-      {isLoading && (
-        <div className="cuentaspagar-loading">
-          <div className="spinner"></div>
-          <p>Cargando datos de cuentas por pagar...</p>
-        </div>
-      )}
-      <main className="cuentaspagar-main-content">
-        <div className="cuentaspagar-container">
-          <section className="cuentaspagar-sidebar">
-            <div className="cuentaspagar-sidebar-header">
-              <h3 className="cuentaspagar-sidebar-title">Administración</h3>
-            </div>
-            <div className="cuentaspagar-sidebar-menu">
-              {userRol === "ADMINISTRADOR" && (
-              <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("balance")}>
-                Balance
+      <div className="page-with-header">
+        <Header />
+        {isLoading && (
+          <div className="cuentaspagar-loading">
+            <div className="spinner"></div>
+            <p>Cargando datos de cuentas por pagar...</p>
+          </div>
+        )}
+        <main className="cuentaspagar-main-content">
+          <div className="cuentaspagar-container">
+            <section className="cuentaspagar-sidebar">
+              <div className="cuentaspagar-sidebar-header">
+                <h3 className="cuentaspagar-sidebar-title">Administración</h3>
               </div>
-              )}
-              <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
-                Transacciones
-              </div>
-              <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("cotizaciones")}>
-                Cotizaciones
-              </div>
-              <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("facturacion")}>
-                Facturas/Notas
-              </div>
-              <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("cuentas-cobrar")}>
-                Cuentas por Cobrar
-              </div>
-              <div
-                className="cuentaspagar-menu-item cuentaspagar-menu-item-active"
-                onClick={() => handleMenuNavigation("cuentas-pagar")}
-              >
-                Cuentas por Pagar
-              </div>
-              <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>
-                Caja chica
-              </div>
-            </div>
-          </section>
-
-          <section className="cuentaspagar-content-panel">
-            <div className="cuentaspagar-header">
-              <div className="cuentaspagar-header-info">
-                <h3 className="cuentaspagar-page-title">Cuentas por Pagar</h3>
-                <p className="cuentaspagar-subtitle">Gestión de pagos pendientes</p>
-              </div>
-              <div className="cuentaspagar-btn-reporte-container">
-                <button
-                  className="cuentaspagar-btn-reporte"
-                  onClick={handleGenerarReporte}
-                >
-                  Generar Reporte
-                </button>
-              </div>
-            </div>
-
-            <div className="cuentaspagar-table-card">
-              <div className="cuentaspagar-table-header">
-                <h4 className="cuentaspagar-table-title">Cuentas por pagar</h4>
-                <div className="cuentaspagar-filters-container">
-                  <div className="cuentaspagar-filter-container">
-                    <div className="cuentaspagar-filter-container">
-                      <button
-                        className="cuentaspagar-btn-orden"
-                        onClick={toggleOrdenFecha}
-                        title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'}`}
-                      >
-                        {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
-                      </button>
-                    </div>
-                    <label htmlFor="filtroEstatus">Filtrar por estatus:</label>
-                    <select
-                      id="filtroEstatus"
-                      value={filtroEstatus}
-                      onChange={(e) => setFiltroEstatus(e.target.value)}
-                      className="cuentaspagar-filter-select"
-                    >
-                      <option value="Todas">Todas</option>
-                      <option value="Pendiente">Pendiente</option>
-                      <option value="En proceso">En proceso</option>
-                      <option value="Vencida">Vencida</option>
-                      <option value="Pagado">Pagado</option>
-                    </select>
+              <div className="cuentaspagar-sidebar-menu">
+                {userRol === "ADMINISTRADOR" && (
+                  <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("balance")}>
+                    Balance
                   </div>
+                )}
+                <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
+                  Transacciones
+                </div>
+                <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("cotizaciones")}>
+                  Cotizaciones
+                </div>
+                <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("facturacion")}>
+                  Facturas/Notas
+                </div>
+                <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("cuentas-cobrar")}>
+                  Cuentas por Cobrar
+                </div>
+                <div
+                  className="cuentaspagar-menu-item cuentaspagar-menu-item-active"
+                  onClick={() => handleMenuNavigation("cuentas-pagar")}
+                >
+                  Cuentas por Pagar
+                </div>
+                <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>
+                  Caja chica
+                </div>
+              </div>
+            </section>
 
-                  <div className="cuentaspagar-filter-container cuentaspagar-date-filter">
-                    <label>Filtrar por fecha de pago:</label>
-                    <div className="cuentaspagar-date-inputs">
-                      <input
-                        type="date"
-                        value={filtroFechas.fechaInicio}
-                        onChange={(e) => handleFiltroFechas("fechaInicio", e.target.value)}
-                        className="cuentaspagar-date-input"
-                        placeholder="Fecha inicio"
-                      />
-                      <span className="cuentaspagar-date-separator">a</span>
-                      <input
-                        type="date"
-                        value={filtroFechas.fechaFin}
-                        onChange={(e) => handleFiltroFechas("fechaFin", e.target.value)}
-                        className="cuentaspagar-date-input"
-                        placeholder="Fecha fin"
-                      />
-                      {filtroFechas.activo && (
+            <section className="cuentaspagar-content-panel">
+              <div className="cuentaspagar-header">
+                <div className="cuentaspagar-header-info">
+                  <h3 className="cuentaspagar-page-title">Cuentas por Pagar</h3>
+                  <p className="cuentaspagar-subtitle">Gestión de pagos pendientes</p>
+                </div>
+                <div className="cuentaspagar-btn-reporte-container">
+                  <button
+                    className="cuentaspagar-btn-reporte"
+                    onClick={handleGenerarReporte}
+                  >
+                    Generar Reporte
+                  </button>
+                </div>
+              </div>
+
+              <div className="cuentaspagar-table-card">
+                <div className="cuentaspagar-table-header">
+                  <h4 className="cuentaspagar-table-title">Cuentas por pagar</h4>
+                  <div className="cuentaspagar-filters-container">
+                    <div className="cuentaspagar-filter-container">
+                      <div className="cuentaspagar-filter-container">
                         <button
-                          type="button"
-                          onClick={limpiarFiltroFechas}
-                          className="cuentaspagar-clear-filter-btn"
-                          title="Limpiar filtro de fechas"
+                          className="cuentaspagar-btn-orden"
+                          onClick={toggleOrdenFecha}
+                          title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'}`}
                         >
-                          ✕
+                          {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
                         </button>
-                      )}
+                      </div>
+                      <label htmlFor="filtroEstatus">Filtrar por estatus:</label>
+                      <select
+                        id="filtroEstatus"
+                        value={filtroEstatus}
+                        onChange={(e) => setFiltroEstatus(e.target.value)}
+                        className="cuentaspagar-filter-select"
+                      >
+                        <option value="Todas">Todas</option>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="En proceso">En proceso</option>
+                        <option value="Vencida">Vencida</option>
+                        <option value="Pagado">Pagado</option>
+                      </select>
+                    </div>
+
+                    <div className="cuentaspagar-filter-container cuentaspagar-date-filter">
+                      <label>Filtrar por fecha de pago:</label>
+                      <div className="cuentaspagar-date-inputs">
+                        <input
+                          type="date"
+                          value={filtroFechas.fechaInicio}
+                          onChange={(e) => handleFiltroFechas("fechaInicio", e.target.value)}
+                          className="cuentaspagar-date-input"
+                          placeholder="Fecha inicio"
+                        />
+                        <span className="cuentaspagar-date-separator">a</span>
+                        <input
+                          type="date"
+                          value={filtroFechas.fechaFin}
+                          onChange={(e) => handleFiltroFechas("fechaFin", e.target.value)}
+                          className="cuentaspagar-date-input"
+                          placeholder="Fecha fin"
+                        />
+                        {filtroFechas.activo && (
+                          <button
+                            type="button"
+                            onClick={limpiarFiltroFechas}
+                            className="cuentaspagar-clear-filter-btn"
+                            title="Limpiar filtro de fechas"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="cuentaspagar-table-container">
-                <table className="cuentaspagar-table">
-                  <thead className="cuentaspagar-table-header-fixed">
-                    <tr>
-                      <th>Folio</th>
-                      <th>Fecha de Pago</th>
-                      <th>Cuenta</th>
-                      <th>Monto</th>
-                      <th>Forma de Pago</th>
-                      <th>Categoría</th>
-                      <th>Renovación (días)</th>
-                      <th>Estatus</th>
-                      <th>Nota</th>
-                      <th>Número de SIM</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cuentasOrdenadas.length > 0 ? (
-                      cuentasOrdenadas.map((cuenta) => (
-                        <tr key={cuenta.id}>
-                          <td>
-                            {cuenta.folio}
-                            {cuenta.sim && <span className="cuentaspagar-sim-id"> -{cuenta.sim.id}</span>}
-                          </td>
-                          <td>{cuenta.fechaPago}</td>
-                          <td>{cuenta.cuenta.nombre}</td>
-                          <td>
-                            <div className="cuentaspagar-monto-info">
-                              <div>{formatCurrency(cuenta.monto)}</div>
-                              {cuenta.montoPagado > 0 && (
-                                <div className="cuentaspagar-monto-detalle">
-                                  <small>Pagado: {formatCurrency(cuenta.montoPagado)}</small>
-                                  <small>Pendiente: {formatCurrency(cuenta.saldoPendiente)}</small>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td>{formasPago[cuenta.formaPago]}</td>
-                          <td>{cuenta.transaccion?.categoria?.descripcion || "-"}</td>
-                          <td>{getDiasRenovacion(cuenta.transaccion?.esquema)}</td>
-                          <td>
-                            <span className={`cuentaspagar-estatus-badge ${getEstatusClass(cuenta.estatus)}`}>
-                              {cuenta.estatus}
-                            </span>
-                          </td>
-                          <td>{cuenta.nota || "-"}</td>
-                          <td>{cuenta.sim?.numero || "-"}</td>
-                          <td>
-                            <div className="cuentaspagar-actions">
-                              {cuenta.estatus !== "Pagado" && (
+                <div className="cuentaspagar-table-container">
+                  <table className="cuentaspagar-table">
+                    <thead className="cuentaspagar-table-header-fixed">
+                      <tr>
+                        <th>Folio</th>
+                        <th>Fecha de Pago</th>
+                        <th>Cuenta</th>
+                        <th>Monto</th>
+                        <th>Forma de Pago</th>
+                        <th>Categoría</th>
+                        <th>Renovación (días)</th>
+                        <th>Estatus</th>
+                        <th>Nota</th>
+                        <th>Número de SIM</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cuentasOrdenadas.length > 0 ? (
+                        cuentasOrdenadas.map((cuenta) => (
+                          <tr key={cuenta.id}>
+                            <td>
+                              {cuenta.folio}
+                              {cuenta.sim && <span className="cuentaspagar-sim-id"> -{cuenta.sim.id}</span>}
+                            </td>
+                            <td>{cuenta.fechaPago}</td>
+                            <td>{cuenta.cuenta.nombre}</td>
+                            <td>
+                              <div className="cuentaspagar-monto-info">
+                                <div>{formatCurrency(cuenta.monto)}</div>
+                                {cuenta.montoPagado > 0 && (
+                                  <div className="cuentaspagar-monto-detalle">
+                                    <small>Pagado: {formatCurrency(cuenta.montoPagado)}</small>
+                                    <small>Pendiente: {formatCurrency(cuenta.saldoPendiente)}</small>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                            <td>{formasPago[cuenta.formaPago]}</td>
+                            <td>{cuenta.transaccion?.categoria?.descripcion || "-"}</td>
+                            <td>{getDiasRenovacion(cuenta.transaccion?.esquema)}</td>
+                            <td>
+                              <span className={`cuentaspagar-estatus-badge ${getEstatusClass(cuenta.estatus)}`}>
+                                {cuenta.estatus}
+                              </span>
+                            </td>
+                            <td>{cuenta.nota || "-"}</td>
+                            <td>{cuenta.sim?.numero || "-"}</td>
+                            <td>
+                              <div className="cuentaspagar-actions">
+                                {cuenta.estatus !== "Pagado" && (
+                                  <button
+                                    className="cuentaspagar-action-btn cuentaspagar-edit-btn"
+                                    onClick={() => openModal("editarCuenta", { cuenta })}
+                                    title="Editar cuenta"
+                                  >
+                                    <img
+                                      src={editIcon}
+                                      alt="Editar"
+                                      className="cuentaspagar-action-icon"
+                                    />
+                                  </button>
+                                )}
+                                {cuenta.estatus !== "Pagado" && (
+                                  <button
+                                    className="cuentaspagar-action-btn cuentaspagar-check-btn"
+                                    onClick={() => openModal("marcarPagada", { cuenta })}
+                                    title="Marcar como pagada"
+                                  >
+                                    <img
+                                      src={checkIcon || "/placeholder.svg"}
+                                      alt="Marcar como pagada"
+                                      className="cuentaspagar-action-icon"
+                                    />
+                                  </button>
+                                )}
                                 <button
-                                  className="cuentaspagar-action-btn cuentaspagar-edit-btn"
-                                  onClick={() => openModal("editarCuenta", { cuenta })}
-                                  title="Editar cuenta"
+                                  className="cuentaspagar-action-btn cuentaspagar-delete-btn"
+                                  onClick={() => handleDeleteCuenta(cuenta)}
+                                  title="Eliminar"
                                 >
                                   <img
-                                    src={editIcon}
-                                    alt="Editar"
+                                    src={deleteIcon || "/placeholder.svg"}
+                                    alt="Eliminar"
                                     className="cuentaspagar-action-icon"
                                   />
                                 </button>
-                              )}
-                              {cuenta.estatus !== "Pagado" && (
-                                <button
-                                  className="cuentaspagar-action-btn cuentaspagar-check-btn"
-                                  onClick={() => openModal("marcarPagada", { cuenta })}
-                                  title="Marcar como pagada"
-                                >
-                                  <img
-                                    src={checkIcon || "/placeholder.svg"}
-                                    alt="Marcar como pagada"
-                                    className="cuentaspagar-action-icon"
-                                  />
-                                </button>
-                              )}
-                              <button
-                                className="cuentaspagar-action-btn cuentaspagar-delete-btn"
-                                onClick={() => handleDeleteCuenta(cuenta)}
-                                title="Eliminar"
-                              >
-                                <img
-                                  src={deleteIcon || "/placeholder.svg"}
-                                  alt="Eliminar"
-                                  className="cuentaspagar-action-icon"
-                                />
-                              </button>
-                            </div>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="11" className="cuentaspagar-no-data">
+                            {(() => {
+                              if (filtroEstatus === "Todas" && !filtroFechas.activo) {
+                                return "No hay cuentas por pagar registradas";
+                              }
+
+                              let mensaje = "No hay cuentas por pagar";
+                              if (filtroEstatus !== "Todas") {
+                                mensaje += ` con estatus "${filtroEstatus}"`;
+                              }
+                              if (filtroFechas.activo) {
+                                mensaje += ` entre ${filtroFechas.fechaInicio} y ${filtroFechas.fechaFin}`;
+                              }
+
+                              return mensaje;
+                            })()}
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="11" className="cuentaspagar-no-data">
-                          {(() => {
-                            if (filtroEstatus === "Todas" && !filtroFechas.activo) {
-                              return "No hay cuentas por pagar registradas";
-                            }
-
-                            let mensaje = "No hay cuentas por pagar";
-                            if (filtroEstatus !== "Todas") {
-                              mensaje += ` con estatus "${filtroEstatus}"`;
-                            }
-                            if (filtroFechas.activo) {
-                              mensaje += ` entre ${filtroFechas.fechaInicio} y ${filtroFechas.fechaFin}`;
-                            }
-
-                            return mensaje;
-                          })()}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          </section>
-        </div>
+            </section>
+          </div>
 
-        <MarcarPagadaModal
-          isOpen={modals.marcarPagada.isOpen}
-          onClose={() => closeModal("marcarPagada")}
-          onSave={handleMarcarPagada}
-          cuenta={modals.marcarPagada.cuenta}
-          formasPago={formasPago}
-        />
+          <MarcarPagadaModal
+            isOpen={modals.marcarPagada.isOpen}
+            onClose={() => closeModal("marcarPagada")}
+            onSave={handleMarcarPagada}
+            cuenta={modals.marcarPagada.cuenta}
+            formasPago={formasPago}
+          />
 
-        <ConfirmarEliminacionModal
-          isOpen={modals.confirmarEliminacion.isOpen}
-          onClose={() => closeModal("confirmarEliminacion")}
-          onConfirm={handleConfirmDelete}
-          cuenta={modals.confirmarEliminacion.cuenta}
-        />
+          <ConfirmarEliminacionModal
+            isOpen={modals.confirmarEliminacion.isOpen}
+            onClose={() => closeModal("confirmarEliminacion")}
+            onConfirm={handleConfirmDelete}
+            cuenta={modals.confirmarEliminacion.cuenta}
+          />
 
-        <EditarCuentaModal
-          isOpen={modals.editarCuenta.isOpen}
-          onClose={() => closeModal("editarCuenta")}
-          onSave={handleEditarCuenta}
-          cuenta={modals.editarCuenta.cuenta}
-          formasPago={formasPago}
-        />
+          <EditarCuentaModal
+            isOpen={modals.editarCuenta.isOpen}
+            onClose={() => closeModal("editarCuenta")}
+            onSave={handleEditarCuenta}
+            cuenta={modals.editarCuenta.cuenta}
+            formasPago={formasPago}
+          />
 
-        <RegenerarModal
-          isOpen={modals.regenerar.isOpen}
-          onClose={() => closeModal("regenerar")}
-          onConfirm={handleRegenerar}
-          cuenta={modals.regenerar.cuenta}
-        />
-      </main>
+          <RegenerarModal
+            isOpen={modals.regenerar.isOpen}
+            onClose={() => closeModal("regenerar")}
+            onConfirm={handleRegenerar}
+            cuenta={modals.regenerar.cuenta}
+          />
+        </main>
       </div>
     </>
   );

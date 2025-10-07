@@ -53,6 +53,12 @@ const Calendario = () => {
     sim: null
   });
 
+  const [filtrosCategoria, setFiltrosCategoria] = useState({
+    CRM: true,
+    ADMON: true,
+    EQUIPOS: true
+  });
+
   const [equipos, setEquipos] = useState([]);
 
   const [formasPago] = useState({
@@ -113,10 +119,11 @@ const Calendario = () => {
       try {
         const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
         const data = await response.json();
+        const activeUsers = data.filter(user => user.estatus === "ACTIVO");
 
         const usersList = (userRol === "ADMINISTRADOR" || userRol === "GESTOR")
-          ? ["Todos los usuarios", ...data.map(user => user.nombre)]
-          : data.map(user => user.nombre);
+          ? ["Todos los usuarios", ...activeUsers.map(user => user.nombre)]
+          : activeUsers.map(user => user.nombre);
 
         setUsers(usersList);
 
@@ -154,6 +161,8 @@ const Calendario = () => {
         return 'evento-cuenta-cobrar';
       case 'CUENTA POR PAGAR':
         return 'evento-cuenta-pagar';
+      case 'EXPIRACIÓN DE EQUIPO':
+        return 'evento-expiracion-equipo';
       default:
         return '';
     }
@@ -194,6 +203,7 @@ const Calendario = () => {
             extendedProps: {
               id: event.id,
               tipo: event.tipo,
+              categoria: event.categoria,
               asignadoA: event.asignadoA,
               trato: event.trato,
               tratoId: event.tratoId,
@@ -206,7 +216,9 @@ const Calendario = () => {
               estado: event.estado,
               esquema: event.esquema,
               monto: event.monto,
-              nota: event.nota
+              nota: event.nota,
+              plataformaNombre: event.plataformaNombre,
+              clienteEquipo: event.clienteEquipo
             }
           }));
 
@@ -374,7 +386,9 @@ const Calendario = () => {
             estado: event.estado,
             esquema: event.esquema,
             monto: event.monto,
-            nota: event.nota
+            nota: event.nota,
+            plataformaNombre: event.plataformaNombre,
+            clienteEquipo: event.clienteEquipo
           }
         };
 
@@ -464,6 +478,12 @@ const Calendario = () => {
     }
   };
 
+  const eventosFiltrados = events.filter(evento => {
+    const categoria = evento.extendedProps?.categoria;
+    if (!categoria) return true; // Mostrar eventos sin categoría
+    return filtrosCategoria[categoria];
+  });
+
   return (
     <>
       <div className="page-with-header">
@@ -477,142 +497,247 @@ const Calendario = () => {
         <div className="ts-calendar-container">
           <div className="ts-calendar-header">
 
-            {(userRol === "ADMINISTRADOR" || userRol === "GESTOR") && (
-              <div className="ts-calendar-user-filter">
-                <select
-                  value={selectedUser || ""}
-                  onChange={handleUserChange}
-                  className="ts-calendar-select"
-                >
-                  {users.map((user) => (
-                    <option key={user} value={user}>
-                      {user}
-                    </option>
-                  ))}
-                </select>
+            <div className="ts-calendar-filters-wrapper">
+              {(userRol === "ADMINISTRADOR" || userRol === "GESTOR") && (
+                <div className="ts-calendar-user-filter">
+                  <select
+                    value={selectedUser || ""}
+                    onChange={handleUserChange}
+                    className="ts-calendar-select"
+                  >
+                    {users.map((user) => (
+                      <option key={user} value={user}>
+                        {user}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="ts-calendar-filters">
+                <label className="ts-calendar-filter-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={filtrosCategoria.CRM}
+                    onChange={(e) => setFiltrosCategoria({ ...filtrosCategoria, CRM: e.target.checked })}
+                  />
+                  <span>CRM</span>
+                </label>
+                <label className="ts-calendar-filter-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={filtrosCategoria.ADMON}
+                    onChange={(e) => setFiltrosCategoria({ ...filtrosCategoria, ADMON: e.target.checked })}
+                  />
+                  <span>ADMON</span>
+                </label>
+                <label className="ts-calendar-filter-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={filtrosCategoria.EQUIPOS}
+                    onChange={(e) => setFiltrosCategoria({ ...filtrosCategoria, EQUIPOS: e.target.checked })}
+                  />
+                  <span>EQUIPOS</span>
+                </label>
               </div>
-            )}
-            <div className="ts-calendar-header-center">
-              <div className="ts-calendar-view-buttons">
-                {["Día", "Semana", "Mes"].map((view) => {
-                  const viewMap = { "Día": "timeGridDay", "Semana": "timeGridWeek", "Mes": "dayGridMonth" };
-                  return (
-                    <button
-                      key={view}
-                      className={`ts-calendar-view-btn ${currentView === viewMap[view] ? "active" : ""}`}
-                      onClick={() => handleViewChange(view)}
-                    >
-                      {view}
-                    </button>
-                  );
-                })}
+              </div>
+
+              <div className="ts-calendar-header-center">
+                <div className="ts-calendar-view-buttons">
+                  {["Día", "Semana", "Mes"].map((view) => {
+                    const viewMap = { "Día": "timeGridDay", "Semana": "timeGridWeek", "Mes": "dayGridMonth" };
+                    return (
+                      <button
+                        key={view}
+                        className={`ts-calendar-view-btn ${currentView === viewMap[view] ? "active" : ""}`}
+                        onClick={() => handleViewChange(view)}
+                      >
+                        {view}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
 
 
 
-          <div className="ts-calendar-navigation">
-            <button className="ts-calendar-nav-btn" onClick={() => navigateDate("prev")}>
-              ‹
-            </button>
-            <h2 className="ts-calendar-title">
-              {calendarRef.current?.getApi().view.title || currentDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
-            </h2>
-            <button className="ts-calendar-nav-btn" onClick={() => navigateDate("next")}>
-              ›
-            </button>
-          </div>
+            <div className="ts-calendar-navigation">
+              <button className="ts-calendar-nav-btn" onClick={() => navigateDate("prev")}>
+                ‹
+              </button>
+              <h2 className="ts-calendar-title">
+                {calendarRef.current?.getApi().view.title || currentDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
+              </h2>
+              <button className="ts-calendar-nav-btn" onClick={() => navigateDate("next")}>
+                ›
+              </button>
+            </div>
 
-          <div className="ts-calendar-content">
-            <FullCalendar
-              ref={calendarRef}
-              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-              initialView="dayGridMonth"
-              events={events}
-              eventClick={handleEventClick}
-              height="auto"
-              contentHeight="auto"
-              selectable={true}
-              locale="es"
-              headerToolbar={false}
+            <div className="ts-calendar-content">
+              <FullCalendar
+                ref={calendarRef}
+                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                initialView="dayGridMonth"
+                events={eventosFiltrados}
+                eventClick={handleEventClick}
+                height="auto"
+                contentHeight="auto"
+                selectable={true}
+                locale="es"
+                headerToolbar={false}
 
-              slotMinTime="06:00:00"
-              slotMaxTime="22:00:00"
-              slotDuration="00:30:00"
-              expandRows={true}
-              dayMaxEvents={4}
-              dayMaxEventRows={4}
-              moreLinkClick="popover"
-              moreLinkClassNames="custom-popover-fixed"
-              moreLinkText={(num) => `+${num} more`}
-              eventDisplay="block"
-              // Para eventos superpuestos:
-              slotEventOverlap={false}
-              eventOverlap={false}
-              eventConstraint={{
-                start: '06:00',
-                end: '22:00'
-              }}
-              buttonText={{
-                today: 'Hoy',
-                month: 'Mes',
-                week: 'Semana',
-                day: 'Día',
-                list: 'Lista'
-              }}
-              dayHeaderFormat={
-                currentView === "timeGridWeek"
-                  ? { weekday: 'short', day: 'numeric' }
-                  : { weekday: 'short' }
-              }
-              allDayText="Todo el día"
-              popoverClassNames="custom-popover"
-            />
-          </div>
+                slotMinTime="06:00:00"
+                slotMaxTime="22:00:00"
+                slotDuration="00:30:00"
+                expandRows={true}
+                dayMaxEvents={4}
+                dayMaxEventRows={4}
+                moreLinkClick="popover"
+                moreLinkClassNames="custom-popover-fixed"
+                moreLinkText={(num) => `+${num} more`}
+                eventDisplay="block"
+                // Para eventos superpuestos:
+                slotEventOverlap={false}
+                eventOverlap={false}
+                eventConstraint={{
+                  start: '06:00',
+                  end: '22:00'
+                }}
+                buttonText={{
+                  today: 'Hoy',
+                  month: 'Mes',
+                  week: 'Semana',
+                  day: 'Día',
+                  list: 'Lista'
+                }}
+                dayHeaderFormat={
+                  currentView === "timeGridWeek"
+                    ? { weekday: 'short', day: 'numeric' }
+                    : { weekday: 'short' }
+                }
+                allDayText="Todo el día"
+                popoverClassNames="custom-popover"
+              />
+            </div>
 
-          {isEventModalOpen && selectedEvent && (
-            <div className="ts-calendar-modal-overlay" onClick={closeEventModal}>
-              <div className="ts-calendar-modal" onClick={(e) => e.stopPropagation()}>
-                <div className="ts-calendar-modal-header">
-                  <h3>{selectedEvent.title}</h3>
-                  <button className="ts-calendar-modal-close" onClick={closeEventModal}>
-                    ×
-                  </button>
-                </div>
-                <div className="ts-calendar-modal-content">
-                  {selectedEvent.tipo && ["REUNION", "LLAMADA", "TAREA"].includes(selectedEvent.tipo.toUpperCase()) && (
-                    <>
-                      <div className="ts-calendar-modal-field">
-                        <strong>Tipo:</strong> {selectedEvent.tipo}
-                      </div>
-                      <div className="ts-calendar-modal-field">
-                        <strong>Asignado a:</strong> {selectedEvent.asignadoA}
-                      </div>
-                      <div className="ts-calendar-modal-field">
-                        <strong>Fecha:</strong> {selectedEvent.start ? new Date(selectedEvent.start).toLocaleDateString('es-ES') : 'No disponible'}
-                      </div>
-                      {!selectedEvent.allDay && (
+            {isEventModalOpen && selectedEvent && (
+              <div className="ts-calendar-modal-overlay" onClick={closeEventModal}>
+                <div className="ts-calendar-modal" onClick={(e) => e.stopPropagation()}>
+                  <div className="ts-calendar-modal-header">
+                    <h3>{selectedEvent.title}</h3>
+                    <button className="ts-calendar-modal-close" onClick={closeEventModal}>
+                      ×
+                    </button>
+                  </div>
+                  <div className="ts-calendar-modal-content">
+                    {selectedEvent.tipo && ["REUNION", "LLAMADA", "TAREA"].includes(selectedEvent.tipo.toUpperCase()) && (
+                      <>
                         <div className="ts-calendar-modal-field">
-                          <strong>Hora:</strong>
-                          {selectedEvent.start ? new Date(selectedEvent.start).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : ''}
-                          {selectedEvent.end ? ` - ${new Date(selectedEvent.end).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}` : ''}
+                          <strong>Tipo:</strong> {selectedEvent.tipo}
                         </div>
-                      )}
-                      <div className="ts-calendar-modal-field">
-                        <strong>Modalidad:</strong> {selectedEvent.modalidad || 'No especificada'}
-                      </div>
-                      {selectedEvent.medio && (
                         <div className="ts-calendar-modal-field">
-                          <strong>Medio:</strong> {selectedEvent.medio}
+                          <strong>Asignado a:</strong> {selectedEvent.asignadoA}
                         </div>
-                      )}
-                      {selectedEvent.trato && (
                         <div className="ts-calendar-modal-field">
-                          <strong>Trato:</strong>
-                          {selectedEvent.trato ? (
+                          <strong>Fecha:</strong> {selectedEvent.start ? new Date(selectedEvent.start).toLocaleDateString('es-ES') : 'No disponible'}
+                        </div>
+                        {!selectedEvent.allDay && (
+                          <div className="ts-calendar-modal-field">
+                            <strong>Hora:</strong>
+                            {selectedEvent.start ? new Date(selectedEvent.start).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : ''}
+                            {selectedEvent.end ? ` - ${new Date(selectedEvent.end).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}` : ''}
+                          </div>
+                        )}
+                        <div className="ts-calendar-modal-field">
+                          <strong>Modalidad:</strong> {selectedEvent.modalidad || 'No especificada'}
+                        </div>
+                        {selectedEvent.medio && (
+                          <div className="ts-calendar-modal-field">
+                            <strong>Medio:</strong> {selectedEvent.medio}
+                          </div>
+                        )}
+                        {selectedEvent.trato && (
+                          <div className="ts-calendar-modal-field">
+                            <strong>Trato:</strong>
+                            {selectedEvent.trato ? (
+                              <span
+                                onClick={() => handleTratoClick(selectedEvent.tratoId)}
+                                style={{
+                                  color: '#3b82f6',
+                                  cursor: 'pointer',
+                                  textDecoration: 'underline',
+                                  marginLeft: '5px'
+                                }}
+                                onMouseOver={(e) => e.target.style.color = '#1d4ed8'}
+                                onMouseOut={(e) => e.target.style.color = '#3b82f6'}
+                              >
+                                {selectedEvent.trato}
+                              </span>
+                            ) : (
+                              <span style={{ marginLeft: '5px' }}>No especificado</span>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {selectedEvent.tipo === "Recarga" && (
+                      <>
+                        <div className="ts-calendar-modal-field">
+                          <strong>Número de SIM:</strong> {selectedEvent.numeroSim}
+                        </div>
+                        <div className="ts-calendar-modal-field">
+                          <strong>IMEI del Equipo:</strong> {selectedEvent.imei}
+                        </div>
+                        <div className="ts-calendar-modal-field">
+                          <strong>Fecha de Recarga:</strong> {new Date(selectedEvent.start).toLocaleDateString('es-ES')}
+                        </div>
+                      </>
+                    )}
+
+                    {selectedEvent.tipo === "Cuenta por Cobrar" && (
+                      <>
+                        <div className="ts-calendar-modal-field">
+                          <strong>No.:</strong> {selectedEvent.numeroCuenta}
+                        </div>
+                        <div className="ts-calendar-modal-field">
+                          <strong>Fecha de Pago:</strong> {new Date(selectedEvent.start).toLocaleDateString('es-ES')}
+                        </div>
+                        <div className="ts-calendar-modal-field">
+                          <strong>Cliente:</strong> {selectedEvent.cliente}
+                        </div>
+                        <div className="ts-calendar-modal-field">
+                          <strong>Estatus:</strong> {selectedEvent.estado}
+                        </div>
+                        <div className="ts-calendar-modal-field">
+                          <strong>Esquema:</strong> {selectedEvent.esquema}
+                        </div>
+                      </>
+                    )}
+
+                    {selectedEvent.tipo === "Cuenta por Pagar" && (
+                      <>
+                        <div className="ts-calendar-modal-field">
+                          <strong>No.:</strong> {selectedEvent.numeroCuenta}
+                        </div>
+                        <div className="ts-calendar-modal-field">
+                          <strong>Fecha de Pago:</strong> {new Date(selectedEvent.start).toLocaleDateString('es-ES')}
+                        </div>
+                        <div className="ts-calendar-modal-field">
+                          <strong>Monto:</strong> ${selectedEvent.monto ? Number(selectedEvent.monto).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : 'No disponible'}
+                        </div>
+                        <div className="ts-calendar-modal-field">
+                          <strong>Estatus:</strong> {selectedEvent.estado || 'No disponible'}
+                        </div>
+                        <div className="ts-calendar-modal-field">
+                          <strong>Cuenta:</strong> {selectedEvent.cliente}
+                        </div>
+                        {selectedEvent.numeroSim && (
+                          <div className="ts-calendar-modal-field">
+                            <strong>Número SIM:</strong>
                             <span
-                              onClick={() => handleTratoClick(selectedEvent.tratoId)}
+                              onClick={() => handleSimNumberClick(selectedEvent.numeroSim)}
                               style={{
                                 color: '#3b82f6',
                                 cursor: 'pointer',
@@ -622,141 +747,82 @@ const Calendario = () => {
                               onMouseOver={(e) => e.target.style.color = '#1d4ed8'}
                               onMouseOut={(e) => e.target.style.color = '#3b82f6'}
                             >
-                              {selectedEvent.trato}
+                              {selectedEvent.numeroSim}
                             </span>
-                          ) : (
-                            <span style={{ marginLeft: '5px' }}>No especificado</span>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {selectedEvent.tipo === "Recarga" && (
-                    <>
-                      <div className="ts-calendar-modal-field">
-                        <strong>Número de SIM:</strong> {selectedEvent.numeroSim}
-                      </div>
-                      <div className="ts-calendar-modal-field">
-                        <strong>IMEI del Equipo:</strong> {selectedEvent.imei}
-                      </div>
-                      <div className="ts-calendar-modal-field">
-                        <strong>Fecha de Recarga:</strong> {new Date(selectedEvent.start).toLocaleDateString('es-ES')}
-                      </div>
-                    </>
-                  )}
-
-                  {selectedEvent.tipo === "Cuenta por Cobrar" && (
-                    <>
-                      <div className="ts-calendar-modal-field">
-                        <strong>No.:</strong> {selectedEvent.numeroCuenta}
-                      </div>
-                      <div className="ts-calendar-modal-field">
-                        <strong>Fecha de Pago:</strong> {new Date(selectedEvent.start).toLocaleDateString('es-ES')}
-                      </div>
-                      <div className="ts-calendar-modal-field">
-                        <strong>Cliente:</strong> {selectedEvent.cliente}
-                      </div>
-                      <div className="ts-calendar-modal-field">
-                        <strong>Estatus:</strong> {selectedEvent.estado}
-                      </div>
-                      <div className="ts-calendar-modal-field">
-                        <strong>Esquema:</strong> {selectedEvent.esquema}
-                      </div>
-                    </>
-                  )}
-
-                  {selectedEvent.tipo === "Cuenta por Pagar" && (
-                    <>
-                      <div className="ts-calendar-modal-field">
-                        <strong>No.:</strong> {selectedEvent.numeroCuenta}
-                      </div>
-                      <div className="ts-calendar-modal-field">
-                        <strong>Fecha de Pago:</strong> {new Date(selectedEvent.start).toLocaleDateString('es-ES')}
-                      </div>
-                      <div className="ts-calendar-modal-field">
-                        <strong>Monto:</strong> ${selectedEvent.monto ? Number(selectedEvent.monto).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : 'No disponible'}
-                      </div>
-                      <div className="ts-calendar-modal-field">
-                        <strong>Estatus:</strong> {selectedEvent.estado || 'No disponible'}
-                      </div>
-                      <div className="ts-calendar-modal-field">
-                        <strong>Cuenta:</strong> {selectedEvent.cliente}
-                      </div>
-                      {selectedEvent.numeroSim && (
+                          </div>
+                        )}
+                        {/* Botón para marcar como pagada */}
+                        {selectedEvent.estado !== "Pagado" && (
+                          <div className="ts-calendar-modal-actions" style={{
+                            marginTop: '15px',
+                            textAlign: 'center',
+                            borderTop: '1px solid #e5e7eb',
+                            paddingTop: '15px'
+                          }}>
+                            <button
+                              className="ts-calendar-btn-pagar"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleMarcarComoPagadaDesdeCalendario(selectedEvent);
+                              }}
+                              style={{
+                                backgroundColor: '#10b981',
+                                color: 'white',
+                                border: 'none',
+                                padding: '10px 20px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                transition: 'background-color 0.2s'
+                              }}
+                              onMouseOver={(e) => e.target.style.backgroundColor = '#059669'}
+                              onMouseOut={(e) => e.target.style.backgroundColor = '#10b981'}
+                            >
+                              Marcar como Pagada
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {selectedEvent.tipo === "Expiración de Equipo" && (
+                      <>
                         <div className="ts-calendar-modal-field">
-                          <strong>Número SIM:</strong>
-                          <span
-                            onClick={() => handleSimNumberClick(selectedEvent.numeroSim)}
-                            style={{
-                              color: '#3b82f6',
-                              cursor: 'pointer',
-                              textDecoration: 'underline',
-                              marginLeft: '5px'
-                            }}
-                            onMouseOver={(e) => e.target.style.color = '#1d4ed8'}
-                            onMouseOut={(e) => e.target.style.color = '#3b82f6'}
-                          >
-                            {selectedEvent.numeroSim}
-                          </span>
+                          <strong>IMEI:</strong> {selectedEvent.imei}
                         </div>
-                      )}
-                      {/* Botón para marcar como pagada */}
-                      {selectedEvent.estado !== "Pagado" && (
-                        <div className="ts-calendar-modal-actions" style={{
-                          marginTop: '15px',
-                          textAlign: 'center',
-                          borderTop: '1px solid #e5e7eb',
-                          paddingTop: '15px'
-                        }}>
-                          <button
-                            className="ts-calendar-btn-pagar"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleMarcarComoPagadaDesdeCalendario(selectedEvent);
-                            }}
-                            style={{
-                              backgroundColor: '#10b981',
-                              color: 'white',
-                              border: 'none',
-                              padding: '10px 20px',
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              fontSize: '14px',
-                              fontWeight: '500',
-                              transition: 'background-color 0.2s'
-                            }}
-                            onMouseOver={(e) => e.target.style.backgroundColor = '#059669'}
-                            onMouseOut={(e) => e.target.style.backgroundColor = '#10b981'}
-                          >
-                            Marcar como Pagada
-                          </button>
+                        <div className="ts-calendar-modal-field">
+                          <strong>Fecha de Expiración:</strong> {new Date(selectedEvent.start).toLocaleDateString('es-ES')}
                         </div>
-                      )}
-                    </>
-                  )}
+                        <div className="ts-calendar-modal-field">
+                          <strong>Plataforma:</strong> {selectedEvent.plataformaNombre}
+                        </div>
+                        <div className="ts-calendar-modal-field">
+                          <strong>Cliente:</strong> {selectedEvent.clienteEquipo}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+          <MarcarPagadaModal
+            isOpen={modalMarcarPagada.isOpen}
+            onClose={closeModalMarcarPagada}
+            onSave={handleSaveMarcarPagada}
+            cuenta={modalMarcarPagada.cuenta}
+            formasPago={formasPago}
+          />
+          <SimDetailsModal
+            isOpen={simDetailsModal.isOpen}
+            onClose={closeSimDetailsModal}
+            sim={simDetailsModal.sim}
+            equipos={equipos}
+          />
         </div>
-        <MarcarPagadaModal
-          isOpen={modalMarcarPagada.isOpen}
-          onClose={closeModalMarcarPagada}
-          onSave={handleSaveMarcarPagada}
-          cuenta={modalMarcarPagada.cuenta}
-          formasPago={formasPago}
-        />
-        <SimDetailsModal
-          isOpen={simDetailsModal.isOpen}
-          onClose={closeSimDetailsModal}
-          sim={simDetailsModal.sim}
-          equipos={equipos}
-        />
-      </div>
-    </>
-  );
+      </>
+      );
 };
 
-export default Calendario;
+      export default Calendario;

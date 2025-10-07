@@ -89,48 +89,50 @@ const EquiposCreditosPlataforma = () => {
 
   // Datos para la gráfica de saldos
   const generateChartData = () => {
-  if (!creditosData.historialSaldos || creditosData.historialSaldos.length === 0) {
-    return {
-      labels: [],
-      datasets: []
+    if (!creditosData.historialSaldos || creditosData.historialSaldos.length === 0) {
+      return {
+        labels: [],
+        datasets: []
+      }
     }
-  }
 
-  // Crear datasets dinámicamente basado en las plataformas disponibles
-  const dataByDate = {}
-  const plataformasEnHistorial = new Set()
-  
-  creditosData.historialSaldos.forEach(item => {
-    const fecha = item.fecha
-    if (!dataByDate[fecha]) {
-      dataByDate[fecha] = {}
+    // Crear datasets dinámicamente basado en las plataformas disponibles
+    const dataByDate = {}
+    const plataformasEnHistorial = new Set()
+
+    creditosData.historialSaldos.forEach(item => {
+      const fecha = item.fecha
+      if (!dataByDate[fecha]) {
+        dataByDate[fecha] = {}
+      }
+      dataByDate[fecha][item.plataforma] = item.saldo
+      plataformasEnHistorial.add(item.plataforma)
+    })
+
+    const labels = Object.keys(dataByDate).sort()
+
+    // Colores para cada plataforma
+    const colores = {
+      'TRACK_SOLID': '#6366f1',
+      'WHATSGPS_ANUAL': '#10b981',
+      'WHATSGPS_VITALICIA': '#55d471',
+      'TRACKERKING': '#ef4444',
+      'JOINTCLOUD': '#8b5cf6',
+      'FULLTRACK': '#f97316',
+      'F_BASIC': '#facc15'
     }
-    dataByDate[fecha][item.plataforma] = item.saldo
-    plataformasEnHistorial.add(item.plataforma)
-  })
 
-  const labels = Object.keys(dataByDate).sort()
+    const datasets = Array.from(plataformasEnHistorial).map(plataforma => ({
+      label: plataforma.replace('_', ' '),
+      data: labels.map(fecha => dataByDate[fecha][plataforma] || 0),
+      borderColor: colores[plataforma] || '#6b7280',
+      backgroundColor: `${colores[plataforma] || '#6b7280'}20`,
+      tension: 0.4,
+      fill: true,
+    }))
 
-  // Colores para cada plataforma
-  const colores = {
-    'TRACK_SOLID': '#6366f1',
-    'WHATSGPS_ANUAL': '#10b981',
-    'WHATSGPS_VITALICIA': '#f59e0b',
-    'TRACKERKING': '#ef4444',
-    'JOINTCLOUD': '#8b5cf6'
+    return { labels, datasets }
   }
-
-  const datasets = Array.from(plataformasEnHistorial).map(plataforma => ({
-    label: plataforma.replace('_', ' '),
-    data: labels.map(fecha => dataByDate[fecha][plataforma] || 0),
-    borderColor: colores[plataforma] || '#6b7280',
-    backgroundColor: `${colores[plataforma] || '#6b7280'}20`,
-    tension: 0.4,
-    fill: true,
-  }))
-
-  return { labels, datasets }
-}
 
   const saldosChartOptions = {
     responsive: true,
@@ -335,6 +337,36 @@ const EquiposCreditosPlataforma = () => {
                     </div>
                   </div>
 
+                  <div className="creditosplataforma-saldo-card creditosplataforma-saldo-licencias">
+                    <div className="creditosplataforma-saldo-content">
+                      <h4 className="creditosplataforma-saldo-title">Licencias</h4>
+                      <div className="creditosplataforma-subtipos">
+                        <div className="creditosplataforma-subtipo">
+                          <div>
+                            <strong style={{ fontSize: '0.95em' }}>Fulltrack</strong>
+                            <div style={{ fontSize: '0.75em', marginTop: '2px', lineHeight: '1.4' }}>
+                              <div>Ocupadas: {creditosData.saldosPorPlataforma?.FULLTRACK_OCUPADAS || 0}</div>
+                              <div>Disponibles: {creditosData.saldosPorPlataforma?.FULLTRACK_DISPONIBLES || 0}</div>
+                              <div>Total: {creditosData.saldosPorPlataforma?.FULLTRACK_TOTAL || 0}</div>
+                            </div>
+                          </div>
+                          <span className="creditosplataforma-saldo-icon">📍</span>
+                        </div>
+                        <div className="creditosplataforma-subtipo">
+                          <div>
+                            <strong style={{ fontSize: '0.95em' }}>F/Basic</strong>
+                            <div style={{ fontSize: '0.75em', marginTop: '2px', lineHeight: '1.4' }}>
+                              <div>Ocupadas: {creditosData.saldosPorPlataforma?.F_BASIC_OCUPADAS || 0}</div>
+                              <div>Disponibles: {creditosData.saldosPorPlataforma?.F_BASIC_DISPONIBLES || 0}</div>
+                              <div>Total: {creditosData.saldosPorPlataforma?.F_BASIC_TOTAL || 0}</div>
+                            </div>
+                          </div>
+                          <span className="creditosplataforma-saldo-icon">📍</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="creditosplataforma-saldo-card creditosplataforma-saldo-whats-gps">
                     <div className="creditosplataforma-saldo-content">
                       <h4 className="creditosplataforma-saldo-title">WhatsGPS</h4>
@@ -422,10 +454,10 @@ const EquiposCreditosPlataforma = () => {
                                 <td>{registro.concepto.replace('_', ' ')}</td>
                                 <td>{registro.equipoNombre || registro.nota || '-'}</td>
                                 <td className={registro.tipo === 'CARGO' ? "creditosplataforma-cargo" : ""}>
-                                  {registro.tipo === 'CARGO' ? `$${registro.monto}` : ''}
+                                  {registro.tipo === 'CARGO' ? registro.monto : ''}
                                 </td>
                                 <td className={registro.tipo === 'ABONO' ? "creditosplataforma-abono" : ""}>
-                                  {registro.tipo === 'ABONO' ? `$${registro.monto}` : ''}
+                                  {registro.tipo === 'ABONO' ? registro.monto : ''}
                                 </td>
                               </tr>
                             ))}

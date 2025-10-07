@@ -461,6 +461,17 @@
   font-size: 1.5rem; 
 }
 
+.creditosplataforma-saldo-licencias {
+  background: linear-gradient(135deg, #f0af37d2 0%, #f1f51eff 100%);
+}
+
+.creditosplataforma-saldos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
 .spinner {
    border: 4px solid rgba(0, 0, 0, 0.1);
   border-left-color: #9c16f7;
@@ -591,9 +602,10 @@
   font-size: 1.4rem; 
   opacity: 0.9;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px; 
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: flex-start;
+  gap: 20px; 
   width: 100%;
 }
 

@@ -2,8 +2,8 @@
 .ts-calendar-container {
   padding: 20px;
   background-color: #f8fafc;
-  min-height: calc(100vh - 70px); 
-  margin-top: 0; 
+  min-height: calc(100vh - 70px);
+  margin-top: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -36,14 +36,6 @@
 }
 
 /* Filtro de usuarios */
-.ts-calendar-user-filter {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  width: 100%;
-  z-index: 1;
-}
-
 .ts-calendar-select {
   padding: 8px 12px;
   border: 1px solid #d1d5db;
@@ -395,6 +387,105 @@
   text-decoration: underline;
 }
 
+.evento-expiracion-equipo {
+  background-color: #facc15 !important;
+  border-left: 4px solid #eab308 !important;
+  color: #713f12 !important;
+}
+
+.ts-calendar-filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  user-select: none;
+}
+
+.ts-calendar-filter-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
+.ts-calendar-filter-checkbox:hover {
+  color: #1f2937;
+}
+
+.ts-calendar-filter-checkbox span {
+  padding: 2px 0;
+}
+
+.ts-calendar-filters-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+/* Filtro de usuarios */
+.ts-calendar-user-filter {
+  display: flex;
+  align-items: center;
+  min-width: 220px;
+  flex-shrink: 0;
+}
+
+/* Contenedor de checkboxes */
+.ts-calendar-filters {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-left: 20px;
+  border-left: 2px solid #e5e7eb;
+}
+
+/* Estilos de cada checkbox */
+.ts-calendar-filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  user-select: none;
+  transition: all 0.2s ease;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.ts-calendar-filter-checkbox:hover {
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+.ts-calendar-filter-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.ts-calendar-filter-checkbox input[type="checkbox"]:hover {
+  transform: scale(1.1);
+}
+
+.ts-calendar-filter-checkbox input[type="checkbox"]:checked {
+  accent-color: #2563eb;
+}
+
+.ts-calendar-filter-checkbox span {
+  padding: 2px 0;
+}
+
 /* Responsivo */
 @media (max-width: 768px) {
   .ts-calendar-container {
@@ -466,6 +557,27 @@
     padding: 1px 4px !important;
     min-height: 14px !important;
   }
+
+  .ts-calendar-filters-wrapper {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .ts-calendar-user-filter {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .ts-calendar-filters {
+    width: 100%;
+    border-left: none;
+    border-top: 2px solid #e5e7eb;
+    padding-left: 0;
+    padding-top: 12px;
+    gap: 12px;
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 480px) {
@@ -526,6 +638,24 @@
     padding: 1px 3px !important;
     min-height: 12px !important;
   }
+
+  .ts-calendar-filters-wrapper {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ts-calendar-filters {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding-left: 0;
+    padding-top: 10px;
+  }
+
+  .ts-calendar-filter-checkbox {
+    width: 100%;
+    padding: 8px 10px;
+  }
 }
 
 .calendario-loading {
@@ -558,6 +688,7 @@
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -635,7 +766,7 @@
     width: 90vw !important;
     max-width: none !important;
   }
-  
+
   .fc-popover-body {
     max-height: calc(60vh - 60px) !important;
   }
@@ -646,7 +777,7 @@
     max-height: 70vh !important;
     width: 95vw !important;
   }
-  
+
   .fc-popover-body {
     max-height: calc(70vh - 60px) !important;
   }

@@ -368,24 +368,25 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
           </select>
         </div>
 
-        {formData.estatus === "ACTIVO" && (
-          <div className="inventario-form-group">
-            <label htmlFor="creditosUsados" className="inventario-form-label">
-              Créditos usados <span className="required"> *</span>
-            </label>
-            <input
-              type="number"
-              id="creditosUsados"
-              name="creditosUsados"
-              value={formData.creditosUsados}
-              onChange={handleInputChange}
-              className="inventario-form-control"
-              placeholder="Número de créditos usados"
-              min="0"
-            />
-          </div>
-        )}
-
+        {formData.estatus === "ACTIVO" &&
+          formData.plataforma &&
+          (formData.plataforma === "1" || formData.plataforma === "2") && (
+            <div className="inventario-form-group">
+              <label htmlFor="creditosUsados" className="inventario-form-label">
+                Créditos usados <span className="required"> *</span>
+              </label>
+              <input
+                type="number"
+                id="creditosUsados"
+                name="creditosUsados"
+                value={formData.creditosUsados}
+                onChange={handleInputChange}
+                className="inventario-form-control"
+                placeholder="Número de créditos usados"
+                min="0"
+              />
+            </div>
+          )}
 
         <div className="inventario-form-actions">
           <button type="button" onClick={onClose} className="inventario-btn inventario-btn-cancel">Cancelar</button>
@@ -943,7 +944,7 @@ const EquiposInventario = () => {
                             </td>
                             <td>{equipo.simReferenciada ? sims.find(s => s.id === equipo.simReferenciada.id)?.numero : "N/A"}</td>
                             <td>{equipo.creditosUsados || 0}</td>
-                             <td>
+                            <td>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <span>{formatDate(equipo.fechaExpiracion)}</span>
                                 {getDaysUntilExpiration(equipo) && (
