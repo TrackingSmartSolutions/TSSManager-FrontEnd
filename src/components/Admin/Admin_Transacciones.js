@@ -1278,46 +1278,38 @@ const AdminTransacciones = () => {
                     </thead>
                     <tbody>
                       {transaccionesFiltradas.length > 0 ? (
-                        transaccionesFiltradas.map((transaccion) => {
-                          console.log(`ID: ${transaccion.id} | fecha: ${transaccion.fecha} | fechaPago: ${transaccion.fechaPago}`);
-
-                          return (
-                            <tr key={transaccion.id}>
-                              <td>
-                                {transaccion.fechaPago}
-                                <div style={{ fontSize: '10px', color: 'red', marginTop: '2px' }}>
-                                  fecha: {transaccion.fecha}<br />
-                                  fechaPago: {transaccion.fechaPago}
-                                </div>
-                              </td>
-                              <td>
-                                <span className={`transacciones-tipo-badge ${transaccion.tipo.toLowerCase()}`}>
-                                  {transaccion.tipo}
-                                </span>
-                              </td>
-                              <td>{transaccion.categoria?.descripcion || 'N/A'}</td>
-                              <td>{transaccion.cuenta?.nombre || 'N/A'}</td>
-                              <td>${transaccion.monto.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
-                              <td>
-                                {formasPago.find((fp) => fp.value === transaccion.formaPago)?.label || transaccion.formaPago}
-                              </td>
-                              <td>{transaccion.notas || "-"}</td>
-                              <td>
-                                <button
-                                  className="transacciones-action-btn transacciones-delete-btn"
-                                  onClick={() => handleDeleteTransaccion(transaccion)}
-                                  title="Eliminar"
-                                >
-                                  <img
-                                    src={deleteIcon || "/placeholder.svg"}
-                                    alt="Eliminar"
-                                    className="transacciones-action-icon"
-                                  />
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })
+                        transaccionesFiltradas.map((transaccion) => (
+                          <tr key={transaccion.id}>
+                            <td>
+                              {transaccion.fechaPago}
+                            </td>
+                            <td>
+                              <span className={`transacciones-tipo-badge ${transaccion.tipo.toLowerCase()}`}>
+                                {transaccion.tipo}
+                              </span>
+                            </td>
+                            <td>{transaccion.categoria?.descripcion || 'N/A'}</td>
+                            <td>{transaccion.cuenta?.nombre || 'N/A'}</td>
+                            <td>${transaccion.monto.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
+                            <td>
+                              {formasPago.find((fp) => fp.value === transaccion.formaPago)?.label || transaccion.formaPago}
+                            </td>
+                            <td>{transaccion.notas || "-"}</td>
+                            <td>
+                              <button
+                                className="transacciones-action-btn transacciones-delete-btn"
+                                onClick={() => handleDeleteTransaccion(transaccion)}
+                                title="Eliminar"
+                              >
+                                <img
+                                  src={deleteIcon || "/placeholder.svg"}
+                                  alt="Eliminar"
+                                  className="transacciones-action-icon"
+                                />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
                       ) : (
                         <tr>
                           <td colSpan="8" className="transacciones-no-data">
