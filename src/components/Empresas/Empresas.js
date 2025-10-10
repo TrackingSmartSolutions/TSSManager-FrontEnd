@@ -1568,25 +1568,26 @@ const Empresas = () => {
         setContacts([])
         return
       }
-       const empresaIdActual = selectedCompany.id;
+      const empresaIdActual = selectedCompany.id;
+      setContacts([])
       try {
         const response = await fetchWithToken(`${API_BASE_URL}/empresas/${empresaIdActual}/contactos`)
         if (!response.ok) throw new Error("Error al cargar los contactos")
         const contactsData = await response.json()
 
         if (selectedCompany?.id === empresaIdActual) {
-        const normalizedContacts = contactsData.map((contact) => ({
-          ...contact,
-          correos: contact.correos || [],
-          telefonos: contact.telefonos || [],
-        }))
-        setContacts(normalizedContacts)
-      }
+          const normalizedContacts = contactsData.map((contact) => ({
+            ...contact,
+            correos: contact.correos || [],
+            telefonos: contact.telefonos || [],
+          }))
+          setContacts(normalizedContacts)
+        }
       } catch (error) {
         console.error("Error al cargar contactos:", error)
-         if (selectedCompany?.id === empresaIdActual) {
-        setContacts([])
-      }
+        if (selectedCompany?.id === empresaIdActual) {
+          setContacts([])
+        }
         Swal.fire({
           icon: "error",
           title: "Error",
@@ -1602,16 +1603,22 @@ const Empresas = () => {
   useEffect(() => {
     const fetchTratos = async () => {
       if (!selectedCompany?.id) return;
-
+      const empresaIdActual = selectedCompany.id;
+      setTratos([]);
       try {
         const response = await fetchWithToken(
-          `${API_BASE_URL}/tratos/filtrar?empresaId=${selectedCompany.id}`
+          `${API_BASE_URL}/tratos/filtrar?empresaId=${empresaIdActual}`
         );
         if (!response.ok) throw new Error("Error al cargar los tratos");
         const data = await response.json();
+          if (selectedCompany?.id === empresaIdActual) {
         setTratos(data);
+      }
       } catch (error) {
         console.error("Error al cargar tratos:", error);
+         if (selectedCompany?.id === empresaIdActual) {
+        setTratos([]);
+      }
         Swal.fire({
           icon: "error",
           title: "Error",
