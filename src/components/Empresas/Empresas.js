@@ -1544,6 +1544,7 @@ const Empresas = () => {
       const empresaFromUrl = companies.find(company => company.id === parseInt(params.empresaId));
       if (empresaFromUrl) {
         setContacts([]);
+        setTratos([]);
         if (!selectedCompany || selectedCompany.id !== empresaFromUrl.id) {
           setSelectedCompany(empresaFromUrl);
         }
@@ -1556,6 +1557,8 @@ const Empresas = () => {
         navigate('/empresas', { replace: true });
       }
     } else if (!params.empresaId && companies.length > 0 && !selectedCompany) {
+      setContacts([]);
+      setTratos([]);
       setSelectedCompany(companies[0]);
       navigate(`/empresas/${companies[0].id}`, { replace: true });
     }
@@ -1575,7 +1578,8 @@ const Empresas = () => {
         if (!response.ok) throw new Error("Error al cargar los contactos")
         const contactsData = await response.json()
 
-        if (selectedCompany?.id === empresaIdActual) {
+        if (selectedCompany?.id === empresaIdActual &&
+          parseInt(params.empresaId) === empresaIdActual) {
           const normalizedContacts = contactsData.map((contact) => ({
             ...contact,
             correos: contact.correos || [],
@@ -1597,7 +1601,7 @@ const Empresas = () => {
     }
 
     fetchContacts()
-  }, [selectedCompany?.id])
+  }, [selectedCompany?.id, params.empresaId])
 
 
   useEffect(() => {
@@ -1611,14 +1615,15 @@ const Empresas = () => {
         );
         if (!response.ok) throw new Error("Error al cargar los tratos");
         const data = await response.json();
-          if (selectedCompany?.id === empresaIdActual) {
-        setTratos(data);
-      }
+        if (selectedCompany?.id === empresaIdActual &&
+          parseInt(params.empresaId) === empresaIdActual) {
+          setTratos(data);
+        }
       } catch (error) {
         console.error("Error al cargar tratos:", error);
-         if (selectedCompany?.id === empresaIdActual) {
-        setTratos([]);
-      }
+        if (selectedCompany?.id === empresaIdActual) {
+          setTratos([]);
+        }
         Swal.fire({
           icon: "error",
           title: "Error",
@@ -1628,7 +1633,7 @@ const Empresas = () => {
     };
 
     fetchTratos();
-  }, [selectedCompany?.id]);
+  }, [selectedCompany?.id, params.empresaId]);
 
   useEffect(() => {
     if (companies.length > 0) {
