@@ -112,7 +112,6 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
       newErrors.formaPago = "La forma de pago es obligatoria";
     }
 
-    // Validar cantidad de créditos si es cuenta de créditos plataforma
     if (esCuentaCreditos) {
       const cantidadCreditos = parseFloat(formData.cantidadCreditos);
       if (!formData.cantidadCreditos || cantidadCreditos <= 0) {
@@ -132,6 +131,7 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
         montoPago: parseFloat(formData.montoPago),
         formaPago: formData.formaPago,
         cantidadCreditos: esCuentaCreditos ? parseFloat(formData.cantidadCreditos) : null,
+        fechaPago: cuenta.fechaPago,
       };
       await onSave(cuentaActualizada);
       onClose();
@@ -143,7 +143,6 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Registrar Pago" size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="cuentaspagar-form">
-
         {/* Mostrar información de la cuenta */}
         <div className="cuentaspagar-info-section">
           <div className="cuentaspagar-info-item">
@@ -166,6 +165,10 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
               <span>{cuenta.transaccion?.cuenta?.nombre}</span>
             </div>
           )}
+          <div className="cuentaspagar-info-item">
+            <label>Fecha de Pago:</label>
+            <span>{cuenta?.fechaPago || "-"}</span> 
+          </div>
         </div>
 
         <div className="cuentaspagar-form-group">
