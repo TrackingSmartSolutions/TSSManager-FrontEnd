@@ -1540,64 +1540,70 @@ const Empresas = () => {
   }, [])
 
   useEffect(() => {
-    if (params.empresaId && companies.length > 0) {
-      const empresaFromUrl = companies.find(company => company.id === parseInt(params.empresaId));
-      if (empresaFromUrl) {
-        if (!selectedCompany || selectedCompany.id !== empresaFromUrl.id) {
-          setSelectedCompany(empresaFromUrl);
-          setContacts([]);
-          setTratos([]);
-        }
-      } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'Empresa no encontrada',
-          text: 'La empresa solicitada no existe o no tienes permisos para verla',
-        });
-        navigate('/empresas', { replace: true });
-      }
-    } else if (!params.empresaId && companies.length > 0 && !selectedCompany) {
-      setSelectedCompany(companies[0]);
-      navigate(`/empresas/${companies[0].id}`, { replace: true });
+    if (!params.empresaId) return;
+    const empresaFromUrl = companies.find(
+      company => company.id === parseInt(params.empresaId)
+    );
+    if (!empresaFromUrl) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Empresa no encontrada',
+        text: 'La empresa solicitada no existe o no tienes permisos para verla',
+      });
+      navigate('/empresas', { replace: true });
+      return;
     }
-  }, [params.empresaId, companies.length]);
 
+    if (!selectedCompany || selectedCompany.id !== empresaFromUrl.id) {
+      setSelectedCompany(empresaFromUrl);
+      setContacts([]);
+      setTratos([]);
+    }
+  }, [params.empresaId, companies]);
 
   useEffect(() => {
     const fetchContacts = async () => {
       if (!selectedCompany?.id) {
-        setContacts([])
-        return
+        setContacts([]);
+        return;
       }
+
       const empresaIdActual = selectedCompany.id;
+
       try {
-        const response = await fetchWithToken(`${API_BASE_URL}/empresas/${empresaIdActual}/contactos`)
-        if (!response.ok) throw new Error("Error al cargar los contactos")
-        const contactsData = await response.json()
+        const response = await fetchWithToken(
+          `${API_BASE_URL}/empresas/${empresaIdActual}/contactos`
+        );
+
+        if (!response.ok) throw new Error("Error al cargar los contactos");
+
+        const contactsData = await response.json();
 
         if (selectedCompany?.id === empresaIdActual) {
-          const normalizedContacts = contactsData.map((contact) => ({
+          const normalizedContacts = (contactsData || []).map((contact) => ({
             ...contact,
             correos: contact.correos || [],
             telefonos: contact.telefonos || [],
-          }))
-          setContacts(normalizedContacts)
+          }));
+          setContacts(normalizedContacts);
         }
       } catch (error) {
-        console.error("Error al cargar contactos:", error)
+        console.error("Error al cargar contactos:", error);
+
         if (selectedCompany?.id === empresaIdActual) {
-          setContacts([])
+          setContacts([]);
         }
+
         Swal.fire({
           icon: "error",
           title: "Error",
           text: error.message,
-        })
+        });
       }
-    }
+    };
 
-    fetchContacts()
-  }, [selectedCompany?.id])
+    fetchContacts();
+  }, [selectedCompany?.id]);
 
 
   useEffect(() => {
@@ -1606,22 +1612,28 @@ const Empresas = () => {
         setTratos([]);
         return;
       }
+
       const empresaIdActual = selectedCompany.id;
+
       try {
         const response = await fetchWithToken(
           `${API_BASE_URL}/tratos/filtrar?empresaId=${empresaIdActual}`
         );
+
         if (!response.ok) throw new Error("Error al cargar los tratos");
+
         const data = await response.json();
 
         if (selectedCompany?.id === empresaIdActual) {
-          setTratos(data);
+          setTratos(data || []);
         }
       } catch (error) {
         console.error("Error al cargar tratos:", error);
+
         if (selectedCompany?.id === empresaIdActual) {
           setTratos([]);
         }
+
         Swal.fire({
           icon: "error",
           title: "Error",
@@ -1647,6 +1659,8 @@ const Empresas = () => {
   })
 
   const handleCompanySelect = (company) => {
+    setContacts([]);
+    setTratos([]);
     setSelectedCompany(company);
     navigate(`/empresas/${company.id}`, { replace: true });
   };

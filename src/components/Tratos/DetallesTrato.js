@@ -3857,6 +3857,7 @@ const DetallesTrato = () => {
       }));
     }
   };
+
   const closeModal = (modalType) => {
     setModals((prev) => ({
       ...prev,
@@ -3868,6 +3869,40 @@ const DetallesTrato = () => {
       },
     }))
   }
+
+  useEffect(() => {
+    return () => {
+      setTrato({
+        nombre: "",
+        contacto: {
+          nombre: "",
+          telefonos: [],
+          correos: [],
+          whatsapp: ""
+        },
+        propietario: "",
+        numeroTrato: "",
+        nombreEmpresa: "",
+        empresaId: "",
+        descripcion: "",
+        domicilio: "",
+        ingresosEsperados: "",
+        sitioWeb: "",
+        sector: "",
+        fechaCreacion: "",
+        fechaCierre: "",
+        fases: [],
+        actividadesAbiertas: { tareas: [], llamadas: [], reuniones: [] },
+        historialInteracciones: [],
+        notas: [],
+      });
+      setLoading(true);
+      setEmailRecords([]);
+      setNuevaNota("");
+      setEditingNoteId(null);
+      setEditingNoteText("");
+    };
+  }, []);
 
   // Función para obtener el estado actual de los correos de seguimiento
   const obtenerEstadoCorreosSeguimiento = async (tratoId) => {
@@ -3887,8 +3922,8 @@ const DetallesTrato = () => {
   // Función para activar/desactivar correos de seguimiento
   const toggleCorreosSeguimiento = async (tratoId, activar) => {
     if (activar) {
-      if (!trato.contacto?.correos || trato.contacto.correos.length === 0 || 
-    !trato.contacto.correos.some(c => c.correo && c.correo.trim() !== '')) {
+      if (!trato.contacto?.correos || trato.contacto.correos.length === 0 ||
+        !trato.contacto.correos.some(c => c.correo && c.correo.trim() !== '')) {
         // Revertir el estado del checkbox
         setCorreosSeguimientoActivo(false);
 
@@ -4261,27 +4296,41 @@ const DetallesTrato = () => {
   useEffect(() => {
     const loadTrato = async () => {
       setLoading(true);
+
       try {
-        // Cargar datos básicos primero
+        // Validar que params.id es válido
+        if (!params.id) {
+          throw new Error("ID de trato no proporcionado");
+        }
+
+        // Cargar datos básicos
         const tratoData = await fetchTrato(params.id);
+
+        if (!tratoData) {
+          throw new Error("No se encontraron datos del trato");
+        }
+
         const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
         const usersData = await usersResponse.json();
         const companiesResponse = await fetchWithToken(`${API_BASE_URL}/empresas`);
         const companiesData = await companiesResponse.json();
-
 
         const users = usersData.map((user) => ({
           id: user.id,
           nombre: user.nombreUsuario,
           nombreReal: user.nombre
         }));
+
         setUsers(users);
         setCompanies(companiesData || []);
 
         const propietarioUser = users.find((user) => user.id === tratoData.propietarioId);
-        const propietarioNombre = propietarioUser ? propietarioUser.nombreReal : tratoData.propietarioNombre || "";
+        const propietarioNombre = propietarioUser
+          ? propietarioUser.nombreReal
+          : tratoData.propietarioNombre || "";
 
-        setTrato({
+        // Establecer el trato con datos limpios
+        const newTratoState = {
           id: tratoData.id || "",
           nombre: tratoData.nombre || "",
           contacto: {
@@ -4291,104 +4340,124 @@ const DetallesTrato = () => {
             whatsapp: tratoData.contacto?.whatsapp || ""
           },
           propietario: propietarioNombre,
+          propietarioId: tratoData.propietarioId,
           numeroTrato: tratoData.noTrato || "",
           nombreEmpresa: tratoData.empresaNombre || "",
           empresaId: tratoData.empresaId || "",
           descripcion: tratoData.descripcion || "",
           domicilio: tratoData.domicilio || "",
-          ingresosEsperados: tratoData.ingresosEsperados ? `$${tratoData.ingresosEsperados.toFixed(2)}` : "",
+          ingresosEsperados: tratoData.ingresosEsperados
+            ? `$${tratoData.ingresosEsperados.toFixed(2)}`
+            : "",
           numeroUnidades: tratoData.numeroUnidades || "",
           sitioWeb: tratoData.sitioWeb || "",
           sector: tratoData.sectorNombre || tratoData.sector || "",
           sectorNombre: tratoData.sectorNombre || "",
-          fechaCreacion: tratoData.fechaCreacion ? new Date(tratoData.fechaCreacion).toLocaleDateString() : "",
-          fechaCierre: tratoData.fechaCierre ? new Date(tratoData.fechaCierre).toLocaleDateString() : "",
+          fechaCreacion: tratoData.fechaCreacion
+            ? new Date(tratoData.fechaCreacion).toLocaleDateString()
+            : "",
+          fechaCierre: tratoData.fechaCierre
+            ? new Date(tratoData.fechaCierre).toLocaleDateString()
+            : "",
           fase: tratoData.fase || "",
           fases: tratoData.fases || [],
           actividadesAbiertas: { tareas: [], llamadas: [], reuniones: [] },
           historialInteracciones: [],
           notas: [],
-        });
+        };
 
+        setTrato(newTratoState);
         setLoading(false);
 
         // Cargar datos secundarios de forma asíncrona
-        loadSecondaryData(tratoData, users);
+        await loadSecondaryData(tratoData, users);
 
       } catch (error) {
         console.error("Error fetching trato:", error);
         setLoading(false);
         Swal.fire({
           title: "Error",
-          text: "No se pudo cargar el trato",
+          text: error.message || "No se pudo cargar el trato",
           icon: "error",
         });
       }
     };
 
-    const loadSecondaryData = async (tratoData, users) => {
+    loadTrato();
+  }, [params.id]);
+
+  const loadSecondaryData = async (tratoData, users) => {
+    try {
+      const currentTratoId = params.id;
+
+      if (!currentTratoId) return;
+
       try {
-        // Solo cargar emails del trato
-        const emailData = await fetchWithToken(`${API_BASE_URL}/correos/trato/${params.id}`)
+        const emailData = await fetchWithToken(`${API_BASE_URL}/correos/trato/${currentTratoId}`)
           .then(res => res.status === 204 ? [] : res.json())
           .catch(() => []);
 
         setEmailRecords(Array.isArray(emailData) ? emailData : []);
+      } catch (error) {
+        console.warn("Error loading emails:", error);
+        setEmailRecords([]);
+      }
 
-        // Solo cargar contactos si hay actividades que los necesiten
-        const allActividades = [
-          ...(tratoData.actividadesAbiertas?.tareas || []),
-          ...(tratoData.actividadesAbiertas?.llamadas || []),
-          ...(tratoData.actividadesAbiertas?.reuniones || [])
-        ];
+      const allActividades = [
+        ...(tratoData.actividadesAbiertas?.tareas || []),
+        ...(tratoData.actividadesAbiertas?.llamadas || []),
+        ...(tratoData.actividadesAbiertas?.reuniones || [])
+      ];
 
-        // Obtener IDs únicos de contactos necesarios
-        const contactosNeeded = new Set();
-        allActividades.forEach(actividad => {
-          if (actividad.contactoId) {
-            contactosNeeded.add(actividad.contactoId);
-          }
-        });
+      const contactosNeeded = new Set();
+      allActividades.forEach(actividad => {
+        if (actividad.contactoId) {
+          contactosNeeded.add(actividad.contactoId);
+        }
+      });
 
-        // Solo cargar los contactos específicos que necesitamos
-        const contactosMap = new Map();
-        if (contactosNeeded.size > 0) {
-          for (const contactoId of contactosNeeded) {
-            try {
-              const contactoResponse = await fetchWithToken(`${API_BASE_URL}/contactos/${contactoId}`);
-              const contactoData = await contactoResponse.json();
-              contactosMap.set(contactoId, contactoData);
-            } catch (error) {
-              console.warn(`No se pudo cargar contacto ${contactoId}`);
-            }
+      const contactosMap = new Map();
+      if (contactosNeeded.size > 0) {
+        for (const contactoId of contactosNeeded) {
+          try {
+            const contactoResponse = await fetchWithToken(
+              `${API_BASE_URL}/contactos/${contactoId}`
+            );
+            const contactoData = await contactoResponse.json();
+            contactosMap.set(contactoId, contactoData);
+          } catch (error) {
+            console.warn(`No se pudo cargar contacto ${contactoId}`);
           }
         }
+      }
 
-        // Función optimizada para mapear actividades
-        const mapActividad = (actividad) => {
-          let nombreContacto = "Sin contacto";
-          if (actividad.contactoId && contactosMap.has(actividad.contactoId)) {
-            nombreContacto = contactosMap.get(actividad.contactoId).nombre;
-          } else if (tratoData.contacto?.nombre) {
-            nombreContacto = tratoData.contacto.nombre;
-          }
+      const mapActividad = (actividad) => {
+        let nombreContacto = "Sin contacto";
+        if (actividad.contactoId && contactosMap.has(actividad.contactoId)) {
+          nombreContacto = contactosMap.get(actividad.contactoId).nombre;
+        } else if (tratoData.contacto?.nombre) {
+          nombreContacto = tratoData.contacto.nombre;
+        }
 
-          return {
-            ...actividad,
-            nombreContacto: nombreContacto,
-            asignadoA: users.find((user) => user.id === actividad.asignadoAId)?.nombreReal || "Sin asignado",
-            fecha: actividad.fechaLimite || "Sin fecha",
-            hora: actividad.horaInicio || "Sin hora",
-            modalidad: actividad.modalidad,
-            lugarReunion: actividad.lugarReunion || null,
-            enlaceReunion: actividad.enlaceReunion || null,
-            tipo: actividad.tipo === "TAREA" ? "TAREA" : actividad.tipo || "Sin tipo",
-            subtipoTarea: actividad.subtipoTarea || null,
-          };
+        return {
+          ...actividad,
+          nombreContacto: nombreContacto,
+          asignadoA: users.find((user) => user.id === actividad.asignadoAId)
+            ?.nombreReal || "Sin asignado",
+          fecha: actividad.fechaLimite || "Sin fecha",
+          hora: actividad.horaInicio || "Sin hora",
+          modalidad: actividad.modalidad,
+          lugarReunion: actividad.lugarReunion || null,
+          enlaceReunion: actividad.enlaceReunion || null,
+          tipo: actividad.tipo === "TAREA" ? "TAREA" : actividad.tipo || "Sin tipo",
+          subtipoTarea: actividad.subtipoTarea || null,
         };
+      };
 
-        // Actualizar el trato con los datos procesados
-        setTrato(prev => ({
+      setTrato(prev => {
+        if (prev.id !== currentTratoId) return prev;
+
+        return {
           ...prev,
           actividadesAbiertas: {
             tareas: (tratoData.actividadesAbiertas?.tareas || [])
@@ -4401,51 +4470,67 @@ const DetallesTrato = () => {
               .filter(a => a.estatus !== "CERRADA")
               .map(mapActividad),
           },
-          historialInteracciones: (tratoData.historialInteracciones || []).map(interaccion => ({
-            id: interaccion.id,
-            fecha: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toLocaleDateString('en-CA') : "Sin fecha",
-            hora: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : "Sin hora",
-            responsable: users.find(u => u.id === interaccion.usuarioCompletadoId)?.nombreReal || "Sin asignado",
-            tipo: interaccion.tipo,
-            medio: interaccion.medio || (interaccion.modalidad === "PRESENCIAL" ? "PRESENCIAL" : interaccion.medio),
-            resultado: interaccion.respuesta ? (interaccion.respuesta === "SI" ? "POSITIVO" : "NEGATIVO") : "Sin resultado",
-            interes: interaccion.interes || "Sin interés",
-            notas: interaccion.notas || "",
-            siguienteAccion: interaccion.siguienteAccion || "",
-          })),
+          historialInteracciones: (tratoData.historialInteracciones || []).map(
+            interaccion => ({
+              id: interaccion.id,
+              fecha: interaccion.fechaCompletado
+                ? new Date(interaccion.fechaCompletado).toLocaleDateString('en-CA')
+                : "Sin fecha",
+              hora: interaccion.fechaCompletado
+                ? new Date(interaccion.fechaCompletado).toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                })
+                : "Sin hora",
+              responsable: users.find(u => u.id === interaccion.usuarioCompletadoId)
+                ?.nombreReal || "Sin asignado",
+              tipo: interaccion.tipo,
+              medio: interaccion.medio ||
+                (interaccion.modalidad === "PRESENCIAL" ? "PRESENCIAL" : interaccion.medio),
+              resultado: interaccion.respuesta
+                ? (interaccion.respuesta === "SI" ? "POSITIVO" : "NEGATIVO")
+                : "Sin resultado",
+              interes: interaccion.interes || "Sin interés",
+              notas: interaccion.notas || "",
+              siguienteAccion: interaccion.siguienteAccion || "",
+            })
+          ),
           notas: (tratoData.notas || []).map((n) => ({
             id: n.id,
             texto: n.nota.replace(/\\"/g, '"').replace(/^"|"$/g, ''),
             autor: n.autorNombre,
-            fecha: n.fechaCreacion ? new Date(n.fechaCreacion).toLocaleDateString() : "",
+            fecha: n.fechaCreacion
+              ? new Date(n.fechaCreacion).toLocaleDateString()
+              : "",
             editadoPor: n.editadoPorName || null,
-            fechaEdicion: n.fechaEdicion ? new Date(n.fechaEdicion).toLocaleDateString() : null,
+            fechaEdicion: n.fechaEdicion
+              ? new Date(n.fechaEdicion).toLocaleDateString()
+              : null,
           })),
-        }));
+        };
+      });
 
-      } catch (error) {
-        console.error("Error loading secondary data:", error);
-      }
-    };
-
-    loadTrato();
-  }, [params.id]);
+    } catch (error) {
+      console.error("Error loading secondary data:", error);
+    }
+  };
 
   const handleVolver = () => {
     navigate("/tratos")
   }
 
   const handleVerEmpresa = () => {
-  if (trato.empresaId) {
-    navigate(`/empresas/${trato.empresaId}`, { replace: true });
-  } else {
-    Swal.fire({
-      title: 'Sin empresa asociada',
-      text: 'Este trato no tiene una empresa asociada',
-      icon: 'info',
-    });
-  }
-};
+    if (trato.empresaId) {
+      navigate(`/empresas/${trato.empresaId}`, { replace: true });
+    } else {
+      Swal.fire({
+        title: 'Sin empresa asociada',
+        text: 'Este trato no tiene una empresa asociada',
+        icon: 'info',
+      });
+    }
+  };
 
   const handleEditarTrato = () => {
     openModal("editarTrato");
