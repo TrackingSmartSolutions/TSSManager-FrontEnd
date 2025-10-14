@@ -3857,7 +3857,7 @@ const DetallesTrato = () => {
       }));
     }
   };
-  
+
   const closeModal = (modalType) => {
     setModals((prev) => ({
       ...prev,
@@ -4438,6 +4438,11 @@ const DetallesTrato = () => {
 
   const handleVerEmpresa = () => {
     if (trato.empresaId) {
+      setTrato(prev => ({
+        ...prev,
+        actividadesAbiertas: { tareas: [], llamadas: [], reuniones: [] },
+        historialInteracciones: [],
+      }));
       navigate(`/empresas/${trato.empresaId}`, { replace: true });
     } else {
       Swal.fire({
