@@ -1543,10 +1543,10 @@ const Empresas = () => {
     if (params.empresaId && companies.length > 0) {
       const empresaFromUrl = companies.find(company => company.id === parseInt(params.empresaId));
       if (empresaFromUrl) {
-        setContacts([]);
-        setTratos([]);
         if (!selectedCompany || selectedCompany.id !== empresaFromUrl.id) {
           setSelectedCompany(empresaFromUrl);
+          setContacts([]);
+          setTratos([]);
         }
       } else {
         Swal.fire({
@@ -1557,12 +1557,10 @@ const Empresas = () => {
         navigate('/empresas', { replace: true });
       }
     } else if (!params.empresaId && companies.length > 0 && !selectedCompany) {
-      setContacts([]);
-      setTratos([]);
       setSelectedCompany(companies[0]);
       navigate(`/empresas/${companies[0].id}`, { replace: true });
     }
-  }, [params.empresaId, companies, navigate, selectedCompany?.id]);
+  }, [params.empresaId, companies.length]);
 
 
   useEffect(() => {
@@ -1572,14 +1570,12 @@ const Empresas = () => {
         return
       }
       const empresaIdActual = selectedCompany.id;
-      setContacts([])
       try {
         const response = await fetchWithToken(`${API_BASE_URL}/empresas/${empresaIdActual}/contactos`)
         if (!response.ok) throw new Error("Error al cargar los contactos")
         const contactsData = await response.json()
 
-        if (selectedCompany?.id === empresaIdActual &&
-          parseInt(params.empresaId) === empresaIdActual) {
+        if (selectedCompany?.id === empresaIdActual) {
           const normalizedContacts = contactsData.map((contact) => ({
             ...contact,
             correos: contact.correos || [],
@@ -1601,22 +1597,24 @@ const Empresas = () => {
     }
 
     fetchContacts()
-  }, [selectedCompany?.id, params.empresaId])
+  }, [selectedCompany?.id])
 
 
   useEffect(() => {
     const fetchTratos = async () => {
-      if (!selectedCompany?.id) return;
+      if (!selectedCompany?.id) {
+        setTratos([]);
+        return;
+      }
       const empresaIdActual = selectedCompany.id;
-      setTratos([]);
       try {
         const response = await fetchWithToken(
           `${API_BASE_URL}/tratos/filtrar?empresaId=${empresaIdActual}`
         );
         if (!response.ok) throw new Error("Error al cargar los tratos");
         const data = await response.json();
-        if (selectedCompany?.id === empresaIdActual &&
-          parseInt(params.empresaId) === empresaIdActual) {
+
+        if (selectedCompany?.id === empresaIdActual) {
           setTratos(data);
         }
       } catch (error) {
@@ -1633,7 +1631,7 @@ const Empresas = () => {
     };
 
     fetchTratos();
-  }, [selectedCompany?.id, params.empresaId]);
+  }, [selectedCompany?.id]);
 
   useEffect(() => {
     if (companies.length > 0) {
@@ -1763,27 +1761,35 @@ const Empresas = () => {
   }
 
   const handleSaveEmpresa = async (empresaData) => {
-    const formattedDomicilioFisico = empresaData.domicilioFisico
-      ? (empresaData.domicilioFisico.endsWith(", México")
-        ? empresaData.domicilioFisico
-        : `${empresaData.domicilioFisico}, México`)
-      : null;
+  const formattedDomicilioFisico = empresaData.domicilioFisico
+    ? (empresaData.domicilioFisico.endsWith(", México")
+      ? empresaData.domicilioFisico
+      : `${empresaData.domicilioFisico}, México`)
+    : null;
 
-    const updatedEmpresa = {
-      ...empresaData,
-      domicilioFisico: formattedDomicilioFisico,
-      statusColor: getStatusColor(empresaData.estatus),
-      contacts: modals.empresa.mode === "edit" ? selectedCompany?.contacts || [] : [],
-    }
-
-    if (modals.empresa.mode === "add") {
-      closeModal("empresa")
-    } else {
-      setCompanies((prev) => prev.map((company) => (company.id === empresaData.id ? updatedEmpresa : company)))
-      setSelectedCompany(updatedEmpresa)
-      closeModal("empresa")
-    }
+  const updatedEmpresa = {
+    ...empresaData,
+    domicilioFisico: formattedDomicilioFisico,
+    statusColor: getStatusColor(empresaData.estatus),
+    contacts: modals.empresa.mode === "edit" ? selectedCompany?.contacts || [] : [],
   }
+
+  if (modals.empresa.mode === "add") {
+    closeModal("empresa")
+  } else {
+    setCompanies((prev) => prev.map((company) => 
+      company.id === empresaData.id ? updatedEmpresa : company
+    ))
+    
+    setSelectedCompany(prev => ({
+      ...updatedEmpresa,
+      contacts: prev?.contacts || []
+    }))
+    
+    closeModal("empresa")
+      }
+}
+
   const handleCompanyCreated = (empresaData) => {
     const formattedDomicilioFisico = empresaData.domicilioFisico
       ? (empresaData.domicilioFisico.endsWith(", México")
