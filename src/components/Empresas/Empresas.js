@@ -1475,9 +1475,6 @@ const Empresas = () => {
 
       setCompanies(companiesWithColors);
 
-      if (companiesWithColors.length > 0 && !selectedCompany) {
-        setSelectedCompany(companiesWithColors[0]);
-      }
     } catch (error) {
       console.error("Error al cargar empresas:", error);
       Swal.fire({
@@ -1556,11 +1553,6 @@ const Empresas = () => {
         });
         navigate('/empresas', { replace: true });
       }
-    } else if (!params.empresaId && companies.length > 0 && !selectedCompany) {
-      setContacts([]);
-      setTratos([]);
-      setSelectedCompany(companies[0]);
-      navigate(`/empresas/${companies[0].id}`, { replace: true });
     }
   }, [params.empresaId, companies.length]);
 
