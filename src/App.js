@@ -36,8 +36,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/principal" element={<Principal />} />
-        <Route path="/empresas" element={<Empresas />} />
-         <Route path="/empresas/:empresaId" element={<Empresas />} />
+        <Route path="/empresas/:empresaId?" element={<Empresas key={window.location.pathname} />} />
         <Route path="/mapa" element={<Mapa />} />
         <Route path="/tratos" element={<Tratos />} />
         <Route path="/detallestrato/:id" element={<DetallesTrato />} />
@@ -63,8 +62,8 @@ function App() {
         <Route path="/configuracion_usuarios" element={<ConfiguracionUsuarios />} />
         <Route path="/calendario" element={<Calendario />} />
         <Route path="/google-drive-callback" element={<GoogleDriveCallback />} />
-        <Route path="/metricas_generales" element={<DashboardMetricas />}/>
-        <Route path='/configuracion_gestion_sectores_plataformas' element={<ConfiguracionGestionSectoresPlataformas />}/>
+        <Route path="/metricas_generales" element={<DashboardMetricas />} />
+        <Route path='/configuracion_gestion_sectores_plataformas' element={<ConfiguracionGestionSectoresPlataformas />} />
       </Routes>
     </Router>
   );

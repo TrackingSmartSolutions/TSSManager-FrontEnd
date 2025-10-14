@@ -4436,16 +4436,16 @@ const DetallesTrato = () => {
   }
 
   const handleVerEmpresa = () => {
-    if (trato.empresaId) {
-      navigate(`/empresas/${trato.empresaId}`);
-    } else {
-      Swal.fire({
-        title: 'Sin empresa asociada',
-        text: 'Este trato no tiene una empresa asociada',
-        icon: 'info',
-      });
-    }
-  };
+  if (trato.empresaId) {
+    navigate(`/empresas/${trato.empresaId}`, { replace: true });
+  } else {
+    Swal.fire({
+      title: 'Sin empresa asociada',
+      text: 'Este trato no tiene una empresa asociada',
+      icon: 'info',
+    });
+  }
+};
 
   const handleEditarTrato = () => {
     openModal("editarTrato");
