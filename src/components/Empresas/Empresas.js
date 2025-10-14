@@ -1541,9 +1541,12 @@ const Empresas = () => {
 
   useEffect(() => {
     if (params.empresaId && companies.length > 0) {
-      const empresaFromUrl = companies.find(company => company.id === parseInt(params.empresaId));
+      const empresaIdFromUrl = parseInt(params.empresaId);
+      const empresaFromUrl = companies.find(company => company.id === empresaIdFromUrl);
+
       if (empresaFromUrl) {
-        if (!selectedCompany || selectedCompany.id !== empresaFromUrl.id) {
+        if (!selectedCompany || selectedCompany.id !== empresaIdFromUrl) {
+          console.log('🔄 Cambiando a empresa:', empresaIdFromUrl);
           setContacts([]);
           setTratos([]);
           setSelectedCompany(empresaFromUrl);
@@ -1556,13 +1559,14 @@ const Empresas = () => {
         });
         navigate('/empresas', { replace: true });
       }
-    } else if (!params.empresaId && companies.length > 0 && !selectedCompany) {
+    } else if (!params.empresaId && companies.length > 0) {
+      console.log('Sin empresaId en URL, seleccionando primera empresa');
       setContacts([]);
       setTratos([]);
       setSelectedCompany(companies[0]);
       navigate(`/empresas/${companies[0].id}`, { replace: true });
     }
-  }, [params.empresaId, companies.length]);
+  }, [params.empresaId, companies, navigate]);
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -1652,6 +1656,27 @@ const Empresas = () => {
     }
   }, [companies.length]);
 
+  useEffect(() => {
+    const handleNavigation = () => {
+      if (params.empresaId) {
+        const empresaIdFromUrl = parseInt(params.empresaId);
+        console.log('🔍 Detectando navegación. URL empresaId:', empresaIdFromUrl, 'Selected:', selectedCompany?.id);
+
+        if (selectedCompany && selectedCompany.id !== empresaIdFromUrl) {
+          const empresaFromUrl = companies.find(c => c.id === empresaIdFromUrl);
+          if (empresaFromUrl) {
+            console.log('Forzando actualización a empresa:', empresaIdFromUrl);
+            setContacts([]);
+            setTratos([]);
+            setSelectedCompany(empresaFromUrl);
+          }
+        }
+      }
+    };
+
+    handleNavigation();
+  }, [params.empresaId, selectedCompany?.id, companies]);
+
 
   const filteredContacts = contacts.filter((contact) => {
     const matchesSearch = contact.nombre?.toLowerCase().includes(contactSearch.toLowerCase())
@@ -1670,7 +1695,10 @@ const Empresas = () => {
 
 
   const handleTratoClick = (tratoId) => {
-    navigate(`/detallestrato/${tratoId}`);
+    console.log('📋 Navegando a trato:', tratoId, 'desde empresa:', selectedCompany?.id);
+    navigate(`/detallestrato/${tratoId}`, {
+      state: { fromEmpresaId: selectedCompany?.id }
+    });
   };
 
   const openModal = (modalType, mode = "add", data = null, extra = {}) => {

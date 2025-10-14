@@ -4438,12 +4438,10 @@ const DetallesTrato = () => {
 
   const handleVerEmpresa = () => {
     if (trato.empresaId) {
-      setTrato(prev => ({
-        ...prev,
-        actividadesAbiertas: { tareas: [], llamadas: [], reuniones: [] },
-        historialInteracciones: [],
-      }));
-      navigate(`/empresas/${trato.empresaId}`, { replace: true });
+      navigate(`/empresas/${trato.empresaId}`, { 
+        replace: true,
+        state: { fromTrato: true, empresaId: trato.empresaId }
+      });
     } else {
       Swal.fire({
         title: 'Sin empresa asociada',
