@@ -156,8 +156,8 @@ const CheckEquiposSidePanel = ({
   const plataformas = ["Todos", ...allPlatforms.sort()];
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const nextCheckTime = null; // Deshabilitado
-  const countdown = null; // Deshabilitado
+  const nextCheckTime = lastCheckTime ? lastCheckTime + (6 * 60 * 60 * 1000) : null;
+  const countdown = useCountdown(nextCheckTime);
 
   // Función para formatear el tiempo restante
   const formatCountdown = (countdown) => {
@@ -323,7 +323,7 @@ const CheckEquiposSidePanel = ({
     }
   };
 
-  const canCheck = true; // Permite check ilimitado
+  const canCheck = !lastCheckTime || countdown === null;
 
   return (
     <>
@@ -332,19 +332,18 @@ const CheckEquiposSidePanel = ({
       <div className={`estatusplataforma-side-panel ${isOpen ? "estatusplataforma-side-panel-open" : ""}`}>
         <div className="estatusplataforma-side-panel-header">
           <h2 className="estatusplataforma-side-panel-title">Selecciona la plataforma</h2>
-          {/* TEMPORAL: Countdown deshabilitado - Para revertir, descomentar todo el bloque */}
-          {/* {countdown && (
-  <div style={{
-    fontSize: '12px',
-    color: '#6b7280',
-    marginTop: '4px',
-    textAlign: 'center'
-  }}>
-    Próximo check disponible en: <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>
-      {formatCountdown(countdown)}
-    </span>
-  </div>
-)} */}
+          {countdown && (
+            <div style={{
+              fontSize: '12px',
+              color: '#6b7280',
+              marginTop: '4px',
+              textAlign: 'center'
+            }}>
+              Próximo check disponible en: <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>
+                {formatCountdown(countdown)}
+              </span>
+            </div>
+          )}
           <button className="estatusplataforma-side-panel-close" onClick={onClose}>
             ✕
           </button>
@@ -383,8 +382,7 @@ const CheckEquiposSidePanel = ({
                 </tr>
               </thead>
               <tbody>
-                {/* TEMPORAL: Check ilimitado - Para revertir, descomentar "canCheck ? (" */}
-                {true ? (
+                {canCheck ? (
                   filteredEquipos.length > 0 ? (
                     filteredEquipos.map((equipo) => (
                       <tr key={equipo.id}>
@@ -455,12 +453,9 @@ const CheckEquiposSidePanel = ({
             type="button"
             onClick={handleSaveChecklist}
             className="estatusplataforma-btn estatusplataforma-btn-primary estatusplataforma-btn-full-width"
-            disabled={filteredEquipos.length === 0 || isSaving}
-          // disabled={!canCheck || filteredEquipos.length === 0 || isSaving}
+            disabled={!canCheck || filteredEquipos.length === 0 || isSaving}
           >
-            {/* TEMPORAL: Texto simplificado - Para revertir, usar la línea comentada abajo */}
-            {isSaving ? "Guardando..." : "Guardar checklist"}
-            {/* {isSaving ? "Guardando..." : countdown ? `Disponible en ${formatCountdown(countdown)}` : "Guardar checklist"} */}
+            {isSaving ? "Guardando..." : countdown ? `Disponible en ${formatCountdown(countdown)}` : "Guardar checklist"}
           </button>
         </div>
       </div>
