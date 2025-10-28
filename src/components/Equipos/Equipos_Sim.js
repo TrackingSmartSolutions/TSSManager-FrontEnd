@@ -1047,6 +1047,7 @@ const loadSaldosInBackground = async (simsToLoad) => {
     
     await Promise.all(batch.map(async (sim) => {
       try {
+        // Cargar último saldo
         const response = await fetch(`${API_BASE_URL}/sims/${sim.id}/ultimo-saldo`, {
           headers: {
             "Content-Type": "application/json",
@@ -1059,33 +1060,22 @@ const loadSaldosInBackground = async (simsToLoad) => {
         if (response.ok && response.status !== 204) {
           const saldoData = await response.json();
           
-          // Para tarifa POR_SEGUNDO
           if (sim.tarifa === "POR_SEGUNDO") {
-            // Si existe el campo saldoActual en la respuesta
             if ('saldoActual' in saldoData) {
               saldoText = `$${saldoData.saldoActual || 0}`;
-            }
-            // Si no existe el campo, significa que es null en BD
-            else {
+            } else {
               saldoText = "$0";
             }
-          } 
-          // Para tarifa SIN_LIMITE o M2M_GLOBAL_15
-          else if (sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") {
-            // Si existe el campo datos en la respuesta
+          } else if (sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") {
             if ('datos' in saldoData) {
               saldoText = `${saldoData.datos || 0} MB`;
-            }
-            // Si no existe el campo, significa que es null en BD
-            else {
+            } else {
               saldoText = "0 MB";
             }
           }
         } else if (response.status === 204) {
-          // HTTP 204 No Content significa que no hay registros
           saldoText = "Sin registros";
         } else if (!response.ok) {
-          // Solo si realmente hay un error (no 204)
           console.error(`Error ${response.status} for SIM ${sim.id}`);
           saldoText = "Error";
         }
@@ -1095,6 +1085,31 @@ const loadSaldosInBackground = async (simsToLoad) => {
             s.id === sim.id ? { ...s, ultimoSaldoRegistrado: saldoText } : s
           )
         );
+
+        if (sim.tarifa === "POR_SEGUNDO") {
+          try {
+            const caidaResponse = await fetch(`${API_BASE_URL}/sims/${sim.id}/verificar-caida-saldo`, {
+              headers: {
+                "Content-Type": "application/json",
+                ...(localStorage.getItem("token") ? { Authorization: `Bearer ${localStorage.getItem("token")}` } : {}),
+              },
+            });
+            
+            if (caidaResponse.ok) {
+              const caidaData = await caidaResponse.json();
+              if (caidaData.tieneCaida) {
+                setAlertasSaldo(prev => {
+                  const newSet = new Set(prev);
+                  newSet.add(sim.id);
+                  return newSet;
+                });
+              }
+            }
+          } catch (error) {
+            console.error(`Error verificando caída de saldo para SIM ${sim.id}:`, error);
+          }
+        }
+        
       } catch (error) {
         console.error(`Error loading saldo for SIM ${sim.id}:`, error);
         setSims(prevSims => 
@@ -1105,7 +1120,6 @@ const loadSaldosInBackground = async (simsToLoad) => {
       }
     }));
     
-    // Pequeña pausa entre batches
     if (i + batchSize < simsToLoad.length) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
@@ -1327,20 +1341,20 @@ const loadSaldosInBackground = async (simsToLoad) => {
   
 
   const aprobarAlertaSaldo = (simId) => {
-    setAlertasSaldo(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(simId);
-      return newSet;
-    });
+  setAlertasSaldo(prev => {
+    const newSet = new Set(prev);
+    newSet.delete(simId);
+    return newSet;
+  });
 
-    Swal.fire({
-      icon: "success",
-      title: "Alerta aprobada",
-      text: "La alerta de caída de saldo ha sido dismissada",
-      timer: 2000,
-      showConfirmButton: false
-    });
-  };
+  Swal.fire({
+    icon: "success",
+    title: "Alerta aprobada",
+    text: "La alerta de caída de saldo superior a $10 ha sido aprobada",
+    timer: 2000,
+    showConfirmButton: false
+  });
+};
 
   return (
     <>
