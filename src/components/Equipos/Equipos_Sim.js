@@ -417,7 +417,7 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
                       gruposDisponibles
                         .filter(grupo => grupo !== 0 && grupo !== 99)
                         .map((grupo) => {
-                          const simsInGroup = (sims || []).filter((s) => s.grupo === grupo);
+                          const simsInGroup = (allSims || []).filter((s) => s.grupo === grupo);
                           const principalCount = simsInGroup.filter((s) => s.principal === "SI").length;
                           const nonPrincipalCount = simsInGroup.filter((s) => s.principal === "NO").length;
                           const remaining = 6 - (principalCount + nonPrincipalCount);
@@ -980,19 +980,20 @@ const EquiposSim = () => {
   }, []);
 
   const fetchCriticalData = async () => {
-  try {
-    setIsLoading(true);
-    await Promise.all([
-      fetchAllGroups(),
-      fetchSims() 
-    ]);
-  } catch (error) {
-    console.error("Error loading critical data:", error);
-    Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos críticos" });
-  } finally {
-    setIsLoading(false);
-  }
-};
+    try {
+      setIsLoading(true);
+      await Promise.all([
+        fetchAllGroups(),
+        fetchSims(),
+        fetchAllSims()
+      ]);
+    } catch (error) {
+      console.error("Error loading critical data:", error);
+      Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos críticos" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchSims();
@@ -1007,124 +1008,134 @@ const EquiposSim = () => {
   }, []);
 
   const fetchSims = async () => {
-  try {
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    const params = new URLSearchParams();
-    if (filterGrupo) params.append('grupo', filterGrupo);
-    if (filterNumero) params.append('numero', filterNumero);
+      const params = new URLSearchParams();
+      if (filterGrupo) params.append('grupo', filterGrupo);
+      if (filterNumero) params.append('numero', filterNumero);
 
-    const response = await fetchWithToken(`${API_BASE_URL}/sims/filtered?${params.toString()}`);
-    const simsData = await response.json();
+      const response = await fetchWithToken(`${API_BASE_URL}/sims/filtered?${params.toString()}`);
+      const simsData = await response.json();
 
-    const simsWithEquipo = simsData.map((sim) => ({
-      ...sim,
-      equipo: sim.equipoNombre ? {
-        nombre: sim.equipoNombre,
-        imei: sim.equipoImei
-      } : null,
-      ultimoSaldoRegistrado: "Cargando..." // Placeholder inicial
-    }));
+      const simsWithEquipo = simsData.map((sim) => ({
+        ...sim,
+        equipo: sim.equipoNombre ? {
+          nombre: sim.equipoNombre,
+          imei: sim.equipoImei
+        } : null,
+        ultimoSaldoRegistrado: "Cargando..." // Placeholder inicial
+      }));
 
-    setSims(simsWithEquipo);
+      setSims(simsWithEquipo);
 
-    // Cargar saldos en background sin bloquear la UI
-    loadSaldosInBackground(simsWithEquipo);
+      // Cargar saldos en background sin bloquear la UI
+      loadSaldosInBackground(simsWithEquipo);
 
-  } catch (error) {
-    console.error("Error loading SIMs:", error);
-    Swal.fire({ icon: "error", title: "Error", text: "Error al cargar SIMs" });
-  } finally {
-    setIsLoading(false);
-  }
-};
+    } catch (error) {
+      console.error("Error loading SIMs:", error);
+      Swal.fire({ icon: "error", title: "Error", text: "Error al cargar SIMs" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-const loadSaldosInBackground = async (simsToLoad) => {
-  const batchSize = 10;
-  
-  for (let i = 0; i < simsToLoad.length; i += batchSize) {
-    const batch = simsToLoad.slice(i, i + batchSize);
-    
-    await Promise.all(batch.map(async (sim) => {
-      try {
-        // Cargar último saldo
-        const response = await fetch(`${API_BASE_URL}/sims/${sim.id}/ultimo-saldo`, {
-          headers: {
-            "Content-Type": "application/json",
-            ...(localStorage.getItem("token") ? { Authorization: `Bearer ${localStorage.getItem("token")}` } : {}),
-          },
-        });
-        
-        let saldoText = "Sin registros";
-        
-        if (response.ok && response.status !== 204) {
-          const saldoData = await response.json();
-          
-          if (sim.tarifa === "POR_SEGUNDO") {
-            if ('saldoActual' in saldoData) {
-              saldoText = `$${saldoData.saldoActual || 0}`;
-            } else {
-              saldoText = "$0";
-            }
-          } else if (sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") {
-            if ('datos' in saldoData) {
-              saldoText = `${saldoData.datos || 0} MB`;
-            } else {
-              saldoText = "0 MB";
-            }
-          }
-        } else if (response.status === 204) {
-          saldoText = "Sin registros";
-        } else if (!response.ok) {
-          console.error(`Error ${response.status} for SIM ${sim.id}`);
-          saldoText = "Error";
-        }
-        
-        setSims(prevSims => 
-          prevSims.map(s => 
-            s.id === sim.id ? { ...s, ultimoSaldoRegistrado: saldoText } : s
-          )
-        );
+  const fetchAllSims = async () => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/sims`);
+      const simsData = await response.json();
+      setAllSims(simsData);
+    } catch (error) {
+      console.error("Error loading all SIMs:", error);
+    }
+  };
 
-        if (sim.tarifa === "POR_SEGUNDO") {
-          try {
-            const caidaResponse = await fetch(`${API_BASE_URL}/sims/${sim.id}/verificar-caida-saldo`, {
-              headers: {
-                "Content-Type": "application/json",
-                ...(localStorage.getItem("token") ? { Authorization: `Bearer ${localStorage.getItem("token")}` } : {}),
-              },
-            });
-            
-            if (caidaResponse.ok) {
-              const caidaData = await caidaResponse.json();
-              if (caidaData.tieneCaida) {
-                setAlertasSaldo(prev => {
-                  const newSet = new Set(prev);
-                  newSet.add(sim.id);
-                  return newSet;
-                });
+  const loadSaldosInBackground = async (simsToLoad) => {
+    const batchSize = 10;
+
+    for (let i = 0; i < simsToLoad.length; i += batchSize) {
+      const batch = simsToLoad.slice(i, i + batchSize);
+
+      await Promise.all(batch.map(async (sim) => {
+        try {
+          // Cargar último saldo
+          const response = await fetch(`${API_BASE_URL}/sims/${sim.id}/ultimo-saldo`, {
+            headers: {
+              "Content-Type": "application/json",
+              ...(localStorage.getItem("token") ? { Authorization: `Bearer ${localStorage.getItem("token")}` } : {}),
+            },
+          });
+
+          let saldoText = "Sin registros";
+
+          if (response.ok && response.status !== 204) {
+            const saldoData = await response.json();
+
+            if (sim.tarifa === "POR_SEGUNDO") {
+              if ('saldoActual' in saldoData) {
+                saldoText = `$${saldoData.saldoActual || 0}`;
+              } else {
+                saldoText = "$0";
+              }
+            } else if (sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") {
+              if ('datos' in saldoData) {
+                saldoText = `${saldoData.datos || 0} MB`;
+              } else {
+                saldoText = "0 MB";
               }
             }
-          } catch (error) {
-            console.error(`Error verificando caída de saldo para SIM ${sim.id}:`, error);
+          } else if (response.status === 204) {
+            saldoText = "Sin registros";
+          } else if (!response.ok) {
+            console.error(`Error ${response.status} for SIM ${sim.id}`);
+            saldoText = "Error";
           }
+
+          setSims(prevSims =>
+            prevSims.map(s =>
+              s.id === sim.id ? { ...s, ultimoSaldoRegistrado: saldoText } : s
+            )
+          );
+
+          if (sim.tarifa === "POR_SEGUNDO") {
+            try {
+              const caidaResponse = await fetch(`${API_BASE_URL}/sims/${sim.id}/verificar-caida-saldo`, {
+                headers: {
+                  "Content-Type": "application/json",
+                  ...(localStorage.getItem("token") ? { Authorization: `Bearer ${localStorage.getItem("token")}` } : {}),
+                },
+              });
+
+              if (caidaResponse.ok) {
+                const caidaData = await caidaResponse.json();
+                if (caidaData.tieneCaida) {
+                  setAlertasSaldo(prev => {
+                    const newSet = new Set(prev);
+                    newSet.add(sim.id);
+                    return newSet;
+                  });
+                }
+              }
+            } catch (error) {
+              console.error(`Error verificando caída de saldo para SIM ${sim.id}:`, error);
+            }
+          }
+
+        } catch (error) {
+          console.error(`Error loading saldo for SIM ${sim.id}:`, error);
+          setSims(prevSims =>
+            prevSims.map(s =>
+              s.id === sim.id ? { ...s, ultimoSaldoRegistrado: "Error" } : s
+            )
+          );
         }
-        
-      } catch (error) {
-        console.error(`Error loading saldo for SIM ${sim.id}:`, error);
-        setSims(prevSims => 
-          prevSims.map(s => 
-            s.id === sim.id ? { ...s, ultimoSaldoRegistrado: "Error" } : s
-          )
-        );
+      }));
+
+      if (i + batchSize < simsToLoad.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
-    }));
-    
-    if (i + batchSize < simsToLoad.length) {
-      await new Promise(resolve => setTimeout(resolve, 100));
     }
-  }
-};
+  };
 
   const fetchAllGroups = async () => {
     try {
@@ -1137,7 +1148,10 @@ const loadSaldosInBackground = async (simsToLoad) => {
   };
 
   const fetchData = async () => {
-    await fetchCriticalData();
+    await Promise.all([
+      fetchCriticalData(),
+      fetchAllSims()
+    ]);
   };
 
 
@@ -1238,6 +1252,7 @@ const loadSaldosInBackground = async (simsToLoad) => {
       title: "Éxito",
       text: simData.id ? "SIM actualizada correctamente" : "SIM agregada correctamente",
     });
+    fetchAllSims();
   };
 
   const handleDeleteSim = async () => {
@@ -1338,247 +1353,247 @@ const loadSaldosInBackground = async (simsToLoad) => {
     return className;
   };
 
-  
+
 
   const aprobarAlertaSaldo = (simId) => {
-  setAlertasSaldo(prev => {
-    const newSet = new Set(prev);
-    newSet.delete(simId);
-    return newSet;
-  });
+    setAlertasSaldo(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(simId);
+      return newSet;
+    });
 
-  Swal.fire({
-    icon: "success",
-    title: "Alerta aprobada",
-    text: "La alerta de caída de saldo superior a $10 ha sido aprobada",
-    timer: 2000,
-    showConfirmButton: false
-  });
-};
+    Swal.fire({
+      icon: "success",
+      title: "Alerta aprobada",
+      text: "La alerta de caída de saldo superior a $10 ha sido aprobada",
+      timer: 2000,
+      showConfirmButton: false
+    });
+  };
 
   return (
     <>
-     <div className="page-with-header">
-      <Header />
-      {isLoading && (
-        <div className="sim-loading">
-          <div className="spinner"></div>
-          <p>Cargando datos de SIM...</p>
-        </div>
-      )}
-      <main className="sim-main-content">
-        <div className="sim-container">
-          <section className="sim-sidebar">
-            <div className="sim-sidebar-header">
-              <h3 className="sim-sidebar-title">Equipos</h3>
-            </div>
-            <div className="sim-sidebar-menu">
-              <div className="sim-menu-item" onClick={() => handleMenuNavigation("estatus-plataforma")}>
-                Estatus plataforma
+      <div className="page-with-header">
+        <Header />
+        {isLoading && (
+          <div className="sim-loading">
+            <div className="spinner"></div>
+            <p>Cargando datos de SIM...</p>
+          </div>
+        )}
+        <main className="sim-main-content">
+          <div className="sim-container">
+            <section className="sim-sidebar">
+              <div className="sim-sidebar-header">
+                <h3 className="sim-sidebar-title">Equipos</h3>
               </div>
-              <div className="sim-menu-item" onClick={() => handleMenuNavigation("modelos")}>
-                Modelos
-              </div>
-              <div className="sim-menu-item" onClick={() => handleMenuNavigation("proveedores")}>
-                Proveedores
-              </div>
-              <div className="sim-menu-item" onClick={() => handleMenuNavigation("inventario")}>
-                Inventario de equipos
-              </div>
-              <div className="sim-menu-item sim-menu-item-active" onClick={() => handleMenuNavigation("sim")}>
-                SIM
-              </div>
-              <div
-                className="creditosplataforma-menu-item"
-                onClick={() => handleMenuNavigation("creditos-plataforma")}
-              >
-                Créditos Plataformas
-              </div>
-            </div>
-          </section>
-
-          <section className="sim-content-panel">
-            <div className="sim-header">
-              <div className="sim-header-info">
-                <h3 className="sim-page-title">SIM</h3>
-                <p className="sim-subtitle">Gestión de SIMs asociadas a equipos</p>
-              </div>
-            </div>
-
-            <div className="sim-table-card">
-              <div className="sim-table-header">
-                <h4 className="sim-table-title">SIMs</h4>
-                <div className="sim-table-controls">
-                  <button
-                    className="sim-btn sim-btn-secondary sim-btn-orden"
-                    onClick={toggleOrdenFechaVigencia}
-                    title={`Cambiar a orden ${ordenFechaVigencia === 'desc' ? 'ascendente' : 'descendente'} por vigencia`}
-                  >
-                    {ordenFechaVigencia === 'desc' ? '📅 ↓ Recientes primero' : '📅 ↑ Antiguas primero'}
-                  </button>
-                  <input
-                    type="text"
-                    placeholder="Buscar por número..."
-                    value={filterNumeroInput}
-                    onChange={handleNumeroInputChange}
-                    className="sim-filter-input"
-                  />
-                  <select
-                    value={filterGrupo}
-                    onChange={(e) => {
-                      setFilterGrupo(e.target.value);
-                      if (e.target.value !== filterGrupo) {
-                        setFilterNumeroInput("");
-                        setFilterNumero("");
-                      }
-                    }}
-                    className="sim-filter-select"
-                  >
-                    <option value="">Todos los grupos</option>
-                    {gruposDisponibles
-                      .sort((a, b) => Number(a) - Number(b))
-                      .map((grupo) => (
-                        <option key={grupo} value={grupo}>
-                          Grupo {grupo}
-                        </option>
-                      ))}
-                  </select>
-                  <button className="sim-btn sim-btn-primary" onClick={() => openModal("form", { sim: null })}>
-                    Agregar SIM
-                  </button>
+              <div className="sim-sidebar-menu">
+                <div className="sim-menu-item" onClick={() => handleMenuNavigation("estatus-plataforma")}>
+                  Estatus plataforma
+                </div>
+                <div className="sim-menu-item" onClick={() => handleMenuNavigation("modelos")}>
+                  Modelos
+                </div>
+                <div className="sim-menu-item" onClick={() => handleMenuNavigation("proveedores")}>
+                  Proveedores
+                </div>
+                <div className="sim-menu-item" onClick={() => handleMenuNavigation("inventario")}>
+                  Inventario de equipos
+                </div>
+                <div className="sim-menu-item sim-menu-item-active" onClick={() => handleMenuNavigation("sim")}>
+                  SIM
+                </div>
+                <div
+                  className="creditosplataforma-menu-item"
+                  onClick={() => handleMenuNavigation("creditos-plataforma")}
+                >
+                  Créditos Plataformas
                 </div>
               </div>
-              <div className="sim-table-container">
-                <table className="sim-table">
-                  <thead>
-                    <tr>
-                      <th>Número</th>
-                      <th>Tarifa</th>
-                      <th>Compañía</th>
-                      <th>Vigencia</th>
-                      <th>Recarga</th>
-                      <th>Responsable</th>
-                      <th>Grupo</th>
-                      <th>Principal</th>
-                      <th>Equipo</th>
-                      <th>Último saldo registrado</th>
-                      <th>Contraseña</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {getSimsOrdenados()
-                      .map((sim) => (
-                        <tr key={sim.id} className={alertasSaldo.has(sim.id) ? "sim-row-alert-caida" : ""}>
-                          <td>{sim.numero}</td>
-                          <td>{sim.tarifa}</td>
-                          <td>{sim.tarifa === "M2M_GLOBAL_15" ? "M2M" : sim.compañia || "Telcel"}</td>
-                          <td>{formatDate(sim.vigencia)}</td>
-                          <td>{sim.recarga ? `$${sim.recarga}` : "N/A"}</td>
-                          <td>{sim.responsable}</td>
-                          <td>{sim.grupo !== null && sim.grupo !== undefined ? `Grupo ${sim.grupo}` : "N/A"}</td>
-                          <td>
-                            <span className={sim.principal === "SI" ? "sim-principal-si" : "sim-principal-no"}>
-                              {sim.principal}
-                            </span>
-                          </td>
-                          <td>{sim.equipo?.nombre || "N/A"}</td>
-                          <td className={getSaldoClassName(sim)}>
-                            {sim.ultimoSaldoRegistrado || "Sin registros"}
-                          </td>
-                          <td>{sim.contrasena || "N/A"}</td>
-                          <td>
-                            <div className="sim-action-buttons">
-                              <button
-                                className="sim-btn-action sim-edit"
-                                onClick={() => openModal("form", { sim })}
-                                title="Editar"
-                              >
-                                <img src={editIcon} alt="Editar" />
-                              </button>
-                              <button
-                                className="sim-btn-action sim-details"
-                                onClick={() => openModal("details", { sim })}
-                                title="Ver detalles"
-                              >
-                                <img src={detailsIcon} alt="Ver detalles" />
-                              </button>
-                              {(userRole === "ADMINISTRADOR" || userRole === "GESTOR") && (
+            </section>
+
+            <section className="sim-content-panel">
+              <div className="sim-header">
+                <div className="sim-header-info">
+                  <h3 className="sim-page-title">SIM</h3>
+                  <p className="sim-subtitle">Gestión de SIMs asociadas a equipos</p>
+                </div>
+              </div>
+
+              <div className="sim-table-card">
+                <div className="sim-table-header">
+                  <h4 className="sim-table-title">SIMs</h4>
+                  <div className="sim-table-controls">
+                    <button
+                      className="sim-btn sim-btn-secondary sim-btn-orden"
+                      onClick={toggleOrdenFechaVigencia}
+                      title={`Cambiar a orden ${ordenFechaVigencia === 'desc' ? 'ascendente' : 'descendente'} por vigencia`}
+                    >
+                      {ordenFechaVigencia === 'desc' ? '📅 ↓ Recientes primero' : '📅 ↑ Antiguas primero'}
+                    </button>
+                    <input
+                      type="text"
+                      placeholder="Buscar por número..."
+                      value={filterNumeroInput}
+                      onChange={handleNumeroInputChange}
+                      className="sim-filter-input"
+                    />
+                    <select
+                      value={filterGrupo}
+                      onChange={(e) => {
+                        setFilterGrupo(e.target.value);
+                        if (e.target.value !== filterGrupo) {
+                          setFilterNumeroInput("");
+                          setFilterNumero("");
+                        }
+                      }}
+                      className="sim-filter-select"
+                    >
+                      <option value="">Todos los grupos</option>
+                      {gruposDisponibles
+                        .sort((a, b) => Number(a) - Number(b))
+                        .map((grupo) => (
+                          <option key={grupo} value={grupo}>
+                            Grupo {grupo}
+                          </option>
+                        ))}
+                    </select>
+                    <button className="sim-btn sim-btn-primary" onClick={() => openModal("form", { sim: null })}>
+                      Agregar SIM
+                    </button>
+                  </div>
+                </div>
+                <div className="sim-table-container">
+                  <table className="sim-table">
+                    <thead>
+                      <tr>
+                        <th>Número</th>
+                        <th>Tarifa</th>
+                        <th>Compañía</th>
+                        <th>Vigencia</th>
+                        <th>Recarga</th>
+                        <th>Responsable</th>
+                        <th>Grupo</th>
+                        <th>Principal</th>
+                        <th>Equipo</th>
+                        <th>Último saldo registrado</th>
+                        <th>Contraseña</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {getSimsOrdenados()
+                        .map((sim) => (
+                          <tr key={sim.id} className={alertasSaldo.has(sim.id) ? "sim-row-alert-caida" : ""}>
+                            <td>{sim.numero}</td>
+                            <td>{sim.tarifa}</td>
+                            <td>{sim.tarifa === "M2M_GLOBAL_15" ? "M2M" : sim.compañia || "Telcel"}</td>
+                            <td>{formatDate(sim.vigencia)}</td>
+                            <td>{sim.recarga ? `$${sim.recarga}` : "N/A"}</td>
+                            <td>{sim.responsable}</td>
+                            <td>{sim.grupo !== null && sim.grupo !== undefined ? `Grupo ${sim.grupo}` : "N/A"}</td>
+                            <td>
+                              <span className={sim.principal === "SI" ? "sim-principal-si" : "sim-principal-no"}>
+                                {sim.principal}
+                              </span>
+                            </td>
+                            <td>{sim.equipo?.nombre || "N/A"}</td>
+                            <td className={getSaldoClassName(sim)}>
+                              {sim.ultimoSaldoRegistrado || "Sin registros"}
+                            </td>
+                            <td>{sim.contrasena || "N/A"}</td>
+                            <td>
+                              <div className="sim-action-buttons">
                                 <button
-                                  className="sim-btn-action sim-delete"
-                                  onClick={() => {
-                                    const hasEquipoVinculado = sim.equipo !== null;
-                                    openModal("confirmDelete", { sim, hasEquipoVinculado });
-                                  }}
-                                  title="Eliminar"
+                                  className="sim-btn-action sim-edit"
+                                  onClick={() => openModal("form", { sim })}
+                                  title="Editar"
                                 >
-                                  <img src={deleteIcon} alt="Eliminar" />
+                                  <img src={editIcon} alt="Editar" />
                                 </button>
-                              )}
-                              <button
-                                className="sim-btn-action sim-saldos"
-                                onClick={() => openModal("saldos", { sim })}
-                                title="Saldos"
-                              >
-                                <img src={balancesIcon} alt="Saldos" />
-                              </button>
-                              {alertasSaldo.has(sim.id) && (
                                 <button
-                                  className="sim-btn-action sim-aprobar"
-                                  onClick={() => aprobarAlertaSaldo(sim.id)}
-                                  title="Aprobar alerta de caída"
+                                  className="sim-btn-action sim-details"
+                                  onClick={() => openModal("details", { sim })}
+                                  title="Ver detalles"
                                 >
-                                  <img src={aprobarIcon} alt="Aprobar" />
+                                  <img src={detailsIcon} alt="Ver detalles" />
                                 </button>
-                              )}
-                            </div>
+                                {(userRole === "ADMINISTRADOR" || userRole === "GESTOR") && (
+                                  <button
+                                    className="sim-btn-action sim-delete"
+                                    onClick={() => {
+                                      const hasEquipoVinculado = sim.equipo !== null;
+                                      openModal("confirmDelete", { sim, hasEquipoVinculado });
+                                    }}
+                                    title="Eliminar"
+                                  >
+                                    <img src={deleteIcon} alt="Eliminar" />
+                                  </button>
+                                )}
+                                <button
+                                  className="sim-btn-action sim-saldos"
+                                  onClick={() => openModal("saldos", { sim })}
+                                  title="Saldos"
+                                >
+                                  <img src={balancesIcon} alt="Saldos" />
+                                </button>
+                                {alertasSaldo.has(sim.id) && (
+                                  <button
+                                    className="sim-btn-action sim-aprobar"
+                                    onClick={() => aprobarAlertaSaldo(sim.id)}
+                                    title="Aprobar alerta de caída"
+                                  >
+                                    <img src={aprobarIcon} alt="Aprobar" />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      {sims.length === 0 && (
+                        <tr>
+                          <td colSpan="12" className="sim-no-data">
+                            No se encontraron SIMs
                           </td>
                         </tr>
-                      ))}
-                    {sims.length === 0 && (
-                      <tr>
-                        <td colSpan="12" className="sim-no-data">
-                          No se encontraron SIMs
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          </section>
-        </div>
+            </section>
+          </div>
 
-        <SimFormModal
-          isOpen={modals.form.isOpen}
-          onClose={() => closeModal("form")}
-          sim={modals.form.sim}
-          onSave={handleSaveSim}
-          equipos={equipos}
-          gruposDisponibles={gruposDisponibles}
-          sims={allSims}
-        />
-        <SaldosSidePanel
-          isOpen={modals.saldos.isOpen}
-          onClose={() => closeModal("saldos")}
-          sim={modals.saldos.sim}
-          onSaveSaldo={handleSaveSaldo}
-        />
+          <SimFormModal
+            isOpen={modals.form.isOpen}
+            onClose={() => closeModal("form")}
+            sim={modals.form.sim}
+            onSave={handleSaveSim}
+            equipos={equipos}
+            gruposDisponibles={gruposDisponibles}
+            sims={allSims}
+          />
+          <SaldosSidePanel
+            isOpen={modals.saldos.isOpen}
+            onClose={() => closeModal("saldos")}
+            sim={modals.saldos.sim}
+            onSaveSaldo={handleSaveSaldo}
+          />
 
-        <ConfirmarEliminacionModal
-          isOpen={modals.confirmDelete.isOpen}
-          onClose={() => closeModal("confirmDelete")}
-          sim={modals.confirmDelete.sim}
-          onConfirm={handleDeleteSim}
-          hasEquipoVinculado={modals.confirmDelete.hasEquipoVinculado}
-        />
-        <SimDetailsModal
-          isOpen={modals.details.isOpen}
-          onClose={() => closeModal("details")}
-          sim={modals.details.sim}
-          equipos={equipos}
-        />
-      </main>
+          <ConfirmarEliminacionModal
+            isOpen={modals.confirmDelete.isOpen}
+            onClose={() => closeModal("confirmDelete")}
+            sim={modals.confirmDelete.sim}
+            onConfirm={handleDeleteSim}
+            hasEquipoVinculado={modals.confirmDelete.hasEquipoVinculado}
+          />
+          <SimDetailsModal
+            isOpen={modals.details.isOpen}
+            onClose={() => closeModal("details")}
+            sim={modals.details.sim}
+            equipos={equipos}
+          />
+        </main>
       </div>
     </>
   );
