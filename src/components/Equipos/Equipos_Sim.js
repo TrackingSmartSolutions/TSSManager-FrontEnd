@@ -51,7 +51,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true,
   );
 };
 
-const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisponibles, sims }) => {
+const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisponibles, allSims }) => {
   const [formData, setFormData] = useState({
     numero: "",
     tarifa: "POR_SEGUNDO",
@@ -1571,7 +1571,7 @@ const EquiposSim = () => {
             onSave={handleSaveSim}
             equipos={equipos}
             gruposDisponibles={gruposDisponibles}
-            sims={allSims}
+            allSims={allSims}
           />
           <SaldosSidePanel
             isOpen={modals.saldos.isOpen}
