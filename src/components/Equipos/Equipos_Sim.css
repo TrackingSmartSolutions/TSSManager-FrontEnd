@@ -263,6 +263,7 @@
   display: flex;
   gap: var(--sim-spacing-md);
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .sim-filter-select {
@@ -284,15 +285,15 @@
   overflow-x: auto;
   overflow-y: auto;
   max-height: 600px;
-  border: 1px solid var(--inventario-border-color);
-  border-radius: var(--inventario-border-radius-sm);
+  border: 1px solid var(--sim-border-color);
+  border-radius: var(--sim-border-radius-sm);
 }
 
 .sim-table {
   width: 100%;
   border-collapse: collapse;
   background-color: white;
-  min-width: 1200px;
+  min-width: 800px;
 }
 
 .sim-table th,
@@ -327,7 +328,6 @@
   font-style: italic;
   padding: var(--sim-spacing-xl) !important;
 }
-
 
 .sim-principal-si {
   background-color: #d4edda;
@@ -382,15 +382,18 @@
 .sim-btn-action img {
   width: 16px;
   height: 16px;
-  filter: brightness(0) saturate(100%) invert(44%) sepia(7%) saturate(1102%) hue-rotate(169deg) brightness(96%) contrast(88%);
+  filter: brightness(0) saturate(100%) invert(44%) sepia(7%) saturate(1102%) hue-rotate(169deg) brightness(96%)
+    contrast(88%);
 }
 
 .sim-edit img {
-  filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(200deg) brightness(104%) contrast(97%);
+  filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(200deg) brightness(104%)
+    contrast(97%);
 }
 
 .sim-delete img {
-  filter: brightness(0) saturate(100%) invert(27%) sepia(98%) saturate(7462%) hue-rotate(3deg) brightness(103%) contrast(97%);
+  filter: brightness(0) saturate(100%) invert(27%) sepia(98%) saturate(7462%) hue-rotate(3deg) brightness(103%)
+    contrast(97%);
 }
 
 .sim-btn-action.sim-saldos {
@@ -867,6 +870,7 @@
   align-items: center;
   gap: 5px;
   transition: background-color 0.3s ease;
+  white-space: nowrap;
 }
 
 .sim-btn-orden:hover {
@@ -902,7 +906,7 @@
 /* Estilo para fila completa con alerta de caída de saldo */
 .sim-table tbody tr.sim-row-alert-caida {
   background-color: #fcbdc6 !important;
-  border-left: 4px solid #f44336 !important;
+  border-left: 44px solid #f44336 !important;
 }
 
 .sim-table tbody tr.sim-row-alert-caida:hover {
@@ -942,7 +946,7 @@
   }
 
   .sim-table {
-    min-width: 1000px;
+    min-width: 700px;
   }
 }
 
@@ -984,7 +988,7 @@
   }
 
   .sim-table {
-    min-width: 900px;
+    min-width: 600px;
   }
 
   .sim-table-header {
@@ -1040,7 +1044,7 @@
   }
 
   .sim-table {
-    min-width: 800px;
+    min-width: 500px;
     font-size: var(--sim-font-size-xs);
   }
 
@@ -1069,6 +1073,10 @@
     padding: var(--sim-spacing-xs);
     min-width: 50px;
   }
+
+  .sim-filter-input {
+    width: 100%;
+  }
 }
 
 @media (max-width: 576px) {
@@ -1088,7 +1096,7 @@
 
   .sim-table {
     font-size: 0.7rem;
-    min-width: 700px;
+    min-width: 450px;
   }
 
   .sim-table th,
@@ -1137,6 +1145,35 @@
   .sim-historial-table-container {
     max-height: 200px;
   }
+
+  .sim-btn-orden {
+    font-size: var(--sim-font-size-xs);
+    padding: var(--sim-spacing-xs);
+  }
+}
+
+@media (max-width: 480px) {
+  .sim-table {
+    min-width: 400px;
+    font-size: 0.65rem;
+  }
+
+  .sim-table th,
+  .sim-table td {
+    padding: 4px 6px;
+  }
+}
+
+@media (max-width: 359px) {
+  .sim-table {
+    min-width: 350px;
+    font-size: 0.6rem;
+  }
+
+  .sim-table th,
+  .sim-table td {
+    padding: 3px 5px;
+  }
 }
 
 /* Responsive para panel lateral */
@@ -1157,7 +1194,6 @@
     opacity: 0;
     transform: translateY(20px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1170,7 +1206,6 @@
 
 /* Ajustes para impresión */
 @media print {
-
   .sim-sidebar,
   .sim-table-controls,
   .sim-action-buttons {
@@ -1203,22 +1238,6 @@
   padding-left: var(--sim-spacing-md);
 }
 
-.sim-historial-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sim-spacing-md);
-  margin-top: var(--sim-spacing-xl);
-  padding-top: var(--sim-spacing-lg);
-  border-top: 1px solid var(--sim-border-color);
-}
-
-.sim-saldos-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sim-spacing-lg);
-  padding-bottom: var(--sim-spacing-lg);
-}
-
 /* Loading Spinner */
 .sim-loading {
   position: fixed;
@@ -1238,7 +1257,7 @@
 
 .sim-loading .spinner {
   border: 4px solid rgba(0, 0, 0, 0.1);
- border-left-color: #9c16f7;
+  border-left-color: #9c16f7;
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -1250,7 +1269,6 @@
   0% {
     transform: rotate(0deg);
   }
-
   100% {
     transform: rotate(360deg);
   }

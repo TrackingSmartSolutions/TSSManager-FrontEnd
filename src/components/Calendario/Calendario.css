@@ -35,10 +35,10 @@
   flex: none;
 }
 
-/* Filtro de usuarios */
+/* Filtro de usuarios mejorado con mejor diseño */
 .ts-calendar-select {
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
+  padding: 10px 16px;
+  border: 2px solid #e5e7eb;
   border-radius: 8px;
   background: white;
   font-size: 14px;
@@ -46,15 +46,23 @@
   cursor: pointer;
   width: 100%;
   max-width: 250px;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.ts-calendar-select:hover {
+  border-color: #cbd5e0;
+  background: #f9fafb;
 }
 
 .ts-calendar-select:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: white;
 }
 
-/* Botones de vista */
+/* Botones de vista mejorados con mejor contraste */
 .ts-calendar-view-buttons {
   display: flex;
   background: #f3f4f6;
@@ -62,6 +70,7 @@
   padding: 4px;
   width: 100%;
   justify-content: center;
+  gap: 4px;
 }
 
 .ts-calendar-view-btn {
@@ -81,11 +90,13 @@
 .ts-calendar-view-btn.active {
   background: white;
   color: #1f2937;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
 }
 
 .ts-calendar-view-btn:hover:not(.active) {
   color: #374151;
+  background: rgba(255, 255, 255, 0.5);
 }
 
 /* Navegación de fechas */
@@ -138,7 +149,7 @@
   overflow: hidden;
 }
 
-/* Estilos de FullCalendar */
+/* Estilos de FullCalendar mejorados */
 .fc-daygrid-event .fc-event-time {
   display: none;
 }
@@ -146,19 +157,20 @@
 .fc-daygrid-event {
   margin: 1px 0 !important;
   border-radius: 4px !important;
-  font-size: 11px !important;
-  padding: 2px 6px !important;
+  font-size: 12px !important;
+  padding: 3px 6px !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
-  min-height: 16px !important;
+  min-height: 18px !important;
   border: 1px solid !important;
-  border-color: rgba(0, 0, 0, 0.2) !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
   position: relative;
+  font-weight: 500;
 }
 
 .fc-daygrid-event::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -1px;
   left: -1px;
@@ -167,7 +179,7 @@
   border: 1px solid;
   border-color: inherit;
   border-radius: 4px;
-  opacity: 0.7;
+  opacity: 0.5;
   pointer-events: none;
 }
 
@@ -187,27 +199,30 @@
 }
 
 .fc-daygrid-more-link {
-  font-size: 10px !important;
+  font-size: 11px !important;
   color: #6b7280 !important;
-  padding: 2px 6px !important;
+  padding: 3px 8px !important;
   cursor: pointer !important;
   text-decoration: none !important;
   border-radius: 4px !important;
   background: #f3f4f6 !important;
   margin-top: 2px !important;
+  font-weight: 600;
 }
 
 .fc-daygrid-more-link:hover {
   background: #e5e7eb !important;
+  color: #374151 !important;
 }
 
 .fc-timegrid-event {
   margin-bottom: 2px !important;
   margin-top: 2px !important;
-  min-height: 20px !important;
-  opacity: 0.9 !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  min-height: 22px !important;
+  opacity: 0.95 !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 4px !important;
 }
 
 .fc-timegrid-event-harness {
@@ -247,7 +262,7 @@
   color: white !important;
 }
 
-/* Estilos por tipo de evento */
+/* Estilos por tipo de evento con mejor contraste */
 .fc-daygrid-event.evento-reunion {
   background-color: #3b82f6 !important;
   border-color: #2563eb !important;
@@ -393,70 +408,54 @@
   color: #713f12 !important;
 }
 
-.ts-calendar-filter-checkbox {
+/* Filtro de usuarios mejorado con label */
+.ts-calendar-user-filter {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  color: #374151;
-  user-select: none;
+  min-width: 220px;
+  flex-shrink: 0;
 }
 
-.ts-calendar-filter-checkbox input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  accent-color: #3b82f6;
+.ts-calendar-user-filter label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.ts-calendar-filter-checkbox:hover {
-  color: #1f2937;
-}
-
-.ts-calendar-filter-checkbox span {
-  padding: 2px 0;
-}
-
+/* Contenedor de checkboxes mejorado */
 .ts-calendar-filters-wrapper {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 24px;
   width: 100%;
   flex-wrap: wrap;
 }
 
-/* Filtro de usuarios */
-.ts-calendar-user-filter {
-  display: flex;
-  align-items: center;
-  min-width: 220px;
-  flex-shrink: 0;
-}
-
-/* Contenedor de checkboxes */
 .ts-calendar-filters {
   display: flex;
-  gap: 20px;
+  gap: 16px;
   align-items: center;
   flex-wrap: wrap;
-  padding-left: 20px;
+  padding-left: 24px;
   border-left: 2px solid #e5e7eb;
+  flex: 1;
 }
 
-/* Estilos de cada checkbox */
+/* Checkboxes mucho más pequeños y compactos */
 .ts-calendar-filter-checkbox {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #374151;
   user-select: none;
-  transition: all 0.2s ease;
-  padding: 6px 12px;
+  transition: all 0.15s ease;
+  padding: 4px 8px;
   border-radius: 6px;
 }
 
@@ -466,12 +465,13 @@
 }
 
 .ts-calendar-filter-checkbox input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   cursor: pointer;
   accent-color: #3b82f6;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
 .ts-calendar-filter-checkbox input[type="checkbox"]:hover {
@@ -483,7 +483,8 @@
 }
 
 .ts-calendar-filter-checkbox span {
-  padding: 2px 0;
+  padding: 0;
+  line-height: 1;
 }
 
 /* Responsivo */
@@ -694,13 +695,15 @@
   }
 }
 
-/* Estilos para el popover de eventos múltiples */
+/* Estilos mejorados para el popover de eventos múltiples */
 .fc-popover {
   max-height: 400px !important;
   overflow-y: auto !important;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
   position: absolute !important;
   z-index: 10001 !important;
+  border-radius: 8px !important;
+  border: 1px solid #e5e7eb !important;
 }
 
 .fc-popover.custom-popover-fixed {
@@ -757,6 +760,8 @@
   z-index: 1 !important;
   border-bottom: 1px solid #e5e7eb !important;
   padding: 8px 12px !important;
+  font-weight: 600 !important;
+  border-radius: 8px 8px 0 0 !important;
 }
 
 /* Responsive para móviles */

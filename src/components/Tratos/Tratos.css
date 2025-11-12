@@ -48,6 +48,7 @@
 
 html {
   font-size: 16px;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -57,7 +58,6 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   width: 100%;
-  overflow-x: hidden;
 }
 
 /* Layout Principal */
@@ -83,12 +83,16 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
 }
 
 .tratos-filters {
   display: flex;
   gap: var(--spacing-lg);
   align-items: center;
+  flex-wrap: wrap;
+  flex-grow: 1;
 }
 
 /* Añadir estilos para los grupos de filtros y etiquetas */
@@ -96,6 +100,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
+  flex: 1 1 250px; /* Base de 250px */
+  min-width: 250px; /* Ancho mínimo de 250px */
 }
 
 .filter-label {
@@ -119,9 +125,9 @@ body {
   padding: var(--spacing-sm) var(--spacing-md);
   font-size: var(--font-size-sm);
   cursor: pointer;
-  width: 250px; 
+  width: 100%;
   box-shadow: var(--box-shadow);
-  padding-right: 35px; 
+  padding-right: 35px;
 }
 
 .tratos-container .tratos-filters .filter-group .user-select:focus {
@@ -141,7 +147,7 @@ body {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  width: 250px; 
+  width: 100%;
   box-shadow: var(--box-shadow);
   justify-content: space-between;
 }
@@ -150,8 +156,7 @@ body {
   background-color: #f5f5f5;
 }
 
-.tratos-container .tratos-filters .filter-group .icon-deploy,
-.tratos-container .tratos-filters .date-range-container .icon-calendar {
+.tratos-container .tratos-filters .filter-group .icon-deploy {
   position: absolute;
   right: 10px;
   top: 50%;
@@ -161,14 +166,28 @@ body {
   pointer-events: none;
 }
 
+.tratos-container .tratos-filters .date-range-container .icon-calendar {
+  width: 20px;
+  height: 20px;
+  display: block;
+  flex-shrink: 0;
+}
+
+.tratos-container .tratos-filters .date-range-container .date-filter-btn span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .date-range-container {
   display: flex;
   align-items: center;
+  width: 100%; /* Ocupar el 100% de su filter-group */
 }
 
 .search-container {
   position: relative;
-  width: 250px;
+  width: 100%;
 }
 
 .global-search-input {
@@ -220,6 +239,7 @@ body {
   overflow-x: auto;
   padding-bottom: var(--spacing-md);
   padding-top: var(--spacing-md);
+  -webkit-overflow-scrolling: touch;
 }
 
 .kanban-column {
@@ -306,17 +326,20 @@ body {
 .column-count {
   background-color: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
-  width: 50px; 
-  height: 50px; 
+  width: 50px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-lg); 
+  font-size: var(--font-size-lg);
   font-weight: bold;
   margin-top: 15px;
   line-height: 1;
   text-align: center;
-  padding-bottom: 2px; 
+  padding-bottom: 2px;
+  min-width: 50px;
+  min-height: 50px;
+  box-sizing: border-box;
 }
 
 .kanban-column.expanded .column-count {
@@ -334,6 +357,7 @@ body {
   margin: 10px;
   display: none;
   min-height: 200px;
+  flex: 1;
 }
 
 .kanban-column.expanded .column-content {
@@ -459,6 +483,7 @@ body {
   margin: 0;
   flex: 1;
   padding-right: var(--spacing-lg);
+  word-break: break-word;
 }
 
 .trato-actions {
@@ -539,6 +564,7 @@ body {
   font-size: var(--font-size-sm);
   color: var(--text-light);
   line-height: 1.5;
+  word-break: break-word;
 }
 
 .trato-details p {
@@ -1099,6 +1125,8 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
   display: flex;
   gap: var(--spacing-md);
   align-items: center;
+  flex: 1 1 auto;
+  justify-content: flex-end;
 }
 
 .btn-toggle-all {
@@ -1124,51 +1152,37 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
 
 /* Media query para pantallas extra grandes (desktops grandes y TVs) */
 @media (min-width: 1921px) {
-  /* Se ajusta el tamaño de la fuente base para pantallas muy grandes */
-  html {
-    font-size: 18px;
-  }
-
-  /* El contenido principal puede tener un padding mayor */
   .main-content {
     padding: var(--spacing-xl) 3rem;
   }
 
-  /* Las columnas expandidas pueden ser un poco más anchas */
   .kanban-column.expanded {
     width: 380px;
   }
 }
 
-/* Media query para pantallas grandes (desktops y laptops) */
-@media (max-width: 1920px) {
-  /* Se asegura que el tamaño de fuente base sea el predeterminado para este rango */
-  html {
-    font-size: 16px;
-  }
-}
-
 /* Media query para pantallas de tamaño medio (laptops y tablets grandes) */
 @media (max-width: 1200px) {
-  /* En pantallas más pequeñas, los controles de tratos se apilan verticalmente */
   .tratos-controls {
     flex-direction: column;
     gap: var(--spacing-md);
-    align-items: flex-start;
+    align-items: stretch;
   }
 
-  /* Los filtros de tratos ocupan todo el ancho y se justifican al espacio entre ellos */
   .tratos-filters {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-start;
+    gap: var(--spacing-md);
   }
 
-  /* Ajuste de ancho para las columnas en su estado normal */
+  .tratos-actions {
+    justify-content: flex-start;
+  }
+
   .kanban-column {
     width: 75px;
   }
 
-  /* Ajuste de ancho para las columnas cuando están expandidas */
   .kanban-column.expanded {
     width: 300px;
   }
@@ -1176,32 +1190,27 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
 
 /* Media query para pantallas pequeñas (tablets y móviles) */
 @media (max-width: 768px) {
-  /* Los controles de tratos se reorganizan */
-  .tratos-controls {
-    flex-direction: column;
-    gap: var(--spacing-md);
-    align-items: stretch;
-  }
-
   .tratos-actions {
     flex-direction: row;
     gap: var(--spacing-sm);
   }
-
-  .btn-toggle-all {
-    flex: 1;
+  
+  .filter-group {
+    min-width: 100%; /* Forzar a los filtros a apilarse */
+    flex-basis: 100%; /* Ocupar todo el ancho */
   }
 
+  .btn-toggle-all,
   .btn-crear-trato {
     flex: 1;
+    font-size: 0.9rem;
+    padding: var(--spacing-md);
   }
 
-  /* El padding del contenido principal se reduce */
   .main-content {
     padding: var(--spacing-md);
   }
 
-  /* Los filtros de tratos se apilan verticalmente */
   .tratos-filters {
     flex-direction: column;
     gap: var(--spacing-md);
@@ -1212,47 +1221,88 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
     width: 100%;
   }
 
-  /* Los desplegables de filtro y contenedores de fecha ocupan todo el ancho */
-  .filter-dropdown,
-  .date-range-container {
-    width: 100%;
-  }
-
-  /* Responsive para el filtro de búsqueda */
-@media (max-width: 768px) {
-  .search-container {
-    width: 100%;
-  }
-  
+  .user-select,
+  .date-range-container,
+  .search-container,
   .global-search-input {
     width: 100%;
+    min-width: 0;
   }
-}
-
-  /* Los elementos de selección de usuario y botones de filtro de fecha ocupan todo el ancho */
+  
+  /* Prevenir auto-zoom en iOS y mejorar legibilidad */
   .user-select,
+  .global-search-input,
   .date-filter-btn {
-    width: 100%;
+    font-size: 1rem; /* 16px */
+    padding: var(--spacing-md);
+  }
+  
+  .tratos-modal-overlay .modal-form-control {
+    font-size: 1rem; /* 16px */
   }
 
-  /* El espacio entre las columnas del kanban se reduce */
+  .trato-card {
+    font-size: 0.95rem;
+  }
+  .trato-nombre {
+      font-size: 1.05rem;
+  }
+  .trato-details {
+    font-size: 0.9rem;
+  }
+
   .kanban-board {
-    gap: 15px;
+    gap: var(--spacing-md);
   }
-
-  /* Las columnas del kanban en estado normal son más estrechas */
+  
+  /* Comportamiento de columnas en móvil: siempre expandidas y con scroll */
   .kanban-column {
-    width: 70px;
+    width: 270px; /* Ancho de columna fijo en móvil */
+    min-height: 300px;
+    transition: none; 
+    justify-content: flex-start;
   }
-
-  /* Las columnas del kanban expandidas son más estrechas */
+  
   .kanban-column.expanded {
-    width: 280px;
+    width: 270px; /* Mismo ancho, sin-efecto */
   }
 
-  /* Se ajusta el tamaño de la fuente para un mejor ajuste en pantallas pequeñas */
-  html {
-    font-size: 15px;
+  .column-navigation {
+    display: none; /* Ocultar botones de expandir/contraer */
+  }
+  
+  .column-header {
+    height: 60px;
+    width: calc(100% - 20px);
+    border-radius: var(--border-radius-md);
+    margin: 10px;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 0 var(--spacing-lg);
+    align-items: center;
+  }
+
+  .vertical-text {
+    writing-mode: horizontal-tb;
+    transform: none;
+    font-size: var(--font-size-lg);
+  }
+  
+  .column-count {
+    margin-top: 0;
+    margin-left: var(--spacing-md);
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    font-size: var(--font-size-md);
+  }
+  
+  .column-content {
+    display: block; /* Forzar visualización */
+    max-height: 400px; 
+    overflow-y: auto;
+    flex: 1;
   }
 
   /* Modal responsive específico para tratos */
@@ -1264,60 +1314,83 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
   .tratos-modal-overlay .tipo-buttons {
     flex-direction: column;
   }
+  
+  .duracion-container {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .duracion-field {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .duracion-field label {
+    min-width: 60px;
+    text-align: left;
+  }
 }
 
 /* Media query para pantallas muy pequeñas (móviles) */
 @media (max-width: 576px) {
   .tratos-actions {
     flex-direction: column;
-    gap: var(--spacing-xs);
+    gap: var(--spacing-sm);
   }
-
-  /* El tamaño del contador de la columna se ajusta para móvil */
-  .column-count {
-    width: 40px; /* Mantenemos un tamaño adecuado incluso en móvil */
-    height: 40px;
-    font-size: var(--font-size-md); /* Mantenemos un tamaño de fuente legible */
+  
+  .kanban-column,
+  .kanban-column.expanded {
+    width: 260px; /* Un poco más angosto */
   }
 
   /* Modal ultra compacto específico para tratos */
   .tratos-modal-overlay {
-    padding: var(--spacing-xs);
+    padding: var(--spacing-sm); /* Añadir padding al overlay */
   }
 
   .tratos-modal-overlay .modal-content {
-    max-width: 95vw;
+    max-width: 95vw; /* Ocupar el 95% del ancho */
+    width: 100%;
+    height: auto; /* Dejar que el contenido defina la altura */
+    max-height: 90vh; /* No más del 90% de la altura */
+    border-radius: var(--border-radius-lg); /* Devolver los bordes redondeados */
+    margin: 0; /* Centrado por el flex del overlay */
+  }
+  
+  .tratos-modal-overlay .modal-header {
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
   }
 
   .tratos-modal-overlay .modal-body {
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-md);
+    border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+  }
+  
+  .tratos-modal-overlay .modal-form-group {
+    padding: 0 var(--spacing-sm);
   }
 
   .tratos-modal-overlay .modal-form-actions {
     flex-direction: column;
     gap: var(--spacing-sm);
+    align-items: stretch; /* Botones de ancho completo */
+  }
+  
+  .tratos-modal-overlay .modal-form-actions .btn {
+    padding: var(--spacing-md);
   }
 }
 
 /* Media query para pantallas mínimas */
 @media (max-width: 400px) {
-  /* Se reduce el padding general para dejar más espacio al contenido */
   .main-content {
     padding: var(--spacing-sm);
   }
 
-  /* Ajuste final para las columnas del kanban en pantallas extremadamente pequeñas */
-  .kanban-column {
-    width: 55px;
-  }
-
+  .kanban-column,
   .kanban-column.expanded {
-    width: 220px;
-  }
-
-  /* Reducción del tamaño de fuente base para dispositivos muy pequeños */
-  html {
-    font-size: 13px;
+    width: 240px; /* Ancho final para pantallas muy chicas */
   }
 }
 
@@ -1356,4 +1429,7 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
   }
 }
 
-
+.tratos-loading p {
+  margin: 0;
+  font-weight: 500;
+}

@@ -12,8 +12,6 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token");
-  console.log("Token enviado:", token); // Para depurar
-
   const headers = {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
