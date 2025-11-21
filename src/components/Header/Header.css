@@ -11,8 +11,8 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   width: 100%;
   position: fixed;
-  top: 0;          
-  left: 0;    
+  top: 0;
+  left: 0;
   z-index: 1000;
 }
 
@@ -277,7 +277,7 @@
 /* Contenedor de notificaciones - DEBE tener position: relative */
 .header-notification-container {
   position: relative;
-  display: inline-block; /* Asegura que el contenedor se ajuste al contenido */
+  display: inline-block;
 }
 
 /* Botón de notificaciones */
@@ -295,8 +295,8 @@
 /* Badge de notificaciones - CRÍTICO: position absolute relativo al botón */
 .ts-header-notification-badge {
   position: absolute;
-  top: -2px;           /* Ajustado para mejor visibilidad */
-  right: -2px;         /* Ajustado para mejor visibilidad */
+  top: -2px;
+  right: -2px;
   background-color: #ef4444;
   color: white;
   border-radius: 50%;
@@ -309,22 +309,11 @@
   font-weight: 600;
   border: 2px solid white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  z-index: 10;         /* Asegura que esté por encima del icono */
-  line-height: 1;      /* Evita problemas de altura de línea */
+  z-index: 10;
+  line-height: 1;
 }
 
-/* Asegura que el badge sea visible en pantallas pequeñas */
-@media (max-width: 768px) {
-  .ts-header-notification-badge {
-    min-width: 16px;
-    height: 16px;
-    font-size: 10px;
-    top: -1px;
-    right: -1px;
-  }
-}
-
-/* Modal de notificaciones */
+/* Modal de notificaciones con responsive mejorado */
 .ts-header-notification-modal {
   position: absolute;
   top: calc(100% + 10px);
@@ -511,6 +500,7 @@
   background: #f3f4f6;
   border-color: #9ca3af;
 }
+
 /* Estilo del perfil de usuario */
 .ts-header-user-profile {
   display: flex;
@@ -752,13 +742,6 @@
   gap: 8px;
 }
 
-/* Íc0,0,0.1);
-  max-width: 280px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 /* Ícono del modal */
 .ts-header-modal-icon {
   width: 20px;
@@ -844,6 +827,11 @@
   .ts-header-user-profile .ts-header-username {
     font-size: var(--font-size-sm, 0.875rem);
   }
+
+  /* Modal de notificaciones más pequeño en tablets */
+  .ts-header-notification-modal {
+    width: 320px;
+  }
 }
 
 /* Ajustes responsivos para pantallas pequeñas */
@@ -884,9 +872,82 @@
     display: none;
   }
 
+  /* Badge más pequeño en móviles */
+  .ts-header-notification-badge {
+    min-width: 16px;
+    height: 16px;
+    font-size: 10px;
+    top: -1px;
+    right: -1px;
+  }
+
+  /* Modal de notificaciones optimizado para móviles */
   .ts-header-notification-modal {
-    width: 300px;
-    right: -50px;
+    width: calc(100vw - 30px);
+    max-width: 320px;
+    right: -10px;
+    max-height: 350px;
+    border-radius: 10px;
+  }
+
+  .ts-header-notification-header {
+    padding: 12px 15px;
+  }
+
+  .ts-header-notification-header h3 {
+    font-size: 14px;
+  }
+
+  .ts-header-notification-count {
+    font-size: 11px;
+    padding: 1px 6px;
+  }
+
+  .ts-header-notification-list {
+    max-height: 230px;
+  }
+
+  .ts-header-notification-item {
+    padding: 10px 15px;
+    gap: 10px;
+  }
+
+  .ts-header-notification-title {
+    font-size: 13px;
+  }
+
+  .ts-header-notification-message {
+    font-size: 12px;
+  }
+
+  .ts-header-notification-time {
+    font-size: 10px;
+  }
+
+  .ts-header-notification-type {
+    width: 6px;
+    height: 6px;
+  }
+
+  .ts-header-notification-check-btn {
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
+  }
+
+  .ts-header-notification-footer {
+    padding: 10px 15px;
+    gap: 6px;
+  }
+
+  .ts-header-notification-btn {
+    padding: 7px 10px;
+    font-size: 11px;
+  }
+
+  .ts-header-notification-empty {
+    padding: 30px 15px;
+    font-size: 13px;
   }
 }
 
@@ -920,21 +981,114 @@
     height: 35px;
   }
 
-  .ts-header-notification .ts-header-badge {
-    font-size: 8px;
-    width: 14px;
-    height: 14px;
-    top: 2px;
-    right: 2px;
-  }
-
   .ts-header-sidebar {
     width: 280px;
   }
 
+  /* Modal de notificaciones más compacto en móviles pequeños */
   .ts-header-notification-modal {
-    width: 280px;
-    right: -80px;
+    width: calc(100vw - 20px);
+    max-width: 300px;
+    right: -5px;
+    max-height: 320px;
+    border-radius: 8px;
+  }
+
+  .ts-header-notification-header {
+    padding: 10px 12px;
+  }
+
+  .ts-header-notification-header h3 {
+    font-size: 13px;
+  }
+
+  .ts-header-notification-count {
+    font-size: 10px;
+    padding: 1px 5px;
+  }
+
+  .ts-header-notification-list {
+    max-height: 200px;
+  }
+
+  .ts-header-notification-item {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .ts-header-notification-title {
+    font-size: 12px;
+    margin-bottom: 2px;
+  }
+
+  .ts-header-notification-message {
+    font-size: 11px;
+    margin-bottom: 2px;
+  }
+
+  .ts-header-notification-time {
+    font-size: 9px;
+  }
+
+  .ts-header-notification-check-btn {
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+  }
+
+  .ts-header-notification-footer {
+    padding: 8px 12px;
+    gap: 5px;
+  }
+
+  .ts-header-notification-btn {
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  .ts-header-notification-empty {
+    padding: 25px 12px;
+    font-size: 12px;
+  }
+}
+
+/* Breakpoint adicional para móviles extra pequeños */
+@media (max-width: 400px) {
+  .ts-header-notification-modal {
+    width: calc(100vw - 15px);
+    max-width: 280px;
+    right: -3px;
+    max-height: 300px;
+  }
+
+  .ts-header-notification-list {
+    max-height: 180px;
+  }
+}
+
+/* Breakpoint para pantallas muy pequeñas */
+@media (max-width: 359px) {
+  .ts-header-notification-modal {
+    width: calc(100vw - 10px);
+    max-width: 270px;
+    right: 0;
+    max-height: 280px;
+  }
+
+  .ts-header-notification-header {
+    padding: 8px 10px;
+  }
+
+  .ts-header-notification-list {
+    max-height: 160px;
+  }
+
+  .ts-header-notification-item {
+    padding: 7px 10px;
+  }
+
+  .ts-header-notification-footer {
+    padding: 7px 10px;
   }
 }
 
@@ -960,4 +1114,3 @@
     padding-top: 55px;
   }
 }
-
