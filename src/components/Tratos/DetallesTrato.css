@@ -2605,9 +2605,20 @@
 .email-info-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end; 
   margin-top: 4px;
   margin-left: 8px;
+}
+
+.email-instructions-col {
+  display: flex;
+  flex-direction: column; 
+  gap: 4px; 
+}
+
+.email-instructions-col small {
+  display: block;
+  line-height: 1.2;
 }
 
 .email-info-row small {

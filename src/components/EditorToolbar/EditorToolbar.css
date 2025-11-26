@@ -138,6 +138,18 @@
   background: #f8f9fa;
 }
 
+/* Estilos para enlaces dentro del editor */
+.gmail-message-editor a {
+    color: #1a73e8;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.gmail-message-editor a:hover {
+    color: #174ea6;
+    text-decoration: underline;
+}
+
 /* Responsivo */
 @media (max-width: 768px) {
   .editor-toolbar {

@@ -343,13 +343,14 @@
 .sim-edit:hover { background-color: rgba(3, 124, 224, 0.1); border-color: var(--sim-secondary-color); }
 .sim-delete:hover { background-color: rgba(220, 53, 69, 0.1); border-color: var(--sim-danger-color); }
 .sim-details:hover { background-color: rgba(108, 117, 125, 0.1); border-color: #6c757d; }
-.sim-btn-action.sim-saldos:hover { background-color: #0056b3; border-color: #0056b3; }
+.sim-btn-action.sim-saldos:hover { background-color: rgba(3, 124, 224, 0.1); border-color: var(--sim-secondary-color);}
 .sim-btn-action.sim-aprobar:hover { background-color: #45a049; border-color: #45a049; }
 
 .sim-btn-action img { width: 14px; height: 14px; filter: brightness(0) saturate(100%) invert(44%) sepia(7%) saturate(1102%) hue-rotate(169deg) brightness(96%) contrast(88%); }
 .sim-edit img { filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(200deg) brightness(104%) contrast(97%); }
 .sim-delete img { filter: brightness(0) saturate(100%) invert(27%) sepia(98%) saturate(7462%) hue-rotate(3deg) brightness(103%) contrast(97%); }
-.sim-btn-action.sim-saldos img, .sim-btn-action.sim-aprobar img { filter: brightness(0) saturate(100%) invert(100%); }
+.sim-btn-action.sim-saldos img { filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(200deg) brightness(104%) contrast(97%); }
+.sim-btn-action.sim-aprobar img { filter: brightness(0) saturate(100%) invert(34%) sepia(72%) saturate(441%) hue-rotate(91deg) brightness(95%) contrast(92%); }
 
 /* Modales */
 .sim-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: var(--sim-spacing-lg); }

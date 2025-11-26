@@ -864,12 +864,8 @@
     gap: 15px;
   }
 
-  .ts-header-user-profile .ts-header-dropdown-icon {
-    display: none;
-  }
-
-  .ts-header-user-profile .ts-header-username {
-    display: none;
+  .ts-header-user-profile {
+    display: none !important;
   }
 
   /* Badge más pequeño en móviles */

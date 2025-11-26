@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import './EditorToolbar.css';
+import Swal from 'sweetalert2';
 
 const EditorToolbar = ({ editorRef }) => {
     const [showDropdown, setShowDropdown] = useState(false);
@@ -73,6 +74,98 @@ const EditorToolbar = ({ editorRef }) => {
         }
     };
 
+    const insertLink = async () => {
+        if (editorRef.current) {
+            const selection = window.getSelection();
+            const selectedText = selection.toString();
+
+            // Verificar si hay texto seleccionado
+            if (!selectedText) {
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'Texto no seleccionado',
+                    text: 'Por favor, selecciona el texto al que quieres agregar un enlace',
+                    confirmButtonText: 'Entendido'
+                });
+                return;
+            }
+
+            const range = selection.getRangeAt(0);
+            const savedRange = range.cloneRange();
+
+            // Solicitar URL al usuario
+            const { value: url } = await Swal.fire({
+                title: 'Insertar hipervínculo',
+                input: 'url',
+                inputLabel: 'Ingresa la URL del enlace',
+                inputPlaceholder: 'https://ejemplo.com',
+                inputValue: 'https://',
+                showCancelButton: true,
+                confirmButtonText: 'Insertar',
+                cancelButtonText: 'Cancelar',
+                inputValidator: (value) => {
+                    if (!value || !value.trim()) {
+                        return 'Debes ingresar una URL';
+                    }
+                }
+            });
+
+            if (url && url.trim()) {
+                // Validar que sea una URL válida
+                let finalUrl = url.trim();
+                if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+                    finalUrl = 'https://' + finalUrl;
+                }
+
+                editorRef.current.focus();
+                selection.removeAllRanges();
+                selection.addRange(savedRange);
+
+                // Crear el enlace
+                document.execCommand('createLink', false, finalUrl);
+
+                // Disparar evento de input
+                const event = new Event('input', { bubbles: true });
+                editorRef.current.dispatchEvent(event);
+            }
+        }
+    };
+
+    const editLink = async () => {
+        const selection = window.getSelection();
+        const anchorNode = selection.anchorNode;
+
+        // Buscar si el cursor está sobre un enlace
+        let linkElement = anchorNode.parentElement;
+        if (linkElement && linkElement.tagName === 'A') {
+            const currentUrl = linkElement.href;
+
+            const { value: newUrl } = await Swal.fire({
+                title: 'Editar hipervínculo',
+                input: 'url',
+                inputLabel: 'Editar URL',
+                inputValue: currentUrl,
+                showCancelButton: true,
+                confirmButtonText: 'Guardar',
+                cancelButtonText: 'Cancelar',
+                inputValidator: (value) => {
+                    if (!value || !value.trim()) {
+                        return 'Debes ingresar una URL';
+                    }
+                }
+            });
+
+            if (newUrl !== undefined && newUrl.trim()) {
+                linkElement.href = newUrl.trim();
+
+                const event = new Event('input', { bubbles: true });
+                editorRef.current.dispatchEvent(event);
+            }
+        } else {
+            insertLink();
+        }
+    };
+
     return (
         <div className="editor-toolbar">
             <div className="toolbar-group">
@@ -103,6 +196,17 @@ const EditorToolbar = ({ editorRef }) => {
             </div>
 
             <div className="toolbar-separator"></div>
+
+            <div className="toolbar-group">
+                <button
+                    type="button"
+                    className="toolbar-btn"
+                    onClick={editLink}
+                    title="Insertar hipervínculo"
+                >
+                    🔗
+                </button>
+            </div>
 
             <div className="toolbar-group">
                 <div className="dropdown-container">

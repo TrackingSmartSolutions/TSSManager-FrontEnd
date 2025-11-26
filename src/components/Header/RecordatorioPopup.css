@@ -1,0 +1,276 @@
+.recordatorio-popup {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 360px;
+  max-width: calc(100vw - 48px);
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.recordatorio-popup.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.recordatorio-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px 16px 0 0;
+}
+
+.recordatorio-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.recordatorio-titulo {
+  flex: 1;
+  min-width: 0;
+}
+
+.recordatorio-titulo h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.recordatorio-tiempo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  opacity: 0.95;
+  margin-top: 4px;
+}
+
+.recordatorio-close {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 8px;
+  margin: -8px;
+  border-radius: 50%;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recordatorio-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.recordatorio-body {
+  padding: 20px 16px;
+}
+
+.recordatorio-trato {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 4px 0;
+  line-height: 1.4;
+}
+
+.recordatorio-empresa {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 16px 0;
+  font-weight: 500;
+}
+
+.recordatorio-detalles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.recordatorio-hora,
+.recordatorio-duracion {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f3f4f6;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.recordatorio-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #667eea;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s, transform 0.1s;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.recordatorio-link:hover {
+  background: #5a6fd6;
+}
+
+.recordatorio-link:active {
+  transform: translateY(1px);
+}
+
+.recordatorio-lugar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #4b5563;
+  margin: 0;
+  background: #f9fafb;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.recordatorio-dismiss {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-top: 1px solid #f3f4f6;
+  background: white;
+  color: #9ca3af;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 0 0 16px 16px;
+  transition: all 0.2s;
+}
+
+.recordatorio-dismiss:hover {
+  background: #f9fafb;
+  color: #6b7280;
+}
+
+/* =========================================
+   MEDIA QUERY MÓVIL (CORREGIDA Y COMPACTA)
+   ========================================= */
+@media (max-width: 640px) {
+  .recordatorio-popup {
+    /* Centrado horizontal garantizado */
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: 94%; 
+    max-width: 360px;
+    
+    /* Posición inferior */
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Header Mini */
+  .recordatorio-header {
+    padding: 8px 10px;
+    height: 38px;
+  }
+
+  .recordatorio-icono {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+  }
+  
+  .recordatorio-icono svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .recordatorio-titulo h4 {
+    font-size: 13px;
+  }
+
+  .recordatorio-tiempo {
+    font-size: 11px;
+    margin-top: 0;
+  }
+
+  /* Body Ultra Compacto */
+  .recordatorio-body {
+    padding: 10px;
+    gap: 4px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .recordatorio-trato {
+    font-size: 14px;
+    margin: 0 0 2px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .recordatorio-empresa {
+    display: none; 
+  }
+
+  .recordatorio-detalles {
+    margin: 0 0 8px 0;
+    gap: 6px;
+  }
+
+  .recordatorio-hora, 
+  .recordatorio-duracion {
+    background: transparent;
+    border: 1px solid #e5e7eb;
+    padding: 2px 6px;
+    font-size: 11px;
+    height: 20px;
+  }
+
+  /* Botón delgado y ancho */
+  .recordatorio-link {
+    padding: 6px; 
+    font-size: 12px;
+    height: 32px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .recordatorio-lugar {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+
+  /* Footer texto */
+  .recordatorio-dismiss {
+    padding: 8px;
+    font-size: 10px;
+    background: #fafafa;
+    border-radius: 0 0 12px 12px;
+  }
+}

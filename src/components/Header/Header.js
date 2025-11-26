@@ -9,6 +9,7 @@ import profilePlaceholder from "../../assets/icons/profile-placeholder.png"
 import dropdownIcon from "../../assets/icons/desplegable.png"
 import clockIcon from "../../assets/icons/clock.png"
 import notificationSound from "../../assets/sounds/notification.wav"
+import RecordatorioPopup from "./RecordatorioPopup"
 
 
 // Cache global para el logo
@@ -30,7 +31,7 @@ const Header = ({ logoUrl }) => {
   const userName = localStorage.getItem("userName") || "Usuario"
   const userRol = localStorage.getItem("userRol") || "EMPLEADO"
   const cantidadNoLeidasRef = useRef(0);
-  const primeraCargarRef = useRef(true); 
+  const primeraCargarRef = useRef(true);
 
   // Estados para inactividad
   const [lastActivity, setLastActivity] = useState(Date.now())
@@ -153,11 +154,10 @@ const Header = ({ logoUrl }) => {
       const audio = new Audio(notificationSound)
       audio.volume = 0.8
       audio.play().catch(error => {
-        console.log("No se pudo reproducir el sonido de notificación:", error)
+        console.error("Error reproduciendo sonido de notificación:", error)
       })
     } catch (error) {
-      console.log("Error al crear audio:", error)
-    }
+      console.error("Error reproduciendo sonido de notificación:", error)}
   }
 
   // Effect para cargar el logo solo una vez por sesión
@@ -187,11 +187,11 @@ const Header = ({ logoUrl }) => {
   }, []);
 
   useEffect(() => {
-  const yaInicializado = sessionStorage.getItem("notificaciones_inicializadas");
-  if (yaInicializado) {
-    obtenerContadorNoLeidas(false); 
-  }
-}, [location.pathname]);
+    const yaInicializado = sessionStorage.getItem("notificaciones_inicializadas");
+    if (yaInicializado) {
+      obtenerContadorNoLeidas(false);
+    }
+  }, [location.pathname]);
 
   // Función mejorada para manejar errores del logo
   const handleLogoError = (e) => {
@@ -217,6 +217,15 @@ const Header = ({ logoUrl }) => {
 
   const [notificaciones, setNotificaciones] = useState([]);
   const [cantidadNoLeidas, setCantidadNoLeidas] = useState(0);
+  const [actividadesProximas, setActividadesProximas] = useState([]);
+  const [actividadesDismissed, setActividadesDismissed] = useState(() => {
+    const saved = localStorage.getItem('actividadesDismissed');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+
+  useEffect(() => {
+
+}, [actividadesDismissed]);
 
   // Función para obtener notificaciones del usuario
   const obtenerNotificaciones = async () => {
@@ -241,39 +250,97 @@ const Header = ({ logoUrl }) => {
 
   // Función para obtener contador de no leídas
   const obtenerContadorNoLeidas = async (debeReproducirSonido = true) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const yaInicializado = sessionStorage.getItem("notificaciones_inicializadas");
+
+      const response = await fetch(`${API_BASE_URL}/notificaciones/user/contador-no-leidas`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const nuevaCantidad = data.count;
+
+        // Solo reproducir sonido si ya se inicializó Y aumentó el contador Y se permite
+        if (yaInicializado &&
+          nuevaCantidad > cantidadNoLeidasRef.current &&
+          debeReproducirSonido) {
+          playNotificationSound();
+        }
+
+        if (!yaInicializado) {
+          sessionStorage.setItem("notificaciones_inicializadas", "true");
+        }
+
+        cantidadNoLeidasRef.current = nuevaCantidad;
+        setCantidadNoLeidas(nuevaCantidad);
+      }
+    } catch (error) {
+      console.error("Error al obtener contador:", error);
+    }
+  };
+
+  // Función para obtener actividades próximas
+  const obtenerActividadesProximas = async () => {
   try {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    const yaInicializado = sessionStorage.getItem("notificaciones_inicializadas");
-
-    const response = await fetch(`${API_BASE_URL}/notificaciones/user/contador-no-leidas`, {
+    const response = await fetch(`${API_BASE_URL}/notificaciones/actividades-proximas`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
     if (response.ok) {
       const data = await response.json();
-      const nuevaCantidad = data.count;
+      
+      const dismissedFromStorage = localStorage.getItem('actividadesDismissed');
+      const dismissedSet = dismissedFromStorage ? new Set(JSON.parse(dismissedFromStorage)) : new Set();
+      
+      const actividadesNuevas = data.filter(act => {
+        const esDismissed = dismissedSet.has(act.id);
+        return !esDismissed;
+      });
 
-      // Solo reproducir sonido si ya se inicializó Y aumentó el contador Y se permite
-      if (yaInicializado && 
-          nuevaCantidad > cantidadNoLeidasRef.current && 
-          debeReproducirSonido) {
-        playNotificationSound();
-        console.log('🔊 Sonido reproducido - nueva notificación detectada');
-      }
+      // Solo actualizar si hay nuevas actividades que no estaban antes
+      setActividadesProximas(prev => {
+        const idsActuales = prev.map(a => a.id);
+        
+        const realmenteNuevas = actividadesNuevas.filter(
+          act => !idsActuales.includes(act.id)
+        );
 
-      if (!yaInicializado) {
-        sessionStorage.setItem("notificaciones_inicializadas", "true");
-        console.log('📱 Sistema inicializado con', nuevaCantidad, 'notificaciones');
-      }
+        // Solo reproducir sonido si hay actividades realmente nuevas
+        if (realmenteNuevas.length > 0) {
+          playNotificationSound();
+        }
 
-      cantidadNoLeidasRef.current = nuevaCantidad;
-      setCantidadNoLeidas(nuevaCantidad);
+        return actividadesNuevas;
+      });
     }
   } catch (error) {
-    console.error("Error al obtener contador:", error);
+    console.error("Error al obtener actividades próximas:", error);
   }
+};
+
+  // Función para marcar actividad como dismissed (persistente)
+  const handleDismissActividad = (actividadId) => {  
+  const currentDismissed = localStorage.getItem('actividadesDismissed');
+  const dismissedSet = currentDismissed ? new Set(JSON.parse(currentDismissed)) : new Set();
+  dismissedSet.add(actividadId);
+  localStorage.setItem('actividadesDismissed', JSON.stringify([...dismissedSet]));
+    
+  // Luego actualizar el estado
+  setActividadesDismissed(dismissedSet);
+  
+  // Remover de las actividades visibles
+  setActividadesProximas(prev => {
+    const filtered = prev.filter(act => act.id !== actividadId);
+    return filtered;
+  });
+  
 };
 
   // Función para marcar como leída
@@ -367,15 +434,39 @@ const Header = ({ logoUrl }) => {
     const inicializar = async () => {
       await obtenerNotificaciones();
       await obtenerContadorNoLeidas();
+      await obtenerActividadesProximas();
     };
 
     inicializar();
 
     const intervalo = setInterval(() => {
       obtenerContadorNoLeidas();
+      obtenerActividadesProximas();
     }, 30000);
 
     return () => clearInterval(intervalo);
+  }, []);
+
+  // Limpiar actividades dismissed al inicio del día
+  useEffect(() => {
+    const limpiarDismissedAntiguas = () => {
+      const ahora = new Date();
+      const ultimaLimpieza = localStorage.getItem('ultimaLimpiezaDismissed');
+
+      // Si es un nuevo día, limpiar dismissed
+      if (!ultimaLimpieza || new Date(ultimaLimpieza).getDate() !== ahora.getDate()) {
+        localStorage.removeItem('actividadesDismissed');
+        setActividadesDismissed(new Set());
+        localStorage.setItem('ultimaLimpiezaDismissed', ahora.toISOString());
+      }
+    };
+
+    limpiarDismissedAntiguas();
+
+    // Verificar cada hora si es necesario limpiar
+    const intervaloLimpieza = setInterval(limpiarDismissedAntiguas, 60 * 60 * 1000);
+
+    return () => clearInterval(intervaloLimpieza);
   }, []);
 
   // Maneja temporizador de inactividad
@@ -507,7 +598,6 @@ const Header = ({ logoUrl }) => {
       return
     }
     setIsCrmDropdownOpen(!isCrmDropdownOpen)
-    console.log(`${e.type} handled, isCrmDropdownOpen:`, !isCrmDropdownOpen)
     if (e.type === "touchstart") {
       setTimeout(() => {
         touchHandledRef.current = false
@@ -856,6 +946,15 @@ const Header = ({ logoUrl }) => {
           </div>
         </div>
       )}
+      {/* Popups de recordatorio */}
+      {actividadesProximas.map((actividad, index) => (
+        <RecordatorioPopup
+          key={actividad.id}
+          actividad={actividad}
+          onClose={() => setActividadesProximas(prev => prev.filter(act => act.id !== actividad.id))}
+          onDismiss={handleDismissActividad}
+        />
+      ))}
     </>
   )
 }

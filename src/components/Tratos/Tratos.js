@@ -1619,26 +1619,36 @@ const Tratos = () => {
   };
 
   const updateSingleTratoActivity = (tratoId, newActivity) => {
-    setColumnas(prevColumnas => {
-      return prevColumnas.map(columna => ({
-        ...columna,
-        tratos: columna.tratos.map(trato => {
-          if (trato.id === tratoId) {
-            return {
-              ...trato,
-              hasActivities: true,
-              lastActivityType: newActivity.tipo,
-              proximaActividadTipo: newActivity.tipo,
-              proximaActividadFecha: newActivity.fechaLimite || newActivity.horaInicio,
-              actividadesAbiertasCount: (trato.actividadesAbiertasCount || 0) + 1,
-              isNeglected: false
-            };
-          }
-          return trato;
-        })
-      }));
-    });
-  };
+  console.log('📌 Actualizando actividad localmente:', {
+    tratoId,
+    tipo: newActivity.tipo,
+    fechaLimite: newActivity.fechaLimite,
+    horaInicio: newActivity.horaInicio
+  });
+
+  setColumnas(prevColumnas => {
+    return prevColumnas.map(columna => ({
+      ...columna,
+      tratos: columna.tratos.map(trato => {
+        if (trato.id === tratoId) {
+          const fechaActividad = newActivity.fechaLimite;
+          
+          const tratoActualizado = {
+            ...trato,
+            hasActivities: true,
+            proximaActividadTipo: newActivity.tipo,
+            proximaActividadFecha: fechaActividad,
+            actividadesAbiertasCount: (trato.actividadesAbiertasCount || 0) + 1,
+            isNeglected: false
+          };
+
+          return tratoActualizado;
+        }
+        return trato;
+      })
+    }));
+  });
+};
 
   const filtrarTratosPorNombre = (tratos) => {
     let filteredTratos = tratos;
@@ -1755,29 +1765,37 @@ const Tratos = () => {
   };
 
   const handleSaveNuevoTrato = (newTrato) => {
-    setColumnas((prev) => {
-      const updatedColumnas = [...prev];
-      const columna = updatedColumnas.find((c) => c.className === "clasificacion");
-      if (columna && !columna.tratos.some((t) => t.id === newTrato.id)) {
-        columna.tratos.push({
-          id: newTrato.id,
-          nombre: newTrato.nombre,
-          propietario: newTrato.propietarioNombre,
-          fechaCierre: new Date(newTrato.fechaCierre).toLocaleDateString(),
-          empresa: newTrato.empresaNombre,
-          numero: newTrato.noTrato,
-          ingresoEsperado: newTrato.ingresoEsperado,
-          isNeglected: false,
-          hasActivities: false,
-          lastActivityType: null,
-          creatorId: newTrato.propietarioId,
-          fechaCreacion: new Date().toISOString(),
-        });
-        columna.count++;
-      }
-      return updatedColumnas;
-    });
-  };
+  setColumnas((prev) => {
+    const updatedColumnas = [...prev];
+    const columna = updatedColumnas.find((c) => c.className === "clasificacion");
+    
+    if (columna && !columna.tratos.some((t) => t.id === newTrato.id)) {
+      const nuevoTratoCard = {
+        id: newTrato.id,
+        nombre: newTrato.nombre,
+        propietario: newTrato.propietarioNombre,
+        fechaCierre: new Date(newTrato.fechaCierre).toLocaleDateString(),
+        empresa: newTrato.empresaNombre,
+        numero: newTrato.noTrato,
+        ingresoEsperado: newTrato.ingresoEsperado,
+        
+        isNeglected: false,
+        hasActivities: false,
+        proximaActividadTipo: null,
+        proximaActividadFecha: null,
+        actividadesAbiertasCount: 0,
+        
+        creatorId: newTrato.propietarioId,
+        fechaCreacion: new Date().toISOString(),
+      };
+      
+      columna.tratos.push(nuevoTratoCard);
+      columna.count++;
+    }
+    
+    return updatedColumnas;
+  });
+};
 
   const handleSaveActividad = async (actividad, tipo) => {
     updateSingleTratoActivity(actividad.tratoId, actividad);

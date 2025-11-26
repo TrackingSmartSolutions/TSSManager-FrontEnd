@@ -395,287 +395,295 @@ const ConfiguracionPlantillas = () => {
 
   return (
     <>
-     <div className="page-with-header">
-      <Header />
-      {isLoading && (
-        <div className="correo-plantillas-loading">
-          <div className="spinner"></div>
-          <p>Cargando plantillas de correo...</p>
+      <div className="page-with-header">
+        <Header />
+        {isLoading && (
+          <div className="correo-plantillas-loading">
+            <div className="spinner"></div>
+            <p>Cargando plantillas de correo...</p>
+          </div>
+        )}
+        <div className="correo-plantillas-config-header">
+          <h2 className="correo-plantillas-config-title">Configuración</h2>
+          <nav className="correo-plantillas-config-nav">
+            <div className="correo-plantillas-nav-item correo-plantillas-nav-item-active">Plantillas de correo</div>
+            <div
+              className="correo-plantillas-nav-item"
+              onClick={() => navigate("/configuracion_admin_datos")}
+            >
+              Administrador de datos
+            </div>
+            <div
+              className="correo-plantillas-nav-item"
+              onClick={() => navigate("/configuracion_empresa")}
+            >
+              Configuración de la empresa
+            </div>
+            <div
+              className="correo-plantillas-nav-item"
+              onClick={() => navigate("/configuracion_almacenamiento")}
+            >
+              Almacenamiento
+            </div>
+            <div
+              className="correo-plantillas-nav-item"
+              onClick={() => navigate("/configuracion_copias_seguridad")}
+            >
+              Copias de Seguridad
+            </div>
+            <div
+              className="correo-plantillas-nav-item"
+              onClick={() => navigate("/configuracion_usuarios")}
+            >
+              Usuarios y roles
+            </div>
+            <div
+              className="correo-plantillas-nav-item"
+              onClick={() => navigate("/configuracion_gestion_sectores_plataformas")}
+            >
+              Sectores y plataformas
+            </div>
+          </nav>
         </div>
-      )}
-      <div className="correo-plantillas-config-header">
-        <h2 className="correo-plantillas-config-title">Configuración</h2>
-        <nav className="correo-plantillas-config-nav">
-          <div className="correo-plantillas-nav-item correo-plantillas-nav-item-active">Plantillas de correo</div>
-          <div
-            className="correo-plantillas-nav-item"
-            onClick={() => navigate("/configuracion_admin_datos")}
-          >
-            Administrador de datos
-          </div>
-          <div
-            className="correo-plantillas-nav-item"
-            onClick={() => navigate("/configuracion_empresa")}
-          >
-            Configuración de la empresa
-          </div>
-          <div
-            className="correo-plantillas-nav-item"
-            onClick={() => navigate("/configuracion_almacenamiento")}
-          >
-            Almacenamiento
-          </div>
-          <div
-            className="correo-plantillas-nav-item"
-            onClick={() => navigate("/configuracion_copias_seguridad")}
-          >
-            Copias de Seguridad
-          </div>
-          <div
-            className="correo-plantillas-nav-item"
-            onClick={() => navigate("/configuracion_usuarios")}
-          >
-            Usuarios y roles
-          </div>
-          <div
-            className="correo-plantillas-nav-item"
-            onClick={() => navigate("/configuracion_gestion_sectores_plataformas")}
-          >
-            Sectores y plataformas
-          </div>
-        </nav>
-      </div>
-      <main className="correo-plantillas-main-content">
-        <div className="correo-plantillas-container">
-          <section className="correo-plantillas-templates-panel">
-            <div className="correo-plantillas-panel-header">
-              <button
-                className="correo-plantillas-btn correo-plantillas-btn-add"
-                onClick={handleNewTemplate}
-              >
-                Nueva plantilla
-              </button>
-            </div>
-
-            <div className="correo-plantillas-search-section">
-              <div className="correo-plantillas-search-filter-row">
-                <div className="correo-plantillas-search-input-container">
-                  <input
-                    type="text"
-                    placeholder="Buscar plantilla por nombre o asunto"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="correo-plantillas-search-input"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="correo-plantillas-templates-list">
-              {filteredTemplates.map((template) => (
-                <div
-                  key={template.id}
-                  className={`correo-plantillas-template-item ${selectedTemplate?.id === template.id ? "selected" : ""
-                    }`}
-                  onClick={() => handleTemplateSelect(template)}
+        <main className="correo-plantillas-main-content">
+          <div className="correo-plantillas-container">
+            <section className="correo-plantillas-templates-panel">
+              <div className="correo-plantillas-panel-header">
+                <button
+                  className="correo-plantillas-btn correo-plantillas-btn-add"
+                  onClick={handleNewTemplate}
                 >
-                  <div className="correo-plantillas-template-info">
-                    <h3>{template.nombre}</h3>
-                    <p className="correo-plantillas-template-subject">{template.asunto}</p>
-                  </div>
-                  <div className="correo-plantillas-template-actions">
-                    <button
-                      className="correo-plantillas-btn-action correo-plantillas-delete"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteTemplate(template.id);
-                      }}
-                      title="Eliminar plantilla"
-                    >
-                      <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="correo-plantillas-editor-panel">
-            <div className="correo-plantillas-editor-form">
-              <div className="correo-plantillas-form-header">
-                <h3>{isEditing ? "Editar Plantilla" : "Nueva Plantilla"}</h3>
-                <div className="correo-plantillas-form-actions">
-                  <button
-                    className="correo-plantillas-btn correo-plantillas-btn-primary"
-                    onClick={handleSaveTemplate}
-                  >
-                    {isEditing ? "Guardar cambios" : "Guardar plantilla"}
-                  </button>
-                </div>
+                  Nueva plantilla
+                </button>
               </div>
 
-              <div className="correo-plantillas-form-row">
-                <div className="correo-plantillas-form-group">
-                  <label htmlFor="nombre">
-                    Nombre de la plantilla <span className="correo-plantillas-required">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="nombre"
-                    value={formData.nombre}
-                    onChange={(e) => handleInputChange("nombre", e.target.value)}
-                    className="correo-plantillas-form-control"
-                    placeholder="Ej: Seguimiento de Trato"
-                  />
-                </div>
-              </div>
-
-              <div className="correo-plantillas-form-row">
-                <div className="correo-plantillas-form-group correo-plantillas-full-width">
-                  <label htmlFor="asunto">
-                    Asunto <span className="correo-plantillas-required">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="asunto"
-                    value={formData.asunto}
-                    onChange={(e) => handleInputChange("asunto", e.target.value)}
-                    className="correo-plantillas-form-control"
-                    placeholder="Ej: Seguimiento sobre nuestro trato - [Nombre de la Empresa]"
-                  />
-                  <small className="correo-plantillas-help-text">
-                    Puede usar variables como [Nombre], [Nombre de la Empresa], [Nombre del Trato], [Hora], etc.
-                  </small>
-                </div>
-              </div>
-
-              <div className="correo-plantillas-form-row">
-                <div className="correo-plantillas-form-group correo-plantillas-full-width">
-                  <label htmlFor="contenido">
-                    Contenido <span className="correo-plantillas-required">*</span>
-                  </label>
-                  <EditorToolbar editorRef={editorRef} />
-                  <div
-                    ref={editorRef}
-                    contentEditable={true}
-                    className="correo-plantillas-form-control correo-plantillas-textarea gmail-message-editor"
-                    onInput={(e) => handleInputChange("contenido", e.target.innerHTML)}
-                    onPaste={(e) => {
-                      e.preventDefault();
-                      const text = e.clipboardData.getData('text/plain');
-                      document.execCommand('insertText', false, text);
-                    }}
-                    style={{
-                      minHeight: '200px',
-                      maxHeight: '400px',
-                      border: '1px solid #ccc',
-                      borderTop: 'none', // NUEVO: para conectar con toolbar
-                      padding: '10px',
-                      borderRadius: '0 0 4px 4px', // MODIFICADO: solo bordes inferiores redondeados
-                      backgroundColor: 'white',
-                      overflow: 'auto',
-                      direction: 'ltr',
-                      textAlign: 'left',
-                      unicodeBidi: 'normal'
-                    }}
-                    suppressContentEditableWarning={true}
-                  />
-                  <small className="correo-plantillas-help-text">
-                    Puede usar las mismas variables que en el asunto para personalizar el contenido.
-                  </small>
-                </div>
-              </div>
-
-              <div className="correo-plantillas-form-row">
-                <div className="correo-plantillas-form-group correo-plantillas-full-width">
-                  <div className="correo-plantillas-content-toolbar">
-                    <button
-                      type="button"
-                      className="correo-plantillas-btn correo-plantillas-btn-secondary gmail-image-btn"
-                      onClick={() => document.getElementById('plantilla-image-upload').click()}
-                    >
-                      📷 Insertar imagen en contenido
-                    </button>
+              <div className="correo-plantillas-search-section">
+                <div className="correo-plantillas-search-filter-row">
+                  <div className="correo-plantillas-search-input-container">
                     <input
-                      id="plantilla-image-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      style={{ display: 'none' }}
+                      type="text"
+                      placeholder="Buscar plantilla por nombre o asunto"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="correo-plantillas-search-input"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="correo-plantillas-form-row">
-                <div className="correo-plantillas-form-group correo-plantillas-full-width">
-                  <label>Adjuntos</label>
-                  <div className="correo-plantillas-file-upload-area">
-                    <div className="correo-plantillas-file-drop-zone">
-                      <div className="correo-plantillas-upload-icon">
-                        <img src={uploadIcon || "/placeholder.svg"} alt="Upload" />
-                      </div>
-                      <p>Arrastra y suelta archivos aquí</p>
-                      <p className="correo-plantillas-file-formats">PDF, JPG, PNG, DOC (máx. 1.5MB por archivo, 3 archivos máximo)</p>
-                      <input
-                        type="file"
-                        multiple
-                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                        onChange={handleFileUpload}
-                        className="correo-plantillas-file-input"
-                      />
+              <div className="correo-plantillas-templates-list">
+                {filteredTemplates.map((template) => (
+                  <div
+                    key={template.id}
+                    className={`correo-plantillas-template-item ${selectedTemplate?.id === template.id ? "selected" : ""
+                      }`}
+                    onClick={() => handleTemplateSelect(template)}
+                  >
+                    <div className="correo-plantillas-template-info">
+                      <h3>{template.nombre}</h3>
+                      <p className="correo-plantillas-template-subject">{template.asunto}</p>
+                    </div>
+                    <div className="correo-plantillas-template-actions">
                       <button
-                        type="button"
-                        className="correo-plantillas-btn correo-plantillas-btn-secondary"
-                        onClick={() => document.querySelector(".correo-plantillas-file-input").click()}
+                        className="correo-plantillas-btn-action correo-plantillas-delete"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTemplate(template.id);
+                        }}
+                        title="Eliminar plantilla"
                       >
-                        Seleccionar archivos
+                        <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
                       </button>
                     </div>
                   </div>
-
-                  {formData.adjuntos.length > 0 && (
-                    <div className="correo-plantillas-attachments-list">
-                      <h4>Archivos adjuntos:</h4>
-                      {formData.adjuntos.map((archivo, index) => (
-                        <div key={index} className="correo-plantillas-attachment-item">
-                          <span className="correo-plantillas-attachment-name">
-                            📄 {archivo.name ? archivo.name : archivo.adjuntoUrl || `Adjunto ${index + 1}`}
-                          </span>
-                          <button
-                            type="button"
-                            className="correo-plantillas-btn-remove-attachment"
-                            onClick={() => handleRemoveAttachment(index)}
-                            title="Eliminar archivo"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                ))}
               </div>
+            </section>
 
-              {selectedTemplate && (
-                <div className="correo-plantillas-template-info-section">
-                  <h4>Información de la plantilla</h4>
-                  <div className="correo-plantillas-info-grid">
-                    <div className="correo-plantillas-info-item">
-                      <label>Fecha de creación:</label>
-                      <span>{formatDate(selectedTemplate.fechaCreacion)}</span>
-                    </div>
-                    <div className="correo-plantillas-info-item">
-                      <label>Última modificación:</label>
-                      <span>{formatDate(selectedTemplate.fechaModificacion)}</span>
+            <section className="correo-plantillas-editor-panel">
+              <div className="correo-plantillas-editor-form">
+                <div className="correo-plantillas-form-header">
+                  <h3>{isEditing ? "Editar Plantilla" : "Nueva Plantilla"}</h3>
+                  <div className="correo-plantillas-form-actions">
+                    <button
+                      className="correo-plantillas-btn correo-plantillas-btn-primary"
+                      onClick={handleSaveTemplate}
+                    >
+                      {isEditing ? "Guardar cambios" : "Guardar plantilla"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="correo-plantillas-form-row">
+                  <div className="correo-plantillas-form-group">
+                    <label htmlFor="nombre">
+                      Nombre de la plantilla <span className="correo-plantillas-required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="nombre"
+                      value={formData.nombre}
+                      onChange={(e) => handleInputChange("nombre", e.target.value)}
+                      className="correo-plantillas-form-control"
+                      placeholder="Ej: Seguimiento de Trato"
+                    />
+                  </div>
+                </div>
+
+                <div className="correo-plantillas-form-row">
+                  <div className="correo-plantillas-form-group correo-plantillas-full-width">
+                    <label htmlFor="asunto">
+                      Asunto <span className="correo-plantillas-required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="asunto"
+                      value={formData.asunto}
+                      onChange={(e) => handleInputChange("asunto", e.target.value)}
+                      className="correo-plantillas-form-control"
+                      placeholder="Ej: Seguimiento sobre nuestro trato - [Nombre de la Empresa]"
+                    />
+                    <small className="correo-plantillas-help-text">
+                      Puede usar variables como [Nombre], [Nombre de la Empresa], [Nombre del Trato], [Hora], etc.
+                    </small>
+                  </div>
+                </div>
+
+                <div className="correo-plantillas-form-row">
+                  <div className="correo-plantillas-form-group correo-plantillas-full-width">
+                    <label htmlFor="contenido">
+                      Contenido <span className="correo-plantillas-required">*</span>
+                    </label>
+                    <EditorToolbar editorRef={editorRef} />
+                    <div
+                      ref={editorRef}
+                      contentEditable={true}
+                      className="correo-plantillas-form-control correo-plantillas-textarea gmail-message-editor"
+                      onInput={(e) => handleInputChange("contenido", e.target.innerHTML)}
+                      onPaste={(e) => {
+                        e.preventDefault();
+                        const clipboardData = e.clipboardData;
+
+                        const htmlData = clipboardData.getData('text/html');
+
+                        if (htmlData) {
+                          document.execCommand('insertHTML', false, htmlData);
+                        } else {
+                          const text = clipboardData.getData('text/plain');
+                          document.execCommand('insertText', false, text);
+                        }
+                      }}
+                      style={{
+                        minHeight: '200px',
+                        maxHeight: '400px',
+                        border: '1px solid #ccc',
+                        borderTop: 'none', // NUEVO: para conectar con toolbar
+                        padding: '10px',
+                        borderRadius: '0 0 4px 4px', // MODIFICADO: solo bordes inferiores redondeados
+                        backgroundColor: 'white',
+                        overflow: 'auto',
+                        direction: 'ltr',
+                        textAlign: 'left',
+                        unicodeBidi: 'normal'
+                      }}
+                      suppressContentEditableWarning={true}
+                    />
+                    <small className="correo-plantillas-help-text">
+                      Puede usar las mismas variables que en el asunto para personalizar el contenido.
+                    </small>
+                  </div>
+                </div>
+
+                <div className="correo-plantillas-form-row">
+                  <div className="correo-plantillas-form-group correo-plantillas-full-width">
+                    <div className="correo-plantillas-content-toolbar">
+                      <button
+                        type="button"
+                        className="correo-plantillas-btn correo-plantillas-btn-secondary gmail-image-btn"
+                        onClick={() => document.getElementById('plantilla-image-upload').click()}
+                      >
+                        📷 Insertar imagen en contenido
+                      </button>
+                      <input
+                        id="plantilla-image-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        style={{ display: 'none' }}
+                      />
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
-          </section>
-        </div>
-      </main>
+
+                <div className="correo-plantillas-form-row">
+                  <div className="correo-plantillas-form-group correo-plantillas-full-width">
+                    <label>Adjuntos</label>
+                    <div className="correo-plantillas-file-upload-area">
+                      <div className="correo-plantillas-file-drop-zone">
+                        <div className="correo-plantillas-upload-icon">
+                          <img src={uploadIcon || "/placeholder.svg"} alt="Upload" />
+                        </div>
+                        <p>Arrastra y suelta archivos aquí</p>
+                        <p className="correo-plantillas-file-formats">PDF, JPG, PNG, DOC (máx. 1.5MB por archivo, 3 archivos máximo)</p>
+                        <input
+                          type="file"
+                          multiple
+                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                          onChange={handleFileUpload}
+                          className="correo-plantillas-file-input"
+                        />
+                        <button
+                          type="button"
+                          className="correo-plantillas-btn correo-plantillas-btn-secondary"
+                          onClick={() => document.querySelector(".correo-plantillas-file-input").click()}
+                        >
+                          Seleccionar archivos
+                        </button>
+                      </div>
+                    </div>
+
+                    {formData.adjuntos.length > 0 && (
+                      <div className="correo-plantillas-attachments-list">
+                        <h4>Archivos adjuntos:</h4>
+                        {formData.adjuntos.map((archivo, index) => (
+                          <div key={index} className="correo-plantillas-attachment-item">
+                            <span className="correo-plantillas-attachment-name">
+                              📄 {archivo.name ? archivo.name : archivo.adjuntoUrl || `Adjunto ${index + 1}`}
+                            </span>
+                            <button
+                              type="button"
+                              className="correo-plantillas-btn-remove-attachment"
+                              onClick={() => handleRemoveAttachment(index)}
+                              title="Eliminar archivo"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {selectedTemplate && (
+                  <div className="correo-plantillas-template-info-section">
+                    <h4>Información de la plantilla</h4>
+                    <div className="correo-plantillas-info-grid">
+                      <div className="correo-plantillas-info-item">
+                        <label>Fecha de creación:</label>
+                        <span>{formatDate(selectedTemplate.fechaCreacion)}</span>
+                      </div>
+                      <div className="correo-plantillas-info-item">
+                        <label>Última modificación:</label>
+                        <span>{formatDate(selectedTemplate.fechaModificacion)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        </main>
       </div>
     </>
   );

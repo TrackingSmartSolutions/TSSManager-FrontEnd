@@ -3279,16 +3279,36 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
     return emailRegex.test(email.trim());
   };
 
+  const normalizarEmail = (email) => {
+    return email
+      .trim()
+      .toLowerCase()
+      .normalize('NFD') // Descompone caracteres con acentos
+      .replace(/[\u0300-\u036f]/g, '') // Elimina los diacríticos (acentos)
+      .replace(/ñ/g, 'n') // Reemplaza ñ por n
+      .replace(/[^a-z0-9@.\-_+]/g, ''); // Solo permite caracteres válidos
+  };
+
   // Función para agregar email
   const addEmailChip = (email) => {
-    const trimmedEmail = email.trim();
-    if (trimmedEmail && !emailChips.includes(trimmedEmail)) {
-      if (isValidEmail(trimmedEmail)) {
-        const newChips = [...emailChips, trimmedEmail];
+    const normalizedEmail = normalizarEmail(email);
+
+    if (normalizedEmail && !emailChips.includes(normalizedEmail)) {
+      if (isValidEmail(normalizedEmail)) {
+        const newChips = [...emailChips, normalizedEmail];
         setEmailChips(newChips);
         setFormData(prev => ({ ...prev, para: newChips.join(', ') }));
         setInputEmail('');
         if (errors.para) setErrors(prev => ({ ...prev, para: '' }));
+      } else {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Email inválido',
+          text: `El email "${email}" no es válido o contiene caracteres no permitidos, intenta por outlook`,
+          timer: 3000,
+          toast: true,
+          position: 'top-end'
+        });
       }
     }
   };
@@ -3364,7 +3384,14 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
               </div>
             </div>
             <div className="email-info-row">
-              <small>Presiona Enter o coma para agregar</small>
+              <div className="email-instructions-col">
+                <small>Presiona Enter o coma para agregar</small>
+
+                <small style={{ color: '#666' }}>
+                  ⚠️ Los acentos y ñ serán removidos automáticamente
+                </small>
+              </div>
+
               {emailChips.length > 0 && (
                 <span className="email-counter">
                   {emailChips.length} destinatario{emailChips.length !== 1 ? 's' : ''}
@@ -3395,8 +3422,16 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
               onInput={(e) => handleInputChange("mensaje", e.target.innerHTML)}
               onPaste={(e) => {
                 e.preventDefault();
-                const text = e.clipboardData.getData('text/plain');
-                document.execCommand('insertText', false, text);
+                const clipboardData = e.clipboardData;
+
+                const htmlData = clipboardData.getData('text/html');
+
+                if (htmlData) {
+                  document.execCommand('insertHTML', false, htmlData);
+                } else {
+                  const text = clipboardData.getData('text/plain');
+                  document.execCommand('insertText', false, text);
+                }
               }}
               style={{
                 minHeight: '200px',
@@ -3506,10 +3541,14 @@ const SeleccionarPlantillaModal = ({ isOpen, onClose, onSelectTemplate, plantill
     onClose();
   };
 
+  const plantillasOrdenadas = [...plantillas].sort((a, b) => {
+    return a.nombre.localeCompare(b.nombre, 'es', { numeric: true, sensitivity: 'base' });
+  });
+
   return (
     <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Seleccionar plantilla" size="md" closeOnOverlayClick={false}>
       <div className="plantillas-list">
-        {plantillas.map((plantilla) => (
+        {plantillasOrdenadas.map((plantilla) => (
           <div
             key={plantilla.id}
             className="plantilla-item"
@@ -4439,7 +4478,7 @@ const DetallesTrato = () => {
 
   const handleVerEmpresa = () => {
     if (trato.empresaId) {
-      navigate(`/empresas/${trato.empresaId}`, { 
+      navigate(`/empresas/${trato.empresaId}`, {
         replace: true,
         state: { fromTrato: true, empresaId: trato.empresaId }
       });
