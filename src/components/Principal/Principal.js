@@ -992,17 +992,17 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
           <div className="response-buttons">
             <button
               type="button"
-              className={`btn-response ${formData.respuesta === 'SI' ? 'active positive' : ''}`}
-              onClick={() => handleInputChange('respuesta', 'SI')}
-            >
-              ✓
-            </button>
-            <button
-              type="button"
               className={`btn-response ${formData.respuesta === 'NO' ? 'active negative' : ''}`}
               onClick={() => handleInputChange('respuesta', 'NO')}
             >
               ✕
+            </button>
+             <button
+              type="button"
+              className={`btn-response ${formData.respuesta === 'SI' ? 'active positive' : ''}`}
+              onClick={() => handleInputChange('respuesta', 'SI')}
+            >
+              ✓
             </button>
           </div>
           {errors.respuesta && <span className="error-message">{errors.respuesta}</span>}
@@ -1056,17 +1056,17 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
           <div className="response-buttons">
             <button
               type="button"
-              className={`btn-response ${formData.informacion === 'SI' ? 'active positive' : ''}`}
-              onClick={() => handleInputChange('informacion', 'SI')}
-            >
-              ✓
-            </button>
-            <button
-              type="button"
               className={`btn-response ${formData.informacion === 'NO' ? 'active negative' : ''}`}
               onClick={() => handleInputChange('informacion', 'NO')}
             >
               ✕
+            </button>
+             <button
+              type="button"
+              className={`btn-response ${formData.informacion === 'SI' ? 'active positive' : ''}`}
+              onClick={() => handleInputChange('informacion', 'SI')}
+            >
+              ✓
             </button>
           </div>
           {errors.informacion && <span className="error-message">{errors.informacion}</span>}
