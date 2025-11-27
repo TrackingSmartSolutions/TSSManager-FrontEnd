@@ -46,7 +46,9 @@ const RecordatorioPopup = ({ actividad, onClose, onDismiss }) => {
                     <h4>{getTipoTexto()}</h4>
                     <span className="recordatorio-tiempo">
                         <Clock size={14} />
-                        En {actividad.minutosRestantes} minutos
+                        {actividad.tipo === 'LLAMADA' && actividad.minutosRestantes === 0
+                            ? '¡Es hora de la llamada!'
+                            : `En ${actividad.minutosRestantes} minutos`}
                     </span>
                 </div>
                 <button className="recordatorio-close" onClick={handleClose}>
