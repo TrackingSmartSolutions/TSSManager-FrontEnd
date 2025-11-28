@@ -9,6 +9,8 @@ import profilePlaceholder from "../../assets/icons/profile-placeholder.png"
 import dropdownIcon from "../../assets/icons/desplegable.png"
 import clockIcon from "../../assets/icons/clock.png"
 import notificationSound from "../../assets/sounds/notification.wav"
+import actividadProxSound from "../../assets/sounds/actividadprox.wav"
+import alertSound from "../../assets/sounds/alert.wav"
 import RecordatorioPopup from "./RecordatorioPopup"
 
 
@@ -37,6 +39,7 @@ const Header = ({ logoUrl }) => {
   const [lastActivity, setLastActivity] = useState(Date.now())
   const [showInactivityModal, setShowInactivityModal] = useState(false)
   const [timeLeft, setTimeLeft] = useState(120)
+  const [alertAudio, setAlertAudio] = useState(null)
 
   // Estado optimizado para el logo
   const [currentLogoUrl, setCurrentLogoUrl] = useState(() => {
@@ -314,7 +317,15 @@ const Header = ({ logoUrl }) => {
 
         // Solo reproducir sonido si hay actividades realmente nuevas
         if (realmenteNuevas.length > 0) {
-          playNotificationSound();
+          try {
+            const audio = new Audio(actividadProxSound);
+            audio.volume = 0.8;
+            audio.play().catch(error => {
+              console.error("Error reproduciendo sonido de actividad:", error);
+            });
+          } catch (error) {
+            console.error("Error reproduciendo sonido de actividad:", error);
+          }
         }
 
         return actividadesNuevas;
@@ -525,6 +536,35 @@ const Header = ({ logoUrl }) => {
       setShowInactivityModal(false)
     }
   }, [showInactivityModal, timeLeft])
+
+  // Manejar sonido de alerta de inactividad
+  useEffect(() => {
+    if (showInactivityModal && timeLeft > 0) {
+      // Crear y reproducir audio en bucle
+      const audio = new Audio(alertSound);
+      audio.loop = true;
+      audio.volume = 0.6;
+      
+      audio.play().catch(error => {
+        console.error("Error reproduciendo sonido de alerta:", error);
+      });
+      
+      setAlertAudio(audio);
+      
+      // Cleanup cuando se desmonta o cambia el estado
+      return () => {
+        if (audio) {
+          audio.pause();
+          audio.currentTime = 0;
+        }
+      };
+    } else if (alertAudio) {
+      // Detener el audio si el modal se cierra
+      alertAudio.pause();
+      alertAudio.currentTime = 0;
+      setAlertAudio(null);
+    }
+  }, [showInactivityModal, timeLeft]);
 
   // Cierra el sidebar al cambiar de ruta
   useEffect(() => {
