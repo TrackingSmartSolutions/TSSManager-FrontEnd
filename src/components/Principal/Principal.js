@@ -831,7 +831,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
           </div>
           {errors.tipo && <span className="error-message">{errors.tipo}</span>}
         </div>
-    
+
         <div className="modal-form-group">
           <label htmlFor="notas">Notas:</label>
           <textarea
@@ -997,7 +997,7 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
             >
               ✕
             </button>
-             <button
+            <button
               type="button"
               className={`btn-response ${formData.respuesta === 'SI' ? 'active positive' : ''}`}
               onClick={() => handleInputChange('respuesta', 'SI')}
@@ -1061,7 +1061,7 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
             >
               ✕
             </button>
-             <button
+            <button
               type="button"
               className={`btn-response ${formData.informacion === 'SI' ? 'active positive' : ''}`}
               onClick={() => handleInputChange('informacion', 'SI')}
@@ -1397,7 +1397,6 @@ const Principal = () => {
 
   const [tareasPendientes, setTareasPendientes] = useState([]);
   const [contactos, setContactos] = useState({});
-  const [empresas, setEmpresas] = useState({});
 
 
   const faseMapping = {
@@ -1472,53 +1471,21 @@ const Principal = () => {
     try {
       const userId = localStorage.getItem("userId");
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const response = await fetchWithToken(`${API_BASE_URL}/tratos/actividades/pendientes?asignadoAId=${userId}&timezone=${timezone}`);
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/tratos/actividades/pendientes?asignadoAId=${userId}&timezone=${timezone}`
+      );
       const data = await response.json();
 
       const datosOrdenados = data.sort((a, b) => {
         if (!a.horaInicio && !b.horaInicio) return 0;
         if (!a.horaInicio) return 1;
         if (!b.horaInicio) return -1;
-
-        const horaA = a.horaInicio.toString().substring(0, 5);
-        const horaB = b.horaInicio.toString().substring(0, 5);
-
-        return horaA.localeCompare(horaB);
+        return a.horaInicio.toString().substring(0, 5).localeCompare(
+          b.horaInicio.toString().substring(0, 5)
+        );
       });
 
       setTareasPendientes(datosOrdenados);
-
-      // Obtener detalles de contactos y empresas
-      const contactoIds = [...new Set(data.map(task => task.contactoId).filter(id => id != null))];
-
-      if (contactoIds.length > 0) {
-        const contactosData = {};
-        const empresasData = {};
-
-        for (const contactoId of contactoIds) {
-          try {
-            const contactosResponse = await fetchWithToken(`${API_BASE_URL}/empresas/contactos/${contactoId}`);
-            if (contactosResponse.ok) {
-              const contactoData = await contactosResponse.json();
-              contactosData[contactoId] = contactoData;
-
-              // Obtener datos de la empresa si el contacto tiene empresaId
-              if (contactoData.empresaId) {
-                const empresaResponse = await fetchWithToken(`${API_BASE_URL}/empresas/${contactoData.empresaId}`);
-                if (empresaResponse.ok) {
-                  const empresaData = await empresaResponse.json();
-                  empresasData[contactoData.empresaId] = empresaData;
-                }
-              }
-            }
-          } catch (error) {
-            console.error(`Error obteniendo datos del contacto ${contactoId}:`, error);
-          }
-        }
-
-        setContactos(prev => ({ ...prev, ...contactosData }));
-        setEmpresas(prev => ({ ...prev, ...empresasData }));
-      }
     } catch (error) {
       console.error("Error fetching tareas pendientes:", error);
     }
@@ -1567,19 +1534,19 @@ const Principal = () => {
     };
 
     const fetchEmpresas = async () => {
-  try {
-    const url = `${API_BASE_URL}/empresas/contar-por-propietario`;
-    const response = await fetchWithToken(url);
-    const data = await response.json();
-    setEmpresasPorUsuario((prev) => ({
-      ...prev,
-      labels: data.map((e) => e.propietarioNombre),
-      datasets: [{ ...prev.datasets[0], data: data.map((e) => e.numeroUnidades) }],
-    }));
-  } catch (error) {
-    console.error("Error fetching empresas:", error);
-  }
-};
+      try {
+        const url = `${API_BASE_URL}/empresas/contar-por-propietario`;
+        const response = await fetchWithToken(url);
+        const data = await response.json();
+        setEmpresasPorUsuario((prev) => ({
+          ...prev,
+          labels: data.map((e) => e.propietarioNombre),
+          datasets: [{ ...prev.datasets[0], data: data.map((e) => e.numeroUnidades) }],
+        }));
+      } catch (error) {
+        console.error("Error fetching empresas:", error);
+      }
+    };
 
     // Ejecutar todas las funciones de carga
     const loadInitialData = async () => {
@@ -1775,24 +1742,23 @@ const Principal = () => {
                     <div key={task.id} className="task-item">
                       <div className="task-info">
                         <div className="task-header">
-                          {task.contactoId && contactos[task.contactoId] && contactos[task.contactoId].empresaId && empresas[contactos[task.contactoId].empresaId] && (
+                          {task.empresaNombre && (
                             <div
                               className="task-empresa clickable"
                               onClick={() => handleEmpresaClick(task.tratoId)}
                               style={{ cursor: 'pointer' }}
                             >
-                              {empresas[contactos[task.contactoId].empresaId].nombre}
+                              {task.empresaNombre}
                             </div>
                           )}
                           <h3>
                             {task.tipo === "LLAMADA" && <img src={phoneIcon || "/placeholder.svg"} alt="Icono de Teléfono" className="task-icon" />}
                             {task.tipo === "REUNION" && <img src={meetingIcon || "/placeholder.svg"} alt="Icono de Reunión" className="task-icon" />}
                             {task.tipo === "TAREA" && <img src={emailIcon || "/placeholder.svg"} alt="Icono de Correo" className="task-icon" />}
-                            {task.contactoId && contactos[task.contactoId] ? (
-                              `${contactos[task.contactoId].nombre} - ${task.tipo}${task.subtipoTarea ? ` - ${task.subtipoTarea}` : ""}`
-                            ) : (
-                              task.contactoId ? `${task.contactoId} - ${task.tipo}${task.subtipoTarea ? ` - ${task.subtipoTarea}` : ""}` : task.tipo
-                            )}
+                            {task.contactoNombre ?
+                              `${task.contactoNombre} - ${task.tipo}${task.subtipoTarea ? ` - ${task.subtipoTarea}` : ""}`
+                              : task.tipo
+                            }
                           </h3>
                         </div>
                         <div className="task-time">
