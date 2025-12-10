@@ -253,7 +253,7 @@ const NuevoConceptoModal = ({ isOpen, onClose, onSave, concepto }) => {
         unidad: formData.unidad,
         concepto: formData.concepto,
         precioUnitario: Number.parseFloat(formData.precioUnitario),
-         descuento: Number.parseFloat(formData.descuento) || 0,
+        descuento: Number.parseFloat(formData.descuento) || 0,
         importeTotal: calculateImporteTotal(),
       };
       onSave(conceptoData);
@@ -940,13 +940,13 @@ const SubirArchivoModal = ({ isOpen, onClose, onDownload, cotizacion }) => {
 
   const validateFiles = () => {
     const newErrors = {};
-    
+
     if ((notasComerciales && !fichaTecnica) || (!notasComerciales && fichaTecnica)) {
       newErrors.general = 'Si subes un archivo, debes subir ambos: Notas Comerciales y Ficha Técnica';
       setErrors(newErrors);
       return false;
     }
-    
+
     return true;
   };
 
@@ -955,7 +955,7 @@ const SubirArchivoModal = ({ isOpen, onClose, onDownload, cotizacion }) => {
 
     setUploading(true);
     const formData = new FormData();
-    
+
     if (notasComerciales) {
       formData.append('notasComerciales', notasComerciales);
     }
@@ -1228,7 +1228,7 @@ const AdminCotizaciones = () => {
             unidad: c.unidad,
             concepto: c.concepto,
             precioUnitario: c.precioUnitario,
-             descuento: c.descuento ?? 0,
+            descuento: c.descuento ?? 0,
             importeTotal: c.importeTotal,
           })),
           empresaData: cotizacionData.empresaData,

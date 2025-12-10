@@ -1304,10 +1304,8 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
   };
 
   const getActivityIcon = () => {
-    const currentDate = new Date();
-    const tomorrow = new Date(currentDate);
-    tomorrow.setDate(currentDate.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     // Caso 1: Trato desatendido
     if (trato.isNeglected) {
@@ -1324,7 +1322,7 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
       );
     }
 
-    // Caso 2: Sin actividades abiertas (usando los nuevos campos optimizados)
+    // Caso 2: Sin actividades abiertas
     const openActivitiesCount = trato.actividadesAbiertasCount || 0;
     if (openActivitiesCount === 0) {
       return (
@@ -1340,7 +1338,7 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
       );
     }
 
-    // Caso 3: Hay actividades abiertas, mostrar la más cercana
+    // Caso 3: Validar existencia de datos de la próxima actividad
     const proximaActividadTipo = trato.proximaActividadTipo;
     const proximaActividadFecha = trato.proximaActividadFecha;
 
@@ -1360,15 +1358,18 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
 
     const activityDate = new Date(proximaActividadFecha);
     activityDate.setHours(0, 0, 0, 0);
+
     let iconClass = "activity-icon";
 
-    // Determinar el estado temporal de la actividad
-    if (activityDate > tomorrow) {
-      iconClass += " activity-future"; // Mañana en adelante
-    } else if (activityDate.toDateString() === currentDate.toDateString()) {
-      iconClass += " activity-today"; // Hoy
-    } else if (activityDate < currentDate) {
-      iconClass += " activity-overdue"; // Vencida
+    if (activityDate.getTime() < today.getTime()) {
+      // FECHA PASADA: Rojo
+      iconClass += " activity-overdue";
+    } else if (activityDate.getTime() === today.getTime()) {
+      // FECHA ES HOY: Amarillo
+      iconClass += " activity-today";
+    } else {
+      // FECHA FUTURA (Mañana o más): Verde
+      iconClass += " activity-future";
     }
 
     // Mapear el tipo de actividad al icono correspondiente
@@ -1378,7 +1379,6 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
       TAREA: activityTask,
     };
     const iconSrc = iconMap[proximaActividadTipo] || addActivity;
-
 
     return (
       <img
@@ -1619,36 +1619,36 @@ const Tratos = () => {
   };
 
   const updateSingleTratoActivity = (tratoId, newActivity) => {
-  console.log('📌 Actualizando actividad localmente:', {
-    tratoId,
-    tipo: newActivity.tipo,
-    fechaLimite: newActivity.fechaLimite,
-    horaInicio: newActivity.horaInicio
-  });
+    console.log('📌 Actualizando actividad localmente:', {
+      tratoId,
+      tipo: newActivity.tipo,
+      fechaLimite: newActivity.fechaLimite,
+      horaInicio: newActivity.horaInicio
+    });
 
-  setColumnas(prevColumnas => {
-    return prevColumnas.map(columna => ({
-      ...columna,
-      tratos: columna.tratos.map(trato => {
-        if (trato.id === tratoId) {
-          const fechaActividad = newActivity.fechaLimite;
-          
-          const tratoActualizado = {
-            ...trato,
-            hasActivities: true,
-            proximaActividadTipo: newActivity.tipo,
-            proximaActividadFecha: fechaActividad,
-            actividadesAbiertasCount: (trato.actividadesAbiertasCount || 0) + 1,
-            isNeglected: false
-          };
+    setColumnas(prevColumnas => {
+      return prevColumnas.map(columna => ({
+        ...columna,
+        tratos: columna.tratos.map(trato => {
+          if (trato.id === tratoId) {
+            const fechaActividad = newActivity.fechaLimite;
 
-          return tratoActualizado;
-        }
-        return trato;
-      })
-    }));
-  });
-};
+            const tratoActualizado = {
+              ...trato,
+              hasActivities: true,
+              proximaActividadTipo: newActivity.tipo,
+              proximaActividadFecha: fechaActividad,
+              actividadesAbiertasCount: (trato.actividadesAbiertasCount || 0) + 1,
+              isNeglected: false
+            };
+
+            return tratoActualizado;
+          }
+          return trato;
+        })
+      }));
+    });
+  };
 
   const filtrarTratosPorNombre = (tratos) => {
     let filteredTratos = tratos;
@@ -1765,37 +1765,37 @@ const Tratos = () => {
   };
 
   const handleSaveNuevoTrato = (newTrato) => {
-  setColumnas((prev) => {
-    const updatedColumnas = [...prev];
-    const columna = updatedColumnas.find((c) => c.className === "clasificacion");
-    
-    if (columna && !columna.tratos.some((t) => t.id === newTrato.id)) {
-      const nuevoTratoCard = {
-        id: newTrato.id,
-        nombre: newTrato.nombre,
-        propietario: newTrato.propietarioNombre,
-        fechaCierre: new Date(newTrato.fechaCierre).toLocaleDateString(),
-        empresa: newTrato.empresaNombre,
-        numero: newTrato.noTrato,
-        ingresoEsperado: newTrato.ingresoEsperado,
-        
-        isNeglected: false,
-        hasActivities: false,
-        proximaActividadTipo: null,
-        proximaActividadFecha: null,
-        actividadesAbiertasCount: 0,
-        
-        creatorId: newTrato.propietarioId,
-        fechaCreacion: new Date().toISOString(),
-      };
-      
-      columna.tratos.push(nuevoTratoCard);
-      columna.count++;
-    }
-    
-    return updatedColumnas;
-  });
-};
+    setColumnas((prev) => {
+      const updatedColumnas = [...prev];
+      const columna = updatedColumnas.find((c) => c.className === "clasificacion");
+
+      if (columna && !columna.tratos.some((t) => t.id === newTrato.id)) {
+        const nuevoTratoCard = {
+          id: newTrato.id,
+          nombre: newTrato.nombre,
+          propietario: newTrato.propietarioNombre,
+          fechaCierre: new Date(newTrato.fechaCierre).toLocaleDateString(),
+          empresa: newTrato.empresaNombre,
+          numero: newTrato.noTrato,
+          ingresoEsperado: newTrato.ingresoEsperado,
+
+          isNeglected: false,
+          hasActivities: false,
+          proximaActividadTipo: null,
+          proximaActividadFecha: null,
+          actividadesAbiertasCount: 0,
+
+          creatorId: newTrato.propietarioId,
+          fechaCreacion: new Date().toISOString(),
+        };
+
+        columna.tratos.push(nuevoTratoCard);
+        columna.count++;
+      }
+
+      return updatedColumnas;
+    });
+  };
 
   const handleSaveActividad = async (actividad, tipo) => {
     updateSingleTratoActivity(actividad.tratoId, actividad);
