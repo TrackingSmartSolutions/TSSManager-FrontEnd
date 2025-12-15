@@ -206,11 +206,11 @@ const AdminBalance = () => {
     setIsLoading(true)
     try {
       let params = new URLSearchParams();
-      
+
       if (filtros.añoSeleccionado !== "Todos los años") {
         params.append("anio", filtros.añoSeleccionado);
       }
-      
+
       if (filtros.mostrarFiltroMes && filtros.mesSeleccionado !== "Todos los meses") {
         const mesNumero = mesesDisponibles.indexOf(filtros.mesSeleccionado) + 1;
         params.append("mes", mesNumero);
@@ -219,10 +219,10 @@ const AdminBalance = () => {
       const data = await fetchWithToken(`${API_BASE_URL}/balance/resumen?${params.toString()}`);
 
       setBalanceData({
-        resumenContable: { 
-            totalIngresos: data.totalIngresos, 
-            totalGastos: data.totalGastos, 
-            utilidadPerdida: data.utilidadPerdida 
+        resumenContable: {
+          totalIngresos: data.totalIngresos,
+          totalGastos: data.totalGastos,
+          utilidadPerdida: data.utilidadPerdida
         },
         graficoMensual: data.graficoMensual,
         acumuladoCuentas: data.acumuladoCuentas,
@@ -231,17 +231,17 @@ const AdminBalance = () => {
 
       // Actualizamos años solo si es necesario
       if (data.aniosDisponibles && data.aniosDisponibles.length > 0) {
-          setAñosDisponibles(data.aniosDisponibles);
+        setAñosDisponibles(data.aniosDisponibles);
       }
-      
+
       // Cargar categorías y cuentas solo si no se han cargado antes
       if (categorias.length === 0) {
-          const [catResp, cuenResp] = await Promise.all([
-              fetchWithToken(`${API_BASE_URL}/categorias`),
-              fetchWithToken(`${API_BASE_URL}/cuentas`)
-          ]);
-          setCategorias(catResp);
-          setCuentas(cuenResp);
+        const [catResp, cuenResp] = await Promise.all([
+          fetchWithToken(`${API_BASE_URL}/categorias`),
+          fetchWithToken(`${API_BASE_URL}/cuentas`)
+        ]);
+        setCategorias(catResp);
+        setCuentas(cuenResp);
       }
 
     } catch (error) {
@@ -826,35 +826,38 @@ const AdminBalance = () => {
                       <tbody>
                         {balanceData.acumuladoCuentas.length > 0 ? (
                           balanceData.acumuladoCuentas
-                            .filter(
-                              (ac) =>
-                                filtros.categoriaSeleccionada === "Todas" ||
-                                ac.categoria === filtros.categoriaSeleccionada,
+                            .filter((ac) =>
+                              filtros.categoriaSeleccionada === "Todas" ||
+                              ac.categoria === filtros.categoriaSeleccionada
                             )
-                            .filter(
-                              (ac) => {
-                                // Si está seleccionada "Todas" las categorías, solo mostrar totales de categoría (cuenta = "Todas")
-                                if (filtros.categoriaSeleccionada === "Todas") {
-                                  return ac.cuenta === "Todas";
-                                }
-                                // Si hay una categoría específica seleccionada, NO mostrar la fila de "Todas" y aplicar filtro de cuenta
-                                if (ac.cuenta === "Todas") {
-                                  return false;
-                                }
-                                return filtros.cuentaSeleccionada === "Todas" || ac.cuenta === filtros.cuentaSeleccionada;
-                              }
+                            .filter((ac) =>
+                              filtros.cuentaSeleccionada === "Todas" ||
+                              ac.cuenta === filtros.cuentaSeleccionada
                             )
                             .map((ac, index) => (
                               <tr key={index}>
                                 <td>{ac.categoria}</td>
                                 <td>{ac.cuenta}</td>
-                                <td>${ac.monto.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
+                                <td>${Number(ac.monto).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
                               </tr>
                             ))
                         ) : (
                           <tr>
                             <td colSpan="3" className="adminbalance-no-data">
                               No hay datos disponibles
+                            </td>
+                          </tr>
+                        )}
+
+                        {balanceData.acumuladoCuentas.length > 0 && (
+                          <tr className="adminbalance-total-row" style={{ backgroundColor: '#f0f0f0', fontWeight: 'bold' }}>
+                            <td colSpan="2" style={{ textAlign: 'right', paddingRight: '10px' }}>TOTAL FILTRADO:</td>
+                            <td>
+                              ${balanceData.acumuladoCuentas
+                                .filter((ac) => filtros.categoriaSeleccionada === "Todas" || ac.categoria === filtros.categoriaSeleccionada)
+                                .filter((ac) => filtros.cuentaSeleccionada === "Todas" || ac.cuenta === filtros.cuentaSeleccionada)
+                                .reduce((sum, item) => sum + Number(item.monto), 0)
+                                .toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                             </td>
                           </tr>
                         )}
