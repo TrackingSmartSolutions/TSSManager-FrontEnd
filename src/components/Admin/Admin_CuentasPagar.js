@@ -167,7 +167,7 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
           )}
           <div className="cuentaspagar-info-item">
             <label>Fecha de Pago:</label>
-            <span>{cuenta?.fechaPago || "-"}</span> 
+            <span>{cuenta?.fechaPago || "-"}</span>
           </div>
         </div>
 
@@ -501,7 +501,7 @@ const AdminCuentasPagar = () => {
   const userRol = localStorage.getItem("userRol")
   const [cuentasPagar, setCuentasPagar] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filtroEstatus, setFiltroEstatus] = useState("Todas");
+  const [filtroEstatus, setFiltroEstatus] = useState("Pendiente");
   const [ordenFecha, setOrdenFecha] = useState('asc');
   const [modals, setModals] = useState({
     marcarPagada: { isOpen: false, cuenta: null },
@@ -519,7 +519,9 @@ const AdminCuentasPagar = () => {
     const fetchCuentasPagar = async () => {
       setIsLoading(true);
       try {
-        const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar`);
+        // Enviar el filtro al backend
+        const params = filtroEstatus !== "Todas" ? `?estatus=${filtroEstatus}` : "";
+        const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar${params}`);
         const data = await response.json();
         setCuentasPagar(data);
       } catch (error) {
@@ -533,33 +535,36 @@ const AdminCuentasPagar = () => {
       }
     };
     fetchCuentasPagar();
-  }, []);
+  }, [filtroEstatus]);
 
   useEffect(() => {
-    const actualizarEstatus = () => {
-      const hoy = new Date();
-      setCuentasPagar((prev) =>
-        prev.map((cuenta) => {
-          if (cuenta.estatus === "Pagado") return cuenta;
+    const hoy = new Date();
+    if (cuentasPagar.length > 0 && filtroEstatus !== 'Pagado') {
+      const cuentasProcesadas = cuentasPagar.map((cuenta) => {
+        if (cuenta.estatus === "Pagado") return cuenta;
 
-          const fechaPago = new Date(cuenta.fecha_pago);
-          const unDiaDespues = new Date(fechaPago);
-          unDiaDespues.setDate(unDiaDespues.getDate() + 1);
+        const fechaPago = new Date(cuenta.fechaPago);
+        const unDiaDespues = new Date(fechaPago);
+        unDiaDespues.setDate(unDiaDespues.getDate() + 1);
 
-          let nuevoEstatus = "Pendiente";
-          if (hoy > unDiaDespues) {
-            nuevoEstatus = "Vencida";
-          }
+        let nuevoEstatus = cuenta.estatus;
 
+        if (hoy > unDiaDespues && cuenta.estatus !== "Pagado") {
+          nuevoEstatus = "Vencida";
+        }
+
+        if (nuevoEstatus !== cuenta.estatus) {
           return { ...cuenta, estatus: nuevoEstatus };
-        }),
-      );
-    };
+        }
+        return cuenta;
+      });
 
-    actualizarEstatus();
-    const interval = setInterval(actualizarEstatus, 24 * 60 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
+      const hayCambios = JSON.stringify(cuentasProcesadas) !== JSON.stringify(cuentasPagar);
+      if (hayCambios) {
+        setCuentasPagar(cuentasProcesadas);
+      }
+    }
+  }, [cuentasPagar.length, filtroEstatus]);
 
   const formasPago = {
     "01": "Efectivo",
@@ -828,7 +833,6 @@ const AdminCuentasPagar = () => {
   };
 
   const cuentasFiltradas = cuentasPagar.filter((cuenta) => {
-    // Filtro por estatus
     const pasaFiltroEstatus = filtroEstatus === "Todas" || cuenta.estatus === filtroEstatus;
 
     // Filtro por rango de fechas
@@ -837,10 +841,8 @@ const AdminCuentasPagar = () => {
       const fechaCuenta = new Date(cuenta.fechaPago);
       const fechaInicio = new Date(filtroFechas.fechaInicio);
       const fechaFin = new Date(filtroFechas.fechaFin);
-
       fechaInicio.setHours(0, 0, 0, 0);
       fechaFin.setHours(23, 59, 59, 999);
-
       pasaFiltroFechas = fechaCuenta >= fechaInicio && fechaCuenta <= fechaFin;
     }
 

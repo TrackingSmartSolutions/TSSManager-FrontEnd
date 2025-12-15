@@ -1097,7 +1097,7 @@ const AdminCuentasCobrar = () => {
   const [emisores, setEmisores] = useState([]);
   const [cuentasVinculadas, setCuentasVinculadas] = useState(new Set());
   const [isLoading, setIsLoading] = useState(true);
-  const [filtroEstatus, setFiltroEstatus] = useState("Todas");
+  const [filtroEstatus, setFiltroEstatus] = useState("PENDIENTE");
   const [categoriasIngreso, setCategoriasIngreso] = useState([]);
   const [ordenFecha, setOrdenFecha] = useState('asc');
 
@@ -1120,17 +1120,17 @@ const AdminCuentasCobrar = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [clientesData, cuentasData, cotizacionesData, emisoresData, categoriasIngresoData] = await Promise.all([
+        const params = filtroEstatus !== "Todas" ? `?estatus=${filtroEstatus}` : "";
+
+        const [clientesData, cuentasData, emisoresData, categoriasIngresoData] = await Promise.all([
           fetchWithToken(`${API_BASE_URL}/empresas?estatus=CLIENTE`),
-          fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar`),
-          fetchWithToken(`${API_BASE_URL}/cotizaciones`),
+          fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar${params}`), // Usamos el filtro
           fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/emisores`),
           fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/categorias-ingreso`),
         ]);
 
         setClientes(clientesData);
         setCuentasPorCobrar(cuentasData);
-        setCotizaciones(cotizacionesData);
         setEmisores(emisoresData);
         setCategoriasIngreso(categoriasIngresoData);
 
@@ -1145,7 +1145,7 @@ const AdminCuentasCobrar = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [filtroEstatus]);
 
 
   useEffect(() => {
@@ -1173,20 +1173,24 @@ const AdminCuentasCobrar = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const openModal = (modalType, data = {}) => {
+  const openModal = async (modalType, data = {}) => { 
     if (modalType === "crearSolicitud" && data.cuenta) {
-      // Busca la cotización asociada a la cuenta por cobrar
-      const cotizacionAsociada = cotizaciones.find(
-        (c) => c.id === data.cuenta.cotizacionId
-      );
-      setModals((prev) => ({
-        ...prev,
-        [modalType]: {
-          isOpen: true,
-          cotizacion: cotizacionAsociada || null,
-          cuenta: data.cuenta,
-        },
-      }));
+      try {
+        Swal.showLoading();
+        const cotizacionData = await fetchWithToken(`${API_BASE_URL}/cotizaciones/${data.cuenta.cotizacionId}`);
+        Swal.close();
+
+        setModals((prev) => ({
+          ...prev,
+          [modalType]: {
+            isOpen: true,
+            cotizacion: cotizacionData, 
+            cuenta: data.cuenta,
+          },
+        }));
+      } catch (error) {
+        Swal.fire("Error", "No se pudo cargar la información de la cotización", "error");
+      }
     } else {
       setModals((prev) => ({
         ...prev,
@@ -1194,6 +1198,7 @@ const AdminCuentasCobrar = () => {
       }));
     }
   };
+
   const closeModal = (modalType) => {
     setModals((prev) => ({
       ...prev,
@@ -1413,10 +1418,7 @@ const AdminCuentasCobrar = () => {
     }
   };
 
-  const cuentasFiltradas = cuentasPorCobrar.filter((cuenta) => {
-    if (filtroEstatus === "Todas") return true;
-    return cuenta.estatus === filtroEstatus;
-  });
+  const cuentasFiltradas = cuentasPorCobrar;
 
   const cuentasOrdenadas = cuentasFiltradas.sort((a, b) => {
     const fechaA = new Date(a.fechaPago);
@@ -1676,7 +1678,7 @@ const AdminCuentasCobrar = () => {
               });
               closeModal("crearSolicitud");
             }}
-            cotizaciones={cotizaciones}
+            cotizaciones={modals.crearSolicitud.cotizacion ? [modals.crearSolicitud.cotizacion] : []}
             cuentasPorCobrar={cuentasPorCobrar}
             emisores={emisores}
             preloadedCotizacion={modals.crearSolicitud.cotizacion}
