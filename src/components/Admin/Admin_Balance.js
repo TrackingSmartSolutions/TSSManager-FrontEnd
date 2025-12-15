@@ -205,139 +205,51 @@ const AdminBalance = () => {
   const fetchData = async () => {
     setIsLoading(true)
     try {
-      const [transaccionesResp, categoriasResp, cuentasResp, cuentasPorCobrarResp, cotizacionesResp] =
-        await Promise.all([
-          fetchWithToken(`${API_BASE_URL}/transacciones`),
-          fetchWithToken(`${API_BASE_URL}/categorias`),
-          fetchWithToken(`${API_BASE_URL}/cuentas`),
-          fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar`),
-          fetchWithToken(`${API_BASE_URL}/cotizaciones`),
-        ])
-
-      const transacciones = transaccionesResp.filter((t) => !esCategoriaReposicion(t.categoria.descripcion))
-      const cuentasPorCobrar = cuentasPorCobrarResp.filter((c) => c.estatus === "PAGADO")
-      const cotizaciones = cotizacionesResp
-
-      const totalIngresos = transacciones.filter((t) => t.tipo === "INGRESO").reduce((sum, t) => sum + t.monto, 0)
-      const totalGastos = transacciones
-        .filter((t) => t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))
-        .reduce((sum, t) => sum + t.monto, 0)
-      const utilidadPerdida = totalIngresos - totalGastos
-
-      const añosConTransacciones = obtenerAñosConTransacciones(transacciones)
-      if (añosDisponibles.length === 0 || JSON.stringify(añosConTransacciones) !== JSON.stringify(añosDisponibles)) {
-        setAñosDisponibles(añosConTransacciones)
+      let params = new URLSearchParams();
+      
+      if (filtros.añoSeleccionado !== "Todos los años") {
+        params.append("anio", filtros.añoSeleccionado);
+      }
+      
+      if (filtros.mostrarFiltroMes && filtros.mesSeleccionado !== "Todos los meses") {
+        const mesNumero = mesesDisponibles.indexOf(filtros.mesSeleccionado) + 1;
+        params.append("mes", mesNumero);
       }
 
-      const graficoMensual = generarDatosGrafico(transacciones, filtros.añoSeleccionado, filtros.mesSeleccionado)
-
-      // Filtrar transacciones para la tabla de acumulado (respeta filtros de tiempo)
-      const transaccionesFiltradas = filtrarTransaccionesPorFecha(transacciones, filtros.añoSeleccionado, filtros.mesSeleccionado)
-
-      const acumuladoCuentas = []
-
-      // Agregar resumen por categoría
-      categoriasResp.forEach((cat) => {
-        if (esCategoriaReposicion(cat.descripcion)) return
-
-        const montoTotal = transaccionesFiltradas
-          .filter(
-            (t) =>
-              t.categoria.id === cat.id &&
-              !esCategoriaReposicion(t.categoria.descripcion) &&
-              (t.tipo === "INGRESO" ||
-                (t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))),
-          )
-          .reduce((sum, t) => sum + t.monto, 0)
-
-        acumuladoCuentas.push({ categoria: cat.descripcion, cuenta: "Todas", monto: montoTotal })
-
-        // Agregar detalle por cuenta
-        const cuentasFiltradas = cuentasResp.filter((c) => c.categoria.id === cat.id && !esCategoriaReposicion(c.categoria.descripcion))
-
-        cuentasFiltradas.forEach((cuenta) => {
-          const montoCuenta = transaccionesFiltradas
-            .filter(
-              (t) =>
-                t.cuenta?.id === cuenta.id &&
-                !esCategoriaReposicion(t.categoria.descripcion) &&
-                (t.tipo === "INGRESO" ||
-                  (t.tipo === "GASTO" && t.notas?.includes("Transacción generada desde Cuentas por Pagar"))),
-            )
-            .reduce((sum, t) => sum + t.monto, 0)
-
-          if (montoCuenta > 0) {
-            acumuladoCuentas.push({ categoria: cat.descripcion, cuenta: cuenta.nombre, monto: montoCuenta })
-          }
-        })
-      })
-
-      const equiposVendidos = cuentasPorCobrar
-        .filter(cuenta => cuenta.numeroEquipos && cuenta.numeroEquipos > 0) // Usar el nuevo campo
-        .map(cuenta => ({
-          cliente: cuenta.clienteNombre,
-          fechaPago: cuenta.fechaRealPago,
-          numeroEquipos: cuenta.numeroEquipos, // Usar el nuevo campo directamente
-        }))
-        .filter(equipo => {
-          // Aplicar filtros de fecha
-          const fechaEquipo = parseLocalDate(equipo.fechaPago)
-          if (!fechaEquipo) return false
-
-          if (filtros.añoSeleccionado === "Todos los años") {
-            return true
-          }
-
-          const año = parseInt(filtros.añoSeleccionado)
-          if (fechaEquipo.getFullYear() !== año) {
-            return false
-          }
-
-          if (filtros.mesSeleccionado === "Todos los meses") {
-            return true
-          }
-
-          const mesIndex = mesesDisponibles.indexOf(filtros.mesSeleccionado)
-          return fechaEquipo.getMonth() === mesIndex
-        })
-        .sort((a, b) => new Date(a.fechaPago) - new Date(b.fechaPago))
-
-        .filter(equipo => {
-          // Aplicar filtros de fecha usando la misma lógica que las transacciones
-          const fechaEquipo = parseLocalDate(equipo.fechaPago)
-          if (!fechaEquipo) return false
-
-          if (filtros.añoSeleccionado === "Todos los años") {
-            return true // No filtrar por fecha
-          }
-
-          const año = parseInt(filtros.añoSeleccionado)
-          if (fechaEquipo.getFullYear() !== año) {
-            return false
-          }
-
-          if (filtros.mesSeleccionado === "Todos los meses") {
-            return true // Solo filtrar por año
-          }
-
-          const mesIndex = mesesDisponibles.indexOf(filtros.mesSeleccionado)
-          return fechaEquipo.getMonth() === mesIndex
-        })
-        .sort((a, b) => new Date(a.fechaPago) - new Date(b.fechaPago))
+      const data = await fetchWithToken(`${API_BASE_URL}/balance/resumen?${params.toString()}`);
 
       setBalanceData({
-        resumenContable: { totalIngresos, totalGastos, utilidadPerdida },
-        graficoMensual,
-        acumuladoCuentas,
-        equiposVendidos,
-      })
-      setCategorias(categoriasResp)
-      setCuentas(cuentasResp)
+        resumenContable: { 
+            totalIngresos: data.totalIngresos, 
+            totalGastos: data.totalGastos, 
+            utilidadPerdida: data.utilidadPerdida 
+        },
+        graficoMensual: data.graficoMensual,
+        acumuladoCuentas: data.acumuladoCuentas,
+        equiposVendidos: data.equiposVendidos,
+      });
+
+      // Actualizamos años solo si es necesario
+      if (data.aniosDisponibles && data.aniosDisponibles.length > 0) {
+          setAñosDisponibles(data.aniosDisponibles);
+      }
+      
+      // Cargar categorías y cuentas solo si no se han cargado antes
+      if (categorias.length === 0) {
+          const [catResp, cuenResp] = await Promise.all([
+              fetchWithToken(`${API_BASE_URL}/categorias`),
+              fetchWithToken(`${API_BASE_URL}/cuentas`)
+          ]);
+          setCategorias(catResp);
+          setCuentas(cuenResp);
+      }
+
     } catch (error) {
+      console.error(error);
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "No se pudieron cargar los datos: " + error.message,
+        text: "No se pudieron cargar los datos optimizados: " + error.message,
       })
     } finally {
       setIsLoading(false)
