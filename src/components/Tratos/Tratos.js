@@ -98,9 +98,9 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true,
 };
 
 // Modal para seleccionar tipo de actividad
-const SeleccionarActividadModal = ({ isOpen, onClose, onSelectActivity, tratoId }) => {
+const SeleccionarActividadModal = ({ isOpen, onClose, onSelectActivity, tratoId, contactoId }) => {
   const handleSelectActivity = (tipo) => {
-    onSelectActivity(tipo, tratoId);
+    onSelectActivity(tipo, tratoId, contactoId);
     onClose();
   };
   return (
@@ -338,7 +338,7 @@ const NuevoTratoModal = ({ isOpen, onClose, onSave, empresaPreseleccionada }) =>
 };
 
 // Modal para programar llamada
-const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId }) => {
+const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId, contactoId }) => {
   const [formData, setFormData] = useState({
     asignadoAId: creatorId || (users.length > 0 ? users[0].id : ""),
     nombreContacto: "",
@@ -353,13 +353,13 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
       setFormData((prev) => ({
         ...prev,
         asignadoAId: creatorId || (users.length > 0 ? users[0].id : ""),
-        nombreContacto: "",
+        nombreContacto: contactoId || "",
         fecha: "",
         horaInicio: "",
       }));
       setErrors({});
     }
-  }, [isOpen, creatorId, users]);
+  }, [isOpen, creatorId, users, contactoId]);
 
   const fetchContactos = async (empresaId) => {
     try {
@@ -519,7 +519,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
 };
 
 // Modal para programar reunión
-const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId }) => {
+const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId, contactoId }) => {
   const [formData, setFormData] = useState({
     asignadoAId: creatorId || (users.length > 0 ? users[0].id : ""),
     nombreContacto: "",
@@ -543,7 +543,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
       setFormData((prev) => ({
         ...prev,
         asignadoAId: creatorId || (users.length > 0 ? users[0].id : ""),
-        nombreContacto: "",
+        nombreContacto: contactoId || "",
         fecha: "",
         horaInicio: "",
         duracionHoras: "",
@@ -561,7 +561,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
         fetchEmpresaDetails(tratoId);
       }
     }
-  }, [isOpen, creatorId, users, tratoId]);
+  }, [isOpen, creatorId, users, tratoId, contactoId]);
 
   const fetchEmpresaDetails = async (tratoId) => {
     try {
@@ -884,7 +884,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
 };
 
 // Modal para programar tarea
-const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId }) => {
+const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId, contactoId }) => {
   const [formData, setFormData] = useState({
     asignadoAId: creatorId || (users.length > 0 ? users[0].id : ""),
     nombreContacto: "",
@@ -900,14 +900,14 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
       setFormData((prev) => ({
         ...prev,
         asignadoAId: creatorId || (users.length > 0 ? users[0].id : ""),
-        nombreContacto: "",
+        nombreContacto: contactoId || "",
         fechaLimite: "",
         tipo: "",
         notas: ""
       }));
       setErrors({});
     }
-  }, [isOpen, creatorId, users]);
+  }, [isOpen, creatorId, users, contactoId]);
 
   const fetchContactos = async (empresaId) => {
     try {
@@ -1755,13 +1755,21 @@ const Tratos = () => {
 
   const handleActivityAdded = (tratoId) => {
     const trato = columnas.flatMap((c) => c.tratos).find((t) => t.id === tratoId);
-    openModal("seleccionarActividad", { tratoId, creatorId: trato.creatorId });
+    openModal("seleccionarActividad", {
+      tratoId,
+      creatorId: trato.creatorId,
+      contactoId: trato.contactoId
+    });
   };
 
-  const handleSelectActivity = (tipo, tratoId) => {
+  const handleSelectActivity = (tipo, tratoId, contactoId) => { // ← AGREGAR contactoId
     const modalMap = { llamada: "programarLlamada", reunion: "programarReunion", tarea: "programarTarea" };
     const trato = columnas.flatMap((c) => c.tratos).find((t) => t.id === tratoId);
-    openModal(modalMap[tipo], { tratoId, creatorId: trato.creatorId });
+    openModal(modalMap[tipo], {
+      tratoId,
+      creatorId: trato.creatorId,
+      contactoId: contactoId || trato.contactoId
+    });
   };
 
   const handleSaveNuevoTrato = (newTrato) => {
@@ -2069,6 +2077,7 @@ const Tratos = () => {
             onClose={() => closeModal("seleccionarActividad")}
             onSelectActivity={handleSelectActivity}
             tratoId={modals.seleccionarActividad.tratoId}
+            contactoId={modals.seleccionarActividad.contactoId}
           />
 
           <ProgramarLlamadaModal
@@ -2078,6 +2087,7 @@ const Tratos = () => {
             tratoId={modals.programarLlamada.tratoId}
             users={users}
             creatorId={modals.programarLlamada.creatorId}
+            contactoId={modals.programarLlamada.contactoId}
           />
 
           <ProgramarReunionModal
@@ -2087,6 +2097,7 @@ const Tratos = () => {
             tratoId={modals.programarReunion.tratoId}
             users={users}
             creatorId={modals.programarReunion.creatorId}
+            contactoId={modals.programarReunion.contactoId}
           />
 
           <ProgramarTareaModal
@@ -2096,6 +2107,7 @@ const Tratos = () => {
             tratoId={modals.programarTarea.tratoId}
             users={users}
             creatorId={modals.programarTarea.creatorId}
+            contactoId={modals.programarTarea.contactoId}
           />
         </main>
       </div>
