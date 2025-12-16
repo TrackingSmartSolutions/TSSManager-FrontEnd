@@ -170,7 +170,6 @@ const Mapa = () => {
             (company) =>
                 company.latitud &&
                 company.longitud &&
-                company.domicilioFisico &&
                 (selectedSector === "TODOS" || company.sectorId === parseInt(selectedSector))
         ) || [];
     }, [companies, selectedSector]);
