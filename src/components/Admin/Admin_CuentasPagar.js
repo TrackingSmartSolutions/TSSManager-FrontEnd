@@ -639,8 +639,6 @@ const AdminCuentasPagar = () => {
     }
   };
 
-
-
   const handleDeleteCuenta = (cuenta) => {
     openModal("confirmarEliminacion", { cuenta });
   };
@@ -804,6 +802,27 @@ const AdminCuentasPagar = () => {
     return new Date(dateString).toLocaleDateString("es-MX");
   };
 
+  // Función auxiliar para determinar el estatus real al momento
+  const getEstatusReal = (cuenta) => {
+    if (cuenta.estatus === "Pagado") return "Pagado";
+    if (cuenta.estatus === "Vencida") return "Vencida";
+    if (!cuenta.fechaPago) return cuenta.estatus;
+
+    const [year, month, day] = cuenta.fechaPago.split('-').map(Number);
+    const fechaVencimiento = new Date(year, month - 1, day);
+    const unDiaDespues = new Date(fechaVencimiento);
+    unDiaDespues.setDate(unDiaDespues.getDate() + 1);
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    unDiaDespues.setHours(0, 0, 0, 0);
+
+    if (hoy > unDiaDespues && cuenta.estatus !== "Pagado") {
+      return "Vencida";
+    }
+    return cuenta.estatus;
+  };
+
   const cuentasFiltradas = cuentasPagar.filter((cuenta) => {
     const estatusReal = getEstatusReal(cuenta);
 
@@ -885,27 +904,6 @@ const AdminCuentasPagar = () => {
       fechaFin: "",
       activo: false
     });
-  };
-
-  // Función auxiliar para determinar el estatus real al momento
-  const getEstatusReal = (cuenta) => {
-    if (cuenta.estatus === "Pagado") return "Pagado";
-    if (cuenta.estatus === "Vencida") return "Vencida";
-    if (!cuenta.fechaPago) return cuenta.estatus;
-
-    const [year, month, day] = cuenta.fechaPago.split('-').map(Number);
-    const fechaVencimiento = new Date(year, month - 1, day);
-    const unDiaDespues = new Date(fechaVencimiento);
-    unDiaDespues.setDate(unDiaDespues.getDate() + 1);
-
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    unDiaDespues.setHours(0, 0, 0, 0);
-
-    if (hoy > unDiaDespues && cuenta.estatus !== "Pagado") {
-      return "Vencida";
-    }
-    return cuenta.estatus;
   };
 
   return (
