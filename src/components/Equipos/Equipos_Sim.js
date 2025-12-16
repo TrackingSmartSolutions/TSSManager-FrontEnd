@@ -932,6 +932,7 @@ const EquiposSim = () => {
   const [ordenFechaVigencia, setOrdenFechaVigencia] = useState('asc');
   const [filterNumero, setFilterNumero] = useState("");
   const [alertasSaldo, setAlertasSaldo] = useState(new Set());
+  const [alertasAprobadas, setAlertasAprobadas] = useState(new Set());
   const [modals, setModals] = useState({
     form: { isOpen: false, sim: null },
     saldos: { isOpen: false, sim: null },
@@ -945,6 +946,19 @@ const EquiposSim = () => {
   const equiposCache = useRef(null);
   const equiposCacheTime = useRef(null);
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
+  const cargarAlertasAprobadas = async () => {
+    try {
+      const result = await window.storage.get('alertas-aprobadas-sims');
+      if (result && result.value) {
+        const alertas = JSON.parse(result.value);
+        setAlertasAprobadas(new Set(alertas));
+      }
+    } catch (error) {
+      console.log('No hay alertas aprobadas previas o error al cargar:', error);
+      setAlertasAprobadas(new Set());
+    }
+  };
 
   const loadEquiposIfNeeded = async () => {
     const now = Date.now();
@@ -976,6 +990,7 @@ const EquiposSim = () => {
     const userRoleFromStorage = localStorage.getItem("userRol");
     setUserRole(userRoleFromStorage === "ADMINISTRADOR" ? "ADMINISTRADOR" : userRoleFromStorage || "ADMINISTRADOR");
 
+    cargarAlertasAprobadas();
     fetchCriticalData();
   }, []);
 
@@ -1110,8 +1125,18 @@ const EquiposSim = () => {
                 const caidaData = await caidaResponse.json();
                 if (caidaData.tieneCaida) {
                   setAlertasSaldo(prev => {
+                    setAlertasAprobadas(aprobadas => {
+                      if (!aprobadas.has(sim.id)) {
+                        const newSet = new Set(prev);
+                        newSet.add(sim.id);
+                        return prev;
+                      }
+                      return prev;
+                    });
                     const newSet = new Set(prev);
-                    newSet.add(sim.id);
+                    if (!alertasAprobadas.has(sim.id)) {
+                      newSet.add(sim.id);
+                    }
                     return newSet;
                   });
                 }
@@ -1120,6 +1145,7 @@ const EquiposSim = () => {
               console.error(`Error verificando caída de saldo para SIM ${sim.id}:`, error);
             }
           }
+
 
         } catch (error) {
           console.error(`Error loading saldo for SIM ${sim.id}:`, error);
@@ -1353,14 +1379,25 @@ const EquiposSim = () => {
     return className;
   };
 
-
-
-  const aprobarAlertaSaldo = (simId) => {
+  const aprobarAlertaSaldo = async (simId) => {
     setAlertasSaldo(prev => {
       const newSet = new Set(prev);
       newSet.delete(simId);
       return newSet;
     });
+
+    const nuevasAprobadas = new Set(alertasAprobadas);
+    nuevasAprobadas.add(simId);
+    setAlertasAprobadas(nuevasAprobadas);
+
+    try {
+      await window.storage.set(
+        'alertas-aprobadas-sims',
+        JSON.stringify(Array.from(nuevasAprobadas))
+      );
+    } catch (error) {
+      console.error('Error guardando alertas aprobadas:', error);
+    }
 
     Swal.fire({
       icon: "success",
