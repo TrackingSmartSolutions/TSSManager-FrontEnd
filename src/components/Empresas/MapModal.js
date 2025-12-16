@@ -119,6 +119,7 @@ const MapModal = ({ isOpen, onClose, onLocationSelect, initialAddress }) => {
 
                     newMap.on('zoomend', () => {
                     });
+                    newMap.scrollWheelZoom.enable();
 
                     setMap(newMap);
 
@@ -263,7 +264,7 @@ const MapModal = ({ isOpen, onClose, onLocationSelect, initialAddress }) => {
     };
 
     const handleModalClick = (e) => {
-        if (e.target.classList.contains('modal-overlay')) {
+        if (e.target === e.currentTarget) {
             onClose();
         }
     };
@@ -382,8 +383,6 @@ const MapModal = ({ isOpen, onClose, onLocationSelect, initialAddress }) => {
 
                     <div
                         className="map-container"
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onTouchStart={(e) => e.stopPropagation()}
                         style={{
                             height: '400px',
                             width: '100%',
@@ -392,7 +391,7 @@ const MapModal = ({ isOpen, onClose, onLocationSelect, initialAddress }) => {
                             overflow: 'hidden',
                             position: 'relative',
                             cursor: 'grab',
-                            zIndex: 1
+                            zIndex: 10
                         }}
                     >
                         <div
