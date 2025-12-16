@@ -100,33 +100,50 @@ const MapModal = ({ isOpen, onClose, onLocationSelect, initialAddress }) => {
                     newMap.on('click', handleMapClick);
                     newMap.on('tap', handleMapClick);
                     newMap.on('dragstart', () => {
-                    });
-
-                    newMap.on('drag', () => {
+                        if (mapRef.current) {
+                            mapRef.current.style.cursor = 'grabbing';
+                        }
                     });
 
                     newMap.on('dragend', () => {
-                    });
-
-                    newMap.on('movestart', () => {
-                    });
-
-                    newMap.on('moveend', () => {
-                    });
-
-                    newMap.on('zoomstart', () => {
-                    });
-
-                    newMap.on('zoomend', () => {
+                        if (mapRef.current) {
+                            mapRef.current.style.cursor = 'grab';
+                        }
                     });
                     newMap.scrollWheelZoom.enable();
 
+                    // Esperar a que el mapa esté completamente cargado
+                    newMap.whenReady(() => {
+                        newMap.invalidateSize();
+                        // Forzar que el mapa tome el control de los eventos
+                        const container = newMap.getContainer();
+                        container.style.cursor = 'grab';
+
+                        // Re-habilitar todas las interacciones
+                        newMap.dragging.enable();
+                        newMap.scrollWheelZoom.enable();
+                        newMap.doubleClickZoom.enable();
+                        newMap.boxZoom.enable();
+                        newMap.keyboard.enable();
+
+                        console.log('Mapa listo y eventos habilitados');
+                    });
+
                     setMap(newMap);
 
-                    // Múltiples intentos de invalidación para asegurar el renderizado
-                    setTimeout(() => newMap.invalidateSize(), 100);
-                    setTimeout(() => newMap.invalidateSize(), 300);
-                    setTimeout(() => newMap.invalidateSize(), 500);
+                    // Invalidaciones adicionales por si acaso
+                    setTimeout(() => {
+                        if (newMap) {
+                            newMap.invalidateSize();
+                            newMap.dragging.enable();
+                        }
+                    }, 200);
+                    setTimeout(() => {
+                        if (newMap) {
+                            newMap.invalidateSize();
+                            newMap.dragging.enable();
+                        }
+                    }, 500);
 
                 } catch (error) {
                     console.error('Error al crear el mapa:', error);
@@ -396,9 +413,15 @@ const MapModal = ({ isOpen, onClose, onLocationSelect, initialAddress }) => {
                     >
                         <div
                             ref={mapRef}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onMouseMove={(e) => e.stopPropagation()}
+                            onWheel={(e) => e.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
                             style={{
                                 height: '100%',
                                 width: '100%',
+                                cursor: 'grab',
+                                touchAction: 'none'
                             }}
                         />
                     </div>
