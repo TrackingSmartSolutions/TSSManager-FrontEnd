@@ -67,14 +67,14 @@ const MapModal = ({ isOpen, onClose, onLocationSelect, initialAddress }) => {
                     const newMap = window.L.map(mapRef.current, {
                         center: position,
                         zoom: 13,
-                        dragging: true,
+                        dragging: true,        
                         touchZoom: true,
                         doubleClickZoom: true,
                         scrollWheelZoom: true,
                         boxZoom: true,
                         keyboard: true,
                         zoomControl: true,
-                        tap: true,
+                        tap: false,           
                         tapTolerance: 15,
                         trackResize: true,
                         inertia: true,
@@ -389,7 +389,8 @@ const MapModal = ({ isOpen, onClose, onLocationSelect, initialAddress }) => {
                             border: '1px solid #ddd',
                             borderRadius: '4px',
                             overflow: 'hidden',
-                            position: 'relative'
+                            position: 'relative',
+                            cursor: 'grab'
                         }}
                     >
                         <div
