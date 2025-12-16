@@ -115,26 +115,17 @@ const Mapa = () => {
                 await loadSectores();
 
                 if (initialCompanies && initialCompanies.length > 0) {
-                    // AGREGAR ESTE DEBUG
-                    console.log("=== EMPRESAS DESDE NAVIGATION STATE ===");
-                    const bombasFromNav = initialCompanies.find(c => c.id === 1955);
-                    console.log("Bombas desde navigation:", bombasFromNav);
-
                     setCompanies(initialCompanies);
                 } else {
                     const response = await fetchWithToken(`${API_BASE_URL}/coordenadas/empresas`);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
 
                     const companiesData = await response.json();
-
-                    // AGREGAR ESTE DEBUG
-                    console.log("=== EMPRESAS DESDE API COORDENADAS ===");
-                    const bombasFromAPI = companiesData.find(c => c.id === 1955);
-                    console.log("Bombas desde API coordenadas:", bombasFromAPI);
-
                     setCompanies(companiesData);
                 }
-
                 setIsLoading(false);
             } catch (error) {
                 console.error('Error loading companies:', error);
@@ -172,45 +163,31 @@ const Mapa = () => {
 
     // Filtra empresas con coordenadas válidas y por sector seleccionado
     const companiesWithCoords = useMemo(() => {
-        const filtered = companies?.filter(
+        return companies?.filter(
             (company) =>
                 company.latitud &&
                 company.longitud &&
-                company.domicilioFisico &&
                 (selectedSector === "TODOS" || company.sectorId === parseInt(selectedSector))
         ) || [];
-
-        // AGREGAR ESTAS LÍNEAS DE DEBUG
-        console.log("=== DEBUG MAPA ===");
-        console.log("Total companies:", companies?.length);
-        console.log("Filtered companies:", filtered.length);
-
-        // Buscar específicamente "Bombas y Equipos del Bajio"
-        const bombasEmpresa = companies?.find(c => c.id === 1955);
-        console.log("Bombas y Equipos del Bajio:", bombasEmpresa);
-
-        if (bombasEmpresa) {
-            console.log("¿Tiene latitud?", !!bombasEmpresa.latitud);
-            console.log("¿Tiene longitud?", !!bombasEmpresa.longitud);
-            console.log("¿Tiene domicilioFisico?", !!bombasEmpresa.domicilioFisico);
-            console.log("domicilioFisico value:", bombasEmpresa.domicilioFisico);
-            console.log("sectorId:", bombasEmpresa.sectorId);
-        }
-
-        const bombasFiltered = filtered.find(c => c.id === 1955);
-        console.log("¿Bombas está en filtered?", !!bombasFiltered);
-        console.log("==================");
-
-        return filtered;
     }, [companies, selectedSector]);
 
     const displayedCompanies = useMemo(() => {
-        // Si hay muchos marcadores, mostrar solo algunos en zoom bajo
-        if (companiesWithCoords.length > 100) {
-            return companiesWithCoords.filter((_, index) => index % 2 === 0);
+    // Si hay muchos marcadores, mostrar solo algunos en zoom bajo
+    if (companiesWithCoords.length > 100) {
+        const filtered = companiesWithCoords.filter((_, index) => index % 2 === 0);
+        
+        // ASEGURAR que la empresa seleccionada siempre esté incluida
+        if (selectedMarker && !filtered.find(c => c.id === selectedMarker.id)) {
+            const selectedCompany = companiesWithCoords.find(c => c.id === selectedMarker.id);
+            if (selectedCompany) {
+                filtered.push(selectedCompany);
+            }
         }
-        return companiesWithCoords;
-    }, [companiesWithCoords]);
+        
+        return filtered;
+    }
+    return companiesWithCoords;
+}, [companiesWithCoords, selectedMarker]);
 
     // Mapas para traducir estados a texto legible
     const statusMap = {

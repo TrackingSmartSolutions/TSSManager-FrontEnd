@@ -1463,11 +1463,6 @@ const Empresas = () => {
       if (!response.ok) throw new Error("Error al cargar las empresas");
       const data = await response.json();
 
-      // AGREGAR ESTE DEBUG
-      console.log("=== DEBUG FETCH EMPRESAS ===");
-      const bombasRaw = data.find(c => c.id === 1955);
-      console.log("Bombas RAW desde API:", bombasRaw);
-
       const companiesWithColors = data.map((company) => ({
         ...company,
         statusColor: getStatusColor(company.estatus),
@@ -1477,11 +1472,6 @@ const Empresas = () => {
             : `${company.domicilioFisico}, México`)
           : null,
       }));
-
-      // AGREGAR ESTE DEBUG
-      const bombasProcessed = companiesWithColors.find(c => c.id === 1955);
-      console.log("Bombas PROCESADA:", bombasProcessed);
-      console.log("============================");
 
       setCompanies(companiesWithColors);
 
