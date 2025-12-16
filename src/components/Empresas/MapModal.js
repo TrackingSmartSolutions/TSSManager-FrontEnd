@@ -44,13 +44,12 @@ const MapModal = ({ isOpen, onClose, onLocationSelect, initialAddress }) => {
                     const script = document.createElement('script');
                     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
 
-                    return new Promise((resolve) => {
-                        script.onload = () => {
+                    script.onload = () => {
+                        setTimeout(() => {
                             setLeafletLoaded(true);
-                            resolve();
-                        };
-                        document.head.appendChild(script);
-                    });
+                        }, 100);
+                    };
+                    document.head.appendChild(script);
                 } else {
                     setLeafletLoaded(true);
                 }
@@ -67,14 +66,14 @@ const MapModal = ({ isOpen, onClose, onLocationSelect, initialAddress }) => {
                     const newMap = window.L.map(mapRef.current, {
                         center: position,
                         zoom: 13,
-                        dragging: true,        
+                        dragging: true,
                         touchZoom: true,
                         doubleClickZoom: true,
                         scrollWheelZoom: true,
                         boxZoom: true,
                         keyboard: true,
                         zoomControl: true,
-                        tap: false,           
+                        tap: false,
                         tapTolerance: 15,
                         trackResize: true,
                         inertia: true,
@@ -383,6 +382,8 @@ const MapModal = ({ isOpen, onClose, onLocationSelect, initialAddress }) => {
 
                     <div
                         className="map-container"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
                         style={{
                             height: '400px',
                             width: '100%',
@@ -390,7 +391,8 @@ const MapModal = ({ isOpen, onClose, onLocationSelect, initialAddress }) => {
                             borderRadius: '4px',
                             overflow: 'hidden',
                             position: 'relative',
-                            cursor: 'grab'
+                            cursor: 'grab',
+                            zIndex: 1
                         }}
                     >
                         <div
