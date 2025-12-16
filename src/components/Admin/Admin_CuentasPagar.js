@@ -537,34 +537,6 @@ const AdminCuentasPagar = () => {
     fetchCuentasPagar();
   }, [filtroEstatus]);
 
-  useEffect(() => {
-    const hoy = new Date();
-    if (cuentasPagar.length > 0 && filtroEstatus !== 'Pagado') {
-      const cuentasProcesadas = cuentasPagar.map((cuenta) => {
-        if (cuenta.estatus === "Pagado") return cuenta;
-
-        const fechaPago = new Date(cuenta.fechaPago);
-        const unDiaDespues = new Date(fechaPago);
-        unDiaDespues.setDate(unDiaDespues.getDate() + 1);
-
-        let nuevoEstatus = cuenta.estatus;
-
-        if (hoy > unDiaDespues && cuenta.estatus !== "Pagado") {
-          nuevoEstatus = "Vencida";
-        }
-
-        if (nuevoEstatus !== cuenta.estatus) {
-          return { ...cuenta, estatus: nuevoEstatus };
-        }
-        return cuenta;
-      });
-
-      const hayCambios = JSON.stringify(cuentasProcesadas) !== JSON.stringify(cuentasPagar);
-      if (hayCambios) {
-        setCuentasPagar(cuentasProcesadas);
-      }
-    }
-  }, [cuentasPagar.length, filtroEstatus]);
 
   const formasPago = {
     "01": "Efectivo",
@@ -833,16 +805,16 @@ const AdminCuentasPagar = () => {
   };
 
   const cuentasFiltradas = cuentasPagar.filter((cuenta) => {
-    const pasaFiltroEstatus = filtroEstatus === "Todas" || cuenta.estatus === filtroEstatus;
+    const estatusReal = getEstatusReal(cuenta);
 
-    // Filtro por rango de fechas
+    const pasaFiltroEstatus = filtroEstatus === "Todas" || estatusReal === filtroEstatus;
+
     let pasaFiltroFechas = true;
     if (filtroFechas.activo) {
-      const fechaCuenta = new Date(cuenta.fechaPago);
-      const fechaInicio = new Date(filtroFechas.fechaInicio);
-      const fechaFin = new Date(filtroFechas.fechaFin);
-      fechaInicio.setHours(0, 0, 0, 0);
-      fechaFin.setHours(23, 59, 59, 999);
+      const [year, month, day] = cuenta.fechaPago.split('-').map(Number);
+      const fechaCuenta = new Date(year, month - 1, day);
+      const fechaInicio = new Date(filtroFechas.fechaInicio + "T00:00:00");
+      const fechaFin = new Date(filtroFechas.fechaFin + "T23:59:59");
       pasaFiltroFechas = fechaCuenta >= fechaInicio && fechaCuenta <= fechaFin;
     }
 
@@ -913,6 +885,27 @@ const AdminCuentasPagar = () => {
       fechaFin: "",
       activo: false
     });
+  };
+
+  // Función auxiliar para determinar el estatus real al momento
+  const getEstatusReal = (cuenta) => {
+    if (cuenta.estatus === "Pagado") return "Pagado";
+    if (cuenta.estatus === "Vencida") return "Vencida";
+    if (!cuenta.fechaPago) return cuenta.estatus;
+
+    const [year, month, day] = cuenta.fechaPago.split('-').map(Number);
+    const fechaVencimiento = new Date(year, month - 1, day);
+    const unDiaDespues = new Date(fechaVencimiento);
+    unDiaDespues.setDate(unDiaDespues.getDate() + 1);
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    unDiaDespues.setHours(0, 0, 0, 0);
+
+    if (hoy > unDiaDespues && cuenta.estatus !== "Pagado") {
+      return "Vencida";
+    }
+    return cuenta.estatus;
   };
 
   return (
@@ -1057,78 +1050,72 @@ const AdminCuentasPagar = () => {
                     </thead>
                     <tbody>
                       {cuentasOrdenadas.length > 0 ? (
-                        cuentasOrdenadas.map((cuenta) => (
-                          <tr key={cuenta.id}>
-                            <td>
-                              {cuenta.folio}
-                              {cuenta.sim && <span className="cuentaspagar-sim-id"> -{cuenta.sim.id}</span>}
-                            </td>
-                            <td>{cuenta.fechaPago}</td>
-                            <td>{cuenta.cuenta.nombre}</td>
-                            <td>
-                              <div className="cuentaspagar-monto-info">
-                                <div>{formatCurrency(cuenta.monto)}</div>
-                                {cuenta.montoPagado > 0 && (
-                                  <div className="cuentaspagar-monto-detalle">
-                                    <small>Pagado: {formatCurrency(cuenta.montoPagado)}</small>
-                                    <small>Pendiente: {formatCurrency(cuenta.saldoPendiente)}</small>
-                                  </div>
-                                )}
-                              </div>
-                            </td>
-                            <td>{formasPago[cuenta.formaPago]}</td>
-                            <td>{cuenta.transaccion?.categoria?.descripcion || "-"}</td>
-                            <td>{getDiasRenovacion(cuenta.transaccion?.esquema)}</td>
-                            <td>
-                              <span className={`cuentaspagar-estatus-badge ${getEstatusClass(cuenta.estatus)}`}>
-                                {cuenta.estatus}
-                              </span>
-                            </td>
-                            <td>{cuenta.nota || "-"}</td>
-                            <td>{cuenta.sim?.numero || "-"}</td>
-                            <td>
-                              <div className="cuentaspagar-actions">
-                                {cuenta.estatus !== "Pagado" && (
+                        cuentasOrdenadas.map((cuenta) => {
+                          // 1. Calculamos el estatus REAL en este momento para mostrarlo correctamente
+                          const estatusParaMostrar = getEstatusReal(cuenta);
+
+                          return (
+                            <tr key={cuenta.id}>
+                              <td>
+                                {cuenta.folio}
+                                {cuenta.sim && <span className="cuentaspagar-sim-id"> -{cuenta.sim.id}</span>}
+                              </td>
+                              <td>{cuenta.fechaPago}</td>
+                              <td>{cuenta.cuenta.nombre}</td>
+                              <td>
+                                <div className="cuentaspagar-monto-info">
+                                  <div>{formatCurrency(cuenta.monto)}</div>
+                                  {cuenta.montoPagado > 0 && (
+                                    <div className="cuentaspagar-monto-detalle">
+                                      <small>Pagado: {formatCurrency(cuenta.montoPagado)}</small>
+                                      <small>Pendiente: {formatCurrency(cuenta.saldoPendiente)}</small>
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                              <td>{formasPago[cuenta.formaPago]}</td>
+                              <td>{cuenta.transaccion?.categoria?.descripcion || "-"}</td>
+                              <td>{getDiasRenovacion(cuenta.transaccion?.esquema)}</td>
+                              <td>
+                                {/* 2. Usamos el estatus calculado para la clase (color) y el texto */}
+                                <span className={`cuentaspagar-estatus-badge ${getEstatusClass(estatusParaMostrar)}`}>
+                                  {estatusParaMostrar}
+                                </span>
+                              </td>
+                              <td>{cuenta.nota || "-"}</td>
+                              <td>{cuenta.sim?.numero || "-"}</td>
+                              <td>
+                                <div className="cuentaspagar-actions">
+                                  {cuenta.estatus !== "Pagado" && (
+                                    <button
+                                      className="cuentaspagar-action-btn cuentaspagar-edit-btn"
+                                      onClick={() => openModal("editarCuenta", { cuenta })}
+                                      title="Editar cuenta"
+                                    >
+                                      <img src={editIcon} alt="Editar" className="cuentaspagar-action-icon" />
+                                    </button>
+                                  )}
+                                  {cuenta.estatus !== "Pagado" && (
+                                    <button
+                                      className="cuentaspagar-action-btn cuentaspagar-check-btn"
+                                      onClick={() => openModal("marcarPagada", { cuenta })}
+                                      title="Marcar como pagada"
+                                    >
+                                      <img src={checkIcon || "/placeholder.svg"} alt="Marcar como pagada" className="cuentaspagar-action-icon" />
+                                    </button>
+                                  )}
                                   <button
-                                    className="cuentaspagar-action-btn cuentaspagar-edit-btn"
-                                    onClick={() => openModal("editarCuenta", { cuenta })}
-                                    title="Editar cuenta"
+                                    className="cuentaspagar-action-btn cuentaspagar-delete-btn"
+                                    onClick={() => handleDeleteCuenta(cuenta)}
+                                    title="Eliminar"
                                   >
-                                    <img
-                                      src={editIcon}
-                                      alt="Editar"
-                                      className="cuentaspagar-action-icon"
-                                    />
+                                    <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" className="cuentaspagar-action-icon" />
                                   </button>
-                                )}
-                                {cuenta.estatus !== "Pagado" && (
-                                  <button
-                                    className="cuentaspagar-action-btn cuentaspagar-check-btn"
-                                    onClick={() => openModal("marcarPagada", { cuenta })}
-                                    title="Marcar como pagada"
-                                  >
-                                    <img
-                                      src={checkIcon || "/placeholder.svg"}
-                                      alt="Marcar como pagada"
-                                      className="cuentaspagar-action-icon"
-                                    />
-                                  </button>
-                                )}
-                                <button
-                                  className="cuentaspagar-action-btn cuentaspagar-delete-btn"
-                                  onClick={() => handleDeleteCuenta(cuenta)}
-                                  title="Eliminar"
-                                >
-                                  <img
-                                    src={deleteIcon || "/placeholder.svg"}
-                                    alt="Eliminar"
-                                    className="cuentaspagar-action-icon"
-                                  />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
                       ) : (
                         <tr>
                           <td colSpan="11" className="cuentaspagar-no-data">
@@ -1136,7 +1123,6 @@ const AdminCuentasPagar = () => {
                               if (filtroEstatus === "Todas" && !filtroFechas.activo) {
                                 return "No hay cuentas por pagar registradas";
                               }
-
                               let mensaje = "No hay cuentas por pagar";
                               if (filtroEstatus !== "Todas") {
                                 mensaje += ` con estatus "${filtroEstatus}"`;
@@ -1144,7 +1130,6 @@ const AdminCuentasPagar = () => {
                               if (filtroFechas.activo) {
                                 mensaje += ` entre ${filtroFechas.fechaInicio} y ${filtroFechas.fechaFin}`;
                               }
-
                               return mensaje;
                             })()}
                           </td>
