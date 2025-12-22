@@ -1100,6 +1100,12 @@ const AdminCuentasCobrar = () => {
   const [filtroEstatus, setFiltroEstatus] = useState("PENDIENTE");
   const [categoriasIngreso, setCategoriasIngreso] = useState([]);
   const [ordenFecha, setOrdenFecha] = useState('asc');
+  const [filtroFechas, setFiltroFechas] = useState({
+    fechaInicio: "",
+    fechaFin: "",
+    activo: false
+  });
+  const [filtroCliente, setFiltroCliente] = useState("");
 
   const [modals, setModals] = useState({
     crearCuentas: { isOpen: false },
@@ -1173,7 +1179,7 @@ const AdminCuentasCobrar = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const openModal = async (modalType, data = {}) => { 
+  const openModal = async (modalType, data = {}) => {
     if (modalType === "crearSolicitud" && data.cuenta) {
       try {
         Swal.showLoading();
@@ -1184,7 +1190,7 @@ const AdminCuentasCobrar = () => {
           ...prev,
           [modalType]: {
             isOpen: true,
-            cotizacion: cotizacionData, 
+            cotizacion: cotizacionData,
             cuenta: data.cuenta,
           },
         }));
@@ -1234,6 +1240,20 @@ const AdminCuentasCobrar = () => {
     }
   };
 
+  const handleFiltroFechas = (campo, valor) => {
+    setFiltroFechas(prev => {
+      const nuevoEstado = { ...prev, [campo]: valor };
+      const fechaInicioCompleta = campo === "fechaInicio" ? valor !== "" : prev.fechaInicio !== "";
+      const fechaFinCompleta = campo === "fechaFin" ? valor !== "" : prev.fechaFin !== "";
+      return { ...nuevoEstado, activo: fechaInicioCompleta && fechaFinCompleta };
+    });
+  };
+
+  const limpiarFiltroFechas = () => {
+    setFiltroFechas({ fechaInicio: "", fechaFin: "", activo: false });
+  };
+
+  const clientesUnicos = [...new Set(cuentasPorCobrar.map(c => c.clienteNombre || c.cliente?.razonSocial))].filter(Boolean).sort();
 
   const handleMarcarPagada = async (updatedCuenta) => {
     setCuentasPorCobrar((prev) =>
@@ -1418,7 +1438,22 @@ const AdminCuentasCobrar = () => {
     }
   };
 
-  const cuentasFiltradas = cuentasPorCobrar;
+  const cuentasFiltradas = cuentasPorCobrar.filter((cuenta) => {
+    const pasaFiltroEstatus = filtroEstatus === "Todas" || cuenta.estatus === filtroEstatus;
+
+    const nombreCliente = cuenta.clienteNombre || cuenta.cliente?.razonSocial;
+    const pasaFiltroCliente = filtroCliente === "" || nombreCliente === filtroCliente;
+
+    let pasaFiltroFechas = true;
+    if (filtroFechas.activo) {
+      const fechaCuenta = new Date(cuenta.fechaPago);
+      const fechaInicio = new Date(filtroFechas.fechaInicio + "T00:00:00");
+      const fechaFin = new Date(filtroFechas.fechaFin + "T23:59:59");
+      pasaFiltroFechas = fechaCuenta >= fechaInicio && fechaCuenta <= fechaFin;
+    }
+
+    return pasaFiltroEstatus && pasaFiltroCliente && pasaFiltroFechas;
+  });
 
   const cuentasOrdenadas = cuentasFiltradas.sort((a, b) => {
     const fechaA = new Date(a.fechaPago);
@@ -1492,27 +1527,83 @@ const AdminCuentasCobrar = () => {
               <div className="cuentascobrar-table-card">
                 <div className="cuentascobrar-table-header">
                   <h4 className="cuentascobrar-table-title">Cuentas por cobrar</h4>
-                  <div className="cuentascobrar-filter-container">
-                    <button
-                      className="cuentascobrar-btn-orden"
-                      onClick={toggleOrdenFecha}
-                      title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'}`}
-                    >
-                      {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
-                    </button>
-                    <label htmlFor="filtroEstatus">Filtrar por estatus:</label>
-                    <select
-                      id="filtroEstatus"
-                      value={filtroEstatus}
-                      onChange={(e) => setFiltroEstatus(e.target.value)}
-                      className="cuentascobrar-filter-select"
-                    >
-                      <option value="Todas">Todas</option>
-                      <option value="PENDIENTE">Pendiente</option>
-                      <option value="VENCIDA">Vencida</option>
-                      <option value="EN_PROCESO">En Proceso</option>
-                      <option value="PAGADO">Pagado</option>
-                    </select>
+                  <div className="cuentascobrar-filters-container">
+
+                    <div className="cuentascobrar-filter-container">
+                      <div style={{ height: '21px' }}></div>
+                      <button
+                        className="cuentascobrar-btn-orden"
+                        onClick={toggleOrdenFecha}
+                        title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'}`}
+                      >
+                        {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
+                      </button>
+                    </div>
+
+                    <div className="cuentascobrar-filter-container">
+                      <label htmlFor="filtroCliente">Filtrar por cliente:</label>
+                      <select
+                        id="filtroCliente"
+                        value={filtroCliente}
+                        onChange={(e) => setFiltroCliente(e.target.value)}
+                        className="cuentascobrar-filter-select"
+                      >
+                        <option value="">Todos los clientes</option>
+                        {clientesUnicos.map((nombre, index) => (
+                          <option key={index} value={nombre}>
+                            {nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="cuentascobrar-filter-container">
+                      <label htmlFor="filtroEstatus">Filtrar por estatus:</label>
+                      <select
+                        id="filtroEstatus"
+                        value={filtroEstatus}
+                        onChange={(e) => setFiltroEstatus(e.target.value)}
+                        className="cuentascobrar-filter-select"
+                      >
+                        <option value="Todas">Todas</option>
+                        <option value="PENDIENTE">Pendiente</option>
+                        <option value="VENCIDA">Vencida</option>
+                        <option value="EN_PROCESO">En Proceso</option>
+                        <option value="PAGADO">Pagado</option>
+                      </select>
+                    </div>
+
+                    <div className="cuentascobrar-filter-container cuentascobrar-date-filter">
+                      <label>Filtrar por fecha de pago:</label>
+                      <div className="cuentascobrar-date-inputs">
+                        <input
+                          type="date"
+                          value={filtroFechas.fechaInicio}
+                          onChange={(e) => handleFiltroFechas("fechaInicio", e.target.value)}
+                          className="cuentascobrar-date-input"
+                          placeholder="Fecha inicio"
+                        />
+                        <span className="cuentascobrar-date-separator">a</span>
+                        <input
+                          type="date"
+                          value={filtroFechas.fechaFin}
+                          onChange={(e) => handleFiltroFechas("fechaFin", e.target.value)}
+                          className="cuentascobrar-date-input"
+                          placeholder="Fecha fin"
+                        />
+                        {filtroFechas.activo && (
+                          <button
+                            type="button"
+                            onClick={limpiarFiltroFechas}
+                            className="cuentascobrar-clear-filter-btn"
+                            title="Limpiar filtro de fechas"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
                   </div>
                 </div>
 

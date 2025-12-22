@@ -514,6 +514,7 @@ const AdminCuentasPagar = () => {
     fechaFin: "",
     activo: false
   });
+  const [filtroCuenta, setFiltroCuenta] = useState("");
 
   useEffect(() => {
     const fetchCuentasPagar = async () => {
@@ -677,7 +678,8 @@ const AdminCuentasPagar = () => {
           body: JSON.stringify({
             transaccionId: cuenta.transaccion.id,
             fechaUltimoPago: cuenta.fechaPago,
-            nuevoMonto: nuevoMonto
+            nuevoMonto: nuevoMonto,
+            formaPago: cuenta.formaPago
           }),
         });
 
@@ -823,10 +825,12 @@ const AdminCuentasPagar = () => {
     return cuenta.estatus;
   };
 
+  const cuentasUnicas = [...new Set(cuentasPagar.map(c => c.cuenta?.nombre))].filter(Boolean).sort();
   const cuentasFiltradas = cuentasPagar.filter((cuenta) => {
     const estatusReal = getEstatusReal(cuenta);
-
     const pasaFiltroEstatus = filtroEstatus === "Todas" || estatusReal === filtroEstatus;
+
+    const pasaFiltroCuenta = filtroCuenta === "" || cuenta.cuenta?.nombre === filtroCuenta;
 
     let pasaFiltroFechas = true;
     if (filtroFechas.activo) {
@@ -837,7 +841,7 @@ const AdminCuentasPagar = () => {
       pasaFiltroFechas = fechaCuenta >= fechaInicio && fechaCuenta <= fechaFin;
     }
 
-    return pasaFiltroEstatus && pasaFiltroFechas;
+    return pasaFiltroEstatus && pasaFiltroFechas && pasaFiltroCuenta;
   });
 
   const cuentasOrdenadas = cuentasFiltradas.sort((a, b) => {
@@ -972,16 +976,36 @@ const AdminCuentasPagar = () => {
                 <div className="cuentaspagar-table-header">
                   <h4 className="cuentaspagar-table-title">Cuentas por pagar</h4>
                   <div className="cuentaspagar-filters-container">
+
                     <div className="cuentaspagar-filter-container">
-                      <div className="cuentaspagar-filter-container">
-                        <button
-                          className="cuentaspagar-btn-orden"
-                          onClick={toggleOrdenFecha}
-                          title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'}`}
-                        >
-                          {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
-                        </button>
-                      </div>
+                      <div style={{ height: '21px' }}></div>
+                      <button
+                        className="cuentaspagar-btn-orden"
+                        onClick={toggleOrdenFecha}
+                        title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'}`}
+                      >
+                        {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
+                      </button>
+                    </div>
+
+                    <div className="cuentaspagar-filter-container">
+                      <label htmlFor="filtroCuenta">Filtrar por cuenta:</label>
+                      <select
+                        id="filtroCuenta"
+                        value={filtroCuenta}
+                        onChange={(e) => setFiltroCuenta(e.target.value)}
+                        className="cuentaspagar-filter-select"
+                      >
+                        <option value="">Todas las cuentas</option>
+                        {cuentasUnicas.map((nombre, index) => (
+                          <option key={index} value={nombre}>
+                            {nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="cuentaspagar-filter-container">
                       <label htmlFor="filtroEstatus">Filtrar por estatus:</label>
                       <select
                         id="filtroEstatus"
