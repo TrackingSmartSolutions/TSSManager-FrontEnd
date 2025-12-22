@@ -391,7 +391,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
 };
 
 // Modal para programar reunión
-const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId }) => {
+const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId, initialModalidad }) => {
   const [formData, setFormData] = useState({
     asignadoAId: "",
     nombreContacto: "",
@@ -425,14 +425,29 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
           const response = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}`);
           const trato = await response.json();
           const defaultContactName = trato.contacto?.nombre || "";
+          let lugarPorDefecto = "";
+          let empresaData = null;
+
+          if (trato.empresaId) {
+            const empresaResponse = await fetchWithToken(`${API_BASE_URL}/empresas/${trato.empresaId}`);
+            empresaData = await empresaResponse.json();
+            setEmpresa(empresaData);
+            fetchContactos(trato.empresaId);
+            
+            if (initialModalidad === "PRESENCIAL" && empresaData.domicilioFisico) {
+               lugarPorDefecto = empresaData.domicilioFisico;
+            } else if (defaultContactName === "" && empresaData.domicilioFisico) {
+               lugarPorDefecto = empresaData.domicilioFisico;
+            }
+          }
           setFormData({
             asignadoAId: localStorage.getItem('userId') || creatorId || (users.length > 0 ? users[0].id : ""),
             nombreContacto: trato.contacto?.id || "",
             fecha: "",
             horaInicio: "",
             duracion: "00:30",
-            modalidad: "VIRTUAL",
-            lugarReunion: "",
+            modalidad: initialModalidad || "VIRTUAL",
+            lugarReunion: lugarPorDefecto,
             medio: "",
             enlaceReunion: "",
           });
@@ -454,7 +469,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
       };
       if (tratoId) fetchTrato();
     }
-  }, [isOpen, creatorId, users, tratoId]);
+  }, [isOpen, creatorId, users, tratoId, initialModalidad]);
 
   const fetchEmpresaDetails = async (tratoId) => {
     try {
@@ -827,7 +842,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
 };
 
 // Modal para programar tarea
-const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId }) => {
+const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId, initialTipo }) => {
   const [formData, setFormData] = useState({
     aasignadoAId: "",
     nombreContacto: "",
@@ -856,7 +871,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
             asignadoAId: localStorage.getItem('userId') || creatorId || (users.length > 0 ? users[0].id : ""),
             nombreContacto: trato.contacto?.id || "",
             fechaLimite: "",
-            tipo: "",
+            tipo: initialTipo || "",
             notas: ""
           });
           setErrors({});
@@ -867,7 +882,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
       };
       if (tratoId) fetchTrato();
     }
-  }, [isOpen, creatorId, users, tratoId]);
+  }, [isOpen, creatorId, users, tratoId, initialTipo]);
 
   const fetchContactos = async (empresaId) => {
     try {
@@ -1903,8 +1918,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
 };
 
 // Modal para completar actividad/ editar interaccion
-const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, openModal, esEdicion }) => {
-  const [formData, setFormData] = useState({
+const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, openModal, esEdicion, onNextAction }) => {  const [formData, setFormData] = useState({
     respuesta: '',
     interes: '',
     informacion: '',
@@ -2015,18 +2029,22 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
         'El reporte de actividad se ha guardado exitosamente';
 
       Swal.fire({
-        title: tituloMensaje,
-        text: textoMensaje,
-        icon: 'success',
-        showCancelButton: !esEdicion,
-        confirmButtonText: esEdicion ? 'Cerrar' : 'Crear nueva actividad',
-        cancelButtonText: 'Cerrar',
-      }).then((result) => {
-        if (result.isConfirmed && !esEdicion) {
-          openModal('seleccionarActividad', { tratoId });
+      title: tituloMensaje,
+      text: textoMensaje,
+      icon: 'success',
+      showCancelButton: !esEdicion,
+      confirmButtonText: esEdicion ? 'Cerrar' : 'Crear nueva actividad',
+      cancelButtonText: 'Cerrar',
+    }).then((result) => {
+      if (result.isConfirmed && !esEdicion) {
+        if (onNextAction) {
+           onNextAction(formData.siguienteAccion); 
+        } else {
+           openModal('seleccionarActividad', { tratoId });
         }
-      });
-      onClose();
+      }
+    });
+    onClose();
     } catch (error) {
       console.error('Error al procesar la actividad:', error);
       Swal.fire({
@@ -2301,7 +2319,8 @@ const AgregarInteraccionModal = ({ isOpen, onClose, onSave, tratoId, onCreateAct
       );
 
       await response.json();
-      onSave();
+      onSave(); // Recarga el historial en el padre
+
       Swal.fire({
         title: '¡Interacción registrada!',
         text: 'La interacción se ha guardado exitosamente',
@@ -2311,9 +2330,8 @@ const AgregarInteraccionModal = ({ isOpen, onClose, onSave, tratoId, onCreateAct
         cancelButtonText: 'Cerrar',
       }).then((result) => {
         if (result.isConfirmed) {
-          // Necesitamos acceso a openModal desde props
           if (onCreateActivity) {
-            onCreateActivity();
+            onCreateActivity(formData.siguienteAccion);
           }
         }
       });
@@ -4145,7 +4163,6 @@ const DetallesTrato = () => {
         // Crear nueva nota si hay contenido en las notas
         let updatedNotas = [...prev.notas]; // Crear copia del array
         if (updatedActividad.notas && updatedActividad.notas.trim()) {
-          // ... resto de la lógica de notas permanece igual
           if (modals.completarActividad.esEdicion) {
             const interaccionId = updatedActividad.id;
             const notaExistente = prev.notas.find(n =>
@@ -4202,18 +4219,6 @@ const DetallesTrato = () => {
         };
       });
 
-      Swal.fire({
-        title: '¡Actividad completada!',
-        text: 'El reporte de actividad se ha guardado exitosamente',
-        icon: 'success',
-        showCancelButton: true,
-        confirmButtonText: 'Crear nueva actividad',
-        cancelButtonText: 'Cerrar',
-      }).then((result) => {
-        if (result.isConfirmed) {
-          openModal('seleccionarActividad', { tratoId: actividad.tratoId });
-        }
-      });
     } catch (error) {
       console.error('Error al completar la actividad:', error);
       Swal.fire({
@@ -4864,6 +4869,63 @@ const DetallesTrato = () => {
         text: "No se pudo encontrar la actividad o el trato asociado.",
       });
     }
+  };
+
+  // Función para determinar y abrir el modal siguiente automáticamente
+  const handleSiguienteAccionAutomatica = (siguienteAccion, tratoId) => {
+    if (!siguienteAccion) {
+      openModal('seleccionarActividad', { tratoId });
+      return;
+    }
+
+    const accion = siguienteAccion;
+
+    const accionesLlamada = [
+      'REGRESAR_LLAMADA',
+      'BUSCAR_OTRO_CONTACTO',
+      'CONTACTAR_DESPUES'
+    ];
+
+    if (accionesLlamada.includes(accion)) {
+      openModal('programarLlamada', { tratoId });
+      return;
+    }
+
+    const accionesReunion = [
+      'REUNION',
+      'REALIZAR_DEMO',
+      'INSTALACION',
+      'REVISION_TECNICA',
+      'VISITAR_EN_FISICO'
+    ];
+
+    if (accionesReunion.includes(accion)) {
+      let modalidadSugerida = 'VIRTUAL';
+      if (['VISITAR_EN_FISICO', 'INSTALACION', 'REVISION_TECNICA'].includes(accion)) {
+        modalidadSugerida = 'PRESENCIAL';
+      }
+
+      openModal('programarReunion', {
+        tratoId,
+        modalidad: modalidadSugerida
+      });
+      return;
+    }
+
+    if (['MANDAR_COTIZACION', 'MANDAR_INFORMACION'].includes(accion)) {
+      openModal('programarTarea', { tratoId, tipo: 'Correo' });
+      return;
+    }
+    if (accion === 'MANDAR_MENSAJE') {
+      openModal('programarTarea', { tratoId, tipo: 'Mensaje' });
+      return;
+    }
+
+    if (['_1ER_SEGUIMIENTO', '_2DO_SEGUIMIENTO', '_3ER_SEGUIMIENTO'].includes(accion)) {
+      openModal('programarTarea', { tratoId, tipo: 'Actividad' });
+      return;
+    }
+    openModal('seleccionarActividad', { tratoId });
   };
 
   const handleSaveAgregarInteraccion = async () => {
@@ -5612,6 +5674,7 @@ const DetallesTrato = () => {
           tratoId={modals.programarReunion.tratoId}
           users={users}
           creatorId={modals.programarReunion.creatorId}
+          initialModalidad={modals.programarReunion.modalidad}
         />
 
         <ProgramarTareaModal
@@ -5622,6 +5685,7 @@ const DetallesTrato = () => {
           tratoId={modals.programarTarea.tratoId}
           users={users}
           creatorId={modals.programarTarea.creatorId}
+          initialTipo={modals.programarTarea.tipo}
         />
 
         <ReprogramarLlamadaModal
@@ -5655,6 +5719,9 @@ const DetallesTrato = () => {
           contactos={modals.completarActividad.contactos || []}
           openModal={openModal}
           esEdicion={modals.completarActividad.esEdicion}
+          onNextAction={(siguienteAccion) => {
+             handleSiguienteAccionAutomatica(siguienteAccion, params.id);
+          }}
         />
 
         <AgregarInteraccionModal
@@ -5663,9 +5730,9 @@ const DetallesTrato = () => {
           onClose={() => closeModal('agregarInteraccion')}
           onSave={handleSaveAgregarInteraccion}
           tratoId={params.id}
-          onCreateActivity={() => {
+          onCreateActivity={(siguienteAccion) => {
             closeModal('agregarInteraccion');
-            openModal('seleccionarActividad', { tratoId: params.id });
+            handleSiguienteAccionAutomatica(siguienteAccion, params.id);
           }}
         />
 
