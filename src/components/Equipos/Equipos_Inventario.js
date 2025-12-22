@@ -548,6 +548,7 @@ const EquiposInventario = () => {
   const [modelos, setModelos] = useState([]);
   const [proveedores, setProveedores] = useState([]);
   const [clientes, setClientes] = useState([]);
+  const [clientesFiltro, setClientesFiltro] = useState([]);
   const [sims, setSims] = useState([]);
   const [filterTipo, setFilterTipo] = useState("");
   const [filterCliente, setFilterCliente] = useState("");
@@ -580,7 +581,7 @@ const EquiposInventario = () => {
     { value: "AG", label: "AG" },
     { value: "BN", label: "BN" },
     { value: "PERDIDO", label: "PERDIDO" },
-    ...clientes
+    ...clientesFiltro
       .map(cliente => ({ value: cliente.id, label: cliente.nombre }))
       .sort((a, b) => a.label.localeCompare(b.label))
   ];
@@ -616,12 +617,18 @@ const EquiposInventario = () => {
         simsResponse.json(),
       ]);
 
-      const filteredClientes = empresas.filter(emp => ["CLIENTE", "EN_PROCESO"].includes(emp.estatus));
+      const todosLosClientes = empresas.filter(emp => ["CLIENTE", "EN_PROCESO"].includes(emp.estatus));
+
+      const idsClientesConEquipos = new Set(equiposData.map(e => e.clienteId).filter(id => id !== null));
+
+      const clientesConInventario = todosLosClientes.filter(c => idsClientesConEquipos.has(c.id));
 
       setEquipos(equiposData);
       setModelos(modelosData);
       setProveedores(proveedoresData);
-      setClientes(filteredClientes);
+      setClientes(todosLosClientes)
+      setClientesFiltro(clientesConInventario);
+
       setSims(simsData);
 
     } catch (error) {
