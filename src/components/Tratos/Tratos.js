@@ -2030,7 +2030,7 @@ const Tratos = () => {
                   onClick={() => setOrdenInteraccion(prev => prev === 'asc' ? 'desc' : 'asc')}
                   title={`Cambiar a orden ${ordenInteraccion === 'asc' ? 'descendente' : 'ascendente'}`}
                 >
-                  {ordenInteraccion === 'asc' ? '📅 ↑ Interacciones antiguas primero' : '📅 ↓ Interacciones recientes primero'}
+                  {ordenInteraccion === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
                 </button>
                 <span className="filter-legend">Ordenar por fecha de interacción</span>
               </div>
