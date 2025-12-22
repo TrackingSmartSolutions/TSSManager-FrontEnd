@@ -2022,17 +2022,17 @@ const Tratos = () => {
                   </div>
                   <span className="filter-legend">Búsqueda por nombre de trato</span>
                 </div>
-              </div>
 
-              <div className="filter-group">
-                <button
-                  className="btn-orden-interaccion"
-                  onClick={() => setOrdenInteraccion(prev => prev === 'asc' ? 'desc' : 'asc')}
-                  title={`Cambiar a orden ${ordenInteraccion === 'asc' ? 'descendente' : 'ascendente'}`}
-                >
-                  {ordenInteraccion === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
-                </button>
-                <span className="filter-legend">Ordenar por fecha de interacción</span>
+                <div className="filter-group filter-width-auto">
+                  <button
+                    className="btn-orden-interaccion"
+                    onClick={() => setOrdenInteraccion(prev => prev === 'asc' ? 'desc' : 'asc')}
+                    title={`Cambiar a orden ${ordenInteraccion === 'asc' ? 'descendente' : 'ascendente'}`}
+                  >
+                    {ordenInteraccion === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
+                  </button>
+                  <span className="filter-legend">Ordenar por fecha de interacción</span>
+                </div>
               </div>
 
               <div className="tratos-actions">
