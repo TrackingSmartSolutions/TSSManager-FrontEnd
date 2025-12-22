@@ -348,6 +348,7 @@ const CheckEquiposSidePanel = ({
         </div>
 
         <div className="estatusplataforma-side-panel-content">
+           <div style={{ flexShrink: 0 }}>
           <div className="estatusplataforma-side-panel-form-group">
             <label htmlFor="plataforma">Plataforma</label>
             <select
@@ -369,6 +370,7 @@ const CheckEquiposSidePanel = ({
               <span>Progreso total: {Object.values(equiposStatus).filter(s => s.status !== null).length} / {equipos.length} equipos</span>
             </div>
           </div>
+           </div>
 
           <div className="estatusplataforma-side-panel-table-container">
             <table className="estatusplataforma-side-panel-table">

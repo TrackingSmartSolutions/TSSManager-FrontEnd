@@ -393,11 +393,14 @@
 .estatusplataforma-side-panel-content {
   flex: 1;
   padding: var(--estatusplataforma-spacing-md);
-  overflow-y: auto;
+  overflow-y: hidden;  
+  display: flex;  
+  flex-direction: column;  
 }
 
 .estatusplataforma-side-panel-form-group {
   margin-bottom: var(--estatusplataforma-spacing-lg);
+  flex-shrink: 0;
 }
 
 .estatusplataforma-side-panel-form-group label {
@@ -417,7 +420,8 @@
 }
 
 .estatusplataforma-side-panel-table-container {
-  max-height: 650px;
+  flex: 1; 
+  min-height: 0;  
   overflow-y: auto;
   border: 1px solid var(--estatusplataforma-border-color);
   border-radius: var(--estatusplataforma-border-radius-sm);
