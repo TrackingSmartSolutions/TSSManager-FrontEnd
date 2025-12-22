@@ -1450,6 +1450,7 @@ const Tratos = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [globalSearchTerm, setGlobalSearchTerm] = useState("");
+  const [ordenInteraccion, setOrdenInteraccion] = useState('asc');
 
 
   const fetchData = async () => {
@@ -1650,16 +1651,35 @@ const Tratos = () => {
     });
   };
 
-  const filtrarTratosPorNombre = (tratos) => {
+  const filtrarYOrdenarTratos = (tratos) => {
     let filteredTratos = tratos;
 
+    // Aplicar filtro de búsqueda por nombre
     if (globalSearchTerm.trim() && globalSearchTerm.trim().length >= 3) {
       filteredTratos = filteredTratos.filter(trato =>
         trato.nombre.toLowerCase().includes(globalSearchTerm.toLowerCase())
       );
     }
 
-    return filteredTratos;
+    // Aplicar ordenamiento por fecha de interacción
+    return ordenarTratosPorInteraccion(filteredTratos);
+  };
+
+  const ordenarTratosPorInteraccion = (tratos) => {
+    return [...tratos].sort((a, b) => {
+      if (!a.proximaActividadFecha && !b.proximaActividadFecha) return 0;
+      if (!a.proximaActividadFecha) return 1;
+      if (!b.proximaActividadFecha) return -1;
+
+      const fechaA = new Date(a.proximaActividadFecha);
+      const fechaB = new Date(b.proximaActividadFecha);
+
+      if (ordenInteraccion === 'asc') {
+        return fechaA - fechaB;
+      } else {
+        return fechaB - fechaA;
+      }
+    });
   };
 
   const handleGlobalSearch = () => {
@@ -2004,6 +2024,17 @@ const Tratos = () => {
                 </div>
               </div>
 
+              <div className="filter-group">
+                <button
+                  className="btn-orden-interaccion"
+                  onClick={() => setOrdenInteraccion(prev => prev === 'asc' ? 'desc' : 'asc')}
+                  title={`Cambiar a orden ${ordenInteraccion === 'asc' ? 'descendente' : 'ascendente'}`}
+                >
+                  {ordenInteraccion === 'asc' ? '📅 ↑ Interacciones antiguas primero' : '📅 ↓ Interacciones recientes primero'}
+                </button>
+                <span className="filter-legend">Ordenar por fecha de interacción</span>
+              </div>
+
               <div className="tratos-actions">
                 <button className="btn-toggle-all" onClick={handleToggleAllColumns}>
                   {allExpanded ? "Contraer Todos" : "Expandir Todos"}
@@ -2034,7 +2065,7 @@ const Tratos = () => {
                     onDrop={(e) => handleDrop(e, columna.id)}
                   >
                     {columna.tratos.length > 0 ? (
-                      filtrarTratosPorNombre(columna.tratos).map((trato) => (
+                      filtrarYOrdenarTratos(columna.tratos).map((trato) => (
                         <TratoCard
                           key={trato.id}
                           trato={trato}

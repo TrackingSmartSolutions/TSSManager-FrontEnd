@@ -100,8 +100,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
-  flex: 0 1 250px; /* Base de 250px */
-  min-width: 250px; /* Ancho mínimo de 250px */
+  flex: 0 1 250px;
+  /* Base de 250px */
+  min-width: 250px;
+  /* Ancho mínimo de 250px */
 }
 
 .filter-label {
@@ -115,7 +117,6 @@ body {
 .filter-dropdown {
   position: relative;
 }
-
 
 .tratos-container .tratos-filters .filter-group .user-select {
   appearance: none;
@@ -182,7 +183,8 @@ body {
 .date-range-container {
   display: flex;
   align-items: center;
-  width: 100%; /* Ocupar el 100% de su filter-group */
+  width: 100%;
+  /* Ocupar el 100% de su filter-group */
 }
 
 .search-container {
@@ -977,7 +979,8 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  padding-right: 35px; /* Espacio para el icono */
+  padding-right: 35px;
+  /* Espacio para el icono */
 }
 
 /* Required field indicator específico para tratos */
@@ -1148,7 +1151,33 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
   transform: translateY(-1px);
 }
 
-/* Responsive Design */
+/* Botón de ordenamiento por interacción */
+.btn-orden-interaccion {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn-orden-interaccion:hover {
+  background-color: #5a6268;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-orden-interaccion:active {
+  transform: translateY(0);
+}
 
 /* Media query para pantallas extra grandes (desktops grandes y TVs) */
 @media (min-width: 1921px) {
@@ -1194,10 +1223,12 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
     flex-direction: row;
     gap: var(--spacing-sm);
   }
-  
+
   .filter-group {
-    min-width: 100%; /* Forzar a los filtros a apilarse */
-    flex-basis: 100%; /* Ocupar todo el ancho */
+    min-width: 100%;
+    /* Forzar a los filtros a apilarse */
+    flex-basis: 100%;
+    /* Ocupar todo el ancho */
   }
 
   .btn-toggle-all,
@@ -1228,25 +1259,29 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
     width: 100%;
     min-width: 0;
   }
-  
+
   /* Prevenir auto-zoom en iOS y mejorar legibilidad */
   .user-select,
   .global-search-input,
   .date-filter-btn {
-    font-size: 1rem; /* 16px */
+    font-size: 1rem;
+    /* 16px */
     padding: var(--spacing-md);
   }
-  
+
   .tratos-modal-overlay .modal-form-control {
-    font-size: 1rem; /* 16px */
+    font-size: 1rem;
+    /* 16px */
   }
 
   .trato-card {
     font-size: 0.95rem;
   }
+
   .trato-nombre {
-      font-size: 1.05rem;
+    font-size: 1.05rem;
   }
+
   .trato-details {
     font-size: 0.9rem;
   }
@@ -1254,23 +1289,26 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
   .kanban-board {
     gap: var(--spacing-md);
   }
-  
+
   /* Comportamiento de columnas en móvil: siempre expandidas y con scroll */
   .kanban-column {
-    width: 270px; /* Ancho de columna fijo en móvil */
+    width: 270px;
+    /* Ancho de columna fijo en móvil */
     min-height: 300px;
-    transition: none; 
+    transition: none;
     justify-content: flex-start;
   }
-  
+
   .kanban-column.expanded {
-    width: 270px; /* Mismo ancho, sin-efecto */
+    width: 270px;
+    /* Mismo ancho, sin-efecto */
   }
 
   .column-navigation {
-    display: none; /* Ocultar botones de expandir/contraer */
+    display: none;
+    /* Ocultar botones de expandir/contraer */
   }
-  
+
   .column-header {
     height: 60px;
     width: calc(100% - 20px);
@@ -1287,7 +1325,7 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
     transform: none;
     font-size: var(--font-size-lg);
   }
-  
+
   .column-count {
     margin-top: 0;
     margin-left: var(--spacing-md);
@@ -1297,10 +1335,11 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
     min-height: 40px;
     font-size: var(--font-size-md);
   }
-  
+
   .column-content {
-    display: block; /* Forzar visualización */
-    max-height: 400px; 
+    display: block;
+    /* Forzar visualización */
+    max-height: 400px;
     overflow-y: auto;
     flex: 1;
   }
@@ -1314,7 +1353,7 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
   .tratos-modal-overlay .tipo-buttons {
     flex-direction: column;
   }
-  
+
   .duracion-container {
     flex-direction: column;
     gap: var(--spacing-md);
@@ -1330,6 +1369,13 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
     min-width: 60px;
     text-align: left;
   }
+
+  .btn-orden-interaccion {
+    width: 100%;
+    justify-content: center;
+    font-size: 13px;
+    padding: 8px 12px;
+  }
 }
 
 /* Media query para pantallas muy pequeñas (móviles) */
@@ -1338,26 +1384,33 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
     flex-direction: column;
     gap: var(--spacing-sm);
   }
-  
+
   .kanban-column,
   .kanban-column.expanded {
-    width: 260px; /* Un poco más angosto */
+    width: 260px;
+    /* Un poco más angosto */
   }
 
   /* Modal ultra compacto específico para tratos */
   .tratos-modal-overlay {
-    padding: var(--spacing-sm); /* Añadir padding al overlay */
+    padding: var(--spacing-sm);
+    /* Añadir padding al overlay */
   }
 
   .tratos-modal-overlay .modal-content {
-    max-width: 95vw; /* Ocupar el 95% del ancho */
+    max-width: 95vw;
+    /* Ocupar el 95% del ancho */
     width: 100%;
-    height: auto; /* Dejar que el contenido defina la altura */
-    max-height: 90vh; /* No más del 90% de la altura */
-    border-radius: var(--border-radius-lg); /* Devolver los bordes redondeados */
-    margin: 0; /* Centrado por el flex del overlay */
+    height: auto;
+    /* Dejar que el contenido defina la altura */
+    max-height: 90vh;
+    /* No más del 90% de la altura */
+    border-radius: var(--border-radius-lg);
+    /* Devolver los bordes redondeados */
+    margin: 0;
+    /* Centrado por el flex del overlay */
   }
-  
+
   .tratos-modal-overlay .modal-header {
     border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
   }
@@ -1366,7 +1419,7 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
     padding: var(--spacing-md);
     border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
   }
-  
+
   .tratos-modal-overlay .modal-form-group {
     padding: 0 var(--spacing-sm);
   }
@@ -1374,9 +1427,10 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
   .tratos-modal-overlay .modal-form-actions {
     flex-direction: column;
     gap: var(--spacing-sm);
-    align-items: stretch; /* Botones de ancho completo */
+    align-items: stretch;
+    /* Botones de ancho completo */
   }
-  
+
   .tratos-modal-overlay .modal-form-actions .btn {
     padding: var(--spacing-md);
   }
@@ -1390,7 +1444,8 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
 
   .kanban-column,
   .kanban-column.expanded {
-    width: 240px; /* Ancho final para pantallas muy chicas */
+    width: 240px;
+    /* Ancho final para pantallas muy chicas */
   }
 }
 
@@ -1424,6 +1479,7 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

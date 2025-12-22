@@ -604,7 +604,7 @@ const EquiposInventario = () => {
         fetchWithToken(`${API_BASE_URL}/equipos`),
         fetchWithToken(`${API_BASE_URL}/modelos`),
         fetchWithToken(`${API_BASE_URL}/proveedores`),
-        fetchWithToken(`${API_BASE_URL}/empresas`),
+        fetchWithToken(`${API_BASE_URL}/empresas/con-equipos`),
         fetchWithToken(`${API_BASE_URL}/sims`),
       ]);
 
