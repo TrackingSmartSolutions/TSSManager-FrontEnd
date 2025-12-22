@@ -1094,6 +1094,11 @@ const AdminCotizaciones = () => {
   const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
   const [ordenFecha, setOrdenFecha] = useState('asc');
   const [isLoading, setIsLoading] = useState(true);
+  const [filtroFechas, setFiltroFechas] = useState({
+    fechaInicio: "",
+    fechaFin: "",
+    activo: false
+  });
 
   const [modals, setModals] = useState({
     cotizacion: { isOpen: false, cotizacion: null },
@@ -1211,6 +1216,19 @@ const AdminCotizaciones = () => {
         break
     }
   }
+
+  const handleFiltroFechas = (campo, valor) => {
+    setFiltroFechas(prev => {
+      const nuevoEstado = { ...prev, [campo]: valor };
+      const fechaInicioCompleta = campo === "fechaInicio" ? valor !== "" : prev.fechaInicio !== "";
+      const fechaFinCompleta = campo === "fechaFin" ? valor !== "" : prev.fechaFin !== "";
+      return { ...nuevoEstado, activo: fechaInicioCompleta && fechaFinCompleta };
+    });
+  };
+
+  const limpiarFiltroFechas = () => {
+    setFiltroFechas({ fechaInicio: "", fechaFin: "", activo: false });
+  };
 
   const handleSaveCotizacion = async (cotizacionData) => {
     try {
@@ -1364,6 +1382,25 @@ const AdminCotizaciones = () => {
     setOrdenFecha(prevOrden => prevOrden === 'desc' ? 'asc' : 'desc');
   };
 
+  const cotizacionesFiltradas = cotizaciones.filter((cotizacion) => {
+    const pasaReceptor = cotizacion.clienteNombre
+      ?.toLowerCase()
+      .includes(filterReceptor.toLowerCase());
+
+    let pasaFechas = true;
+    if (filtroFechas.activo) {
+      const fechaItem = new Date(cotizacion.fechaCreacion || cotizacion.fecha);
+      const fechaInicio = new Date(filtroFechas.fechaInicio + "T00:00:00");
+      const fechaFin = new Date(filtroFechas.fechaFin + "T23:59:59");
+
+      if (!isNaN(fechaItem.getTime())) {
+        pasaFechas = fechaItem >= fechaInicio && fechaItem <= fechaFin;
+      }
+    }
+
+    return pasaReceptor && pasaFechas;
+  });
+
   const ordenarCotizaciones = (cotizacionesList) => {
     return [...cotizacionesList].sort((a, b) => {
       const fechaA = new Date(a.fechaCreacion);
@@ -1441,23 +1478,64 @@ const AdminCotizaciones = () => {
                 </div>
               </div>
 
-              <div className="cotizaciones-filter">
-                <label htmlFor="filterReceptor">Filtrar por Receptor: </label>
-                <input
-                  type="text"
-                  id="filterReceptor"
-                  value={filterReceptor}
-                  onChange={(e) => setFilterReceptor(e.target.value)}
-                  placeholder="Escribe el nombre del receptor"
-                  className="cotizaciones-form-control"
-                />
-                <button
-                  className="cotizaciones-btn cotizaciones-btn-orden"
-                  onClick={toggleOrdenFecha}
-                  title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
-                >
-                  {ordenFecha === 'desc' ? '📅 ↓ Recientes primero' : '📅 ↑ Antiguas primero'}
-                </button>
+              <div className="cotizaciones-filter-container">
+
+                {/* Filtro Receptor */}
+                <div className="cotizaciones-filter-group">
+                  <label htmlFor="filterReceptor">Filtrar por Receptor:</label>
+                  <input
+                    type="text"
+                    id="filterReceptor"
+                    value={filterReceptor}
+                    onChange={(e) => setFilterReceptor(e.target.value)}
+                    placeholder="Nombre del receptor"
+                    className="cotizaciones-form-control"
+                  />
+                </div>
+
+                {/* Filtro Fechas */}
+                <div className="cotizaciones-filter-group">
+                  <label>Filtrar por Fecha:</label>
+                  <div className="cotizaciones-date-inputs">
+                    <input
+                      type="date"
+                      value={filtroFechas.fechaInicio}
+                      onChange={(e) => handleFiltroFechas("fechaInicio", e.target.value)}
+                      className="cotizaciones-date-input"
+                      placeholder="Inicio"
+                    />
+                    <span className="cotizaciones-date-separator">a</span>
+                    <input
+                      type="date"
+                      value={filtroFechas.fechaFin}
+                      onChange={(e) => handleFiltroFechas("fechaFin", e.target.value)}
+                      className="cotizaciones-date-input"
+                      placeholder="Fin"
+                    />
+                    {filtroFechas.activo && (
+                      <button
+                        type="button"
+                        onClick={limpiarFiltroFechas}
+                        className="cotizaciones-clear-filter-btn"
+                        title="Limpiar fechas"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Botón Ordenar */}
+                <div className="cotizaciones-filter-group">
+                  <div style={{ height: '21px' }}></div>
+                  <button
+                    className="cotizaciones-btn cotizaciones-btn-orden"
+                    onClick={toggleOrdenFecha}
+                    title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
+                  >
+                    {ordenFecha === 'desc' ? '📅 ↓ Recientes' : '📅 ↑ Antiguas'}
+                  </button>
+                </div>
               </div>
 
               {/* Tabla de Cotizaciones */}
@@ -1481,12 +1559,7 @@ const AdminCotizaciones = () => {
                     </thead>
                     <tbody>
                       {cotizaciones.length > 0 ? (
-                        ordenarCotizaciones(cotizaciones)
-                          .filter((cotizacion) =>
-                            cotizacion.clienteNombre
-                              ?.toLowerCase()
-                              .includes(filterReceptor.toLowerCase())
-                          )
+                        ordenarCotizaciones(cotizacionesFiltradas)
                           .map((cotizacion, index) => (
                             <tr key={cotizacion.id}>
                               <td>{index + 1}</td>

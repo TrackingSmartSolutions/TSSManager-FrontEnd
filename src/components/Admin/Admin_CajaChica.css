@@ -350,6 +350,22 @@
   box-shadow: 0 4px 15px rgba(242, 113, 0, 0.3);
 }
 
+.cajachica-select-filter {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  min-width: 200px; 
+  background-color: white;
+  color: #333;
+}
+
+.cajachica-select-filter:focus {
+  outline: none;
+  border-color: var(--cajachica-secondary-color);
+  box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
 
 @media (max-width: 1200px) {
   .cajachica-container { gap: var(--cajachica-spacing-md); }
@@ -411,6 +427,11 @@
   
   .cajachica-reporte-button-container { justify-content: center; }
   .cajachica-btn-reporte { width: 100%; max-width: 100%; }
+
+  .cajachica-select-filter {
+    width: 100%;
+    box-sizing: border-box;
+  }
 }
 
 @media (max-width: 576px) {

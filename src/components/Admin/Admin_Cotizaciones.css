@@ -428,6 +428,64 @@
 .cotizaciones-file-selected { margin: 0 0 4px 0; font-size: 13px; color: #495057; }
 .cotizaciones-file-details { margin: 0; font-size: 12px; color: #6c757d; }
 
+.cotizaciones-filter-container {
+  margin-bottom: var(--cotizaciones-spacing-xl);
+  display: flex;
+  align-items: flex-end;
+  gap: 15px;
+  flex-wrap: wrap;
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid var(--cotizaciones-border-color);
+}
+
+.cotizaciones-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cotizaciones-filter-group label {
+  font-size: var(--cotizaciones-font-size-sm);
+  font-weight: 500;
+  color: var(--cotizaciones-text-color);
+}
+
+/* Inputs de Fecha */
+.cotizaciones-date-inputs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cotizaciones-date-input {
+  padding: var(--cotizaciones-spacing-sm);
+  border: 1px solid var(--cotizaciones-border-color);
+  border-radius: var(--cotizaciones-border-radius-sm);
+  font-size: var(--cotizaciones-font-size-sm);
+  min-width: 130px;
+}
+
+.cotizaciones-date-separator {
+  color: #666;
+  font-weight: 500;
+}
+
+.cotizaciones-clear-filter-btn {
+  background: #ff4757;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cotizaciones-clear-filter-btn:hover { background: #ff3742; }
 
 @media (max-width: 1200px) {
   .cotizaciones-container { gap: var(--cotizaciones-spacing-md); }
@@ -479,6 +537,28 @@
   }
   
   .cotizaciones-header-actions { justify-content: center; }
+  .cotizaciones-filter-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .cotizaciones-filter-group {
+    width: 100%;
+  }
+
+  .cotizaciones-date-inputs {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .cotizaciones-date-input {
+    flex: 1;
+  }
+  
+  .cotizaciones-btn-orden {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 576px) {

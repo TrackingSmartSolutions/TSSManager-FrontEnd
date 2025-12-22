@@ -20,7 +20,7 @@ const fetchWithToken = async (url, options = {}) => {
 
 const AdminCajaChica = () => {
   const navigate = useNavigate()
-  const userRol = localStorage.getItem("userRol") 
+  const userRol = localStorage.getItem("userRol")
   const [transaccionesEfectivo, setTransaccionesEfectivo] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [ordenFecha, setOrdenFecha] = useState('asc');
@@ -37,6 +37,8 @@ const AdminCajaChica = () => {
     fechaInicio: '',
     fechaFin: ''
   });
+
+  const [filtroCuenta, setFiltroCuenta] = useState("");
 
   const obtenerRangoMesActual = () => {
     const ahora = new Date();
@@ -160,21 +162,27 @@ const AdminCajaChica = () => {
   const calcularSaldoAcumulado = () => {
     const fechaInicio = filtroFechas.fechaInicio ? new Date(filtroFechas.fechaInicio + 'T00:00:00') : null;
 
-    // Ordenar todas las transacciones por fecha (ascendente para cálculo correcto)
     const todasTransaccionesOrdenadas = [...transaccionesEfectivo]
       .sort((a, b) => new Date(a.fechaPago + 'T00:00:00') - new Date(b.fechaPago + 'T00:00:00'));
 
     let saldoInicial = 0;
+
+    // Calcular saldo inicial considerando la cuenta seleccionada
     if (fechaInicio) {
       todasTransaccionesOrdenadas.forEach((transaccion) => {
         const fechaTransaccion = new Date(transaccion.fechaPago + 'T00:00:00');
-        if (fechaTransaccion < fechaInicio) {
+
+        const esCuentaCorrecta = filtroCuenta === "" || transaccion.cuenta.id.toString() === filtroCuenta;
+
+        if (fechaTransaccion < fechaInicio && esCuentaCorrecta) {
           if (transaccion.tipo === "INGRESO") saldoInicial += transaccion.monto;
           else saldoInicial -= transaccion.monto;
         }
       });
     }
-    const transaccionesFiltradas = filtrarTransaccionesPorFecha(transaccionesEfectivo);
+
+    // Obtener las transacciones del rango y cuenta seleccionada
+    const transaccionesFiltradas = filtrarTransacciones(transaccionesEfectivo);
 
     const transaccionesOrdenadas = transaccionesFiltradas
       .sort((a, b) => new Date(a.fechaPago + 'T00:00:00') - new Date(b.fechaPago + 'T00:00:00'));
@@ -194,21 +202,18 @@ const AdminCajaChica = () => {
     }
   };
 
-  const filtrarTransaccionesPorFecha = (transacciones) => {
-  if (!filtroFechas.fechaInicio || !filtroFechas.fechaFin) {
-    return transacciones;
-  }
+  const filtrarTransacciones = (transacciones) => {
+    return transacciones.filter(transaccion => {
+      const fechaTransaccion = new Date(transaccion.fechaPago + 'T00:00:00');
+      const fechaInicio = filtroFechas.fechaInicio ? new Date(filtroFechas.fechaInicio + 'T00:00:00') : null;
+      const fechaFin = filtroFechas.fechaFin ? new Date(filtroFechas.fechaFin + 'T23:59:59') : null;
+      const pasaFechas = (!fechaInicio || fechaTransaccion >= fechaInicio) && (!fechaFin || fechaTransaccion <= fechaFin);
 
-  return transacciones.filter(transaccion => {
-    // Cambiar de transaccion.fecha a transaccion.fechaPago
-    const fechaTransaccion = new Date(transaccion.fechaPago + 'T00:00:00');
-    const fechaInicio = new Date(filtroFechas.fechaInicio + 'T00:00:00');
-    const fechaFin = new Date(filtroFechas.fechaFin + 'T23:59:59');
+      const pasaCuenta = filtroCuenta === "" || transaccion.cuenta.id.toString() === filtroCuenta;
 
-    return fechaTransaccion >= fechaInicio && fechaTransaccion <= fechaFin;
-  });
-};
-
+      return pasaFechas && pasaCuenta;
+    });
+  };
 
   const transaccionesConSaldo = calcularSaldoAcumulado();
 
@@ -468,152 +473,167 @@ const AdminCajaChica = () => {
 
   return (
     <>
-     <div className="page-with-header">
-      <Header />
-      {isLoading && (
-        <div className="cajachica-loading">
-          <div className="spinner"></div>
-          <p>Cargando datos de caja chica...</p>
-        </div>
-      )}
-      <main className="cajachica-main-content">
-        <div className="cajachica-container">
-          <section className="cajachica-sidebar">
-            <div className="cajachica-sidebar-header">
-              <h3 className="cajachica-sidebar-title">Administración</h3>
-            </div>
-            <div className="cajachica-sidebar-menu">
-              {userRol === "ADMINISTRADOR" && (
-              <div className="cajachica-menu-item" onClick={() => handleMenuNavigation("balance")}>
-                Balance
+      <div className="page-with-header">
+        <Header />
+        {isLoading && (
+          <div className="cajachica-loading">
+            <div className="spinner"></div>
+            <p>Cargando datos de caja chica...</p>
+          </div>
+        )}
+        <main className="cajachica-main-content">
+          <div className="cajachica-container">
+            <section className="cajachica-sidebar">
+              <div className="cajachica-sidebar-header">
+                <h3 className="cajachica-sidebar-title">Administración</h3>
               </div>
-              )}
-              <div className="cajachica-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
-                Transacciones
+              <div className="cajachica-sidebar-menu">
+                {userRol === "ADMINISTRADOR" && (
+                  <div className="cajachica-menu-item" onClick={() => handleMenuNavigation("balance")}>
+                    Balance
+                  </div>
+                )}
+                <div className="cajachica-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
+                  Transacciones
+                </div>
+                <div className="cajachica-menu-item" onClick={() => handleMenuNavigation("cotizaciones")}>
+                  Cotizaciones
+                </div>
+                <div className="cajachica-menu-item" onClick={() => handleMenuNavigation("facturacion")}>
+                  Facturas/Notas
+                </div>
+                <div className="cajachica-menu-item" onClick={() => handleMenuNavigation("cuentas-cobrar")}>
+                  Cuentas por Cobrar
+                </div>
+                <div className="cajachica-menu-item" onClick={() => handleMenuNavigation("cuentas-pagar")}>
+                  Cuentas por Pagar
+                </div>
+                <div
+                  className="cajachica-menu-item cajachica-menu-item-active"
+                  onClick={() => handleMenuNavigation("caja-chica")}
+                >
+                  Caja chica
+                </div>
               </div>
-              <div className="cajachica-menu-item" onClick={() => handleMenuNavigation("cotizaciones")}>
-                Cotizaciones
+            </section>
+            <section className="cajachica-content-panel">
+              <div className="cajachica-header">
+                <div className="cajachica-header-info">
+                  <h3 className="cajachica-page-title">Caja Chica</h3>
+                  <p className="cajachica-subtitle">Gestión de transacciones en Efectivo</p>
+                </div>
               </div>
-              <div className="cajachica-menu-item" onClick={() => handleMenuNavigation("facturacion")}>
-                Facturas/Notas
+              <div className="cajachica-resumen-grid">
+                <div className="cajachica-resumen-card cajachica-ingresos">
+                  <h4 className="cajachica-resumen-titulo">Total Ingresos</h4>
+                  <p className="cajachica-resumen-monto">{formatCurrency(resumenCajaChica.totalIngresos)}</p>
+                </div>
+                <div className="cajachica-resumen-card cajachica-gastos">
+                  <h4 className="cajachica-resumen-titulo">Total Gastos</h4>
+                  <p className="cajachica-resumen-monto">{formatCurrency(resumenCajaChica.totalGastos)}</p>
+                </div>
+                <div className="cajachica-resumen-card cajachica-utilidad">
+                  <h4 className="cajachica-resumen-titulo">Saldo</h4>
+                  <p className="cajachica-resumen-monto">{formatCurrency(resumenCajaChica.utilidadPerdida)}</p>
+                </div>
               </div>
-              <div className="cajachica-menu-item" onClick={() => handleMenuNavigation("cuentas-cobrar")}>
-                Cuentas por Cobrar
+              <div className="cajachica-filtros-fecha">
+                <div className="cajachica-filtro-grupo">
+                  <label>Filtrar por cuenta:</label>
+                  <select
+                    value={filtroCuenta}
+                    onChange={(e) => setFiltroCuenta(e.target.value)}
+                    className="cajachica-select-filter"
+                  >
+                    <option value="">Todas las cuentas</option>
+                    {cuentas.map((cuenta) => (
+                      <option key={cuenta.id} value={cuenta.id}>
+                        {cuenta.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="cajachica-filtro-grupo">
+                  <label>Fecha inicio:</label>
+                  <input
+                    type="date"
+                    value={filtroFechas.fechaInicio}
+                    onChange={(e) => setFiltroFechas(prev => ({ ...prev, fechaInicio: e.target.value }))}
+                    className="cajachica-date-input"
+                  />
+                </div>
+                <div className="cajachica-filtro-grupo">
+                  <label>Fecha fin:</label>
+                  <input
+                    type="date"
+                    value={filtroFechas.fechaFin}
+                    onChange={(e) => setFiltroFechas(prev => ({ ...prev, fechaFin: e.target.value }))}
+                    className="cajachica-date-input"
+                  />
+                </div>
+                <button
+                  className="cajachica-btn cajachica-btn-filtro"
+                  onClick={() => setFiltroFechas(obtenerRangoMesActual())}
+                >
+                  Mes actual
+                </button>
+                <button
+                  className="cajachica-btn cajachica-btn-filtro cajachica-btn-orden"
+                  onClick={toggleOrdenFecha}
+                  title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
+                >
+                  {ordenFecha === 'desc' ? '📅 ↓ Recientes primero' : '📅 ↑ Antiguas primero'}
+                </button>
               </div>
-              <div className="cajachica-menu-item" onClick={() => handleMenuNavigation("cuentas-pagar")}>
-                Cuentas por Pagar
-              </div>
-              <div
-                className="cajachica-menu-item cajachica-menu-item-active"
-                onClick={() => handleMenuNavigation("caja-chica")}
-              >
-                Caja chica
-              </div>
-            </div>
-          </section>
-          <section className="cajachica-content-panel">
-            <div className="cajachica-header">
-              <div className="cajachica-header-info">
-                <h3 className="cajachica-page-title">Caja Chica</h3>
-                <p className="cajachica-subtitle">Gestión de transacciones en Efectivo</p>
-              </div>
-            </div>
-            <div className="cajachica-resumen-grid">
-              <div className="cajachica-resumen-card cajachica-ingresos">
-                <h4 className="cajachica-resumen-titulo">Total Ingresos</h4>
-                <p className="cajachica-resumen-monto">{formatCurrency(resumenCajaChica.totalIngresos)}</p>
-              </div>
-              <div className="cajachica-resumen-card cajachica-gastos">
-                <h4 className="cajachica-resumen-titulo">Total Gastos</h4>
-                <p className="cajachica-resumen-monto">{formatCurrency(resumenCajaChica.totalGastos)}</p>
-              </div>
-              <div className="cajachica-resumen-card cajachica-utilidad">
-                <h4 className="cajachica-resumen-titulo">Saldo</h4>
-                <p className="cajachica-resumen-monto">{formatCurrency(resumenCajaChica.utilidadPerdida)}</p>
-              </div>
-            </div>
-            <div className="cajachica-filtros-fecha">
-              <div className="cajachica-filtro-grupo">
-                <label>Fecha inicio:</label>
-                <input
-                  type="date"
-                  value={filtroFechas.fechaInicio}
-                  onChange={(e) => setFiltroFechas(prev => ({ ...prev, fechaInicio: e.target.value }))}
-                  className="cajachica-date-input"
-                />
-              </div>
-              <div className="cajachica-filtro-grupo">
-                <label>Fecha fin:</label>
-                <input
-                  type="date"
-                  value={filtroFechas.fechaFin}
-                  onChange={(e) => setFiltroFechas(prev => ({ ...prev, fechaFin: e.target.value }))}
-                  className="cajachica-date-input"
-                />
-              </div>
-              <button
-                className="cajachica-btn cajachica-btn-filtro"
-                onClick={() => setFiltroFechas(obtenerRangoMesActual())}
-              >
-                Mes actual
-              </button>
-              <button
-                className="cajachica-btn cajachica-btn-filtro cajachica-btn-orden"
-                onClick={toggleOrdenFecha}
-                title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
-              >
-                {ordenFecha === 'desc' ? '📅 ↓ Recientes primero' : '📅 ↑ Antiguas primero'}
-              </button>
-            </div>
-            <div className="cajachica-table-card">
-              <h4 className="cajachica-table-title">Transacciones en Efectivo</h4>
-              <div className="cajachica-table-container">
-                <table className="cajachica-table">
-                  <thead className="cajachica-table-header-fixed">
-                    <tr>
-                      <th>Fecha</th>
-                      <th>Cuenta</th>
-                      <th>Nota</th>
-                      <th>Gastos</th>
-                      <th>Ingresos</th>
-                      <th>Saldo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {transaccionesConSaldo.length > 0 ? (
-                      transaccionesConSaldo.map((transaccion) => (
-                        <tr key={transaccion.id}>
-                          <td>{transaccion.fechaPago}</td>                          
-                          <td>{transaccion.cuenta.nombre}</td>
-                          <td>{transaccion.notas || "-"}</td>
-                          <td className="cajachica-gasto">
-                            {transaccion.tipo === "GASTO" ? formatCurrency(transaccion.monto) : "-"}
-                          </td>
-                          <td className="cajachica-ingreso">
-                            {transaccion.tipo === "INGRESO" ? formatCurrency(transaccion.monto) : "-"}
-                          </td>
-                          <td className="cajachica-saldo">{formatCurrency(transaccion.saldoAcumulado)}</td>
-                        </tr>
-                      ))
-                    ) : (
+              <div className="cajachica-table-card">
+                <h4 className="cajachica-table-title">Transacciones en Efectivo</h4>
+                <div className="cajachica-table-container">
+                  <table className="cajachica-table">
+                    <thead className="cajachica-table-header-fixed">
                       <tr>
-                        <td colSpan="6" className="cajachica-no-data">
-                          No hay transacciones en efectivo registradas
-                        </td>
+                        <th>Fecha</th>
+                        <th>Cuenta</th>
+                        <th>Nota</th>
+                        <th>Gastos</th>
+                        <th>Ingresos</th>
+                        <th>Saldo</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {transaccionesConSaldo.length > 0 ? (
+                        transaccionesConSaldo.map((transaccion) => (
+                          <tr key={transaccion.id}>
+                            <td>{transaccion.fechaPago}</td>
+                            <td>{transaccion.cuenta.nombre}</td>
+                            <td>{transaccion.notas || "-"}</td>
+                            <td className="cajachica-gasto">
+                              {transaccion.tipo === "GASTO" ? formatCurrency(transaccion.monto) : "-"}
+                            </td>
+                            <td className="cajachica-ingreso">
+                              {transaccion.tipo === "INGRESO" ? formatCurrency(transaccion.monto) : "-"}
+                            </td>
+                            <td className="cajachica-saldo">{formatCurrency(transaccion.saldoAcumulado)}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="6" className="cajachica-no-data">
+                            No hay transacciones en efectivo registradas
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-            <div className="cajachica-reporte-button-container">
-              <button className="cajachica-btn cajachica-btn-reporte" onClick={handleGenerarReporte}>
-                Crear Reporte
-              </button>
-            </div>
-          </section>
-        </div>
-      </main>
+              <div className="cajachica-reporte-button-container">
+                <button className="cajachica-btn cajachica-btn-reporte" onClick={handleGenerarReporte}>
+                  Crear Reporte
+                </button>
+              </div>
+            </section>
+          </div>
+        </main>
       </div>
     </>
   )

@@ -947,12 +947,12 @@ const ConceptosModal = ({ isOpen, onClose, solicitud, onSave }) => {
       setIsLoading(true);
       const response = await fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/solicitudes/${solicitud.id}/conceptos`);
       const data = await response.json();
-      
+
       // Priorizar conceptos personalizados si existen, sino usar los seleccionados
-      const conceptosActuales = data.conceptosPersonalizados && data.conceptosPersonalizados.trim() 
-        ? data.conceptosPersonalizados 
+      const conceptosActuales = data.conceptosPersonalizados && data.conceptosPersonalizados.trim()
+        ? data.conceptosPersonalizados
         : data.conceptosSeleccionados || "";
-      
+
       setConceptosEditables(conceptosActuales);
       setConceptosOriginales(data.conceptosSeleccionados || "");
     } catch (error) {
@@ -1052,7 +1052,7 @@ const ConceptosModal = ({ isOpen, onClose, solicitud, onSave }) => {
               rows={8}
             />
             <small className="facturacion-help-text">
-              Estos son los conceptos que aparecerán en el documento PDF. 
+              Estos son los conceptos que aparecerán en el documento PDF.
               Separa cada concepto con coma y espacio (, )
             </small>
           </div>
@@ -1090,6 +1090,12 @@ const AdminFacturacion = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [ordenFecha, setOrdenFecha] = useState('asc');
   const [solicitudesTimbradas, setSolicitudesTimbradas] = useState(new Set());
+  const [filtroFechas, setFiltroFechas] = useState({
+    fechaInicio: "",
+    fechaFin: "",
+    activo: false
+  });
+  const [filtroReceptor, setFiltroReceptor] = useState("");
 
   const [modals, setModals] = useState({
     emisor: { isOpen: false, emisor: null },
@@ -1173,6 +1179,21 @@ const AdminFacturacion = () => {
         break;
     }
   };
+
+  const handleFiltroFechas = (campo, valor) => {
+    setFiltroFechas(prev => {
+      const nuevoEstado = { ...prev, [campo]: valor };
+      const fechaInicioCompleta = campo === "fechaInicio" ? valor !== "" : prev.fechaInicio !== "";
+      const fechaFinCompleta = campo === "fechaFin" ? valor !== "" : prev.fechaFin !== "";
+      return { ...nuevoEstado, activo: fechaInicioCompleta && fechaFinCompleta };
+    });
+  };
+
+  const limpiarFiltroFechas = () => {
+    setFiltroFechas({ fechaInicio: "", fechaFin: "", activo: false });
+  };
+
+  const receptoresUnicos = [...new Set(solicitudes.map(s => s.receptor))].filter(Boolean).sort();
 
   const handleSaveEmisor = (savedEmisor) => {
     setEmisores((prev) => {
@@ -1354,7 +1375,21 @@ const AdminFacturacion = () => {
 
   const emisorActual = emisores[emisorSeleccionado];
 
-  const solicitudesOrdenadas = solicitudes.sort((a, b) => {
+  const solicitudesFiltradas = solicitudes.filter((solicitud) => {
+    const pasaReceptor = filtroReceptor === "" || solicitud.receptor === filtroReceptor;
+
+    let pasaFechas = true;
+    if (filtroFechas.activo) {
+      const fechaSol = new Date(solicitud.fechaEmision);
+      const fechaInicio = new Date(filtroFechas.fechaInicio + "T00:00:00");
+      const fechaFin = new Date(filtroFechas.fechaFin + "T23:59:59");
+      pasaFechas = fechaSol >= fechaInicio && fechaSol <= fechaFin;
+    }
+
+    return pasaReceptor && pasaFechas;
+  });
+
+  const solicitudesOrdenadas = solicitudesFiltradas.sort((a, b) => {
     const fechaA = new Date(a.fechaEmision || '1900-01-01');
     const fechaB = new Date(b.fechaEmision || '1900-01-01');
 
@@ -1472,14 +1507,69 @@ const AdminFacturacion = () => {
               <div className="facturacion-table-card">
                 <div className="facturacion-table-header">
                   <h4 className="facturacion-table-title">Solicitudes de Facturas y Notas</h4>
-                  <div className="facturacion-header-controls">
+                  <div className="facturacion-filters-container">
+
+                  <div className="facturacion-filter-container">
+                    <div style={{ height: '21px' }}></div> 
                     <button
                       className="facturacion-btn-orden"
                       onClick={toggleOrdenFecha}
-                      title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'} (afecta ambas tablas)`}
+                      title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'}`}
                     >
-                      {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
+                      {ordenFecha === 'asc' ? '📅 ↑ Antiguas' : '📅 ↓ Recientes'}
                     </button>
+                  </div>
+
+                  <div className="facturacion-filter-container">
+                    <label htmlFor="filtroReceptor">Filtrar por receptor:</label>
+                    <select
+                      id="filtroReceptor"
+                      value={filtroReceptor}
+                      onChange={(e) => setFiltroReceptor(e.target.value)}
+                      className="facturacion-filter-select"
+                    >
+                      <option value="">Todos los receptores</option>
+                      {receptoresUnicos.map((receptor, index) => (
+                        <option key={index} value={receptor}>
+                          {receptor}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="facturacion-filter-container facturacion-date-filter">
+                    <label>Filtrar por fecha emisión:</label>
+                    <div className="facturacion-date-inputs">
+                      <input
+                        type="date"
+                        value={filtroFechas.fechaInicio}
+                        onChange={(e) => handleFiltroFechas("fechaInicio", e.target.value)}
+                        className="facturacion-date-input"
+                        placeholder="Inicio"
+                      />
+                      <span className="facturacion-date-separator">a</span>
+                      <input
+                        type="date"
+                        value={filtroFechas.fechaFin}
+                        onChange={(e) => handleFiltroFechas("fechaFin", e.target.value)}
+                        className="facturacion-date-input"
+                        placeholder="Fin"
+                      />
+                      {filtroFechas.activo && (
+                        <button
+                          type="button"
+                          onClick={limpiarFiltroFechas}
+                          className="facturacion-clear-filter-btn"
+                          title="Limpiar fechas"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="facturacion-filter-container">
+                    <div style={{ height: '21px' }}></div>
                     <button
                       className="facturacion-btn facturacion-btn-primary"
                       onClick={() => openModal("solicitud", { solicitud: null })}
@@ -1488,6 +1578,8 @@ const AdminFacturacion = () => {
                     </button>
                   </div>
                 </div>
+                </div>
+
                 <div className="facturacion-table-container">
                   <table className="facturacion-table">
                     <thead className="facturacion-table-header-fixed">

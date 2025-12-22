@@ -478,7 +478,82 @@
 .facturacion-textarea-conceptos { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; font-size: 14px; resize: vertical; box-sizing: border-box; }
 .facturacion-conceptos-readonly { background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #e9ecef; min-height: 40px; }
 
+.facturacion-filters-container {
+  display: flex;
+  gap: 15px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
 
+.facturacion-filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.facturacion-filter-container label {
+  font-weight: 500;
+  color: #333;
+  font-size: var(--facturacion-font-size-xs);
+}
+
+.facturacion-filter-select {
+  padding: var(--facturacion-spacing-sm);
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  color: #333;
+  font-size: var(--facturacion-font-size-sm);
+  min-width: 160px;
+}
+
+.facturacion-filter-select:focus {
+  outline: none;
+  border-color: var(--facturacion-secondary-color);
+  box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
+/* Fechas */
+.facturacion-date-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.facturacion-date-inputs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.facturacion-date-input {
+  padding: var(--facturacion-spacing-sm);
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: var(--facturacion-font-size-sm);
+  min-width: 125px;
+}
+
+.facturacion-date-separator {
+  color: #666;
+  font-weight: 500;
+}
+
+.facturacion-clear-filter-btn {
+  background: #ff4757;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.facturacion-clear-filter-btn:hover { background: #ff3742; }
 
 @media (max-width: 1200px) {
   .facturacion-container { gap: var(--facturacion-spacing-md); }
@@ -552,6 +627,34 @@
   .facturacion-table-card { padding: var(--facturacion-spacing-sm); }
   .facturacion-table { min-width: 600px; font-size: var(--facturacion-font-size-xs); }
   .facturacion-table th, .facturacion-table td { padding: var(--facturacion-spacing-xs); }
+
+  .facturacion-filters-container {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 15px;
+  }
+
+  .facturacion-filter-container,
+  .facturacion-filter-select,
+  .facturacion-date-input,
+  .facturacion-btn-orden,
+  .facturacion-date-inputs {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .facturacion-date-inputs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .facturacion-date-separator { display: none; }
+  
+  .facturacion-clear-filter-btn {
+    align-self: flex-end;
+    margin-top: 5px;
+  }
 }
 
 @media (max-width: 576px) {
