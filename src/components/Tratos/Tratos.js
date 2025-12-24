@@ -1667,16 +1667,21 @@ const Tratos = () => {
 
   const ordenarTratosPorInteraccion = (tratos) => {
     return [...tratos].sort((a, b) => {
-      if (!a.proximaActividadFecha && !b.proximaActividadFecha) return 0;
-      if (!a.proximaActividadFecha) return 1;
-      if (!b.proximaActividadFecha) return -1;
+      const fechaA = a.proximaActividadFecha ? new Date(a.proximaActividadFecha) : null;
+      const fechaB = b.proximaActividadFecha ? new Date(b.proximaActividadFecha) : null;
 
-      const fechaA = new Date(a.proximaActividadFecha);
-      const fechaB = new Date(b.proximaActividadFecha);
+      if (!fechaA && !fechaB) return 0;
 
       if (ordenInteraccion === 'asc') {
+        if (!fechaA) return -1;
+        if (!fechaB) return 1;
+
         return fechaA - fechaB;
       } else {
+
+        if (!fechaA) return 1;
+        if (!fechaB) return -1;
+
         return fechaB - fechaA;
       }
     });
