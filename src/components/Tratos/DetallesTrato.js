@@ -5168,6 +5168,8 @@ const DetallesTrato = () => {
           const cleanNumber = numero.replace(/\D/g, '');
           const mensaje = `Hola ${contacto.nombre || ''}, te comparto la cotización #${cotizacion.id} del trato ${trato.nombre}.`;
 
+          handleDescargarCotizacion(cotizacion.id);
+
           window.open(`https://wa.me/52${cleanNumber}?text=${encodeURIComponent(mensaje)}`, '_blank');
           marcarComoEnviada();
         });
@@ -5267,12 +5269,12 @@ const DetallesTrato = () => {
 
 
         if (savedCotizacion.tratoId !== currentTratoId) {
-            setCotizaciones((prev) => prev.filter((c) => c.id !== savedCotizacion.id));
+          setCotizaciones((prev) => prev.filter((c) => c.id !== savedCotizacion.id));
         } else {
 
-            setCotizaciones((prev) =>
+          setCotizaciones((prev) =>
             prev.map((c) => (c.id === savedCotizacion.id ? { ...c, ...savedCotizacion } : c))
-            );
+          );
         }
       } else {
         setCotizaciones((prev) => [savedCotizacion, ...prev]);
