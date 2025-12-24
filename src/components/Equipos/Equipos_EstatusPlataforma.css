@@ -338,8 +338,8 @@
 .estatusplataforma-side-panel {
   position: fixed;
   top: 0;
-  right: -600px;
-  width: 600px;
+  right: -400px;
+  width: 400px;
   height: 100vh;
   background-color: white;
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
@@ -722,9 +722,6 @@
     min-width: 240px;
   }
 
-  .estatusplataforma-side-panel {
-    width: 550px;
-  }
 }
 
 @media (max-width: 992px) {

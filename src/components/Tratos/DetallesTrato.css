@@ -2634,6 +2634,228 @@
   font-size: 11px;
 }
 
+/* Sección de Cotizaciones */
+.cotizaciones-trato .cotizaciones-tabla {
+  width: 100%;
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.cotizaciones-trato .tabla-header {
+  display: grid;
+  grid-template-columns: 140px 260px 220px 200px 260px 100px; 
+  background-color: var(--background-color);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--text-color);
+}
+
+.cotizaciones-trato .tabla-row {
+  display: grid;
+  grid-template-columns:  140px 260px 220px 200px 260px 100px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cotizaciones-trato .acciones-cell {
+  gap: 4px;
+}
+
+.cotizaciones-trato .btn-accion-cotizacion {
+  background: none;
+  border: 1px solid;
+  border-radius: var(--border-radius-sm);
+  padding: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.cotizaciones-trato .btn-accion-cotizacion:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cotizaciones-trato .btn-accion-cotizacion img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
+/* Botón EDITAR - Azul */
+.cotizaciones-trato .btn-accion-cotizacion:nth-child(1) {
+  border-color: #2196f3;
+}
+
+.cotizaciones-trato .btn-accion-cotizacion:nth-child(1) img {
+  filter: invert(42%) sepia(93%) saturate(1352%) hue-rotate(187deg) brightness(96%) contrast(98%);
+}
+
+.cotizaciones-trato .btn-accion-cotizacion:nth-child(1):hover {
+  background-color: rgba(33, 150, 243, 0.1);
+  border-color: #1976d2;
+}
+
+/* Botón DESCARGAR - Verde */
+.cotizaciones-trato .btn-accion-cotizacion:nth-child(2) {
+  border-color: #4caf50;
+}
+
+.cotizaciones-trato .btn-accion-cotizacion:nth-child(2) img {
+  filter: invert(64%) sepia(49%) saturate(450%) hue-rotate(75deg) brightness(91%) contrast(88%);
+}
+
+.cotizaciones-trato .btn-accion-cotizacion:nth-child(2):hover {
+  background-color: rgba(76, 175, 80, 0.1);
+  border-color: #388e3c;
+}
+
+/* Botón ENVIAR - Azul oscuro */
+.cotizaciones-trato .btn-accion-cotizacion:nth-child(3) {
+  border-color: #1565c0;
+}
+
+.cotizaciones-trato .btn-accion-cotizacion:nth-child(3) img {
+  filter: invert(23%) sepia(71%) saturate(1849%) hue-rotate(199deg) brightness(94%) contrast(95%);
+}
+
+.cotizaciones-trato .btn-accion-cotizacion:nth-child(3):hover {
+  background-color: rgba(21, 101, 192, 0.1);
+  border-color: #0a387e;
+}
+
+.cotizaciones-trato .btn-accion-cotizacion:nth-child(4):disabled img {
+  filter: invert(70%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(95%) contrast(85%);
+}
+
+/* Botón ELIMINAR - Rojo */
+.cotizaciones-trato .btn-accion-cotizacion:nth-child(5) {
+  border-color: #dc3545;
+}
+
+.cotizaciones-trato .btn-accion-cotizacion:nth-child(5) img {
+  filter: invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
+}
+
+.cotizaciones-trato .btn-accion-cotizacion:nth-child(5):hover {
+  background-color: rgba(220, 53, 69, 0.1);
+  border-color: #c82333;
+}
+
+.cotizaciones-trato .estatus-badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.cotizaciones-trato .estatus-badge.pendiente {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.cotizaciones-trato .estatus-badge.enviada {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.cotizaciones-trato .estatus-badge.aceptada {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.cotizaciones-trato .estatus-badge.rechazada {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.cotizaciones-trato .btn-accion-cotizacion.cotizaciones-receivable-btn-vinculada {
+  border-color: #4caf50 !important;
+  background-color: rgba(76, 175, 80, 0.1) !important;
+}
+
+.cotizaciones-trato .btn-accion-cotizacion.cotizaciones-receivable-btn-vinculada:hover {
+  background-color: rgba(76, 175, 80, 0.2) !important;
+  border-color: #388e3c !important;
+}
+
+/* Filtro para que el icono se vea verde */
+.cotizaciones-trato .btn-accion-cotizacion.cotizaciones-receivable-btn-vinculada img {
+   filter: invert(64%) sepia(49%) saturate(450%) hue-rotate(75deg) brightness(91%) contrast(88%) !important;
+}
+
+
+/* Estilo DISPONIBLE (ROJO/NARANJA) */
+.cotizaciones-trato .btn-accion-cotizacion.cotizaciones-receivable-btn-disponible {
+  border-color: #f44336 !important;
+  background-color: rgba(244, 67, 54, 0.1) !important;
+}
+
+.cotizaciones-trato .btn-accion-cotizacion.cotizaciones-receivable-btn-disponible:hover {
+   background-color: rgba(244, 67, 54, 0.2) !important;
+   border-color: #d32f2f !important;
+}
+
+/* Filtro para que el icono se vea rojo */
+.cotizaciones-trato .btn-accion-cotizacion.cotizaciones-receivable-btn-disponible img {
+   filter: invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%) !important;
+}
+
+.swal-share-container {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.btn-share-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  transition: background-color 0.2s, transform 0.1s;
+  min-width: 140px;
+}
+
+.btn-share-option:hover {
+  transform: translateY(-1px);
+}
+
+.btn-share-whatsapp {
+  background-color: #25D366; 
+}
+
+.btn-share-whatsapp:hover {
+  background-color: #1eab52;
+}
+
+.btn-share-email {
+  background-color: #037ce0;
+}
+
+.btn-share-email:hover {
+  background-color: #0260b0;
+}
+
+.share-icon-img {
+  width: 18px;
+  height: 18px;
+  filter: brightness(0) invert(1); 
+}
+
 /* Responsivo */
 @media (max-width: 480px) {
   .confirmacion-envio-step2 .method-buttons {

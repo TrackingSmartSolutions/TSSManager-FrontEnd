@@ -126,7 +126,6 @@ const processEquiposPorMotivo = (equiposOffline) => {
     .sort((a, b) => b.cantidad - a.cantidad); // Ordenar por cantidad descendente
 };
 
-
 // Panel Lateral Deslizante para Check Equipos
 const CheckEquiposSidePanel = ({
   isOpen,

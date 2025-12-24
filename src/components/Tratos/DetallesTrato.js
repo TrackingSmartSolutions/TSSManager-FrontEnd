@@ -16,9 +16,14 @@ import checkIcon from "../../assets/icons/ganado.png"
 import closeIcon from "../../assets/icons/perdido.png"
 import attachIcon from "../../assets/icons/adjunto-archivo.png";
 import deploy from "../../assets/icons/desplegar.png"
+import send from "../../assets/icons/enviar.png"
+import downloadIcon from "../../assets/icons/descarga.png";
+import receivableIcon from "../../assets/icons/cuenta-cobrar.png"
 import { API_BASE_URL } from "../Config/Config";
 import EditorToolbar from '../EditorToolbar/EditorToolbar';
 import '../EditorToolbar/EditorToolbar.css';
+import { CotizacionModal } from '../Admin/Admin_Cotizaciones';
+import { CrearCuentasModal } from "../Admin/Admin_Cotizaciones";
 
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token");
@@ -433,11 +438,11 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             empresaData = await empresaResponse.json();
             setEmpresa(empresaData);
             fetchContactos(trato.empresaId);
-            
+
             if (initialModalidad === "PRESENCIAL" && empresaData.domicilioFisico) {
-               lugarPorDefecto = empresaData.domicilioFisico;
+              lugarPorDefecto = empresaData.domicilioFisico;
             } else if (defaultContactName === "" && empresaData.domicilioFisico) {
-               lugarPorDefecto = empresaData.domicilioFisico;
+              lugarPorDefecto = empresaData.domicilioFisico;
             }
           }
           setFormData({
@@ -1918,7 +1923,8 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
 };
 
 // Modal para completar actividad/ editar interaccion
-const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, openModal, esEdicion, onNextAction }) => {  const [formData, setFormData] = useState({
+const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, openModal, esEdicion, onNextAction }) => {
+  const [formData, setFormData] = useState({
     respuesta: '',
     interes: '',
     informacion: '',
@@ -2029,22 +2035,22 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
         'El reporte de actividad se ha guardado exitosamente';
 
       Swal.fire({
-      title: tituloMensaje,
-      text: textoMensaje,
-      icon: 'success',
-      showCancelButton: !esEdicion,
-      confirmButtonText: esEdicion ? 'Cerrar' : 'Crear nueva actividad',
-      cancelButtonText: 'Cerrar',
-    }).then((result) => {
-      if (result.isConfirmed && !esEdicion) {
-        if (onNextAction) {
-           onNextAction(formData.siguienteAccion); 
-        } else {
-           openModal('seleccionarActividad', { tratoId });
+        title: tituloMensaje,
+        text: textoMensaje,
+        icon: 'success',
+        showCancelButton: !esEdicion,
+        confirmButtonText: esEdicion ? 'Cerrar' : 'Crear nueva actividad',
+        cancelButtonText: 'Cerrar',
+      }).then((result) => {
+        if (result.isConfirmed && !esEdicion) {
+          if (onNextAction) {
+            onNextAction(formData.siguienteAccion);
+          } else {
+            openModal('seleccionarActividad', { tratoId });
+          }
         }
-      }
-    });
-    onClose();
+      });
+      onClose();
     } catch (error) {
       console.error('Error al procesar la actividad:', error);
       Swal.fire({
@@ -2859,7 +2865,7 @@ const EditarTratoModal = ({ isOpen, onClose, onSave, trato, users, companies }) 
 };
 
 // Modal para crear correo
-const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeModal }) => {
+const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeModal, archivoPrecargado = null, asuntoPrecargado = null }) => {
   const [formData, setFormData] = useState({
     para: "",
     asunto: "",
@@ -2964,7 +2970,15 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
     }
   }, [formData.mensaje]);
 
-
+  useEffect(() => {
+    if (isOpen && archivoPrecargado) {
+      setFormData(prev => ({
+        ...prev,
+        adjuntos: [archivoPrecargado],
+        asunto: asuntoPrecargado || prev.asunto
+      }));
+    }
+  }, [isOpen, archivoPrecargado, asuntoPrecargado]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -3825,6 +3839,9 @@ const DetallesTrato = () => {
   const [correosSeguimientoActivo, setCorreosSeguimientoActivo] = useState(false);
   const [cargandoCorreos, setCargandoCorreos] = useState(false);
   const [mostrarTodasLasNotas, setMostrarTodasLasNotas] = useState(false);
+  const [cotizaciones, setCotizaciones] = useState([]);
+  const [cotizacionesVinculadas, setCotizacionesVinculadas] = useState(new Set());
+  const [showCotizacionesSection, setShowCotizacionesSection] = useState(false);
 
   const getCurrentUserId = () => {
     const userId = localStorage.getItem('userId');
@@ -3939,6 +3956,24 @@ const DetallesTrato = () => {
         title: 'Error',
         text: 'No se pudo obtener el estado de los correos de seguimiento'
       });
+    }
+  };
+
+  const checkVinculaciones = async (cotizacionesList) => {
+    try {
+      const vinculacionPromises = cotizacionesList.map(async (cotizacion) => {
+        const response = await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacion.id}/check-vinculada`);
+        const { vinculada } = await response.json();
+        return { id: cotizacion.id, vinculada };
+      });
+
+      const resultados = await Promise.all(vinculacionPromises);
+      const vinculadas = new Set(
+        resultados.filter(r => r.vinculada).map(r => r.id)
+      );
+      setCotizacionesVinculadas(vinculadas);
+    } catch (error) {
+      console.error("Error verificando vinculaciones:", error);
     }
   };
 
@@ -4477,6 +4512,41 @@ const DetallesTrato = () => {
     loadTrato();
   }, [params.id]);
 
+  useEffect(() => {
+    // Verificar si debe mostrar la sección de cotizaciones
+    const fasesPermitidas = [
+      'COTIZACION_PROPUESTA_PRACTICA',
+      'NEGOCIACION_REVISION',
+      'CERRADO_GANADO'
+    ];
+
+    setShowCotizacionesSection(fasesPermitidas.includes(trato.fase));
+
+    // Cargar cotizaciones si está en fase permitida
+    if (fasesPermitidas.includes(trato.fase)) {
+      cargarCotizaciones();
+    }
+  }, [trato.fase]);
+
+  const cargarCotizaciones = async () => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/cotizaciones/trato/${params.id}`);
+      const data = await response.json();
+      setCotizaciones(data);
+
+      if (data.length > 0) {
+        await checkVinculaciones(data);
+      }
+    } catch (error) {
+      console.error('Error cargando cotizaciones:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudieron cargar las cotizaciones'
+      });
+    }
+  };
+
   const handleVolver = () => {
     navigate("/tratos")
   }
@@ -4579,8 +4649,11 @@ const DetallesTrato = () => {
     openModal("seleccionarActividad")
   }
 
-  const handleAgregarCorreo = () => {
-    openModal("crearCorreo")
+  const handleAgregarCorreo = (archivoPrecargado = null, asuntoPrecargado = null) => {
+    openModal("crearCorreo", {
+      archivoPrecargado,
+      asuntoPrecargado
+    });
   }
 
   const handleCambiarFase = async (nuevaFase) => {
@@ -4970,6 +5043,257 @@ const DetallesTrato = () => {
       });
     }
   };
+
+  const handleEditarCotizacion = (cotizacion) => {
+    openModal('editarCotizacion', { cotizacion });
+  };
+
+  const handleDescargarCotizacion = async (cotizacionId) => {
+    try {
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/cotizaciones/${cotizacionId}/download-pdf?incluirArchivos=false`,
+        { method: 'GET', headers: { 'Accept': 'application/pdf' } }
+      );
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `COTIZACION_${cotizacionId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo descargar la cotización'
+      });
+    }
+  };
+
+  const handleCompartirCotizacion = async (cotizacion) => {
+    const limpiarNombreArchivo = (texto) => {
+      return texto
+        .replace(/[^a-z0-9]/gi, '_')
+        .replace(/_{2,}/g, '_')
+        .toLowerCase();
+    };
+
+    const obtenerArchivoPDF = async () => {
+      try {
+        Swal.fire({
+          title: 'Preparando archivo...',
+          text: 'Generando PDF para adjuntar',
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
+        });
+
+        const response = await fetchWithToken(
+          `${API_BASE_URL}/cotizaciones/${cotizacion.id}/download-pdf?incluirArchivos=false`,
+          { method: 'GET', headers: { 'Accept': 'application/pdf' } }
+        );
+
+        if (!response.ok) throw new Error('Error al descargar PDF');
+
+        const blob = await response.blob();
+
+        if (blob.size === 0) throw new Error('El PDF generado está vacío');
+
+        const nombreSeguro = limpiarNombreArchivo(trato.nombre || 'trato');
+        const fileName = `cotizacion_${cotizacion.id}_${nombreSeguro}.pdf`;
+
+        const file = new File([blob], fileName, {
+          type: 'application/pdf',
+          lastModified: new Date().getTime()
+        });
+
+        Swal.close();
+        return file;
+      } catch (error) {
+        Swal.close();
+        console.error(error);
+        Swal.fire('Error', 'No se pudo generar el archivo PDF para adjuntar', 'error');
+        return null;
+      }
+    };
+
+    const marcarComoEnviada = async () => {
+      if (cotizacion.estatus === 'PENDIENTE') {
+        try {
+          await fetchWithToken(
+            `${API_BASE_URL}/cotizaciones/${cotizacion.id}/marcar-enviada`,
+            { method: 'PUT' }
+          );
+          cargarCotizaciones();
+        } catch (error) {
+          console.error("No se pudo actualizar el estatus", error);
+        }
+      }
+    };
+
+    await Swal.fire({
+      title: 'Compartir Cotización',
+      text: 'Selecciona el medio de envío',
+      showConfirmButton: false,
+      showCloseButton: true,
+      html: `
+        <div class="swal-share-container">
+          <button id="btn-share-whatsapp" class="btn-share-option btn-share-whatsapp">
+            <img src="${whatsappIcon}" class="share-icon-img" alt="" />
+            WhatsApp
+          </button>
+          <button id="btn-share-email" class="btn-share-option btn-share-email">
+            <img src="${emailIcon}" class="share-icon-img" alt="" />
+            Correo
+          </button>
+        </div>
+      `,
+      didOpen: () => {
+        document.getElementById('btn-share-whatsapp').addEventListener('click', () => {
+          Swal.close();
+          const contacto = trato.contacto;
+          let numero = contacto?.whatsapp || contacto?.celular;
+
+          if (!numero && contacto?.telefonos?.length > 0) {
+            numero = contacto.telefonos[0].telefono;
+          }
+
+          if (!numero) {
+            Swal.fire('Atención', 'El contacto no tiene número celular registrado', 'warning');
+            return;
+          }
+
+          const cleanNumber = numero.replace(/\D/g, '');
+          const mensaje = `Hola ${contacto.nombre || ''}, te comparto la cotización #${cotizacion.id} del trato ${trato.nombre}.`;
+
+          window.open(`https://wa.me/52${cleanNumber}?text=${encodeURIComponent(mensaje)}`, '_blank');
+          marcarComoEnviada();
+        });
+
+        document.getElementById('btn-share-email').addEventListener('click', async () => {
+          const file = await obtenerArchivoPDF();
+
+          if (file) {
+            openModal('crearCorreo', {
+              archivoPrecargado: file,
+              asuntoPrecargado: `Cotización #${cotizacion.id} - ${trato.nombre}`
+            });
+            marcarComoEnviada();
+          }
+        });
+      }
+    });
+  };
+
+  const handleCrearCuentaCobrar = (cotizacion) => {
+    if (cotizacion.estatus === 'ACEPTADA') {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Alerta',
+        text: 'Ya se generaron las cuentas por cobrar para esta cotización'
+      });
+      return;
+    }
+    openModal('crearCuentas', { cotizacion });
+  };
+
+  const handleEliminarCotizacion = async (cotizacionId) => {
+    const result = await Swal.fire({
+      title: '¿Está seguro?',
+      text: '¿Desea eliminar esta cotización de forma permanente?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacionId}`, { method: 'DELETE' });
+        cargarCotizaciones();
+        Swal.fire({
+          icon: 'success',
+          title: 'Eliminada',
+          text: 'La cotización ha sido eliminada correctamente'
+        });
+      } catch (error) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'No se pudo eliminar la cotización'
+        });
+      }
+    }
+  };
+
+  const handleSaveCotizacion = async (cotizacionData) => {
+    try {
+      const url = cotizacionData.id
+        ? `${API_BASE_URL}/cotizaciones/${cotizacionData.id}`
+        : `${API_BASE_URL}/cotizaciones`;
+      const method = cotizacionData.id ? "PUT" : "POST";
+
+      // Aseguramos que lleve el tratoId si es nueva y se crea desde aquí
+      const payload = {
+        ...cotizacionData,
+        // Si estamos creando desde detalles trato, forzamos el ID de este trato
+        tratoId: cotizacionData.tratoId || parseInt(params.id),
+
+        // Mapeo de datos para el backend
+        clienteNombre: cotizacionData.cliente,
+        unidades: cotizacionData.conceptos.map((c) => ({
+          cantidad: c.cantidad,
+          unidad: c.unidad,
+          concepto: c.concepto,
+          precioUnitario: c.precioUnitario,
+          descuento: c.descuento ?? 0,
+          importeTotal: c.importeTotal,
+        })),
+        empresaData: cotizacionData.empresaData,
+      };
+
+      const response = await fetchWithToken(url, {
+        method,
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error("Error al guardar");
+
+      const savedCotizacion = await response.json();
+
+      // Actualizar la lista local de cotizaciones
+      if (cotizacionData.id) {
+        setCotizaciones((prev) =>
+          prev.map((c) => (c.id === savedCotizacion.id ? { ...c, ...savedCotizacion } : c))
+        );
+      } else {
+        setCotizaciones((prev) => [savedCotizacion, ...prev]);
+      }
+
+      Swal.fire({
+        icon: "success",
+        title: "Éxito",
+        text: "Cotización guardada correctamente",
+      });
+
+      // Cerrar modales
+      if (modals.crearCotizacion?.isOpen) closeModal("crearCotizacion");
+      if (modals.editarCotizacion?.isOpen) closeModal("editarCotizacion");
+
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo guardar la cotización",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <>
@@ -5566,6 +5890,118 @@ const DetallesTrato = () => {
               </div>
             </div>
 
+            {/* Sección de Cotizaciones - SOLO visible en fases específicas */}
+            {showCotizacionesSection && (
+              <div className="seccion cotizaciones-trato">
+                <div className="seccion-header">
+                  <h2>Cotizaciones</h2>
+                  <button
+                    onClick={() => openModal('crearCotizacion', { tratoId: trato.id, empresaId: trato.empresaId })}
+                    className="btn-agregar"
+                  >
+                    <img src={addIcon || "/placeholder.svg"} alt="Agregar" />
+                  </button>
+                </div>
+
+                <div className="cotizaciones-tabla">
+                  <div className="tabla-header">
+                    <div className="header-cell">Folio</div>
+                    <div className="header-cell">Fecha</div>
+                    <div className="header-cell">Importe</div>
+                    <div className="header-cell">Estatus</div>
+                    <div className="header-cell">Creada por</div>
+                    <div className="header-cell">Acciones</div>
+                  </div>
+
+                  <div className="tabla-body">
+                    {cotizaciones.length > 0 ? (
+                      cotizaciones.map((cotizacion) => (
+                        <div key={cotizacion.id} className="tabla-row">
+                          <div className="cell">#{cotizacion.id}</div>
+                          <div className="cell">{cotizacion.fecha}</div>
+                          <div className="cell">${cotizacion.total.toFixed(2)}</div>
+                          <div className="cell">
+                            <span className={`estatus-badge ${cotizacion.estatus.toLowerCase()}`}>
+                              {cotizacion.estatus}
+                            </span>
+                          </div>
+                          <div className="cell">{cotizacion.usuarioCreadorNombre || 'N/A'}</div>
+                          <div className="cell acciones-cell">
+                            <button
+                              onClick={() => handleEditarCotizacion(cotizacion)}
+                              className="btn-accion-cotizacion"
+                              title="Editar"
+                            >
+                              <img src={editIcon} alt="Editar" />
+                            </button>
+                            <button
+                              onClick={() => handleDescargarCotizacion(cotizacion.id)}
+                              className="btn-accion-cotizacion"
+                              title="Descargar"
+                            >
+                              <img src={downloadIcon} alt="Descargar" />
+                            </button>
+                            <button
+                              onClick={() => handleCompartirCotizacion(cotizacion)}
+                              className="btn-accion-cotizacion"
+                              title="Compartir"
+                            >
+                              <img src={send} alt="Enviar" />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                const response = await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacion.id}/check-vinculada`);
+                                const { vinculada } = await response.json();
+
+                                if (vinculada) {
+                                  Swal.fire({
+                                    icon: "warning",
+                                    title: "Alerta",
+                                    text: "Ya se generaron las cuentas por cobrar para esta cotización",
+                                  });
+                                  setCotizacionesVinculadas(prev => new Set([...prev, cotizacion.id]));
+                                } else {
+                                  openModal("crearCuentas", { cotizacion: cotizacion });
+                                }
+                              }}
+                              className={`btn-accion-cotizacion ${cotizacionesVinculadas.has(cotizacion.id)
+                                ? 'cotizaciones-receivable-btn-vinculada'
+                                : 'cotizaciones-receivable-btn-disponible'
+                                }`}
+                              title={
+                                cotizacionesVinculadas.has(cotizacion.id)
+                                  ? "Cuentas por cobrar ya generadas"
+                                  : "Generar Cuenta por Cobrar"
+                              }
+                            >
+                              <img
+                                src={receivableIcon}
+                                alt="Cuenta"
+                                className="cotizaciones-action-icon"
+                              />
+                            </button>
+                            <button
+                              onClick={() => handleEliminarCotizacion(cotizacion.id)}
+                              className="btn-accion-cotizacion"
+                              title="Eliminar"
+                            >
+                              <img src={deleteIcon} alt="Eliminar" />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="tabla-row">
+                        <div className="cell-empty">
+                          <p className="no-actividades">No hay cotizaciones registradas</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Correos electrónicos */}
             <div className="seccion correos-electronicos">
               <div className="seccion-header">
@@ -5720,7 +6156,7 @@ const DetallesTrato = () => {
           openModal={openModal}
           esEdicion={modals.completarActividad.esEdicion}
           onNextAction={(siguienteAccion) => {
-             handleSiguienteAccionAutomatica(siguienteAccion, params.id);
+            handleSiguienteAccionAutomatica(siguienteAccion, params.id);
           }}
         />
 
@@ -5750,6 +6186,8 @@ const DetallesTrato = () => {
           tratoId={params.id}
           openModal={openModal}
           closeModal={closeModal}
+          archivoPrecargado={modals.crearCorreo.archivoPrecargado}
+          asuntoPrecargado={modals.crearCorreo.asuntoPrecargado}
         />
 
         <SeleccionarPlantillaModal
@@ -5758,6 +6196,47 @@ const DetallesTrato = () => {
           onSelectTemplate={modals.seleccionarPlantilla.onSelectTemplate}
           plantillas={modals.seleccionarPlantilla.plantillas || []}
         />
+        {(modals.crearCotizacion?.isOpen || modals.editarCotizacion?.isOpen) && (
+          <CotizacionModal
+            isOpen={modals.crearCotizacion?.isOpen || modals.editarCotizacion?.isOpen}
+            onClose={() => {
+              if (modals.crearCotizacion?.isOpen) closeModal("crearCotizacion");
+              if (modals.editarCotizacion?.isOpen) closeModal("editarCotizacion");
+            }}
+            onSave={handleSaveCotizacion}
+            cotizacion={
+              modals.editarCotizacion?.isOpen
+                ? modals.editarCotizacion.cotizacion
+                : {
+                  clienteNombre: trato.nombreEmpresa,
+                  empresaData: { id: trato.empresaId, nombre: trato.nombreEmpresa, ...trato.empresaData },
+                  tratoId: parseInt(params.id),
+                  unidades: []
+                }
+            }
+            clientes={companies}
+            modals={modals}
+            setModals={setModals}
+            users={users}
+          />
+        )}
+        {modals.crearCuentas?.isOpen && (
+          <CrearCuentasModal
+            isOpen={modals.crearCuentas?.isOpen}
+            onClose={() => closeModal("crearCuentas")}
+            cotizacion={modals.crearCuentas?.cotizacion}
+            onSave={(savedCuentas) => {
+              setCotizacionesVinculadas(prev => new Set([...prev, modals.crearCuentas?.cotizacion?.id]));
+
+              Swal.fire({
+                icon: "success",
+                title: "Éxito",
+                text: "Cuenta/s por cobrar creada correctamente",
+              });
+              closeModal("crearCuentas");
+            }}
+          />
+        )}
       </div>
     </>
   )

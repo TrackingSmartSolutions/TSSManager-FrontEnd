@@ -386,12 +386,41 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
   const [formData, setFormData] = useState({
     cliente: "",
     conceptos: [],
+    tratoId: null,
   });
   const [showConceptoModal, setShowConceptoModal] = useState(false);
   const [editingConcepto, setEditingConcepto] = useState(null);
   const [errors, setErrors] = useState({});
+  const [tratosDisponibles, setTratosDisponibles] = useState([]);
+  const [loadingTratos, setLoadingTratos] = useState(false);
 
   const isEditing = !!cotizacion;
+
+  const cargarTratosDisponibles = async (empresaId) => {
+    if (!empresaId) {
+      setTratosDisponibles([]);
+      return;
+    }
+
+    setLoadingTratos(true);
+    try {
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/cotizaciones/tratos-disponibles/${empresaId}`
+      );
+      const data = await response.json();
+      setTratosDisponibles(data);
+    } catch (error) {
+      console.error('Error cargando tratos:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudieron cargar los tratos disponibles'
+      });
+      setTratosDisponibles([]);
+    } finally {
+      setLoadingTratos(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -408,18 +437,25 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
             importeTotal: c.importeTotal,
           })) : [],
           empresaData: cotizacion.empresaData || null,
+          tratoId: cotizacion.tratoId || null,
         });
+
+        if (cotizacion.empresaData?.id) {
+          cargarTratosDisponibles(cotizacion.empresaData.id);
+        }
       } else {
         setFormData({
           cliente: "",
           conceptos: [],
           empresaData: null,
+          tratoId: null,
         });
+        setTratosDisponibles([]);
       }
       setErrors({});
     }
   }, [isOpen, cotizacion]);
-
+  
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -529,6 +565,7 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
         importeConLetra: numeroALetras(total),
         fecha: cotizacion?.fecha || new Date().toLocaleDateString("es-MX"),
         empresaData: formData.empresaData,
+        tratoId: formData.tratoId,
       };
       onSave(cotizacionData);
       onClose();
@@ -536,6 +573,22 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
   };
 
   const { subtotal, iva, total } = calculateTotals();
+
+  const handleClienteChange = async (clienteNombre) => {
+    handleInputChange("cliente", clienteNombre);
+
+    const empresaSeleccionada = clientes.find(
+      c => c.nombre === clienteNombre
+    );
+
+    if (empresaSeleccionada) {
+      handleInputChange("empresaData", empresaSeleccionada);
+      await cargarTratosDisponibles(empresaSeleccionada.id);
+    } else {
+      setTratosDisponibles([]);
+      handleInputChange("tratoId", null);
+    }
+  };
 
   return (
     <>
@@ -552,7 +605,7 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
             <select
               id="cliente"
               value={formData.cliente}
-              onChange={(e) => handleInputChange("cliente", e.target.value)}
+              onChange={(e) => handleClienteChange(e.target.value)}
               className={`cotizaciones-form-control ${errors.cliente ? "error" : ""}`}
             >
               <option value="">Seleccione un cliente</option>
@@ -567,6 +620,26 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
             {errors.cliente && <span className="cotizaciones-error-message">{errors.cliente}</span>}
           </div>
 
+          {tratosDisponibles.length > 0 && (
+            <div className="cotizaciones-form-group">
+              <label htmlFor="trato">Vincular a Trato (Opcional)</label>
+              <select
+                id="trato"
+                value={formData.tratoId || ""}
+                onChange={(e) => handleInputChange("tratoId", e.target.value ? parseInt(e.target.value) : null)}
+                className="cotizaciones-form-control"
+                disabled={loadingTratos}
+              >
+                <option value="">Sin vincular a trato</option>
+                {tratosDisponibles.map((trato) => (
+                  <option key={trato.id} value={trato.id}>
+                    {trato.nombre} - {trato.fase}
+                  </option>
+                ))}
+              </select>
+              {loadingTratos && <span className="cotizaciones-info-message">Cargando tratos...</span>}
+            </div>
+          )}
           <div className="cotizaciones-form-group">
             <div className="cotizaciones-conceptos-header">
               <label>Conceptos  <span className="required"> *</span></label>
@@ -1241,6 +1314,7 @@ const AdminCotizaciones = () => {
         method,
         body: JSON.stringify({
           clienteNombre: cotizacionData.cliente,
+          tratoId: cotizacionData.tratoId,
           unidades: cotizacionData.conceptos.map((c) => ({
             cantidad: c.cantidad,
             unidad: c.unidad,
@@ -1279,6 +1353,7 @@ const AdminCotizaciones = () => {
       });
     }
   };
+
 
   const handleDeleteCotizacion = (cotizacion) => {
     openModal("confirmarEliminacion", { cotizacion });
@@ -1700,4 +1775,6 @@ const AdminCotizaciones = () => {
   )
 }
 
-export default AdminCotizaciones
+export default AdminCotizaciones;
+export { CotizacionModal };
+export { CrearCuentasModal };
