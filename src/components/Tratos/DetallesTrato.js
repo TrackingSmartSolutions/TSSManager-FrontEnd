@@ -5237,13 +5237,10 @@ const DetallesTrato = () => {
         : `${API_BASE_URL}/cotizaciones`;
       const method = cotizacionData.id ? "PUT" : "POST";
 
-      // Aseguramos que lleve el tratoId si es nueva y se crea desde aquí
       const payload = {
         ...cotizacionData,
-        // Si estamos creando desde detalles trato, forzamos el ID de este trato
         tratoId: cotizacionData.tratoId || parseInt(params.id),
 
-        // Mapeo de datos para el backend
         clienteNombre: cotizacionData.cliente,
         unidades: cotizacionData.conceptos.map((c) => ({
           cantidad: c.cantidad,
@@ -5265,11 +5262,18 @@ const DetallesTrato = () => {
 
       const savedCotizacion = await response.json();
 
-      // Actualizar la lista local de cotizaciones
       if (cotizacionData.id) {
-        setCotizaciones((prev) =>
-          prev.map((c) => (c.id === savedCotizacion.id ? { ...c, ...savedCotizacion } : c))
-        );
+        const currentTratoId = parseInt(params.id);
+
+
+        if (savedCotizacion.tratoId !== currentTratoId) {
+            setCotizaciones((prev) => prev.filter((c) => c.id !== savedCotizacion.id));
+        } else {
+
+            setCotizaciones((prev) =>
+            prev.map((c) => (c.id === savedCotizacion.id ? { ...c, ...savedCotizacion } : c))
+            );
+        }
       } else {
         setCotizaciones((prev) => [savedCotizacion, ...prev]);
       }
@@ -5280,7 +5284,6 @@ const DetallesTrato = () => {
         text: "Cotización guardada correctamente",
       });
 
-      // Cerrar modales
       if (modals.crearCotizacion?.isOpen) closeModal("crearCotizacion");
       if (modals.editarCotizacion?.isOpen) closeModal("editarCotizacion");
 
