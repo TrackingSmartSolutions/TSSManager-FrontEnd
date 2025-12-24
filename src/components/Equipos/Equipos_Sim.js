@@ -1360,15 +1360,21 @@ const EquiposSim = () => {
 
     let className = "";
 
-    // Para tarifa POR_SEGUNDO - verificar si el saldo es menor a $10
+    // Para tarifa POR_SEGUNDO (Saldos en dinero)
     if (sim.tarifa === "POR_SEGUNDO" && sim.ultimoSaldoRegistrado.startsWith("$")) {
-      const saldoValue = parseFloat(sim.ultimoSaldoRegistrado.replace("$", ""));
-      if (!isNaN(saldoValue) && saldoValue < 10) {
-        className = "sim-saldo-warning";
+      const saldoValue = parseFloat(sim.ultimoSaldoRegistrado.replace("$", "").trim());
+      
+      if (!isNaN(saldoValue)) {
+        if (saldoValue < 10) {
+          // Alerta de saldo bajo
+          className = "sim-saldo-warning";
+        } else if (saldoValue > 210) {
+          className = "sim-saldo-success";
+        }
       }
     }
 
-    // Para tarifa M2M_GLOBAL_15 - verificar si los datos son mayores a 15MB
+    // Para tarifa M2M_GLOBAL_15 (Datos)
     if (sim.tarifa === "M2M_GLOBAL_15" && sim.ultimoSaldoRegistrado.includes("MB")) {
       const datosValue = parseFloat(sim.ultimoSaldoRegistrado.replace("MB", "").trim());
       if (!isNaN(datosValue) && datosValue > 15) {

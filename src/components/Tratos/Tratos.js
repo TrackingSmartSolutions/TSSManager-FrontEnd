@@ -1395,7 +1395,7 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
 
   return (
     <div
-      className={`trato-card ${isDragging ? "dragging" : ""}`}
+      className={`trato-card ${isDragging ? "dragging" : ""} ${trato.isNeglected ? "desatendido" : ""}`}
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}

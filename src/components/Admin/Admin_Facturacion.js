@@ -1516,7 +1516,7 @@ const AdminFacturacion = () => {
                       onClick={toggleOrdenFecha}
                       title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'}`}
                     >
-                      {ordenFecha === 'asc' ? '📅 ↑ Antiguas' : '📅 ↓ Recientes'}
+                      {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
                     </button>
                   </div>
 

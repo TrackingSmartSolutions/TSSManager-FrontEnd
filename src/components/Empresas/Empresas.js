@@ -921,8 +921,17 @@ const ContactoModal = ({
       }
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Error al guardar el contacto");
+        const text = await response.text();
+        let errorMessage = "Error al guardar el contacto";
+
+        try {
+          const errorData = JSON.parse(text);
+          if (errorData.message) errorMessage = errorData.message;
+        } catch (e) {
+          if (text) errorMessage = text;
+        }
+
+        throw new Error(errorMessage);
       }
 
       const savedContacto = await response.json();
@@ -937,10 +946,14 @@ const ContactoModal = ({
         confirmButtonText: 'OK'
       });
     } catch (error) {
+      const isDuplicate = error.message.includes("Ya existe un contacto") ||
+        error.message.includes("mismo Nombre");
+
       Swal.fire({
-        icon: "error",
-        title: "Error",
+        icon: isDuplicate ? "warning" : "error",
+        title: isDuplicate ? "Contacto Duplicado" : "Error",
         text: error.message,
+        confirmButtonColor: isDuplicate ? "#FF9800" : "#d33",
       });
     }
   };

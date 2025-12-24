@@ -1185,6 +1185,16 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
   width: fit-content;    
 }
 
+.trato-card.desatendido {
+    background-color: #ffebee; 
+    border: 1px solid #ef5350;
+    box-shadow: 0 2px 5px rgba(239, 83, 80, 0.4);
+}
+
+.trato-card.desatendido:hover {
+    background-color: #ffcdd2; 
+}
+
 /* Media query para pantallas extra grandes (desktops grandes y TVs) */
 @media (min-width: 1921px) {
   .main-content {

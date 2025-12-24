@@ -244,7 +244,9 @@ const Header = ({ logoUrl }) => {
 
       if (response.ok) {
         const data = await response.json();
-        setNotificaciones(data);
+        const notificacionesFiltradas = data.filter(n => n.tipoNotificacion !== 'ACTIVIDAD');
+        
+        setNotificaciones(notificacionesFiltradas);
       }
     } catch (error) {
       console.error("Error al obtener notificaciones:", error);

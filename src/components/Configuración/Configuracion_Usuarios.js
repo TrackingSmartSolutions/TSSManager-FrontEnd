@@ -608,7 +608,7 @@ const ReasignacionModal = ({ isOpen, onClose, onConfirm, usuario, usuariosActivo
 
   const cargarContadores = async () => {
     if (!usuario?.id) return
-    
+
     setCargandoContadores(true)
     try {
       const response = await fetchWithToken(`${API_BASE_URL}/auth/users/${usuario.id}/assignment-counts`)
@@ -638,7 +638,7 @@ const ReasignacionModal = ({ isOpen, onClose, onConfirm, usuario, usuariosActivo
           <p className="confirmation-message">
             ¿A quién desea asignar los tratos y actividades de <strong>{usuario?.nombre} {usuario?.apellidos}</strong>?
           </p>
-          
+
           {/* Mostrar contadores */}
           <div className="contadores-reasignacion">
             {cargandoContadores ? (
@@ -656,7 +656,7 @@ const ReasignacionModal = ({ isOpen, onClose, onConfirm, usuario, usuariosActivo
               </div>
             )}
           </div>
-          
+
           <div className="modal-form-group">
             <label htmlFor="usuarioDestino">
               Seleccionar usuario <span className="required">*</span>
@@ -696,12 +696,106 @@ const ReasignacionModal = ({ isOpen, onClose, onConfirm, usuario, usuariosActivo
   )
 }
 
+const ConflictResolutionModal = ({ isOpen, onClose, onConfirm, conflictos }) => {
+  const [resoluciones, setResoluciones] = useState({});
+
+  useEffect(() => {
+    if (isOpen && conflictos) {
+      const initialUsers = {};
+      conflictos.forEach((c) => {
+        initialUsers[c.actividad.id] = {
+          id: c.actividad.id,
+          fecha: c.actividad.fechaLimite,
+          hora: c.actividad.horaInicio ? c.actividad.horaInicio.substring(0, 5) : "09:00", // Recortar segundos si vienen
+        };
+      });
+      setResoluciones(initialUsers);
+    }
+  }, [isOpen, conflictos]);
+
+  const handleChange = (id, field, value) => {
+    setResoluciones((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], [field]: value },
+    }));
+  };
+
+  const handleConfirm = () => {
+    const listaResoluciones = Object.values(resoluciones);
+    onConfirm(listaResoluciones);
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Conflictos de Agenda Detectados" size="lg" closeOnOverlayClick={false}>
+      <div className="conflict-modal-body">
+        <div className="alert alert-warning" style={{ marginBottom: '15px', padding: '10px', backgroundColor: '#fff3cd', border: '1px solid #ffeeba', borderRadius: '4px' }}>
+          <strong>¡Atención!</strong> Se encontraron {conflictos.length} actividades que coinciden con la agenda del usuario receptor.
+          Por favor, asigna una nueva fecha u hora para evitar empalmes.
+        </div>
+
+        <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+          <table className="config-usuarios-table">
+            <thead>
+              <tr>
+                <th>Actividad</th>
+                <th>Horario Original</th>
+                <th>Nueva Fecha</th>
+                <th>Nueva Hora</th>
+              </tr>
+            </thead>
+            <tbody>
+              {conflictos.map((item) => (
+                <tr key={item.actividad.id}>
+                  <td>
+                    <small>{item.actividad.descripcion}</small>
+                  </td>
+                  <td style={{ color: '#dc3545' }}>
+                    {item.actividad.fechaLimite} {item.actividad.horaInicio}
+                  </td>
+                  <td>
+                    <input
+                      type="date"
+                      className="modal-form-control"
+                      value={resoluciones[item.actividad.id]?.fecha || ""}
+                      onChange={(e) => handleChange(item.actividad.id, "fecha", e.target.value)}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="time"
+                      className="modal-form-control"
+                      value={resoluciones[item.actividad.id]?.hora || ""}
+                      onChange={(e) => handleChange(item.actividad.id, "hora", e.target.value)}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="modal-form-actions" style={{ marginTop: '20px' }}>
+          <button type="button" onClick={onClose} className="btn btn-secondary">
+            Cancelar reasignación
+          </button>
+          <button type="button" onClick={handleConfirm} className="btn btn-primary">
+            Confirmar y Reasignar
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
 // Componente Principal
 const ConfiguracionUsuarios = () => {
 
   const [usuarios, setUsuarios] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [usuariosActivos, setUsuariosActivos] = useState([]);
+  const [conflictModalOpen, setConflictModalOpen] = useState(false);
+  const [conflictData, setConflictData] = useState([]);
+  const [pendingReassignData, setPendingReassignData] = useState(null);
   const [modals, setModals] = useState({
     usuario: { isOpen: false, mode: "add", data: null },
     restablecerContrasena: { isOpen: false, data: null },
@@ -907,11 +1001,60 @@ const ConfiguracionUsuarios = () => {
   };
 
   const handleConfirmReasignacion = async (usuarioDestinoId) => {
-    const usuario = modals.reasignacion.data?.usuario;
-    if (!usuario) return;
+    const usuarioOrigen = modals.reasignacion.data?.usuario;
+    if (!usuarioOrigen) return;
 
-    await ejecutarCambioEstatus(usuario.id, usuarioDestinoId);
-    closeModal("reasignacion");
+    setPendingReassignData({
+      origenId: usuarioOrigen.id,
+      destinoId: usuarioDestinoId
+    });
+
+    try {
+      // Verificar conflictos
+      const response = await fetchWithToken(`${API_BASE_URL}/auth/users/${usuarioOrigen.id}/check-conflicts?targetUserId=${usuarioDestinoId}`);
+      const conflictos = await response.json();
+
+      if (conflictos && conflictos.length > 0) {
+        closeModal("reasignacion");
+        setConflictData(conflictos);
+        setConflictModalOpen(true);
+      } else {
+        await ejecutarCambioEstatus(usuarioOrigen.id, usuarioDestinoId);
+        closeModal("reasignacion");
+      }
+    } catch (error) {
+      console.error("Error verificando conflictos:", error);
+      Swal.fire({ icon: "error", title: "Error", text: "Error al verificar disponibilidad de agenda." });
+    }
+  };
+
+  const handleResolveConflicts = async (resoluciones) => {
+    if (!pendingReassignData) return;
+
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/auth/users/${pendingReassignData.origenId}/deactivate-resolved`, {
+        method: 'POST',
+        body: JSON.stringify({
+          targetUserId: pendingReassignData.destinoId,
+          resoluciones: resoluciones
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.ok) {
+        Swal.fire({
+          icon: "success",
+          title: "Reasignación Exitosa",
+          text: "Los usuarios y actividades han sido actualizados correctamente.",
+        });
+        setConflictModalOpen(false);
+        fetchData();
+      } else {
+        throw new Error("Error en la respuesta del servidor");
+      }
+    } catch (error) {
+      Swal.fire({ icon: "error", title: "Error", text: "No se pudo completar la reasignación." });
+    }
   };
 
   return (
@@ -944,11 +1087,11 @@ const ConfiguracionUsuarios = () => {
             </div>
             <div className="config-usuarios-nav-item config-usuarios-nav-item-active">Usuarios y roles</div>
             <div
-            className="correo-plantillas-nav-item"
-            onClick={() => navigate("/configuracion_gestion_sectores_plataformas")}
-          >
-            Sectores y plataformas
-          </div>
+              className="correo-plantillas-nav-item"
+              onClick={() => navigate("/configuracion_gestion_sectores_plataformas")}
+            >
+              Sectores y plataformas
+            </div>
           </nav>
         </div>
 
@@ -1051,6 +1194,12 @@ const ConfiguracionUsuarios = () => {
           onConfirm={handleConfirmReasignacion}
           usuario={modals.reasignacion.data?.usuario}
           usuariosActivos={modals.reasignacion.data?.usuariosDisponibles || []}
+        />
+        <ConflictResolutionModal
+          isOpen={conflictModalOpen}
+          onClose={() => setConflictModalOpen(false)}
+          conflictos={conflictData}
+          onConfirm={handleResolveConflicts}
         />
       </div>
     </>

@@ -455,7 +455,7 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
       setErrors({});
     }
   }, [isOpen, cotizacion]);
-  
+
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -540,6 +540,9 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
     if (formData.conceptos.length === 0) {
       newErrors.conceptos = "Debe agregar al menos un concepto";
     }
+    if (tratosDisponibles.length > 0 && !formData.tratoId) {
+      newErrors.tratoId = "Debe vincular un trato a la cotización";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -622,15 +625,15 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
 
           {tratosDisponibles.length > 0 && (
             <div className="cotizaciones-form-group">
-              <label htmlFor="trato">Vincular a Trato (Opcional)</label>
+              <label htmlFor="trato">Vincular a Trato <span className="required"> *</span></label>
               <select
                 id="trato"
                 value={formData.tratoId || ""}
                 onChange={(e) => handleInputChange("tratoId", e.target.value ? parseInt(e.target.value) : null)}
-                className="cotizaciones-form-control"
+                className={`cotizaciones-form-control ${errors.tratoId ? "error" : ""}`}
                 disabled={loadingTratos}
               >
-                <option value="">Sin vincular a trato</option>
+                <option value="">Seleccionar trato...</option>
                 {tratosDisponibles.map((trato) => (
                   <option key={trato.id} value={trato.id}>
                     {trato.nombre} - {trato.fase}
@@ -638,6 +641,7 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
                 ))}
               </select>
               {loadingTratos && <span className="cotizaciones-info-message">Cargando tratos...</span>}
+              {errors.tratoId && <span className="cotizaciones-error-message">{errors.tratoId}</span>}
             </div>
           )}
           <div className="cotizaciones-form-group">
@@ -1553,69 +1557,61 @@ const AdminCotizaciones = () => {
                 </div>
               </div>
 
-              <div className="cotizaciones-filter-container">
-
-                {/* Filtro Receptor */}
-                <div className="cotizaciones-filter-group">
-                  <label htmlFor="filterReceptor">Filtrar por Receptor:</label>
-                  <input
-                    type="text"
-                    id="filterReceptor"
-                    value={filterReceptor}
-                    onChange={(e) => setFilterReceptor(e.target.value)}
-                    placeholder="Nombre del receptor"
-                    className="cotizaciones-form-control"
-                  />
-                </div>
-
-                {/* Filtro Fechas */}
-                <div className="cotizaciones-filter-group">
-                  <label>Filtrar por Fecha:</label>
-                  <div className="cotizaciones-date-inputs">
-                    <input
-                      type="date"
-                      value={filtroFechas.fechaInicio}
-                      onChange={(e) => handleFiltroFechas("fechaInicio", e.target.value)}
-                      className="cotizaciones-date-input"
-                      placeholder="Inicio"
-                    />
-                    <span className="cotizaciones-date-separator">a</span>
-                    <input
-                      type="date"
-                      value={filtroFechas.fechaFin}
-                      onChange={(e) => handleFiltroFechas("fechaFin", e.target.value)}
-                      className="cotizaciones-date-input"
-                      placeholder="Fin"
-                    />
-                    {filtroFechas.activo && (
-                      <button
-                        type="button"
-                        onClick={limpiarFiltroFechas}
-                        className="cotizaciones-clear-filter-btn"
-                        title="Limpiar fechas"
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Botón Ordenar */}
-                <div className="cotizaciones-filter-group">
-                  <div style={{ height: '21px' }}></div>
-                  <button
-                    className="cotizaciones-btn cotizaciones-btn-orden"
-                    onClick={toggleOrdenFecha}
-                    title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
-                  >
-                    {ordenFecha === 'desc' ? '📅 ↓ Recientes' : '📅 ↑ Antiguas'}
-                  </button>
-                </div>
-              </div>
-
               {/* Tabla de Cotizaciones */}
               <div className="cotizaciones-table-card">
-                <h4 className="cotizaciones-table-title">Cotizaciones</h4>
+
+                <div className="cotizaciones-table-header-row">
+                  <h4 className="cotizaciones-table-title">Cotizaciones</h4>
+
+                  <div className="cotizaciones-header-controls">
+
+                    {/* Filtro Receptor */}
+                    <input
+                      type="text"
+                      value={filterReceptor}
+                      onChange={(e) => setFilterReceptor(e.target.value)}
+                      placeholder="Buscar por receptor..."
+                      className="cotizaciones-filter-input"
+                    />
+
+                    {/* Filtro Fechas */}
+                    <div className="cotizaciones-date-group">
+                      <input
+                        type="date"
+                        value={filtroFechas.fechaInicio}
+                        onChange={(e) => handleFiltroFechas("fechaInicio", e.target.value)}
+                        className="cotizaciones-filter-input cotizaciones-date-input"
+                      />
+                      <span className="cotizaciones-date-separator">a</span>
+                      <input
+                        type="date"
+                        value={filtroFechas.fechaFin}
+                        onChange={(e) => handleFiltroFechas("fechaFin", e.target.value)}
+                        className="cotizaciones-filter-input cotizaciones-date-input"
+                      />
+                      {filtroFechas.activo && (
+                        <button
+                          type="button"
+                          onClick={limpiarFiltroFechas}
+                          className="cotizaciones-clear-filter-btn"
+                          title="Limpiar fechas"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Botón Ordenar */}
+                    <button
+                      className="cotizaciones-btn-orden"
+                      onClick={toggleOrdenFecha}
+                      title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
+                    >
+                      <span className="cotizaciones-icon-orden">📅</span>
+                      {ordenFecha === 'desc' ? '↓ Recientes primero' : '↑ Antiguas primero'}
+                    </button>
+                  </div>
+                </div>
 
                 <div className="cotizaciones-table-container">
                   <table className="cotizaciones-table">
