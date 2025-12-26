@@ -69,6 +69,7 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
   useEffect(() => {
     if (isOpen) {
       if (sim) {
+        const imeiActual = sim.equipo?.imei || sim.equipoImei || "";
         setFormData({
           numero: sim.numero || "",
           tarifa: sim.tarifa || "POR_SEGUNDO",
@@ -77,7 +78,7 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
           responsable: sim.responsable || "TSS",
           principal: sim.principal || "NO",
           grupo: sim.grupo?.toString() || "",
-          equipo: sim.equipoImei || "",
+          equipo: imeiActual,
           contrasena: sim.contrasena || "tss2025",
         });
       } else {
@@ -292,6 +293,9 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
       equipo.estatus !== "ALMACEN"
   );
 
+  const currentImei = sim?.equipo?.imei || sim?.equipoImei;
+  const currentNombre = sim?.equipo?.nombre || sim?.equipoNombre || "Equipo";
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={sim ? "Editar SIM" : "Nueva SIM"} size="md" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="sim-form">
@@ -492,10 +496,9 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
                 {equipo.nombre} ({equipo.tipo}) - IMEI: {equipo.imei}
               </option>
             ))}
-            {/* Para equipos ya vinculados en edición */}
-            {sim && sim.equipoImei && !availableEquipos.find((e) => e.imei === sim.equipoImei) && (
-              <option key={sim.equipoImei} value={sim.equipoImei}>
-                {sim.equipoNombre} - IMEI: {sim.equipoImei} [Vinculado]
+            {sim && currentImei && !availableEquipos.find((e) => e.imei === currentImei) && (
+              <option key={currentImei} value={currentImei}>
+                {currentNombre} - IMEI: {currentImei} [Vinculado]
               </option>
             )}
           </select>
