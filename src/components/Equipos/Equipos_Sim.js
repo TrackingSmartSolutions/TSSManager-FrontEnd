@@ -1073,7 +1073,6 @@ const EquiposSim = () => {
 
       await Promise.all(batch.map(async (sim) => {
         try {
-          // Cargar último saldo
           const response = await fetch(`${API_BASE_URL}/sims/${sim.id}/ultimo-saldo`, {
             headers: {
               "Content-Type": "application/json",
@@ -1123,21 +1122,21 @@ const EquiposSim = () => {
 
               if (caidaResponse.ok) {
                 const caidaData = await caidaResponse.json();
+
                 if (caidaData.tieneCaida) {
                   setAlertasSaldo(prev => {
-                    setAlertasAprobadas(aprobadas => {
-                      if (!aprobadas.has(sim.id)) {
-                        const newSet = new Set(prev);
-                        newSet.add(sim.id);
-                        return prev;
-                      }
-                      return prev;
-                    });
                     const newSet = new Set(prev);
-                    if (!alertasAprobadas.has(sim.id)) {
-                      newSet.add(sim.id);
-                    }
+                    newSet.add(sim.id);
                     return newSet;
+                  });
+                } else {
+                  setAlertasSaldo(prev => {
+                    if (prev.has(sim.id)) {
+                      const newSet = new Set(prev);
+                      newSet.delete(sim.id);
+                      return newSet;
+                    }
+                    return prev;
                   });
                 }
               }
@@ -1145,7 +1144,6 @@ const EquiposSim = () => {
               console.error(`Error verificando caída de saldo para SIM ${sim.id}:`, error);
             }
           }
-
 
         } catch (error) {
           console.error(`Error loading saldo for SIM ${sim.id}:`, error);
@@ -1363,7 +1361,7 @@ const EquiposSim = () => {
     // Para tarifa POR_SEGUNDO (Saldos en dinero)
     if (sim.tarifa === "POR_SEGUNDO" && sim.ultimoSaldoRegistrado.startsWith("$")) {
       const saldoValue = parseFloat(sim.ultimoSaldoRegistrado.replace("$", "").trim());
-      
+
       if (!isNaN(saldoValue)) {
         if (saldoValue < 10) {
           // Alerta de saldo bajo
@@ -1386,32 +1384,35 @@ const EquiposSim = () => {
   };
 
   const aprobarAlertaSaldo = async (simId) => {
-    setAlertasSaldo(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(simId);
-      return newSet;
-    });
-
-    const nuevasAprobadas = new Set(alertasAprobadas);
-    nuevasAprobadas.add(simId);
-    setAlertasAprobadas(nuevasAprobadas);
-
     try {
-      await window.storage.set(
-        'alertas-aprobadas-sims',
-        JSON.stringify(Array.from(nuevasAprobadas))
-      );
-    } catch (error) {
-      console.error('Error guardando alertas aprobadas:', error);
-    }
+      const response = await fetchWithToken(`${API_BASE_URL}/sims/${simId}/aprobar-alerta`, {
+        method: 'POST'
+      });
 
-    Swal.fire({
-      icon: "success",
-      title: "Alerta aprobada",
-      text: "La alerta de caída de saldo superior a $10 ha sido aprobada",
-      timer: 2000,
-      showConfirmButton: false
-    });
+      if (!response.ok) throw new Error("Error al aprobar alerta");
+
+      setAlertasSaldo(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(simId);
+        return newSet;
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: "Alerta aprobada",
+        text: "La alerta ha sido marcada como revisada.",
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+    } catch (error) {
+      console.error('Error aprobando alerta:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo aprobar la alerta"
+      });
+    }
   };
 
   return (
