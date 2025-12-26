@@ -1231,24 +1231,42 @@ const EquiposSim = () => {
   };
 
   const handleSaveSim = (simData) => {
+    const resolverEquipo = (simResponse, simAnterior, listaEquipos) => {
+      let imei = null;
+      let nombre = null;
+
+      if (simResponse.equipo && typeof simResponse.equipo === 'object') {
+        imei = simResponse.equipo.imei;
+        nombre = simResponse.equipo.nombre;
+      } else {
+        imei = simResponse.equipoImei;
+        nombre = simResponse.equipoNombre;
+      }
+      if (!imei) return null;
+
+      if (!nombre) {
+        const equipoEnLista = listaEquipos.find(e => e.imei === imei);
+        if (equipoEnLista) {
+          nombre = equipoEnLista.nombre;
+        }
+        else if (simAnterior && simAnterior.equipo && simAnterior.equipo.imei === imei) {
+          nombre = simAnterior.equipo.nombre;
+        }
+      }
+
+      return {
+        imei: imei,
+        nombre: nombre || "Desconocido"
+      };
+    };
+
     setSims((prev) => {
       const existingSim = prev.find(s => s.id === simData.id);
       const isNew = !existingSim;
 
       const saldoVisual = existingSim ? existingSim.ultimoSaldoRegistrado : (simData.ultimoSaldoRegistrado || "Sin registros");
 
-      let equipoMapeado = null;
-      if (simData.equipo && typeof simData.equipo === 'object') {
-        equipoMapeado = {
-          nombre: simData.equipo.nombre,
-          imei: simData.equipo.imei
-        };
-      } else if (simData.equipoNombre) {
-        equipoMapeado = {
-          nombre: simData.equipoNombre,
-          imei: simData.equipoImei
-        };
-      }
+      const equipoMapeado = resolverEquipo(simData, existingSim, equipos);
 
       const simWithEquipo = {
         ...simData,
@@ -1267,15 +1285,10 @@ const EquiposSim = () => {
     });
 
     setAllSims((prev) => {
-      const isNew = !prev.find(s => s.id === simData.id);
+      const existingSim = prev.find(s => s.id === simData.id);
+      const isNew = !existingSim;
 
-      let equipoMapeado = null;
-      if (simData.equipo && typeof simData.equipo === 'object') {
-        equipoMapeado = {
-          nombre: simData.equipo.nombre,
-          imei: simData.equipo.imei
-        };
-      }
+      const equipoMapeado = resolverEquipo(simData, existingSim, equipos);
 
       const simWithEquipo = {
         ...simData,
@@ -1297,7 +1310,6 @@ const EquiposSim = () => {
       title: "Éxito",
       text: simData.id ? "SIM actualizada correctamente" : "SIM agregada correctamente",
     });
-
   };
 
   const handleDeleteSim = async () => {
