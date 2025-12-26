@@ -1232,15 +1232,29 @@ const EquiposSim = () => {
 
   const handleSaveSim = (simData) => {
     setSims((prev) => {
-      const isNew = !prev.find(s => s.id === simData.id);
+      const existingSim = prev.find(s => s.id === simData.id);
+      const isNew = !existingSim;
+
+      const saldoVisual = existingSim ? existingSim.ultimoSaldoRegistrado : (simData.ultimoSaldoRegistrado || "Sin registros");
+
+      let equipoMapeado = null;
+      if (simData.equipo && typeof simData.equipo === 'object') {
+        equipoMapeado = {
+          nombre: simData.equipo.nombre,
+          imei: simData.equipo.imei
+        };
+      } else if (simData.equipoNombre) {
+        equipoMapeado = {
+          nombre: simData.equipoNombre,
+          imei: simData.equipoImei
+        };
+      }
+
       const simWithEquipo = {
         ...simData,
         compañia: simData.tarifa === "M2M_GLOBAL_15" ? "M2M" : "Telcel",
-        equipo: simData.equipoNombre ? {
-          nombre: simData.equipoNombre,
-          imei: simData.equipoImei
-        } : null,
-        ultimoSaldoRegistrado: simData.ultimoSaldoRegistrado || "Sin registros"
+        equipo: equipoMapeado,
+        ultimoSaldoRegistrado: saldoVisual
       };
 
       if (isNew) {
@@ -1254,13 +1268,19 @@ const EquiposSim = () => {
 
     setAllSims((prev) => {
       const isNew = !prev.find(s => s.id === simData.id);
+
+      let equipoMapeado = null;
+      if (simData.equipo && typeof simData.equipo === 'object') {
+        equipoMapeado = {
+          nombre: simData.equipo.nombre,
+          imei: simData.equipo.imei
+        };
+      }
+
       const simWithEquipo = {
         ...simData,
         compañia: simData.tarifa === "M2M_GLOBAL_15" ? "M2M" : "Telcel",
-        equipo: simData.equipoNombre ? {
-          nombre: simData.equipoNombre,
-          imei: simData.equipoImei
-        } : null,
+        equipo: equipoMapeado
       };
 
       if (isNew) {
@@ -1271,12 +1291,13 @@ const EquiposSim = () => {
         );
       }
     });
+
     Swal.fire({
       icon: "success",
       title: "Éxito",
       text: simData.id ? "SIM actualizada correctamente" : "SIM agregada correctamente",
     });
-    fetchAllSims();
+
   };
 
   const handleDeleteSim = async () => {
