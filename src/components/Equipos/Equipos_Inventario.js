@@ -97,7 +97,7 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
           imei: equipo.imei || "",
           nombre: equipo.nombre || "",
           modeloId: equipo.modeloId || "",
-          clienteId: equipo.clienteId || null,
+          clienteId: equipo.clienteId || equipo.clienteDefault || "",
           clienteDefault: equipo.clienteDefault || null,
           proveedorId: equipo.proveedorId || "",
           tipo: equipo.tipo || "ALMACEN",
@@ -106,18 +106,12 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
           plataforma: equipo.plataforma?.id || "",
           creditosUsados: equipo.creditosUsados || 0,
         });
-        if (equipo.clienteId === null && equipo.clienteDefault) {
-          setFormData((prev) => ({
-            ...prev,
-            clienteId: equipo.clienteDefault,
-          }));
-        }
       } else {
         setFormData({
           imei: "",
           nombre: "",
           modeloId: "",
-          clienteId: null,
+          clienteId: "",
           clienteDefault: null,
           proveedorId: "",
           tipo: "ALMACEN",
