@@ -1284,7 +1284,6 @@ const ConfirmacionEnvioModal = ({ isOpen, onClose, onConfirm, tratoId, actividad
 
 const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdded, navigate }) => {
   const [isDragging, setIsDragging] = useState(false);
-  const sinActividad = (trato.actividadesAbiertasCount || 0) === 0;
 
   const handleDragStart = (e) => {
     setIsDragging(true);
@@ -1396,8 +1395,7 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
 
   return (
     <div
-      className={`trato-card ${isDragging ? "dragging" : ""} ${trato.isNeglected || sinActividad ? "desatendido" : ""
-        }`}
+      className={`trato-card ${isDragging ? "dragging" : ""} ${trato.isNeglected ? "desatendido" : ""}`}
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
