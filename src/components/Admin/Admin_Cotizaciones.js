@@ -1617,7 +1617,7 @@ const AdminCotizaciones = () => {
                   <table className="cotizaciones-table">
                     <thead className="cotizaciones-table-header-fixed">
                       <tr>
-                        <th>No.</th>
+                        <th>No. Cotización</th>
                         <th>Receptor</th>
                         <th>Fecha</th>
                         <th className="cotizaciones-equipos-column-header">Total de equipos</th>
@@ -1633,7 +1633,7 @@ const AdminCotizaciones = () => {
                         ordenarCotizaciones(cotizacionesFiltradas)
                           .map((cotizacion, index) => (
                             <tr key={cotizacion.id}>
-                              <td>{index + 1}</td>
+                              <td>#{cotizacion.id}</td>
                               <td>{cotizacion.clienteNombre}</td>
                               <td>{cotizacion.fecha}</td>
                               <td className="cotizaciones-equipos-column">{cotizacion.cantidadTotal || 0}</td>
