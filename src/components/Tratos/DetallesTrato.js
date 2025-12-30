@@ -22,7 +22,7 @@ import receivableIcon from "../../assets/icons/cuenta-cobrar.png"
 import { API_BASE_URL } from "../Config/Config";
 import EditorToolbar from '../EditorToolbar/EditorToolbar';
 import '../EditorToolbar/EditorToolbar.css';
-import { CotizacionModal, CrearCuentasModal, SubirArchivoModa } from '../Admin/Admin_Cotizaciones';
+import { CotizacionModal, CrearCuentasModal, SubirArchivoModal } from '../Admin/Admin_Cotizaciones';
 
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token");
