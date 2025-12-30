@@ -1774,3 +1774,4 @@ const AdminCotizaciones = () => {
 export default AdminCotizaciones;
 export { CotizacionModal };
 export { CrearCuentasModal };
+export { SubirArchivoModal };

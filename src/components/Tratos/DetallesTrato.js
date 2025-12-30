@@ -22,8 +22,7 @@ import receivableIcon from "../../assets/icons/cuenta-cobrar.png"
 import { API_BASE_URL } from "../Config/Config";
 import EditorToolbar from '../EditorToolbar/EditorToolbar';
 import '../EditorToolbar/EditorToolbar.css';
-import { CotizacionModal } from '../Admin/Admin_Cotizaciones';
-import { CrearCuentasModal } from "../Admin/Admin_Cotizaciones";
+import { CotizacionModal, CrearCuentasModal, SubirArchivoModa } from '../Admin/Admin_Cotizaciones';
 
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token");
@@ -3863,6 +3862,7 @@ const DetallesTrato = () => {
     crearCorreo: { isOpen: false },
     seleccionarPlantilla: { isOpen: false },
     agregarInteraccion: { isOpen: false, props: {} },
+    subirArchivo: { isOpen: false, cotizacion: null },
   })
 
   const openModal = async (modalType, data = {}) => {
@@ -5048,27 +5048,40 @@ const DetallesTrato = () => {
     openModal('editarCotizacion', { cotizacion });
   };
 
-  const handleDescargarCotizacion = async (cotizacionId) => {
+  const handleDescargarCotizacion = (cotizacionId) => {
+    const cotizacion = cotizaciones.find(c => c.id === cotizacionId);
+    if (cotizacion) {
+      openModal("subirArchivo", { cotizacion });
+    }
+  };
+
+  const executeDownload = async (cotizacionId, incluirArchivos) => {
     try {
       const response = await fetchWithToken(
-        `${API_BASE_URL}/cotizaciones/${cotizacionId}/download-pdf?incluirArchivos=false`,
-        { method: 'GET', headers: { 'Accept': 'application/pdf' } }
+        `${API_BASE_URL}/cotizaciones/${cotizacionId}/download-pdf?incluirArchivos=${incluirArchivos}`,
+        {
+          method: 'GET',
+          headers: { 'Accept': 'application/pdf' }
+        }
       );
+
+      if (!response.ok) throw new Error('Error downloading PDF');
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `COTIZACION_${cotizacionId}.pdf`;
+      a.download = `COTIZACION_${cotizacionId}_${new Date().toLocaleDateString('es-MX')}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
+
     } catch (error) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'No se pudo descargar la cotización'
+        text: 'No se pudo descargar la cotización: ' + error.message,
       });
     }
   };
@@ -6242,6 +6255,12 @@ const DetallesTrato = () => {
             }}
           />
         )}
+        <SubirArchivoModal
+          isOpen={modals.subirArchivo.isOpen}
+          onClose={() => closeModal("subirArchivo")}
+          onDownload={executeDownload}
+          cotizacion={modals.subirArchivo.cotizacion}
+        />
       </div>
     </>
   )
