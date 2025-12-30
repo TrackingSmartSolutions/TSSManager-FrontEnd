@@ -831,7 +831,9 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
       setFormData({
         cotizacionId: cotizacion.id || "",
         clienteNombre: cotizacion.clienteNombre || "",
-        noEquipos: cotizacion.unidades ? cotizacion.unidades.reduce((sum, u) => sum + u.cantidad, 0) : 0,
+        noEquipos: cotizacion.unidades 
+          ? cotizacion.unidades.reduce((sum, u) => u.unidad === "Equipos" ? sum + u.cantidad : sum, 0) 
+          : 0,
         esquema: "ANUAL",
         numeroPagos: "1",
         fechaInicial: new Date().toISOString().split('T')[0],
