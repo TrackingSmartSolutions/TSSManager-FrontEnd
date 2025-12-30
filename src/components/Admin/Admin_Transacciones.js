@@ -257,7 +257,7 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
       <form onSubmit={handleSubmit} className="transacciones-form">
         <div className="transacciones-form-row">
           <div className="transacciones-form-group">
-            <label htmlFor="fecha">Fecha <span className="required"> *</span></label>
+            <label htmlFor="fecha">Fecha de registro <span className="required"> *</span></label>
             <input
               type="date"
               id="fecha"
@@ -370,7 +370,14 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
         </div>
         <div className="transacciones-form-row">
           <div className="transacciones-form-group">
-            <label htmlFor="fechaPago">Fecha de pago <span className="required"> *</span></label>
+            <label htmlFor="fechaPago">
+              {formData.tipo === "GASTO"
+                ? "Fecha de gasto"
+                : formData.tipo === "INGRESO"
+                  ? "Fecha de cobro"
+                  : "Fecha de pago"}
+              <span className="required"> *</span>
+            </label>
             <input
               type="date"
               id="fechaPago"
