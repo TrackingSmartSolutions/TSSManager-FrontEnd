@@ -384,7 +384,15 @@ const AdminBalance = () => {
           monto: formatCurrency(ac.monto),
         }))
 
-      const equiposFormateados = balanceData.equiposVendidos.map((equipo) => ({
+      const clientesConRenta = balanceData.acumuladoCuentas
+        .filter((item) => normalizarTexto(item.categoria).includes("renta"))
+        .map((item) => item.cuenta)
+
+      const equiposRealesParaPDF = balanceData.equiposVendidos.filter((equipo) => {
+        return !clientesConRenta.includes(equipo.cliente)
+      })
+
+      const equiposFormateados = equiposRealesParaPDF.map((equipo) => ({
         cliente: equipo.cliente,
         fecha: equipo.fechaPago,
         equipos: equipo.numeroEquipos.toString(),
@@ -676,6 +684,14 @@ const AdminBalance = () => {
       { Todas: ["Todas"] },
     )
 
+  const clientesConRenta = balanceData.acumuladoCuentas
+    .filter((item) => normalizarTexto(item.categoria).includes("renta"))
+    .map((item) => item.cuenta)
+
+  const equiposVendidosReales = balanceData.equiposVendidos.filter((equipo) => {
+    return !clientesConRenta.includes(equipo.cliente)
+  })
+
   return (
     <>
       <div className="page-with-header">
@@ -877,8 +893,8 @@ const AdminBalance = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {balanceData.equiposVendidos.length > 0 ? (
-                          balanceData.equiposVendidos.map((equipo, index) => (
+                        {equiposVendidosReales.length > 0 ? (
+                          equiposVendidosReales.map((equipo, index) => (
                             <tr key={index}>
                               <td>{equipo.cliente}</td>
                               <td>{equipo.fechaPago}</td>

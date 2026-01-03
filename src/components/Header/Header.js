@@ -160,7 +160,8 @@ const Header = ({ logoUrl }) => {
         console.error("Error reproduciendo sonido de notificación:", error)
       })
     } catch (error) {
-      console.error("Error reproduciendo sonido de notificación:", error)}
+      console.error("Error reproduciendo sonido de notificación:", error)
+    }
   }
 
   // Effect para cargar el logo solo una vez por sesión
@@ -228,7 +229,7 @@ const Header = ({ logoUrl }) => {
 
   useEffect(() => {
 
-}, [actividadesDismissed]);
+  }, [actividadesDismissed]);
 
   // Función para obtener notificaciones del usuario
   const obtenerNotificaciones = async () => {
@@ -245,7 +246,7 @@ const Header = ({ logoUrl }) => {
       if (response.ok) {
         const data = await response.json();
         const notificacionesFiltradas = data.filter(n => n.tipoNotificacion !== 'ACTIVIDAD');
-        
+
         setNotificaciones(notificacionesFiltradas);
       }
     } catch (error) {
@@ -290,71 +291,71 @@ const Header = ({ logoUrl }) => {
 
   // Función para obtener actividades próximas
   const obtenerActividadesProximas = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
 
-    const response = await fetch(`${API_BASE_URL}/notificaciones/actividades-proximas`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      
-      const dismissedFromStorage = localStorage.getItem('actividadesDismissed');
-      const dismissedSet = dismissedFromStorage ? new Set(JSON.parse(dismissedFromStorage)) : new Set();
-      
-      const actividadesNuevas = data.filter(act => {
-        const esDismissed = dismissedSet.has(act.id);
-        return !esDismissed;
+      const response = await fetch(`${API_BASE_URL}/notificaciones/actividades-proximas`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Solo actualizar si hay nuevas actividades que no estaban antes
-      setActividadesProximas(prev => {
-        const idsActuales = prev.map(a => a.id);
-        
-        const realmenteNuevas = actividadesNuevas.filter(
-          act => !idsActuales.includes(act.id)
-        );
+      if (response.ok) {
+        const data = await response.json();
 
-        // Solo reproducir sonido si hay actividades realmente nuevas
-        if (realmenteNuevas.length > 0) {
-          try {
-            const audio = new Audio(actividadProxSound);
-            audio.volume = 0.8;
-            audio.play().catch(error => {
+        const dismissedFromStorage = localStorage.getItem('actividadesDismissed');
+        const dismissedSet = dismissedFromStorage ? new Set(JSON.parse(dismissedFromStorage)) : new Set();
+
+        const actividadesNuevas = data.filter(act => {
+          const esDismissed = dismissedSet.has(act.id);
+          return !esDismissed;
+        });
+
+        // Solo actualizar si hay nuevas actividades que no estaban antes
+        setActividadesProximas(prev => {
+          const idsActuales = prev.map(a => a.id);
+
+          const realmenteNuevas = actividadesNuevas.filter(
+            act => !idsActuales.includes(act.id)
+          );
+
+          // Solo reproducir sonido si hay actividades realmente nuevas
+          if (realmenteNuevas.length > 0) {
+            try {
+              const audio = new Audio(actividadProxSound);
+              audio.volume = 0.8;
+              audio.play().catch(error => {
+                console.error("Error reproduciendo sonido de actividad:", error);
+              });
+            } catch (error) {
               console.error("Error reproduciendo sonido de actividad:", error);
-            });
-          } catch (error) {
-            console.error("Error reproduciendo sonido de actividad:", error);
+            }
           }
-        }
 
-        return actividadesNuevas;
-      });
+          return actividadesNuevas;
+        });
+      }
+    } catch (error) {
+      console.error("Error al obtener actividades próximas:", error);
     }
-  } catch (error) {
-    console.error("Error al obtener actividades próximas:", error);
-  }
-};
+  };
 
   // Función para marcar actividad como dismissed (persistente)
-  const handleDismissActividad = (actividadId) => {  
-  const currentDismissed = localStorage.getItem('actividadesDismissed');
-  const dismissedSet = currentDismissed ? new Set(JSON.parse(currentDismissed)) : new Set();
-  dismissedSet.add(actividadId);
-  localStorage.setItem('actividadesDismissed', JSON.stringify([...dismissedSet]));
-    
-  // Luego actualizar el estado
-  setActividadesDismissed(dismissedSet);
-  
-  // Remover de las actividades visibles
-  setActividadesProximas(prev => {
-    const filtered = prev.filter(act => act.id !== actividadId);
-    return filtered;
-  });
-  
-};
+  const handleDismissActividad = (actividadId) => {
+    const currentDismissed = localStorage.getItem('actividadesDismissed');
+    const dismissedSet = currentDismissed ? new Set(JSON.parse(currentDismissed)) : new Set();
+    dismissedSet.add(actividadId);
+    localStorage.setItem('actividadesDismissed', JSON.stringify([...dismissedSet]));
+
+    // Luego actualizar el estado
+    setActividadesDismissed(dismissedSet);
+
+    // Remover de las actividades visibles
+    setActividadesProximas(prev => {
+      const filtered = prev.filter(act => act.id !== actividadId);
+      return filtered;
+    });
+
+  };
 
   // Función para marcar como leída
   const marcarComoLeida = async (notificacionId) => {
@@ -484,8 +485,11 @@ const Header = ({ logoUrl }) => {
 
   // Maneja temporizador de inactividad
   useEffect(() => {
-    const timeoutDuration = 30 * 60 * 1000 // 30 minutos
-    const warningDuration = 28 * 60 * 1000 // 28 minutos
+    // 1 hora = 60 minutos
+    const timeoutDuration = 60 * 60 * 1000;
+
+    // Alerta 2 minutos antes (58 minutos)
+    const warningDuration = 58 * 60 * 1000;
 
     const resetTimer = () => {
       setLastActivity(Date.now())
@@ -510,7 +514,7 @@ const Header = ({ logoUrl }) => {
           navigate("/")
         })
       } else if (timeSinceLastActivity >= warningDuration) {
-        setShowInactivityModal(true)
+        setShowInactivityModal(prev => !prev ? true : prev)
       }
     }
 
@@ -541,32 +545,28 @@ const Header = ({ logoUrl }) => {
 
   // Manejar sonido de alerta de inactividad
   useEffect(() => {
-    if (showInactivityModal && timeLeft > 0) {
-      // Crear y reproducir audio en bucle
-      const audio = new Audio(alertSound);
-      audio.loop = true;
-      audio.volume = 0.6;
-      
-      audio.play().catch(error => {
-        console.error("Error reproduciendo sonido de alerta:", error);
-      });
-      
-      setAlertAudio(audio);
-      
-      // Cleanup cuando se desmonta o cambia el estado
-      return () => {
-        if (audio) {
-          audio.pause();
-          audio.currentTime = 0;
-        }
-      };
-    } else if (alertAudio) {
-      // Detener el audio si el modal se cierra
-      alertAudio.pause();
-      alertAudio.currentTime = 0;
-      setAlertAudio(null);
+    let audioInstance = null;
+
+    if (showInactivityModal) {
+      audioInstance = new Audio(alertSound);
+      audioInstance.loop = true;
+      audioInstance.volume = 1.0;
+
+      const playPromise = audioInstance.play();
+
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.error("El navegador bloqueó la reproducción automática:", error);
+        });
+      }
     }
-  }, [showInactivityModal, timeLeft]);
+    return () => {
+      if (audioInstance) {
+        audioInstance.pause();
+        audioInstance.currentTime = 0;
+      }
+    };
+  }, [showInactivityModal]);
 
   // Cierra el sidebar al cambiar de ruta
   useEffect(() => {
@@ -606,6 +606,35 @@ const Header = ({ logoUrl }) => {
     document.addEventListener("click", handleClickOutside)
     return () => document.removeEventListener("click", handleClickOutside)
   }, [])
+
+  useEffect(() => {
+    const unlockAudio = () => {
+      const tempAudio = new Audio(alertSound);
+      tempAudio.volume = 0;
+
+      const playPromise = tempAudio.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          tempAudio.pause();
+          document.removeEventListener('click', unlockAudio);
+          document.removeEventListener('keydown', unlockAudio);
+          document.removeEventListener('touchstart', unlockAudio);
+        }).catch(error => {
+          console.log("Esperando interacción para audio...");
+        });
+      }
+    };
+
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('keydown', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
+
+    return () => {
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
+  }, []);
 
   // Formatea tiempo restante a MM:SS
   const formatTimeLeft = (seconds) => {
