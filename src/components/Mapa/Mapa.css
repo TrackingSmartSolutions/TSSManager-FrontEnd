@@ -74,16 +74,13 @@
 /* Barra lateral con información adicional */
 .mapa-sidebar {
     width: 300px;
-    /* Ancho fijo para escritorio */
     background: white;
     padding: 15px;
     border-left: 1px solid #ccc;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    scrollbar-gutter: stable;
     height: 100%;
+    display: flex;
+    flex-direction: column; 
+    overflow: hidden; 
 }
 
 /* Estilo para el título de la barra lateral */
@@ -93,9 +90,15 @@
     color: #333;
 }
 
-/* Estilo para los párrafos de detalles en la barra lateral */
+.mapa-details {
+    flex-grow: 1;           
+    overflow-y: auto;      
+    margin-bottom: 10px;   
+    padding-right: 5px;     
+}
+
 .mapa-details p {
-    margin: 5px 0;
+    margin: 8px 0;         
     font-size: 0.95em;
 }
 
@@ -108,6 +111,15 @@
 /* Efecto hover para los enlaces */
 .mapa-details a:hover {
     text-decoration: underline;
+}
+
+.mapa-sidebar-footer {
+    flex-shrink: 0; 
+    border-top: 1px solid #eee; 
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px; 
 }
 
 /* Contenedor para el botón de direcciones */

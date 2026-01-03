@@ -172,22 +172,22 @@ const Mapa = () => {
     }, [companies, selectedSector]);
 
     const displayedCompanies = useMemo(() => {
-    // Si hay muchos marcadores, mostrar solo algunos en zoom bajo
-    if (companiesWithCoords.length > 100) {
-        const filtered = companiesWithCoords.filter((_, index) => index % 2 === 0);
-        
-        // ASEGURAR que la empresa seleccionada siempre esté incluida
-        if (selectedMarker && !filtered.find(c => c.id === selectedMarker.id)) {
-            const selectedCompany = companiesWithCoords.find(c => c.id === selectedMarker.id);
-            if (selectedCompany) {
-                filtered.push(selectedCompany);
+        // Si hay muchos marcadores, mostrar solo algunos en zoom bajo
+        if (companiesWithCoords.length > 100) {
+            const filtered = companiesWithCoords.filter((_, index) => index % 2 === 0);
+
+            // ASEGURAR que la empresa seleccionada siempre esté incluida
+            if (selectedMarker && !filtered.find(c => c.id === selectedMarker.id)) {
+                const selectedCompany = companiesWithCoords.find(c => c.id === selectedMarker.id);
+                if (selectedCompany) {
+                    filtered.push(selectedCompany);
+                }
             }
+
+            return filtered;
         }
-        
-        return filtered;
-    }
-    return companiesWithCoords;
-}, [companiesWithCoords, selectedMarker]);
+        return companiesWithCoords;
+    }, [companiesWithCoords, selectedMarker]);
 
     // Mapas para traducir estados a texto legible
     const statusMap = {
@@ -337,6 +337,7 @@ const Mapa = () => {
                         {selectedMarker ? (
                             <>
                                 <h3>{selectedMarker.nombre}</h3>
+
                                 <div className="mapa-details">
                                     <p><strong>Estatus:</strong> {getStatusText(selectedMarker.estatus)}</p>
                                     <p>
@@ -352,14 +353,17 @@ const Mapa = () => {
                                     <p><strong>Sector:</strong> {getSectorText(selectedMarker.sectorId)}</p>
                                     <p><strong>Domicilio Físico:</strong> {selectedMarker.domicilioFisico}</p>
                                 </div>
-                                <div className="mapa-directions-button">
-                                    <button onClick={handleGetDirections} className="mapa-btn mapa-btn-directions" title="Obtener direcciones">
-                                        <img src={carIcon} alt="Obtener direcciones" className="mapa-car-icon" />
+
+                                <div className="mapa-sidebar-footer">
+                                    <div className="mapa-directions-button">
+                                        <button onClick={handleGetDirections} className="mapa-btn mapa-btn-directions" title="Obtener direcciones">
+                                            <img src={carIcon} alt="Obtener direcciones" className="mapa-car-icon" />
+                                        </button>
+                                    </div>
+                                    <button className="mapa-btn mapa-btn-secondary" onClick={() => setSelectedMarker(null)}>
+                                        Cerrar
                                     </button>
                                 </div>
-                                <button className="mapa-btn mapa-btn-secondary" onClick={() => setSelectedMarker(null)}>
-                                    Cerrar
-                                </button>
                             </>
                         ) : (
                             <p>Selecciona un marcador para ver los detalles</p>
