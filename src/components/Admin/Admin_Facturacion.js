@@ -920,9 +920,22 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, tipo, item }) =
       <div className="facturacion-confirmar-eliminacion">
         <div className="facturacion-confirmation-content">
           <p className="facturacion-confirmation-message">{getMessage()}</p>
-          <div className="facturacion-modal-form-actions">
-            <button type="button" onClick={onClose} className="facturacion-btn facturacion-btn-cancel">Cancelar</button>
-            <button type="button" onClick={onConfirm} className="facturacion-btn facturacion-btn-confirm">Confirmar</button>
+
+          <div className="facturacion-confirmation-actions">
+            <button
+              type="button"
+              onClick={onClose}
+              className="facturacion-btn facturacion-btn-cancel"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={onConfirm}
+              className="facturacion-btn facturacion-btn-confirm"
+            >
+              Confirmar
+            </button>
           </div>
         </div>
       </div>
@@ -1263,7 +1276,17 @@ const AdminFacturacion = () => {
             text: "Solicitud eliminada correctamente",
           });
         } catch (error) {
-          Swal.fire({ icon: "error", title: "Error", text: error.message });
+          let mensajeError = error.message;
+
+          if (error.message.includes("cuenta por cobrar asociada ya ha sido marcada como pagada")) {
+            mensajeError = "No se puede eliminar esta solicitud porque la cuenta por cobrar asociada ya está pagada.";
+          }
+
+          Swal.fire({
+            icon: "error",
+            title: "No se puede eliminar",
+            text: mensajeError
+          });
         }
       },
     });
@@ -1509,75 +1532,75 @@ const AdminFacturacion = () => {
                   <h4 className="facturacion-table-title">Solicitudes de Facturas y Notas</h4>
                   <div className="facturacion-filters-container">
 
-                  <div className="facturacion-filter-container">
-                    <div style={{ height: '21px' }}></div> 
-                    <button
-                      className="facturacion-btn-orden"
-                      onClick={toggleOrdenFecha}
-                      title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'}`}
-                    >
-                      {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
-                    </button>
-                  </div>
+                    <div className="facturacion-filter-container">
+                      <div style={{ height: '21px' }}></div>
+                      <button
+                        className="facturacion-btn-orden"
+                        onClick={toggleOrdenFecha}
+                        title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'}`}
+                      >
+                        {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
+                      </button>
+                    </div>
 
-                  <div className="facturacion-filter-container">
-                    <label htmlFor="filtroReceptor">Filtrar por receptor:</label>
-                    <select
-                      id="filtroReceptor"
-                      value={filtroReceptor}
-                      onChange={(e) => setFiltroReceptor(e.target.value)}
-                      className="facturacion-filter-select"
-                    >
-                      <option value="">Todos los receptores</option>
-                      {receptoresUnicos.map((receptor, index) => (
-                        <option key={index} value={receptor}>
-                          {receptor}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                    <div className="facturacion-filter-container">
+                      <label htmlFor="filtroReceptor">Filtrar por receptor:</label>
+                      <select
+                        id="filtroReceptor"
+                        value={filtroReceptor}
+                        onChange={(e) => setFiltroReceptor(e.target.value)}
+                        className="facturacion-filter-select"
+                      >
+                        <option value="">Todos los receptores</option>
+                        {receptoresUnicos.map((receptor, index) => (
+                          <option key={index} value={receptor}>
+                            {receptor}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                  <div className="facturacion-filter-container facturacion-date-filter">
-                    <label>Filtrar por fecha emisión:</label>
-                    <div className="facturacion-date-inputs">
-                      <input
-                        type="date"
-                        value={filtroFechas.fechaInicio}
-                        onChange={(e) => handleFiltroFechas("fechaInicio", e.target.value)}
-                        className="facturacion-date-input"
-                        placeholder="Inicio"
-                      />
-                      <span className="facturacion-date-separator">a</span>
-                      <input
-                        type="date"
-                        value={filtroFechas.fechaFin}
-                        onChange={(e) => handleFiltroFechas("fechaFin", e.target.value)}
-                        className="facturacion-date-input"
-                        placeholder="Fin"
-                      />
-                      {filtroFechas.activo && (
-                        <button
-                          type="button"
-                          onClick={limpiarFiltroFechas}
-                          className="facturacion-clear-filter-btn"
-                          title="Limpiar fechas"
-                        >
-                          ✕
-                        </button>
-                      )}
+                    <div className="facturacion-filter-container facturacion-date-filter">
+                      <label>Filtrar por fecha emisión:</label>
+                      <div className="facturacion-date-inputs">
+                        <input
+                          type="date"
+                          value={filtroFechas.fechaInicio}
+                          onChange={(e) => handleFiltroFechas("fechaInicio", e.target.value)}
+                          className="facturacion-date-input"
+                          placeholder="Inicio"
+                        />
+                        <span className="facturacion-date-separator">a</span>
+                        <input
+                          type="date"
+                          value={filtroFechas.fechaFin}
+                          onChange={(e) => handleFiltroFechas("fechaFin", e.target.value)}
+                          className="facturacion-date-input"
+                          placeholder="Fin"
+                        />
+                        {filtroFechas.activo && (
+                          <button
+                            type="button"
+                            onClick={limpiarFiltroFechas}
+                            className="facturacion-clear-filter-btn"
+                            title="Limpiar fechas"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="facturacion-filter-container">
+                      <div style={{ height: '21px' }}></div>
+                      <button
+                        className="facturacion-btn facturacion-btn-primary"
+                        onClick={() => openModal("solicitud", { solicitud: null })}
+                      >
+                        Generar
+                      </button>
                     </div>
                   </div>
-
-                  <div className="facturacion-filter-container">
-                    <div style={{ height: '21px' }}></div>
-                    <button
-                      className="facturacion-btn facturacion-btn-primary"
-                      onClick={() => openModal("solicitud", { solicitud: null })}
-                    >
-                      Generar
-                    </button>
-                  </div>
-                </div>
                 </div>
 
                 <div className="facturacion-table-container">
@@ -1597,83 +1620,95 @@ const AdminFacturacion = () => {
                     </thead>
                     <tbody>
                       {solicitudesOrdenadas.length > 0 ? (
-                        solicitudesOrdenadas.map((solicitud) => (
-                          <tr key={solicitud.id}>
-                            <td>{solicitud.identificador}</td>
-                            <td>{solicitud.fechaEmision || "N/A"}</td>
-                            <td>{solicitud.receptor || "N/A"}</td>
-                            <td className="facturacion-concepto-cell">{solicitud.concepto || "N/A"}</td>
-                            <td>${(solicitud.total || 0).toFixed(2)}</td>
-                            <td>
-                              {solicitud.metodoPago === "PUE"
-                                ? "Pago en una sola exhibición (PUE)"
-                                : solicitud.metodoPago === "PPD"
-                                  ? "Pago en parcialidades o diferido (PPD)"
-                                  : "N/A"}
-                            </td>
-                            <td>
-                              {solicitud.formaPago === "01"
-                                ? "Efectivo"
-                                : solicitud.formaPago === "03"
-                                  ? "Transferencia electrónica de fondos"
-                                  : solicitud.formaPago === "02"
-                                    ? "Tarjeta Spin"
-                                    : solicitud.formaPago === "04"
-                                      ? "Tarjeta de crédito"
-                                      : solicitud.formaPago === "28"
-                                        ? "Tarjeta de débito"
-                                        : solicitud.formaPago === "07"
-                                          ? "Con saldo acumulado"
-                                          : solicitud.formaPago === "30"
-                                            ? "Aplicación de anticipos"
-                                            : solicitud.formaPago === "99"
-                                              ? "Por definir"
-                                              : "otros"}
-                            </td>
-                            <td>{solicitud.folio || "N/A"}</td>
-                            <td>
-                              <div className="facturacion-actions">
-                                <button
-                                  className="facturacion-action-btn facturacion-edit-btn"
-                                  onClick={() => openModal("solicitud", { solicitud })}
-                                  title="Editar"
-                                >
-                                  <img src={editIcon || "/placeholder.svg"} alt="Editar" className="facturacion-action-icon" />
-                                </button>
-                                <button
-                                  className="facturacion-action-btn facturacion-delete-btn"
-                                  onClick={() => handleDeleteSolicitud(solicitud)}
-                                  title="Eliminar"
-                                >
-                                  <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" className="facturacion-action-icon" />
-                                </button>
-                                <button
-                                  className="facturacion-action-btn facturacion-download-btn"
-                                  onClick={() => openModal("conceptos", { solicitud })}
-                                  title="Editar conceptos y descargar PDF"
-                                >
-                                  <img src={downloadIcon || "/placeholder.svg"} alt="Editar conceptos" className="facturacion-action-icon" />
-                                </button>
-                                {solicitud.tipo === "SOLICITUD_DE_FACTURA" && (
+                        solicitudesOrdenadas.map((solicitud) => {
+                          const cuentaAsociada = cuentasPorCobrar.find(
+                            c => c.id === solicitud.cuentaPorCobrarId
+                          );
+                          const esCuentaPagada = cuentaAsociada?.estatus === "PAGADO";
+                          return (
+                            <tr key={solicitud.id}>
+                              <td>{solicitud.identificador}</td>
+                              <td>{solicitud.fechaEmision || "N/A"}</td>
+                              <td>{solicitud.receptor || "N/A"}</td>
+                              <td className="facturacion-concepto-cell">{solicitud.concepto || "N/A"}</td>
+                              <td>${(solicitud.total || 0).toFixed(2)}</td>
+                              <td>
+                                {solicitud.metodoPago === "PUE"
+                                  ? "Pago en una sola exhibición (PUE)"
+                                  : solicitud.metodoPago === "PPD"
+                                    ? "Pago en parcialidades o diferido (PPD)"
+                                    : "N/A"}
+                              </td>
+                              <td>
+                                {solicitud.formaPago === "01"
+                                  ? "Efectivo"
+                                  : solicitud.formaPago === "03"
+                                    ? "Transferencia electrónica de fondos"
+                                    : solicitud.formaPago === "02"
+                                      ? "Tarjeta Spin"
+                                      : solicitud.formaPago === "04"
+                                        ? "Tarjeta de crédito"
+                                        : solicitud.formaPago === "28"
+                                          ? "Tarjeta de débito"
+                                          : solicitud.formaPago === "07"
+                                            ? "Con saldo acumulado"
+                                            : solicitud.formaPago === "30"
+                                              ? "Aplicación de anticipos"
+                                              : solicitud.formaPago === "99"
+                                                ? "Por definir"
+                                                : "otros"}
+                              </td>
+                              <td>{solicitud.folio || "N/A"}</td>
+                              <td>
+                                <div className="facturacion-actions">
                                   <button
-                                    className={`facturacion-action-btn ${solicitudesTimbradas.has(solicitud.identificador)
-                                      ? 'facturacion-stamp-btn-vinculada'
-                                      : 'facturacion-stamp-btn-disponible'
-                                      }`}
-                                    onClick={() => handleTimbrarClick(solicitud)}
-                                    title={solicitudesTimbradas.has(solicitud.identificador) ? "Ya timbrada" : "Timbrar"}
+                                    className="facturacion-action-btn facturacion-edit-btn"
+                                    onClick={() => openModal("solicitud", { solicitud })}
+                                    title="Editar"
                                   >
-                                    <img
-                                      src={stampIcon || "/placeholder.svg"}
-                                      alt="Timbrar"
-                                      className="facturacion-action-icon"
-                                    />
+                                    <img src={editIcon || "/placeholder.svg"} alt="Editar" className="facturacion-action-icon" />
                                   </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))
+                                  <button
+                                    className={`facturacion-action-btn facturacion-delete-btn ${esCuentaPagada ? 'facturacion-btn-disabled' : ''
+                                      }`}
+                                    onClick={() => !esCuentaPagada && handleDeleteSolicitud(solicitud)}
+                                    disabled={esCuentaPagada}
+                                    title={
+                                      esCuentaPagada
+                                        ? "No se puede eliminar - Cuenta pagada"
+                                        : "Eliminar"
+                                    }
+                                  >
+                                    <img src={deleteIcon} alt="Eliminar" className="facturacion-action-icon" />
+                                  </button>
+                                  <button
+                                    className="facturacion-action-btn facturacion-download-btn"
+                                    onClick={() => openModal("conceptos", { solicitud })}
+                                    title="Editar conceptos y descargar PDF"
+                                  >
+                                    <img src={downloadIcon || "/placeholder.svg"} alt="Editar conceptos" className="facturacion-action-icon" />
+                                  </button>
+                                  {solicitud.tipo === "SOLICITUD_DE_FACTURA" && (
+                                    <button
+                                      className={`facturacion-action-btn ${solicitudesTimbradas.has(solicitud.identificador)
+                                        ? 'facturacion-stamp-btn-vinculada'
+                                        : 'facturacion-stamp-btn-disponible'
+                                        }`}
+                                      onClick={() => handleTimbrarClick(solicitud)}
+                                      title={solicitudesTimbradas.has(solicitud.identificador) ? "Ya timbrada" : "Timbrar"}
+                                    >
+                                      <img
+                                        src={stampIcon || "/placeholder.svg"}
+                                        alt="Timbrar"
+                                        className="facturacion-action-icon"
+                                      />
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
                       ) : (
                         <tr>
                           <td colSpan="9" className="facturacion-no-data">No hay solicitudes registradas</td>
