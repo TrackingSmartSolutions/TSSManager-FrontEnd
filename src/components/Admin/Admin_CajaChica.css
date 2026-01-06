@@ -339,9 +339,9 @@
 .cajachica-btn-reporte {
   background-color: #c73232;
   color: white;
-  padding: var(--cajachica-spacing-md) var(--cajachica-spacing-xl);
-  font-size: var(--cajachica-font-size-md);
-  min-width: 150px;
+  padding: var(--cajachica-spacing-sm) var(--cajachica-spacing-lg);
+  font-size: var(--cajachica-font-size-sm);
+  min-width: 100px;
 }
 
 .cajachica-btn-reporte:hover {

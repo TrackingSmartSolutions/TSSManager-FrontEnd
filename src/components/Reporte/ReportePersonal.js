@@ -20,6 +20,85 @@ const fetchWithToken = async (url, options = {}) => {
   return response;
 };
 
+const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayClick = true }) => {
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "unset";
+    return () => { document.body.style.overflow = "unset"; };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const overlayStyle = {
+    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050
+  };
+
+  let widthStyle = '500px';
+  let maxWidthStyle = '95%';
+
+  if (size === 'lg') widthStyle = '800px';
+  if (size === 'xl') widthStyle = '950px';
+
+  const contentStyle = {
+    backgroundColor: 'white', borderRadius: '8px', padding: '20px',
+    maxHeight: '95vh', overflowY: 'auto', width: widthStyle, maxWidth: maxWidthStyle,
+    position: 'relative', boxShadow: '0 5px 15px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column'
+  };
+
+  return (
+    <div style={overlayStyle} onClick={closeOnOverlayClick ? onClose : () => { }}>
+      <div style={contentStyle} onClick={(e) => e.stopPropagation()}>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          marginBottom: '10px', borderBottom: '1px solid #dee2e6', paddingBottom: '10px'
+        }}>
+          <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>{title}</h2>
+          <button onClick={onClose} style={{
+            border: 'none', background: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#6c757d', padding: '0 5px'
+          }}>✕</button>
+        </div>
+        <div style={{ flex: 1, overflowY: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Modal de Vista Previa
+const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
+  if (!isOpen) return null;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Vista previa" size="xl" closeOnOverlayClick={false}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+          <button
+            type="button"
+            onClick={onDownload}
+            className="reporte-btn reporte-btn-download"
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', width: 'auto', padding: '8px 16px' }}
+          >
+            <img src={downloadIcon} alt="Descargar" className="reporte-btn-icon" style={{ width: '16px', height: '16px' }} />
+            Descargar PDF
+          </button>
+        </div>
+
+        <div style={{
+          border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden',
+          height: '75vh'
+        }}>
+          <iframe
+            src={`${pdfUrl}#view=FitH&navpanes=0`}
+            title="Vista Previa"
+            width="100%" height="100%" style={{ border: 'none' }}
+          />
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
 const ReportePersonal = () => {
   const [dateRange, setDateRange] = useState({
     startDate: null,
@@ -33,6 +112,11 @@ const ReportePersonal = () => {
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [pdfPreview, setPdfPreview] = useState({
+    isOpen: false,
+    url: null,
+    filename: ""
+  });
 
   const activitiesChartRef = useRef(null);
   const companiesChartRef = useRef(null);
@@ -750,14 +834,15 @@ const ReportePersonal = () => {
 
       const userInfo = `${(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR") && selectedUser ? selectedUser : `${currentUser.nombre} ${currentUser.apellidos}`}`;
       const fileName = `Reporte_${userInfo.replace(/\s+/g, '_')}_${dateRange.startDate || getTodayDate()}_${dateRange.endDate || getTodayDate()}.pdf`;
-      doc.save(fileName);
+      const blobUrl = doc.output('bloburl');
 
-      Swal.fire({
-        icon: "success",
-        title: "Reporte generado",
-        text: "PDF descargado exitosamente",
-        confirmButtonColor: '#2563eb'
+      setPdfPreview({
+        isOpen: true,
+        url: blobUrl,
+        filename: fileName
       });
+
+      Swal.close();
 
     } catch (error) {
       console.error("Error generando PDF:", error);
@@ -770,6 +855,33 @@ const ReportePersonal = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDownloadFromPreview = () => {
+    if (pdfPreview.url) {
+      const a = document.createElement('a');
+      a.href = pdfPreview.url;
+      a.download = pdfPreview.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      Swal.fire({
+        icon: "success",
+        title: "Reporte descargado",
+        text: "PDF guardado exitosamente",
+        confirmButtonColor: '#2563eb',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    }
+  };
+
+  const handleClosePreview = () => {
+    if (pdfPreview.url) {
+      window.URL.revokeObjectURL(pdfPreview.url);
+    }
+    setPdfPreview({ isOpen: false, url: null, filename: "" });
   };
 
   const handleUserChange = (e) => {
@@ -830,7 +942,7 @@ const ReportePersonal = () => {
                 </div>
                 <button className="reporte-btn reporte-btn-download" onClick={handleDownloadPDF}>
                   <img src={downloadIcon} alt="Descargar" className="reporte-btn-icon" />
-                  Descargar PDF
+                  Visualizar PDF
                 </button>
               </div>
             </div>
@@ -902,6 +1014,12 @@ const ReportePersonal = () => {
             </div>
           </div>
         </main>
+        <PdfPreviewModal
+          isOpen={pdfPreview.isOpen}
+          onClose={handleClosePreview}
+          pdfUrl={pdfPreview.url}
+          onDownload={handleDownloadFromPreview}
+        />
       </div>
     </>
   );

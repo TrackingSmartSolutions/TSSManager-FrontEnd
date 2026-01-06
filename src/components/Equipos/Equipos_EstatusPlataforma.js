@@ -74,42 +74,83 @@ const useCountdown = (targetTime) => {
 };
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
+const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayClick = true }) => {
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-
-    return () => {
-      document.body.style.overflow = "unset";
-    };
+    document.body.style.overflow = isOpen ? "hidden" : "unset";
+    return () => { document.body.style.overflow = "unset"; };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const sizeClasses = {
-    sm: "estatusplataforma-modal-sm",
-    md: "estatusplataforma-modal-md",
-    lg: "estatusplataforma-modal-lg",
-    xl: "estatusplataforma-modal-xl",
+  const overlayStyle = {
+    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050
+  };
+
+  let widthStyle = '500px';
+  let maxWidthStyle = '95%';
+
+  if (size === 'sm') widthStyle = '400px';
+  if (size === 'md') widthStyle = '600px';
+  if (size === 'lg') widthStyle = '800px';
+  if (size === 'xl') widthStyle = '950px';
+
+  const contentStyle = {
+    backgroundColor: 'white', borderRadius: '8px', padding: '20px',
+    maxHeight: '95vh', overflowY: 'auto', width: widthStyle, maxWidth: maxWidthStyle,
+    position: 'relative', boxShadow: '0 5px 15px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column'
   };
 
   return (
-    <div className="estatusplataforma-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
-      <div className={`estatusplataforma-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
-        <div className="estatusplataforma-modal-header">
-          <h2 className="estatusplataforma-modal-title">{title}</h2>
-          {canClose && (
-            <button className="estatusplataforma-modal-close" onClick={onClose}>
-              ✕
-            </button>
-          )}
+    <div style={overlayStyle} onClick={closeOnOverlayClick ? onClose : () => { }}>
+      <div style={contentStyle} onClick={(e) => e.stopPropagation()}>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          marginBottom: '10px', borderBottom: '1px solid #dee2e6', paddingBottom: '10px'
+        }}>
+          <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>{title}</h2>
+          <button onClick={onClose} style={{
+            border: 'none', background: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#6c757d', padding: '0 5px'
+          }}>✕</button>
         </div>
-        <div className="estatusplataforma-modal-body">{children}</div>
+        <div style={{ flex: 1, overflowY: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          {children}
+        </div>
       </div>
     </div>
+  );
+};
+
+// Modal de Vista Previa
+const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
+  if (!isOpen) return null;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Vista previa" size="xl" closeOnOverlayClick={false}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+          <button
+            type="button"
+            onClick={onDownload}
+            className="estatusplataforma-btn estatusplataforma-btn-pdf"
+            style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+          >
+            Descargar PDF
+          </button>
+        </div>
+
+        <div style={{
+          border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden',
+          height: '75vh'
+        }}>
+          <iframe
+            src={`${pdfUrl}#view=FitH&navpanes=0`}
+            title="Vista Previa"
+            width="100%" height="100%" style={{ border: 'none' }}
+          />
+        </div>
+      </div>
+    </Modal>
   );
 };
 
@@ -347,29 +388,29 @@ const CheckEquiposSidePanel = ({
         </div>
 
         <div className="estatusplataforma-side-panel-content">
-           <div style={{ flexShrink: 0 }}>
-          <div className="estatusplataforma-side-panel-form-group">
-            <label htmlFor="plataforma">Plataforma</label>
-            <select
-              id="plataforma"
-              value={selectedPlatform}
-              onChange={(e) => setSelectedPlatform(e.target.value)}
-              className="estatusplataforma-side-panel-form-control"
-            >
-              {plataformas.map((plataforma) => (
-                <option key={plataforma} value={plataforma}>
-                  {platformMap[plataforma] || plataforma || "Sin Plataforma"}
-                </option>
-              ))}
-            </select>
-          </div>
+          <div style={{ flexShrink: 0 }}>
+            <div className="estatusplataforma-side-panel-form-group">
+              <label htmlFor="plataforma">Plataforma</label>
+              <select
+                id="plataforma"
+                value={selectedPlatform}
+                onChange={(e) => setSelectedPlatform(e.target.value)}
+                className="estatusplataforma-side-panel-form-control"
+              >
+                {plataformas.map((plataforma) => (
+                  <option key={plataforma} value={plataforma}>
+                    {platformMap[plataforma] || plataforma || "Sin Plataforma"}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div className="estatusplataforma-side-panel-form-group">
-            <div className="estatusplataforma-progress-info">
-              <span>Progreso total: {Object.values(equiposStatus).filter(s => s.status !== null).length} / {equipos.length} equipos</span>
+            <div className="estatusplataforma-side-panel-form-group">
+              <div className="estatusplataforma-progress-info">
+                <span>Progreso total: {Object.values(equiposStatus).filter(s => s.status !== null).length} / {equipos.length} equipos</span>
+              </div>
             </div>
           </div>
-           </div>
 
           <div className="estatusplataforma-side-panel-table-container">
             <table className="estatusplataforma-side-panel-table">
@@ -580,6 +621,11 @@ const EquiposEstatusPlataforma = () => {
 
   const [lastCheckTime, setLastCheckTime] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [pdfPreview, setPdfPreview] = useState({
+    isOpen: false,
+    url: null,
+    filename: ""
+  });
 
   const fetchData = async () => {
     try {
@@ -688,6 +734,12 @@ const EquiposEstatusPlataforma = () => {
   };
 
   const handleGeneratePDF = async () => {
+    Swal.fire({
+      title: 'Generando vista previa...',
+      text: 'Por favor espere',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
     const element = document.createElement("div");
     const chartImages = await Promise.all([
       getChartImage("estatusClienteChart"),
@@ -934,7 +986,50 @@ const EquiposEstatusPlataforma = () => {
       pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
-    html2pdf().set(opt).from(element).save();
+    try {
+        const blobUrl = await html2pdf().set(opt).from(element).output('bloburl');
+        
+        setPdfPreview({
+            isOpen: true,
+            url: blobUrl,
+            filename: opt.filename
+        });
+        
+        Swal.close(); 
+        
+    } catch (error) {
+        console.error("Error al generar PDF:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo generar la vista previa del PDF'
+        });
+    }
+  };
+
+  const handleDownloadFromPreview = () => {
+    if (pdfPreview.url) {
+      const a = document.createElement('a');
+      a.href = pdfPreview.url;
+      a.download = pdfPreview.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      Swal.fire({
+        icon: "success",
+        title: "Descarga iniciada",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    }
+  };
+
+  const handleClosePreview = () => {
+    if (pdfPreview.url) {
+      window.URL.revokeObjectURL(pdfPreview.url);
+    }
+    setPdfPreview({ isOpen: false, url: null, filename: "" });
   };
 
 
@@ -1315,7 +1410,7 @@ const EquiposEstatusPlataforma = () => {
 
               <div className="estatusplataforma-pdf-button-container">
                 <button className="estatusplataforma-btn estatusplataforma-btn-pdf" onClick={handleGeneratePDF}>
-                  Crear PDF
+                  Visualizar PDF
                 </button>
               </div>
             </section>
@@ -1347,6 +1442,12 @@ const EquiposEstatusPlataforma = () => {
                 confirmarCambio: { ...prev.confirmarCambio, motivo },
               }))
             }
+          />
+          <PdfPreviewModal
+            isOpen={pdfPreview.isOpen}
+            onClose={handleClosePreview}
+            pdfUrl={pdfPreview.url}
+            onDownload={handleDownloadFromPreview}
           />
         </main>
       </div>

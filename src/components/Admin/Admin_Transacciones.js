@@ -823,6 +823,7 @@ const AdminTransacciones = () => {
   const [cuentas, setCuentas] = useState([]);
   const [filtrosCuenta, setFiltrosCuenta] = useState("Todas");
   const [filtroCategoria, setFiltroCategoria] = useState("Todas");
+  const [filtroFormaPago, setFiltroFormaPago] = useState("Todas");
   const [isLoading, setIsLoading] = useState(true);
   const [ordenFecha, setOrdenFecha] = useState('asc');
   const [modals, setModals] = useState({
@@ -1101,7 +1102,11 @@ const AdminTransacciones = () => {
     ? transaccionesPorCategoria
     : transaccionesPorCategoria.filter((t) => t.cuenta && t.cuenta.nombre === filtrosCuenta);
 
-  const transaccionesFiltradas = transaccionesSinOrdenar.sort((a, b) => {
+  const transaccionesPorFormaPago = filtroFormaPago === "Todas"
+    ? transaccionesSinOrdenar
+    : transaccionesSinOrdenar.filter((t) => t.formaPago === filtroFormaPago);
+
+  const transaccionesFiltradas = transaccionesPorFormaPago.sort((a, b) => {
     const fechaA = new Date(a.fechaPago);
     const fechaB = new Date(b.fechaPago);
     return ordenFecha === 'desc' ? fechaB - fechaA : fechaA - fechaB;
@@ -1123,6 +1128,14 @@ const AdminTransacciones = () => {
   const toggleOrdenFecha = () => {
     setOrdenFecha(prevOrden => prevOrden === 'desc' ? 'asc' : 'desc');
   };
+
+  const totalIngresos = transaccionesFiltradas
+    .filter(t => t.tipo === "INGRESO")
+    .reduce((acc, curr) => acc + Number(curr.monto), 0);
+
+  const totalGastos = transaccionesFiltradas
+    .filter(t => t.tipo === "GASTO")
+    .reduce((acc, curr) => acc + Number(curr.monto), 0);
 
   return (
     <>
@@ -1177,6 +1190,12 @@ const AdminTransacciones = () => {
                 </div>
                 <div className="transacciones-header-actions">
                   <button
+                    className="transacciones-btn transacciones-btn-primary"
+                    onClick={() => openModal("nuevaTransaccion")}
+                  >
+                    Crear transacción
+                  </button>
+                  <button
                     className="transacciones-btn transacciones-btn-secondary"
                     onClick={() => openModal("gestionarCategorias")}
                   >
@@ -1190,43 +1209,71 @@ const AdminTransacciones = () => {
                   </button>
                 </div>
               </div>
+              <div className="transacciones-summary-cards">
+                <div className="summary-card ingreso">
+                  <span className="summary-label">Total Ingresos</span>
+                  <span className="summary-amount">
+                    ${totalIngresos.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="summary-card gasto">
+                  <span className="summary-label">Total Gastos</span>
+                  <span className="summary-amount">
+                    ${totalGastos.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
               <div className="transacciones-filters-section">
-                <div className="transacciones-filters-column">
-                  <div className="transacciones-filter-row">
-                    <div className="transacciones-filter-group">
-                      <select
-                        value={filtroCategoria}
-                        onChange={(e) => handleCategoriaChange(e.target.value)}
-                        className="transacciones-filter-select"
-                      >
-                        {categoriasUnicas.map((categoria) => (
-                          <option key={categoria} value={categoria}>
-                            {categoria === "Todas" ? "Todas las categorías" : categoria}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                <div className="filters-left">
+
+                  <div className="transacciones-filter-group">
+                    <select
+                      value={filtroFormaPago}
+                      onChange={(e) => setFiltroFormaPago(e.target.value)}
+                      className="transacciones-filter-select"
+                    >
+                      <option value="Todas">Todas las formas de pago</option>
+                      {formasPago.map((forma) => (
+                        <option key={forma.value} value={forma.value}>
+                          {forma.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
-                  <div className="transacciones-filter-row">
-                    <div className="transacciones-filter-group">
-                      <select
-                        value={filtrosCuenta}
-                        onChange={(e) => setFiltrosCuenta(e.target.value)}
-                        className="transacciones-filter-select"
-                      >
-                        {cuentasUnicas.map((cuenta) => (
-                          <option key={cuenta} value={cuenta}>
-                            {cuenta === "Todas" ? "Todas las cuentas" : cuenta}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                  <div className="transacciones-filter-group">
+                    <select
+                      value={filtroCategoria}
+                      onChange={(e) => handleCategoriaChange(e.target.value)}
+                      className="transacciones-filter-select"
+                    >
+                      {categoriasUnicas.map((categoria) => (
+                        <option key={categoria} value={categoria}>
+                          {categoria === "Todas" ? "Todas las categorías" : categoria}
+                        </option>
+                      ))}
+                    </select>
                   </div>
+
+                  <div className="transacciones-filter-group">
+                    <select
+                      value={filtrosCuenta}
+                      onChange={(e) => setFiltrosCuenta(e.target.value)}
+                      className="transacciones-filter-select"
+                    >
+                      {cuentasUnicas.map((cuenta) => (
+                        <option key={cuenta} value={cuenta}>
+                          {cuenta === "Todas" ? "Todas las cuentas" : cuenta}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                 </div>
-                <div className="transacciones-filtros-fecha">
+
+                <div className="filters-right">
                   <div className="transacciones-filtro-grupo">
-                    <label>Fecha inicio:</label>
+                    <label>De:</label>
                     <input
                       type="date"
                       value={filtroFechas.fechaInicio}
@@ -1235,7 +1282,7 @@ const AdminTransacciones = () => {
                     />
                   </div>
                   <div className="transacciones-filtro-grupo">
-                    <label>Fecha fin:</label>
+                    <label>Hasta:</label>
                     <input
                       type="date"
                       value={filtroFechas.fechaFin}
@@ -1246,8 +1293,9 @@ const AdminTransacciones = () => {
                   <button
                     className="transacciones-btn transacciones-btn-filtro"
                     onClick={() => setFiltroFechas(obtenerRangoMesActual())}
+                    title="Mes actual"
                   >
-                    Mes actual
+                    Mes
                   </button>
                   <button
                     className="transacciones-btn transacciones-btn-filtro transacciones-btn-orden"
@@ -1255,15 +1303,6 @@ const AdminTransacciones = () => {
                     title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
                   >
                     {ordenFecha === 'desc' ? '📅 ↓ Recientes primero' : '📅 ↑ Antiguas primero'}
-                  </button>
-                </div>
-
-                <div className="transacciones-actions-group">
-                  <button
-                    className="transacciones-btn transacciones-btn-primary"
-                    onClick={() => openModal("nuevaTransaccion")}
-                  >
-                    Crear transacción
                   </button>
                 </div>
               </div>

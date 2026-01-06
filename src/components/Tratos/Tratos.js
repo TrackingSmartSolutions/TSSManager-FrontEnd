@@ -394,7 +394,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     const currentDate = new Date().toLocaleDateString('en-CA');
     const now = new Date();
     const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-    if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
+    if (!formData.nombreContacto) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fecha.trim()) newErrors.fecha = "Este campo es obligatorio";
     else if (formData.fecha < currentDate) newErrors.fecha = "La fecha no puede ser en el pasado";
     if (!formData.horaInicio.trim()) newErrors.horaInicio = "Este campo es obligatorio";
@@ -630,7 +630,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
     const currentDate = new Date().toLocaleDateString('en-CA');
     const now = new Date();
     const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-    if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
+    if (!formData.nombreContacto) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fecha.trim()) newErrors.fecha = "Este campo es obligatorio";
     else if (formData.fecha < currentDate) newErrors.fecha = "La fecha no puede ser en el pasado";
     else if (formData.fecha === currentDate && formData.horaInicio && formData.horaInicio < currentTime)
@@ -940,7 +940,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
   const validateForm = () => {
     const newErrors = {};
     const currentDate = new Date().toLocaleDateString('en-CA');
-    if (!formData.nombreContacto.trim()) newErrors.nombreContacto = "Este campo es obligatorio";
+    if (!formData.nombreContacto) newErrors.nombreContacto = "Este campo es obligatorio";
     if (!formData.fechaLimite.trim()) newErrors.fechaLimite = "Este campo es obligatorio";
     else if (formData.fechaLimite < currentDate) newErrors.fechaLimite = "La fecha no puede ser en el pasado";
     if (!formData.tipo.trim()) newErrors.tipo = "Este campo es obligatorio";
@@ -1620,13 +1620,6 @@ const Tratos = () => {
   };
 
   const updateSingleTratoActivity = (tratoId, newActivity) => {
-    console.log('📌 Actualizando actividad localmente:', {
-      tratoId,
-      tipo: newActivity.tipo,
-      fechaLimite: newActivity.fechaLimite,
-      horaInicio: newActivity.horaInicio
-    });
-
     setColumnas(prevColumnas => {
       return prevColumnas.map(columna => ({
         ...columna,
@@ -1758,7 +1751,7 @@ const Tratos = () => {
     } else if (globalSearchTerm.trim().length === 0) {
       setExpandedColumns([]);
     }
-  }, [globalSearchTerm, columnas]);
+  }, [globalSearchTerm]);
 
   const openModal = (modalType, data = {}) => {
     setModals((prev) => ({ ...prev, [modalType]: { isOpen: true, ...data } }));
@@ -2099,6 +2092,54 @@ const Tratos = () => {
                   </div>
                 </div>
               ))}
+            </div>
+
+            <div className="leyenda-container">
+
+              {/* Columna Izquierda: Tipos de Actividad */}
+              <div className="leyenda-columna">
+                <div className="leyenda-item">
+                  <img src={activityCall} alt="Llamada" className="leyenda-icon-img" />
+                  <span>Con llamada programada</span>
+                </div>
+                <div className="leyenda-item">
+                  <img src={activityTask} alt="Actividad" className="leyenda-icon-img" />
+                  <span>Con actividad programada</span>
+                </div>
+                <div className="leyenda-item">
+                  <img src={activityMeeting} alt="Reunión" className="leyenda-icon-img" />
+                  <span>Con reunión programada</span>
+                </div>
+              </div>
+
+              {/* Columna Central: Estados especiales */}
+              <div className="leyenda-columna">
+                <div className="leyenda-item">
+                  <img src={neglectedTreatment} alt="Desatendido" className="leyenda-icon-img" />
+                  <span>Sin actividad programada por más de 1 semana</span>
+                </div>
+                <div className="leyenda-item">
+                  <img src={addActivity} alt="Agregar" className="leyenda-icon-img" />
+                  <span>Agregar actividad</span>
+                </div>
+              </div>
+
+              {/* Columna Derecha: Semáforo (VERTICAL) */}
+              <div className="leyenda-columna semaforo-vertical">
+                <div className="leyenda-item">
+                  <div className="leyenda-indicador indicador-verde"></div>
+                  <span>Interacción programada para mañana en adelante</span>
+                </div>
+                <div className="leyenda-item">
+                  <div className="leyenda-indicador indicador-amarillo"></div>
+                  <span>Interacción programada para el día de hoy</span>
+                </div>
+                <div className="leyenda-item">
+                  <div className="leyenda-indicador indicador-rojo"></div>
+                  <span>Interacción vencida</span>
+                </div>
+              </div>
+
             </div>
           </div>
 

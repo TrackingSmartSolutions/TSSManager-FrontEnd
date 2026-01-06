@@ -18,6 +18,132 @@ const fetchWithToken = async (url, options = {}) => {
   return response.json()
 }
 
+const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayClick = true }) => {
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "unset";
+    return () => { document.body.style.overflow = "unset"; };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const overlayStyle = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1050
+  };
+
+  let widthStyle = '500px';
+  let maxWidthStyle = '95%';
+  if (size === 'lg') {
+    widthStyle = '800px';
+  } else if (size === 'xl') {
+    widthStyle = '950px';
+  }
+
+  const contentStyle = {
+    backgroundColor: 'white',
+    borderRadius: '8px',
+    padding: '20px',
+    maxHeight: '95vh',
+    overflowY: 'auto',
+    width: widthStyle,
+    maxWidth: maxWidthStyle,
+    position: 'relative',
+    boxShadow: '0 5px 15px rgba(0,0,0,0.5)',
+    display: 'flex',
+    flexDirection: 'column'
+  };
+
+  return (
+    <div style={overlayStyle} onClick={closeOnOverlayClick ? onClose : () => { }}>
+      <div style={contentStyle} onClick={(e) => e.stopPropagation()}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '10px',
+          borderBottom: '1px solid #dee2e6',
+          paddingBottom: '10px'
+        }}>
+          <h2 style={{ margin: 0, fontSize: '1.10rem', fontWeight: 600 }}>{title}</h2>
+          <button
+            onClick={onClose}
+            style={{
+              border: 'none',
+              background: 'none',
+              fontSize: '1.5rem',
+              cursor: 'pointer',
+              color: '#6c757d',
+              padding: '0 5px'
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
+  if (!isOpen) return null;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Vista previa" size="xl" closeOnOverlayClick={false}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+          <button
+            type="button"
+            onClick={onDownload}
+            className="cajachica-btn"
+            style={{
+              backgroundColor: '#dc3545',
+              color: 'white',
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px'
+            }}
+          >
+            Descargar PDF
+          </button>
+        </div>
+
+        <div style={{
+          border: '1px solid #ddd',
+          borderRadius: '4px',
+          overflow: 'hidden',
+          height: '75vh'
+        }}>
+          <iframe
+            src={`${pdfUrl}#view=FitH&navpanes=0`}
+            title="Vista Previa"
+            width="100%"
+            height="100%"
+            style={{ border: 'none' }}
+          />
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
 const AdminCajaChica = () => {
   const navigate = useNavigate()
   const userRol = localStorage.getItem("userRol")
@@ -39,6 +165,11 @@ const AdminCajaChica = () => {
   });
 
   const [filtroCuenta, setFiltroCuenta] = useState("");
+  const [pdfPreview, setPdfPreview] = useState({
+    isOpen: false,
+    url: null,
+    filename: ""
+  });
 
   const obtenerRangoMesActual = () => {
     const ahora = new Date();
@@ -451,16 +582,15 @@ const AdminCajaChica = () => {
 
       const fechaArchivo = new Date().toISOString().split("T")[0]
       const nombreArchivo = `Caja_Chica_${fechaArchivo}.pdf`
+      const blobUrl = pdf.output('bloburl');
+      Swal.close();
 
-      pdf.save(nombreArchivo)
+      setPdfPreview({
+        isOpen: true,
+        url: blobUrl,
+        filename: nombreArchivo
+      });
 
-      Swal.fire({
-        icon: "success",
-        title: "Reporte generado exitosamente",
-        text: `El archivo ${nombreArchivo} se ha descargado correctamente`,
-        timer: 3000,
-        showConfirmButton: false,
-      })
     } catch (error) {
       console.error("Error al generar el reporte:", error)
       Swal.fire({
@@ -470,6 +600,32 @@ const AdminCajaChica = () => {
       })
     }
   }
+
+  const handleDownloadFromPreview = () => {
+    if (pdfPreview.url) {
+      const link = document.createElement('a');
+      link.href = pdfPreview.url;
+      link.download = pdfPreview.filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      Swal.fire({
+        icon: "success",
+        title: "Reporte descargado",
+        text: `El archivo ${pdfPreview.filename} se ha guardado correctamente`,
+        timer: 3000,
+        showConfirmButton: false,
+      });
+    }
+  };
+
+  const handleClosePreview = () => {
+    if (pdfPreview.url) {
+      window.URL.revokeObjectURL(pdfPreview.url);
+    }
+    setPdfPreview({ isOpen: false, url: null, filename: "" });
+  };
 
   return (
     <>
@@ -628,9 +784,15 @@ const AdminCajaChica = () => {
               </div>
               <div className="cajachica-reporte-button-container">
                 <button className="cajachica-btn cajachica-btn-reporte" onClick={handleGenerarReporte}>
-                  Crear Reporte
+                  Visualizar Reporte
                 </button>
               </div>
+              <PdfPreviewModal
+                isOpen={pdfPreview.isOpen}
+                onClose={handleClosePreview}
+                pdfUrl={pdfPreview.url}
+                onDownload={handleDownloadFromPreview}
+              />
             </section>
           </div>
         </main>

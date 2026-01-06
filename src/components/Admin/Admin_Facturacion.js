@@ -22,39 +22,81 @@ const fetchWithToken = async (url, options = {}) => {
 };
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
+const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayClick = true }) => {
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
+    document.body.style.overflow = isOpen ? "hidden" : "unset";
+    return () => { document.body.style.overflow = "unset"; };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const sizeClasses = {
-    sm: "facturacion-modal-sm",
-    md: "facturacion-modal-md",
-    lg: "facturacion-modal-lg",
-    xl: "facturacion-modal-xl",
+  const overlayStyle = {
+    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050
+  };
+
+  let widthStyle = '500px';
+  let maxWidthStyle = '95%';
+
+  if (size === 'lg') widthStyle = '800px';
+  else if (size === 'xl') widthStyle = '950px';
+
+  const contentStyle = {
+    backgroundColor: 'white', borderRadius: '8px', padding: '20px',
+    maxHeight: '95vh', overflowY: 'auto', width: widthStyle, maxWidth: maxWidthStyle,
+    position: 'relative', boxShadow: '0 5px 15px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column'
   };
 
   return (
-    <div className="facturacion-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
-      <div className={`facturacion-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
-        <div className="facturacion-modal-header">
-          <h2 className="facturacion-modal-title">{title}</h2>
-          {canClose && (
-            <button className="facturacion-modal-close" onClick={onClose}>✕</button>
-          )}
+    <div style={overlayStyle} onClick={closeOnOverlayClick ? onClose : () => { }}>
+      <div style={contentStyle} onClick={(e) => e.stopPropagation()}>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          marginBottom: '10px', borderBottom: '1px solid #dee2e6', paddingBottom: '10px'
+        }}>
+          <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>{title}</h2>
+          <button onClick={onClose} style={{
+            border: 'none', background: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#6c757d', padding: '0 5px'
+          }}>✕</button>
         </div>
-        <div className="facturacion-modal-body">{children}</div>
+        <div style={{ flex: 1, overflowY: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          {children}
+        </div>
       </div>
     </div>
+  );
+};
+
+// Modal de Vista Previa
+const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
+  if (!isOpen) return null;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Vista previa" size="xl" closeOnOverlayClick={false}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+          <button
+            type="button"
+            onClick={onDownload}
+            className="facturacion-btn facturacion-btn-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+          >
+            Descargar PDF
+          </button>
+        </div>
+
+        <div style={{
+          border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden',
+          height: '75vh'
+        }}>
+          <iframe
+            src={`${pdfUrl}#view=FitH&navpanes=0`}
+            title="Vista Previa"
+            width="100%" height="100%" style={{ border: 'none' }}
+          />
+        </div>
+      </div>
+    </Modal>
   );
 };
 
@@ -944,7 +986,7 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, tipo, item }) =
 };
 
 // Modal para Editar Conceptos
-const ConceptosModal = ({ isOpen, onClose, solicitud, onSave }) => {
+const ConceptosModal = ({ isOpen, onClose, solicitud, onSave, onPreview }) => {
   const [conceptosEditables, setConceptosEditables] = useState("");
   const [conceptosOriginales, setConceptosOriginales] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -1003,9 +1045,7 @@ const ConceptosModal = ({ isOpen, onClose, solicitud, onSave }) => {
         `${API_BASE_URL}/solicitudes-factura-nota/solicitudes/${solicitud.id}/download-pdf`,
         {
           method: "GET",
-          headers: {
-            "Content-Type": "application/pdf",
-          },
+          headers: { "Content-Type": "application/pdf" },
         }
       );
 
@@ -1013,24 +1053,17 @@ const ConceptosModal = ({ isOpen, onClose, solicitud, onSave }) => {
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${solicitud.identificador}_${new Date(solicitud.fechaEmision).toISOString().split('T')[0]}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      const filename = `${solicitud.identificador}_${new Date(solicitud.fechaEmision).toISOString().split('T')[0]}.pdf`;
 
-      Swal.fire({
-        icon: "success",
-        title: "Descarga Completada",
-        text: "El PDF se ha descargado correctamente.",
-      });
+      if (onPreview) {
+        onPreview(url, filename);
+      }
+
     } catch (error) {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: `No se pudo descargar el PDF: ${error.message}`,
+        text: `No se pudo generar la vista previa: ${error.message}`,
       });
     }
   };
@@ -1081,7 +1114,7 @@ const ConceptosModal = ({ isOpen, onClose, solicitud, onSave }) => {
               {isLoading ? "Guardando..." : "Guardar Cambios"}
             </button>
             <button type="button" onClick={handleDescargarPDF} className="facturacion-btn facturacion-btn-primary">
-              Descargar PDF
+              Visualizar PDF
             </button>
           </div>
         </div>
@@ -1109,6 +1142,12 @@ const AdminFacturacion = () => {
     activo: false
   });
   const [filtroReceptor, setFiltroReceptor] = useState("");
+  const [filtroTipo, setFiltroTipo] = useState("");
+  const [pdfPreview, setPdfPreview] = useState({
+    isOpen: false,
+    url: null,
+    filename: ""
+  });
 
   const [modals, setModals] = useState({
     emisor: { isOpen: false, emisor: null },
@@ -1348,14 +1387,7 @@ const AdminFacturacion = () => {
   };
 
   const handleDescargarFactura = async (factura) => {
-    if (!factura.id) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "No se encontró el ID de la factura.",
-      });
-      return;
-    }
+    if (!factura.id) return;
 
     try {
       const response = await fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/facturas/${factura.id}/download`, {
@@ -1365,20 +1397,22 @@ const AdminFacturacion = () => {
       if (!response.ok) throw new Error(`Error al descargar el archivo: ${response.statusText}`);
 
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = factura.archivoUrl?.split("/").pop() || "factura.pdf";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      
+      if (blob.type === 'application/pdf') {
+          const url = window.URL.createObjectURL(blob);
+          const filename = factura.archivoUrl?.split("/").pop() || "factura.pdf";
+          
+          handleOpenPreview(url, filename);
+      } else {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = factura.archivoUrl?.split("/").pop() || "archivo";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+      }
 
-      Swal.fire({
-        icon: "success",
-        title: "Descarga Completada",
-        text: "El archivo se ha descargado correctamente.",
-      });
     } catch (error) {
       Swal.fire({
         icon: "error",
@@ -1386,6 +1420,35 @@ const AdminFacturacion = () => {
         text: `No se pudo descargar el archivo: ${error.message}`,
       });
     }
+  };
+
+  const handleOpenPreview = (url, filename) => {
+    setPdfPreview({ isOpen: true, url, filename });
+  };
+
+  const handleDownloadFromPreview = () => {
+    if (pdfPreview.url) {
+      const a = document.createElement('a');
+      a.href = pdfPreview.url;
+      a.download = pdfPreview.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      Swal.fire({
+        icon: "success",
+        title: "Descarga iniciada",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    }
+  };
+
+  const handleClosePreview = () => {
+    if (pdfPreview.url) {
+      window.URL.revokeObjectURL(pdfPreview.url);
+    }
+    setPdfPreview({ isOpen: false, url: null, filename: "" });
   };
 
   const navegarEmisor = (direccion) => {
@@ -1401,6 +1464,8 @@ const AdminFacturacion = () => {
   const solicitudesFiltradas = solicitudes.filter((solicitud) => {
     const pasaReceptor = filtroReceptor === "" || solicitud.receptor === filtroReceptor;
 
+    const pasaTipo = filtroTipo === "" || solicitud.tipo === filtroTipo;
+
     let pasaFechas = true;
     if (filtroFechas.activo) {
       const fechaSol = new Date(solicitud.fechaEmision);
@@ -1409,7 +1474,7 @@ const AdminFacturacion = () => {
       pasaFechas = fechaSol >= fechaInicio && fechaSol <= fechaFin;
     }
 
-    return pasaReceptor && pasaFechas;
+    return pasaReceptor && pasaTipo && pasaFechas;
   });
 
   const solicitudesOrdenadas = solicitudesFiltradas.sort((a, b) => {
@@ -1544,6 +1609,20 @@ const AdminFacturacion = () => {
                     </div>
 
                     <div className="facturacion-filter-container">
+                      <label htmlFor="filtroTipo">Filtrar por tipo:</label>
+                      <select
+                        id="filtroTipo"
+                        value={filtroTipo}
+                        onChange={(e) => setFiltroTipo(e.target.value)}
+                        className="facturacion-filter-select"
+                      >
+                        <option value="">Todos los tipos</option>
+                        <option value="SOLICITUD_DE_FACTURA">Solicitud de Factura</option>
+                        <option value="NOTA">Nota</option>
+                      </select>
+                    </div>
+
+                    <div className="facturacion-filter-container">
                       <label htmlFor="filtroReceptor">Filtrar por receptor:</label>
                       <select
                         id="filtroReceptor"
@@ -1612,9 +1691,9 @@ const AdminFacturacion = () => {
                         <th>Receptor</th>
                         <th>Concepto</th>
                         <th>Total</th>
-                        <th>Método de Pago</th>
                         <th>Forma de Pago</th>
                         <th>Cuenta por Cobrar</th>
+                        <th>Estatus</th>
                         <th>Acciones</th>
                       </tr>
                     </thead>
@@ -1632,13 +1711,6 @@ const AdminFacturacion = () => {
                               <td>{solicitud.receptor || "N/A"}</td>
                               <td className="facturacion-concepto-cell">{solicitud.concepto || "N/A"}</td>
                               <td>${(solicitud.total || 0).toFixed(2)}</td>
-                              <td>
-                                {solicitud.metodoPago === "PUE"
-                                  ? "Pago en una sola exhibición (PUE)"
-                                  : solicitud.metodoPago === "PPD"
-                                    ? "Pago en parcialidades o diferido (PPD)"
-                                    : "N/A"}
-                              </td>
                               <td>
                                 {solicitud.formaPago === "01"
                                   ? "Efectivo"
@@ -1659,6 +1731,16 @@ const AdminFacturacion = () => {
                                                 : "otros"}
                               </td>
                               <td>{solicitud.folio || "N/A"}</td>
+                              <td>
+                                <span
+                                  className={`facturacion-estatus-badge ${solicitud.estatusCuentaPorCobrar === "PAGADO"
+                                    ? "facturacion-estatus-pagado"
+                                    : "facturacion-estatus-pendiente"
+                                    }`}
+                                >
+                                  {solicitud.estatusCuentaPorCobrar === "PAGADO" ? "Pagado" : "Pendiente"}
+                                </span>
+                              </td>
                               <td>
                                 <div className="facturacion-actions">
                                   <button
@@ -1795,6 +1877,13 @@ const AdminFacturacion = () => {
             onClose={() => closeModal("conceptos")}
             onSave={() => { }}
             solicitud={modals.conceptos.solicitud}
+            onPreview={handleOpenPreview}
+          />
+          <PdfPreviewModal
+            isOpen={pdfPreview.isOpen}
+            onClose={handleClosePreview}
+            pdfUrl={pdfPreview.url}
+            onDownload={handleDownloadFromPreview}
           />
         </main>
       </div>

@@ -127,44 +127,84 @@ const numeroALetras = (numero) => {
 }
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
+const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayClick = true }) => {
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden"
-    } else {
-      document.body.style.overflow = "unset"
-    }
+    document.body.style.overflow = isOpen ? "hidden" : "unset";
+    return () => { document.body.style.overflow = "unset"; };
+  }, [isOpen]);
 
-    return () => {
-      document.body.style.overflow = "unset"
-    }
-  }, [isOpen])
+  if (!isOpen) return null;
 
-  if (!isOpen) return null
+  const overlayStyle = {
+    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050
+  };
 
-  const sizeClasses = {
-    sm: "cotizaciones-modal-sm",
-    md: "cotizaciones-modal-md",
-    lg: "cotizaciones-modal-lg",
-    xl: "cotizaciones-modal-xl",
-  }
+  let widthStyle = '500px';
+  let maxWidthStyle = '95%';
+
+  if (size === 'lg') widthStyle = '800px';
+  else if (size === 'xl') widthStyle = '950px';
+
+  const contentStyle = {
+    backgroundColor: 'white', borderRadius: '8px', padding: '20px',
+    maxHeight: '95vh', overflowY: 'auto', width: widthStyle, maxWidth: maxWidthStyle,
+    position: 'relative', boxShadow: '0 5px 15px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column'
+  };
 
   return (
-    <div className="cotizaciones-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
-      <div className={`cotizaciones-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
-        <div className="cotizaciones-modal-header">
-          <h2 className="cotizaciones-modal-title">{title}</h2>
-          {canClose && (
-            <button className="cotizaciones-modal-close" onClick={onClose}>
-              ✕
-            </button>
-          )}
+    <div style={overlayStyle} onClick={closeOnOverlayClick ? onClose : () => { }}>
+      <div style={contentStyle} onClick={(e) => e.stopPropagation()}>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          marginBottom: '10px', borderBottom: '1px solid #dee2e6', paddingBottom: '10px'
+        }}>
+          <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>{title}</h2>
+          <button onClick={onClose} style={{
+            border: 'none', background: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#6c757d', padding: '0 5px'
+          }}>✕</button>
         </div>
-        <div className="cotizaciones-modal-body">{children}</div>
+
+        <div style={{ flex: 1, overflowY: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          {children}
+        </div>
       </div>
     </div>
-  )
-}
+  );
+};
+
+// Modal de Vista Previa
+const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
+  if (!isOpen) return null;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Vista previa" size="xl" closeOnOverlayClick={false}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+          <button
+            type="button"
+            onClick={onDownload}
+            className="cotizaciones-btn cotizaciones-btn-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+          >
+            Descargar PDF
+          </button>
+        </div>
+
+        <div style={{
+          border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden',
+          height: '75vh'
+        }}>
+          <iframe
+            src={`${pdfUrl}#view=FitH&navpanes=0`}
+            title="Vista Previa"
+            width="100%" height="100%" style={{ border: 'none' }}
+          />
+        </div>
+      </div>
+    </Modal>
+  );
+};
 
 // Modal para Nuevo Concepto
 const NuevoConceptoModal = ({ isOpen, onClose, onSave, concepto }) => {
@@ -831,8 +871,8 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
       setFormData({
         cotizacionId: cotizacion.id || "",
         clienteNombre: cotizacion.clienteNombre || "",
-        noEquipos: cotizacion.unidades 
-          ? cotizacion.unidades.reduce((sum, u) => u.unidad === "Equipos" ? sum + u.cantidad : sum, 0) 
+        noEquipos: cotizacion.unidades
+          ? cotizacion.unidades.reduce((sum, u) => u.unidad === "Equipos" ? sum + u.cantidad : sum, 0)
           : 0,
         esquema: "ANUAL",
         numeroPagos: "1",
@@ -1145,14 +1185,14 @@ const SubirArchivoModal = ({ isOpen, onClose, onDownload, cotizacion }) => {
             className="cotizaciones-btn cotizaciones-btn-secondary"
             disabled={uploading}
           >
-            Descargar sin archivos
+            Ver sin archivos
           </button>
           <button
             onClick={handleDownloadWithFiles}
             className="cotizaciones-btn cotizaciones-btn-primary"
             disabled={uploading || (!notasComerciales && !fichaTecnica)}
           >
-            {uploading ? 'Subiendo...' : 'Subir y descargar'}
+            {uploading ? 'Cargando...' : 'Cargar y ver'}
           </button>
         </div>
       </div>
@@ -1177,6 +1217,11 @@ const AdminCotizaciones = () => {
     fechaInicio: "",
     fechaFin: "",
     activo: false
+  });
+  const [pdfPreview, setPdfPreview] = useState({
+    isOpen: false,
+    url: null,
+    filename: ""
   });
 
   const [modals, setModals] = useState({
@@ -1441,22 +1486,48 @@ const AdminCotizaciones = () => {
       if (!response.ok) throw new Error('Error downloading PDF');
 
       const blob = await response.blob();
+
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `COTIZACION_${cotizacionId}_${new Date().toLocaleDateString('es-MX')}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      const filename = `COTIZACION_${cotizacionId}_${new Date().toLocaleDateString('es-MX').replace(/\//g, '-')}.pdf`;
+
+      setPdfPreview({
+        isOpen: true,
+        url: url,
+        filename: filename
+      });
 
     } catch (error) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'No se pudo descargar la cotización: ' + error.message,
+        text: 'No se pudo generar la vista previa: ' + error.message,
       });
     }
+  };
+
+  const handleDownloadFromPreview = () => {
+    if (pdfPreview.url) {
+      const a = document.createElement('a');
+      a.href = pdfPreview.url;
+      a.download = pdfPreview.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      Swal.fire({
+        icon: "success",
+        title: "Descarga iniciada",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    }
+  };
+
+  const handleClosePreview = () => {
+    if (pdfPreview.url) {
+      window.URL.revokeObjectURL(pdfPreview.url);
+    }
+    setPdfPreview({ isOpen: false, url: null, filename: "" });
   };
 
   const toggleOrdenFecha = () => {
@@ -1765,6 +1836,13 @@ const AdminCotizaciones = () => {
             onClose={() => closeModal("subirArchivo")}
             onDownload={executeDownload}
             cotizacion={modals.subirArchivo.cotizacion}
+          />
+
+          <PdfPreviewModal
+            isOpen={pdfPreview.isOpen}
+            onClose={handleClosePreview}
+            pdfUrl={pdfPreview.url}
+            onDownload={handleDownloadFromPreview}
           />
 
         </main>

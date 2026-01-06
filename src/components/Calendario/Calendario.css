@@ -2,7 +2,10 @@
 .ts-calendar-container {
   padding: 20px;
   background-color: #f8fafc;
-  min-height: calc(100vh - 70px);
+  height: calc(100vh - 70px); 
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   margin-top: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
@@ -20,6 +23,7 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   position: relative;
   min-height: auto;
+  flex-shrink: 0;
 }
 
 .ts-calendar-header-center {
@@ -147,6 +151,9 @@
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  flex: 1; 
+  height: 100%;
+  position: relative;
 }
 
 /* Estilos de FullCalendar mejorados */

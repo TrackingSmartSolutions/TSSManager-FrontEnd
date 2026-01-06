@@ -147,19 +147,18 @@
 }
 
 /* Sección de Filtros  */
-.transacciones-filters-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: var(--transacciones-spacing-xl);
-  flex-wrap: wrap; 
-  gap: var(--transacciones-spacing-md);
-}
-
-.transacciones-filter-group {
+.filters-right {
   display: flex;
   gap: var(--transacciones-spacing-sm);
-  align-items: center;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.transacciones-filter-group, 
+.transacciones-filtro-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .transacciones-actions-group {
@@ -169,31 +168,18 @@
 }
 
 /* Inputs y Selects */
+.transacciones-date-input,
 .transacciones-filter-select {
-  padding: var(--transacciones-spacing-sm) var(--transacciones-spacing-md);
+  height: 38px; 
+  padding: 0 10px;
   border: 1px solid var(--transacciones-border-color);
   border-radius: var(--transacciones-border-radius-sm);
-  font-size: var(--transacciones-font-size-sm);
-  background-color: white;
-  color: var(--transacciones-text-color);
-  cursor: pointer;
-  min-width: 180px; 
-  max-width: 100%;
+  background-color: #fff;
+  font-size: 0.85rem;
 }
 
-.transacciones-filter-select:focus {
-  outline: none;
-  border-color: var(--transacciones-secondary-color);
-  box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
-}
-
-.transacciones-date-input {
-  padding: var(--transacciones-spacing-sm) var(--transacciones-spacing-md);
-  border: 1px solid var(--transacciones-border-color);
-  border-radius: var(--transacciones-border-radius-sm);
-  font-size: var(--transacciones-font-size-sm);
-  background-color: white;
-  color: var(--transacciones-text-color);
+.transacciones-filter-select {
+  min-width: 160px;
 }
 
 .transacciones-filtros-fecha {
@@ -203,16 +189,10 @@
   flex-wrap: wrap;
 }
 
-.transacciones-filtro-grupo {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
 .transacciones-filtro-grupo label {
-  font-size: var(--transacciones-font-size-sm); 
-  font-weight: 500;
-  color: var(--transacciones-text-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--transacciones-text-light);
 }
 
 /* Botones */
@@ -269,14 +249,23 @@
 }
 
 .transacciones-btn-filtro {
-  background: #007bff;
+  background-color: #0d6efd; 
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 0 15px;
+  border-radius: var(--transacciones-border-radius-sm);
   cursor: pointer;
-  font-size: 14px;
-  height: 36px; 
+  font-size: 0.85rem;
+  font-weight: 500;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.transacciones-btn-filtro:hover {
+  background-color: #0b5ed7; 
 }
 
 .transacciones-btn-orden {
@@ -401,7 +390,126 @@
 .transacciones-confirmation-content { display: flex; flex-direction: column; align-items: center; gap: var(--transacciones-spacing-lg); }
 .transacciones-confirmation-message { font-size: var(--transacciones-font-size-md); color: var(--transacciones-text-color); margin: 0; }
 
+/* Contenedor de las tarjetas de resumen */
+.transacciones-summary-cards {
+  display: flex;
+  gap: var(--transacciones-spacing-lg);
+  margin-bottom: var(--transacciones-spacing-xl);
+  width: 100%;
+}
 
+.summary-card {
+  flex: 1;
+  background: white;
+  padding: var(--transacciones-spacing-md) var(--transacciones-spacing-lg);
+  border-radius: var(--transacciones-border-radius-md);
+  box-shadow: var(--transacciones-box-shadow);
+  display: flex;
+  flex-direction: column;
+  border-left: 5px solid transparent; 
+}
+
+.summary-card.ingreso {
+  background-color: #d1e7dd; 
+  border-left: 5px solid #198754; 
+  color: #0f5132; 
+}
+
+.summary-card.ingreso .summary-label,
+.summary-card.ingreso .summary-amount {
+  color: #0f5132;
+}
+
+.summary-card.gasto {
+  background-color: #f8d7da; 
+  border-left: 5px solid #dc3545; 
+  color: #842029; 
+}
+
+.summary-card.gasto .summary-label,
+.summary-card.gasto .summary-amount {
+  color: #842029;
+}
+
+.summary-label {
+  font-size: var(--transacciones-font-size-sm);
+  color: var(--transacciones-text-light);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-amount {
+  font-size: var(--transacciones-font-size-xl);
+  font-weight: 700;
+  color: var(--transacciones-text-color);
+}
+
+.summary-amount.positive { color: var(--transacciones-success-color); }
+.summary-amount.negative { color: var(--transacciones-danger-color); }
+
+.transacciones-filters-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: var(--transacciones-spacing-xl);
+  flex-wrap: wrap; 
+  gap: 15px;
+  background-color: white;
+  padding: 15px;
+  border-radius: var(--transacciones-border-radius-md);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.filters-left {
+  display: flex;
+  flex-direction: row; 
+  gap: 15px;
+  flex-wrap: wrap; 
+  flex: 2; 
+  align-items: flex-end;
+}
+
+.transacciones-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1; 
+  min-width: 150px; 
+}
+
+.filter-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #666;
+  margin-left: 2px;
+}
+
+.transacciones-filter-select {
+  width: 100%;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+@media (max-width: 992px) {
+  .transacciones-filters-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filters-left {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .transacciones-summary-cards {
+    flex-direction: column;
+    gap: var(--transacciones-spacing-md);
+  }
+}
 
 @media (max-width: 1200px) {
   .transacciones-container { gap: var(--transacciones-spacing-md); }
@@ -420,6 +528,19 @@
   .transacciones-content-panel { min-height: auto; width: 100%; }
   .transacciones-table { min-width: 700px; }
   .transacciones-form-row { flex-direction: column; gap: var(--transacciones-spacing-sm); }
+
+  .transacciones-filters-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filters-left, .filters-right {
+    width: 100%;
+  }
+
+  .transacciones-filter-select {
+    width: 100%;
+  }
 }
 
 @media (max-width: 768px) {

@@ -71,30 +71,119 @@ const DetallesTratoModal = ({ isOpen, onClose, title, children, size = "md", can
   }, [isOpen])
 
   if (!isOpen) return null
+  
+  const overlayStyle = {
+    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', 
+    display: 'flex', alignItems: 'center', justifyContent: 'center', 
+    zIndex: 1050 
+  };
 
-  const sizeClasses = {
-    sm: "modal-sm",
-    md: "modal-md",
-    lg: "modal-lg",
-    xl: "modal-xl",
-  }
+  // Lógica de tamaños
+  let widthStyle = '500px'; 
+  let maxWidthStyle = '95%';
+
+  if (size === 'sm') widthStyle = '300px';
+  if (size === 'md') widthStyle = '600px'; 
+  if (size === 'lg') widthStyle = '800px';
+  if (size === 'xl') widthStyle = '950px'; 
+
+  // Estilo del contenedor blanco
+  const contentStyle = {
+    backgroundColor: 'white', 
+    borderRadius: '8px', 
+    padding: '20px',
+    maxHeight: '95vh', 
+    overflowY: 'auto', 
+    width: widthStyle, 
+    maxWidth: maxWidthStyle,
+    position: 'relative', 
+    boxShadow: '0 5px 15px rgba(0,0,0,0.5)', 
+    display: 'flex', 
+    flexDirection: 'column'
+  };
 
   return (
-    <div className="detalles-trato-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
-      <div className={`modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2 className="modal-title">{title}</h2>
+    <div style={overlayStyle} onClick={closeOnOverlayClick ? onClose : () => { }}>
+      <div style={contentStyle} onClick={(e) => e.stopPropagation()}>
+        <div style={{ 
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            marginBottom: '10px', borderBottom: '1px solid #dee2e6', paddingBottom: '10px'
+        }}>
+          <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>{title}</h2>
           {canClose && (
-            <button className="modal-close" onClick={onClose}>
+            <button 
+                onClick={onClose} 
+                style={{ 
+                    border: 'none', background: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#6c757d', padding: '0 5px'
+                }}
+            >
               ✕
             </button>
           )}
         </div>
-        <div className="modal-body">{children}</div>
+        
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+            {children}
+        </div>
       </div>
     </div>
   )
 }
+
+const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
+  if (!isOpen) return null;
+
+  return (
+    <DetallesTratoModal isOpen={isOpen} onClose={onClose} title="Vista previa" size="xl" closeOnOverlayClick={false}>
+      <style>{`
+        .detalles-trato-modal h2 {
+          font-size: 1rem !important;
+        }
+      `}</style>
+      
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
+          <button 
+            type="button" 
+            onClick={onDownload} 
+            style={{ 
+                backgroundColor: '#c73232',
+                color: 'white',
+                padding: '10px 20px',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: '500',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+            }}
+          >
+            Descargar PDF
+          </button>
+        </div>
+
+        <div style={{ 
+            border: '1px solid #ddd', 
+            borderRadius: '4px', 
+            overflow: 'hidden', 
+            height: '75vh' 
+        }}>
+          <iframe 
+            src={`${pdfUrl}#view=FitH&navpanes=0`} 
+            title="Vista Previa"
+            width="100%" 
+            height="100%" 
+            style={{ border: 'none' }}
+          />
+        </div>
+      </div>
+    </DetallesTratoModal>
+  );
+};
 
 // Modal para seleccionar tipo de actividad
 const SeleccionarActividadModal = ({ isOpen, onClose, onSelectActivity }) => {
@@ -3841,6 +3930,11 @@ const DetallesTrato = () => {
   const [cotizaciones, setCotizaciones] = useState([]);
   const [cotizacionesVinculadas, setCotizacionesVinculadas] = useState(new Set());
   const [showCotizacionesSection, setShowCotizacionesSection] = useState(false);
+  const [pdfPreview, setPdfPreview] = useState({ 
+  isOpen: false, 
+  url: null, 
+  filename: "" 
+});
 
   const getCurrentUserId = () => {
     const userId = localStorage.getItem('userId');
@@ -5068,22 +5162,48 @@ const DetallesTrato = () => {
       if (!response.ok) throw new Error('Error downloading PDF');
 
       const blob = await response.blob();
+      
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `COTIZACION_${cotizacionId}_${new Date().toLocaleDateString('es-MX')}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      const filename = `COTIZACION_${cotizacionId}_${new Date().toLocaleDateString('es-MX').replace(/\//g, '-')}.pdf`;
+
+      setPdfPreview({
+        isOpen: true,
+        url: url,
+        filename: filename
+      });
 
     } catch (error) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'No se pudo descargar la cotización: ' + error.message,
+        text: 'No se pudo generar la vista previa: ' + error.message,
       });
     }
+  };
+
+  const handleDownloadFromPreview = () => {
+    if (pdfPreview.url) {
+      const a = document.createElement('a');
+      a.href = pdfPreview.url;
+      a.download = pdfPreview.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      Swal.fire({
+        icon: "success",
+        title: "Descarga iniciada",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    }
+  };
+
+  const handleClosePreview = () => {
+    if (pdfPreview.url) {
+      window.URL.revokeObjectURL(pdfPreview.url);
+    }
+    setPdfPreview({ isOpen: false, url: null, filename: "" });
   };
 
   const handleCompartirCotizacion = async (cotizacion) => {
@@ -6260,6 +6380,12 @@ const DetallesTrato = () => {
           onClose={() => closeModal("subirArchivo")}
           onDownload={executeDownload}
           cotizacion={modals.subirArchivo.cotizacion}
+        />
+        <PdfPreviewModal
+          isOpen={pdfPreview.isOpen}
+          onClose={handleClosePreview}
+          pdfUrl={pdfPreview.url}
+          onDownload={handleDownloadFromPreview}
         />
       </div>
     </>

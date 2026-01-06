@@ -39,6 +39,85 @@ const getWeekEnd = () => {
     return sunday.toISOString().split("T")[0]
 }
 
+const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayClick = true }) => {
+    useEffect(() => {
+        document.body.style.overflow = isOpen ? "hidden" : "unset";
+        return () => { document.body.style.overflow = "unset"; };
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
+    const overlayStyle = {
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050
+    };
+
+    let widthStyle = '500px';
+    let maxWidthStyle = '95%';
+
+    if (size === 'lg') widthStyle = '800px';
+    if (size === 'xl') widthStyle = '950px';
+
+    const contentStyle = {
+        backgroundColor: 'white', borderRadius: '8px', padding: '20px',
+        maxHeight: '95vh', overflowY: 'auto', width: widthStyle, maxWidth: maxWidthStyle,
+        position: 'relative', boxShadow: '0 5px 15px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column'
+    };
+
+    return (
+        <div style={overlayStyle} onClick={closeOnOverlayClick ? onClose : () => { }}>
+            <div style={contentStyle} onClick={(e) => e.stopPropagation()}>
+                <div style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    marginBottom: '10px', borderBottom: '1px solid #dee2e6', paddingBottom: '10px'
+                }}>
+                    <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>{title}</h2>
+                    <button onClick={onClose} style={{
+                        border: 'none', background: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#6c757d', padding: '0 5px'
+                    }}>✕</button>
+                </div>
+                <div style={{ flex: 1, overflowY: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                    {children}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Modal de Vista Previa
+const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
+    if (!isOpen) return null;
+
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} title="Vista previa" size="xl" closeOnOverlayClick={false}>
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+                    <button
+                        type="button"
+                        onClick={onDownload}
+                        className="reporte-btn reporte-btn-download"
+                        style={{ display: 'flex', alignItems: 'center', gap: '5px', width: 'auto', padding: '8px 16px' }}
+                    >
+                        <img src={downloadIcon} alt="Descargar" className="reporte-btn-icon" style={{ width: '16px', height: '16px' }} />
+                        Descargar PDF
+                    </button>
+                </div>
+
+                <div style={{
+                    border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden',
+                    height: '75vh'
+                }}>
+                    <iframe
+                        src={`${pdfUrl}#view=FitH&navpanes=0`}
+                        title="Vista Previa"
+                        width="100%" height="100%" style={{ border: 'none' }}
+                    />
+                </div>
+            </div>
+        </Modal>
+    );
+};
+
 const DashboardMetricas = () => {
     const navigate = useNavigate()
     const [dateRange, setDateRange] = useState({
@@ -52,8 +131,11 @@ const DashboardMetricas = () => {
     const [initialDataLoaded, setInitialDataLoaded] = useState(false)
     const [dashboardData, setDashboardData] = useState(null)
     const [usuarios, setUsuarios] = useState([{ id: "todos", nombre: "Todos los usuarios" }])
-
-
+    const [pdfPreview, setPdfPreview] = useState({
+        isOpen: false,
+        url: null,
+        filename: ""
+    });
     //  Agregando refs para las secciones como en reporte-personal
     const resumenSectionRef = useRef(null)
     const graficasSectionRef = useRef(null)
@@ -500,17 +582,14 @@ const DashboardMetricas = () => {
             const usuarioTexto = selectedUser === "todos" ? "todos-usuarios" : `usuario-${selectedUser}`
             const nombreArchivo = `dashboard-metricas-${fechaArchivo}-${usuarioTexto}.pdf`
 
-            pdf.save(nombreArchivo)
+            const blobUrl = pdf.output('bloburl');
+            setPdfPreview({
+                isOpen: true,
+                url: blobUrl,
+                filename: nombreArchivo
+            });
 
-            Swal.close()
-            Swal.fire({
-                icon: 'success',
-                title: '¡PDF generado!',
-                text: 'El reporte PDF se ha descargado exitosamente',
-                timer: 2000,
-                showConfirmButton: false
-            })
-
+            Swal.close();
         } catch (error) {
             console.error('Error generando PDF:', error)
             Swal.close()
@@ -521,6 +600,32 @@ const DashboardMetricas = () => {
             })
         }
     }
+
+    const handleDownloadFromPreview = () => {
+        if (pdfPreview.url) {
+            const a = document.createElement('a');
+            a.href = pdfPreview.url;
+            a.download = pdfPreview.filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            Swal.fire({
+                icon: 'success',
+                title: '¡PDF descargado!',
+                text: 'El reporte se ha guardado exitosamente',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+    };
+
+    const handleClosePreview = () => {
+        if (pdfPreview.url) {
+            window.URL.revokeObjectURL(pdfPreview.url);
+        }
+        setPdfPreview({ isOpen: false, url: null, filename: "" });
+    };
 
     const formatearNumero = (numero) => {
         return new Intl.NumberFormat("es-ES").format(numero)
@@ -600,210 +705,216 @@ const DashboardMetricas = () => {
 
     return (
         <>
-         <div className="page-with-header">
-            <Header />
-            <main className="reporte-main-content">
-                <div className="reporte-container">
-                    <div className="reporte-header">
-                        <div className="reporte-header-info">
-                            <h1 className="reporte-page-title">Dashboard de Métricas Generales</h1>
-                            <p className="reporte-subtitle">
-                                {currentUser.nombre} {currentUser.apellidos} - {formatDate()}
-                            </p>
-                        </div>
-                        <div className="reporte-header-controls">
-                            <div className="reporte-date-range-container">
-                                <label className="reporte-date-label">Rango de fecha</label>
-                                <div className="reporte-date-inputs">
-                                    <input
-                                        type="date"
-                                        value={dateRange.startDate || ""}
-                                        onChange={(e) => handleDateRangeChange("startDate", e.target.value)}
-                                        className="reporte-date-input"
-                                    />
-                                    <span className="reporte-date-separator">-</span>
-                                    <input
-                                        type="date"
-                                        value={dateRange.endDate || ""}
-                                        onChange={(e) => handleDateRangeChange("endDate", e.target.value)}
-                                        className="reporte-date-input"
-                                    />
-                                </div>
+            <div className="page-with-header">
+                <Header />
+                <main className="reporte-main-content">
+                    <div className="reporte-container">
+                        <div className="reporte-header">
+                            <div className="reporte-header-info">
+                                <h1 className="reporte-page-title">Dashboard de Métricas Generales</h1>
+                                <p className="reporte-subtitle">
+                                    {currentUser.nombre} {currentUser.apellidos} - {formatDate()}
+                                </p>
                             </div>
-                            {(userRole === "ADMINISTRADOR" || userRole === "GESTOR") && (
+                            <div className="reporte-header-controls">
                                 <div className="reporte-date-range-container">
-                                    <label className="reporte-date-label">Usuario</label>
-                                    <select
-                                        className="reporte-date-input"
-                                        value={selectedUser}
-                                        onChange={(e) => setSelectedUser(e.target.value)}
-                                    >
-                                        {usuarios.map((usuario) => (
-                                            <option key={usuario.id} value={usuario.id}>
-                                                {usuario.nombre}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <label className="reporte-date-label">Rango de fecha</label>
+                                    <div className="reporte-date-inputs">
+                                        <input
+                                            type="date"
+                                            value={dateRange.startDate || ""}
+                                            onChange={(e) => handleDateRangeChange("startDate", e.target.value)}
+                                            className="reporte-date-input"
+                                        />
+                                        <span className="reporte-date-separator">-</span>
+                                        <input
+                                            type="date"
+                                            value={dateRange.endDate || ""}
+                                            onChange={(e) => handleDateRangeChange("endDate", e.target.value)}
+                                            className="reporte-date-input"
+                                        />
+                                    </div>
                                 </div>
-                            )}
-                            <button className="reporte-btn reporte-btn-download" onClick={handleDownloadPDF}>
-                                <img src={downloadIcon || "/placeholder.svg"} alt="Descargar" className="reporte-btn-icon" />
-                                Generar Reporte
-                            </button>
+                                {(userRole === "ADMINISTRADOR" || userRole === "GESTOR") && (
+                                    <div className="reporte-date-range-container">
+                                        <label className="reporte-date-label">Usuario</label>
+                                        <select
+                                            className="reporte-date-input"
+                                            value={selectedUser}
+                                            onChange={(e) => setSelectedUser(e.target.value)}
+                                        >
+                                            {usuarios.map((usuario) => (
+                                                <option key={usuario.id} value={usuario.id}>
+                                                    {usuario.nombre}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+                                <button className="reporte-btn reporte-btn-download" onClick={handleDownloadPDF}>
+                                    <img src={downloadIcon || "/placeholder.svg"} alt="Descargar" className="reporte-btn-icon" />
+                                    Visualizar Reporte
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    {loading && (
-                        <div className="reporte-loading">
-                            <div className="reporte-loading-spinner"></div>
-                            <span>Cargando datos...</span>
-                        </div>
-                    )}
-
-                    {!loading && dashboardData && (
-                        dashboardData.empresasCreadas?.length === 0 &&
-                        dashboardData.tasaRespuesta?.length === 0 &&
-                        dashboardData.tasaConversion?.length === 0
-                    ) && (
-                            <div className="dashboard-metricas__no-data">
-                                <div className="dashboard-metricas__no-data-content">
-                                    <h3>No hay datos disponibles</h3>
-                                    <p>No se encontraron métricas para el período seleccionado.</p>
-                                </div>
+                        {loading && (
+                            <div className="reporte-loading">
+                                <div className="reporte-loading-spinner"></div>
+                                <span>Cargando datos...</span>
                             </div>
                         )}
 
-                    {/*  Panel de Resumen Ejecutivo para PDF */}
-                    <div className="dashboard-metricas__resumen-ejecutivo" ref={resumenSectionRef}>
-                        <TarjetaResumen
-                            titulo="Total Empresas Creadas"
-                            valor={dashboardData?.resumenEjecutivo?.totalEmpresas || 0}
-                            tendencia={dashboardData?.resumenEjecutivo?.tendencias?.totalEmpresas || "stable"}
-                            icono="fas fa-building"
-                        />
-                        <TarjetaResumen
-                            titulo="Promedio de Contacto"
-                            valor={dashboardData?.resumenEjecutivo?.promedioContacto || 0}
-                            sufijo="%"
-                            tendencia={dashboardData?.resumenEjecutivo?.tendencias?.promedioContacto || "stable"}
-                            icono="fas fa-phone"
-                        />
-                        <TarjetaResumen
-                            titulo="Tasa de Respuesta Global"
-                            valor={dashboardData?.resumenEjecutivo?.tasaRespuestaGlobal || 0}
-                            sufijo="%"
-                            tendencia={dashboardData?.resumenEjecutivo?.tendencias?.tasaRespuestaGlobal || "stable"}
-                            icono="fas fa-chart-line"
-                        />
-                        <TarjetaResumen
-                            titulo="Tasa de Conversión Global"
-                            valor={dashboardData?.resumenEjecutivo?.tasaConversionGlobal || 0}
-                            sufijo="%"
-                            tendencia={dashboardData?.resumenEjecutivo?.tendencias?.tasaConversionGlobal || "stable"}
-                            icono="fas fa-handshake"
-                        />
-                    </div>
-
-
-                    {/*  Gráficas con ref para PDF */}
-                    <div className="dashboard-metricas__graficas-grid" ref={graficasSectionRef}>
-                        <GraficaBarras
-                            titulo="Empresas Creadas por Usuario"
-                            datos={dashboardData?.empresasCreadas?.map(item => ({
-                                usuario: item.usuario,
-                                nuevas: item.nuevas,
-                                contactadas: item.contactadas,
-                                infoEnviada: item.infoEnviada
-                            })) || []}
-                            series={["Empresas Nuevas", "Empresas Contactadas", "Info Enviada"]}
-                            colores={["rgb(74, 144, 226)", "rgb(91, 192, 222)", "rgb(44, 90, 160)"]}
-                        />
-
-                        <GraficaBarras
-                            titulo="Tasa de Respuesta por Usuario"
-                            datos={dashboardData?.tasaRespuesta?.map(item => ({
-                                usuario: item.usuario,
-                                totalLlamadas: item.totalLlamadas,
-                                llamadasExitosas: item.llamadasExitosas
-                            })) || []}
-                            series={["Total Llamadas", "Llamadas Exitosas"]}
-                            colores={["rgb(44, 90, 160)", "rgb(78, 205, 196)"]}
-                        />
-
-                        <div className="dashboard-metricas__grafica-conversion">
-                            <h3 className="dashboard-metricas__grafica-titulo">Tasa de Conversión por Usuario</h3>
-
-                            <div className="dashboard-metricas__grafica-leyenda">
-                                <div className="dashboard-metricas__leyenda-item">
-                                    <span className="dashboard-metricas__leyenda-color" style={{ backgroundColor: '#87ceeb' }}></span>
-                                    <span className="dashboard-metricas__leyenda-texto">Contactadas</span>
+                        {!loading && dashboardData && (
+                            dashboardData.empresasCreadas?.length === 0 &&
+                            dashboardData.tasaRespuesta?.length === 0 &&
+                            dashboardData.tasaConversion?.length === 0
+                        ) && (
+                                <div className="dashboard-metricas__no-data">
+                                    <div className="dashboard-metricas__no-data-content">
+                                        <h3>No hay datos disponibles</h3>
+                                        <p>No se encontraron métricas para el período seleccionado.</p>
+                                    </div>
                                 </div>
-                                <div className="dashboard-metricas__leyenda-item">
-                                    <span className="dashboard-metricas__leyenda-color" style={{ backgroundColor: '#5bc0de' }}></span>
-                                    <span className="dashboard-metricas__leyenda-texto">Respuesta Positiva</span>
-                                </div>
-                                <div className="dashboard-metricas__leyenda-item">
-                                    <span className="dashboard-metricas__leyenda-color" style={{ backgroundColor: '#2c5aa0' }}></span>
-                                    <span className="dashboard-metricas__leyenda-texto">Interés Medio/Alto</span>
-                                </div>
-                                <div className="dashboard-metricas__leyenda-item">
-                                    <span className="dashboard-metricas__leyenda-color" style={{ backgroundColor: '#030020' }}></span>
-                                    <span className="dashboard-metricas__leyenda-texto">Reuniones</span>
-                                </div>
-                            </div>
+                            )}
 
-                            <div className="dashboard-metricas__conversion-content">
-                                {(dashboardData?.tasaConversion || []).map((item, index) => (
-                                    <div key={index} className="dashboard-metricas__conversion-usuario">
-                                        <h4 className="dashboard-metricas__conversion-nombre">{item.usuario}</h4>
-                                        <div className="dashboard-metricas__conversion-barras">
-                                            <div className="dashboard-metricas__conversion-barra-stack">
-                                                <div
-                                                    className="dashboard-metricas__conversion-segmento dashboard-metricas__conversion-segmento--contactadas"
-                                                    style={{ width: "100%" }}
-                                                >
-                                                    {item.contactadas > 0 && (
-                                                        <span className="dashboard-metricas__conversion-valor-fijo">{item.contactadas}</span>
-                                                    )}
-                                                </div>
-                                                <div
-                                                    className="dashboard-metricas__conversion-segmento dashboard-metricas__conversion-segmento--positiva"
-                                                    style={{ width: `${item.contactadas > 0 ? (item.respuestaPositiva / item.contactadas) * 100 : 0}%` }}
-                                                >
-                                                    {item.respuestaPositiva > 0 && (
-                                                        <span className="dashboard-metricas__conversion-valor-fijo">{item.respuestaPositiva}</span>
-                                                    )}
-                                                </div>
-                                                <div
-                                                    className="dashboard-metricas__conversion-segmento dashboard-metricas__conversion-segmento--interes"
-                                                    style={{ width: `${item.contactadas > 0 ? (item.interesMedio / item.contactadas) * 100 : 0}%` }}
-                                                >
-                                                    {item.interesMedio > 0 && (
-                                                        <span className="dashboard-metricas__conversion-valor-fijo">{item.interesMedio}</span>
-                                                    )}
-                                                </div>
-                                                <div
-                                                    className="dashboard-metricas__conversion-segmento dashboard-metricas__conversion-segmento--reuniones"
-                                                    style={{ width: `${item.contactadas > 0 ? (item.reuniones / item.contactadas) * 100 : 0}%` }}
-                                                >
-                                                    {item.reuniones > 0 && (
-                                                        <span className="dashboard-metricas__conversion-valor-fijo">{item.reuniones}</span>
-                                                    )}
+                        {/*  Panel de Resumen Ejecutivo para PDF */}
+                        <div className="dashboard-metricas__resumen-ejecutivo" ref={resumenSectionRef}>
+                            <TarjetaResumen
+                                titulo="Total Empresas Creadas"
+                                valor={dashboardData?.resumenEjecutivo?.totalEmpresas || 0}
+                                tendencia={dashboardData?.resumenEjecutivo?.tendencias?.totalEmpresas || "stable"}
+                                icono="fas fa-building"
+                            />
+                            <TarjetaResumen
+                                titulo="Promedio de Contacto"
+                                valor={dashboardData?.resumenEjecutivo?.promedioContacto || 0}
+                                sufijo="%"
+                                tendencia={dashboardData?.resumenEjecutivo?.tendencias?.promedioContacto || "stable"}
+                                icono="fas fa-phone"
+                            />
+                            <TarjetaResumen
+                                titulo="Tasa de Respuesta Global"
+                                valor={dashboardData?.resumenEjecutivo?.tasaRespuestaGlobal || 0}
+                                sufijo="%"
+                                tendencia={dashboardData?.resumenEjecutivo?.tendencias?.tasaRespuestaGlobal || "stable"}
+                                icono="fas fa-chart-line"
+                            />
+                            <TarjetaResumen
+                                titulo="Tasa de Conversión Global"
+                                valor={dashboardData?.resumenEjecutivo?.tasaConversionGlobal || 0}
+                                sufijo="%"
+                                tendencia={dashboardData?.resumenEjecutivo?.tendencias?.tasaConversionGlobal || "stable"}
+                                icono="fas fa-handshake"
+                            />
+                        </div>
+
+
+                        {/*  Gráficas con ref para PDF */}
+                        <div className="dashboard-metricas__graficas-grid" ref={graficasSectionRef}>
+                            <GraficaBarras
+                                titulo="Empresas Creadas por Usuario"
+                                datos={dashboardData?.empresasCreadas?.map(item => ({
+                                    usuario: item.usuario,
+                                    nuevas: item.nuevas,
+                                    contactadas: item.contactadas,
+                                    infoEnviada: item.infoEnviada
+                                })) || []}
+                                series={["Empresas Nuevas", "Empresas Contactadas", "Info Enviada"]}
+                                colores={["rgb(74, 144, 226)", "rgb(91, 192, 222)", "rgb(44, 90, 160)"]}
+                            />
+
+                            <GraficaBarras
+                                titulo="Tasa de Respuesta por Usuario"
+                                datos={dashboardData?.tasaRespuesta?.map(item => ({
+                                    usuario: item.usuario,
+                                    totalLlamadas: item.totalLlamadas,
+                                    llamadasExitosas: item.llamadasExitosas
+                                })) || []}
+                                series={["Total Llamadas", "Llamadas Exitosas"]}
+                                colores={["rgb(44, 90, 160)", "rgb(78, 205, 196)"]}
+                            />
+
+                            <div className="dashboard-metricas__grafica-conversion">
+                                <h3 className="dashboard-metricas__grafica-titulo">Tasa de Conversión por Usuario</h3>
+
+                                <div className="dashboard-metricas__grafica-leyenda">
+                                    <div className="dashboard-metricas__leyenda-item">
+                                        <span className="dashboard-metricas__leyenda-color" style={{ backgroundColor: '#87ceeb' }}></span>
+                                        <span className="dashboard-metricas__leyenda-texto">Contactadas</span>
+                                    </div>
+                                    <div className="dashboard-metricas__leyenda-item">
+                                        <span className="dashboard-metricas__leyenda-color" style={{ backgroundColor: '#5bc0de' }}></span>
+                                        <span className="dashboard-metricas__leyenda-texto">Respuesta Positiva</span>
+                                    </div>
+                                    <div className="dashboard-metricas__leyenda-item">
+                                        <span className="dashboard-metricas__leyenda-color" style={{ backgroundColor: '#2c5aa0' }}></span>
+                                        <span className="dashboard-metricas__leyenda-texto">Interés Medio/Alto</span>
+                                    </div>
+                                    <div className="dashboard-metricas__leyenda-item">
+                                        <span className="dashboard-metricas__leyenda-color" style={{ backgroundColor: '#030020' }}></span>
+                                        <span className="dashboard-metricas__leyenda-texto">Reuniones</span>
+                                    </div>
+                                </div>
+
+                                <div className="dashboard-metricas__conversion-content">
+                                    {(dashboardData?.tasaConversion || []).map((item, index) => (
+                                        <div key={index} className="dashboard-metricas__conversion-usuario">
+                                            <h4 className="dashboard-metricas__conversion-nombre">{item.usuario}</h4>
+                                            <div className="dashboard-metricas__conversion-barras">
+                                                <div className="dashboard-metricas__conversion-barra-stack">
+                                                    <div
+                                                        className="dashboard-metricas__conversion-segmento dashboard-metricas__conversion-segmento--contactadas"
+                                                        style={{ width: "100%" }}
+                                                    >
+                                                        {item.contactadas > 0 && (
+                                                            <span className="dashboard-metricas__conversion-valor-fijo">{item.contactadas}</span>
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        className="dashboard-metricas__conversion-segmento dashboard-metricas__conversion-segmento--positiva"
+                                                        style={{ width: `${item.contactadas > 0 ? (item.respuestaPositiva / item.contactadas) * 100 : 0}%` }}
+                                                    >
+                                                        {item.respuestaPositiva > 0 && (
+                                                            <span className="dashboard-metricas__conversion-valor-fijo">{item.respuestaPositiva}</span>
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        className="dashboard-metricas__conversion-segmento dashboard-metricas__conversion-segmento--interes"
+                                                        style={{ width: `${item.contactadas > 0 ? (item.interesMedio / item.contactadas) * 100 : 0}%` }}
+                                                    >
+                                                        {item.interesMedio > 0 && (
+                                                            <span className="dashboard-metricas__conversion-valor-fijo">{item.interesMedio}</span>
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        className="dashboard-metricas__conversion-segmento dashboard-metricas__conversion-segmento--reuniones"
+                                                        style={{ width: `${item.contactadas > 0 ? (item.reuniones / item.contactadas) * 100 : 0}%` }}
+                                                    >
+                                                        {item.reuniones > 0 && (
+                                                            <span className="dashboard-metricas__conversion-valor-fijo">{item.reuniones}</span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
+                                            <div className="dashboard-metricas__conversion-metricas">
+                                                <span className="dashboard-metricas__conversion-metrica">Respuesta: {item.tasaRespuesta}%</span>
+                                                <span className="dashboard-metricas__conversion-metrica">Interés: {item.tasaInteres}%</span>
+                                                <span className="dashboard-metricas__conversion-metrica">Reuniones: {item.tasaReuniones}%</span>
+                                            </div>
                                         </div>
-                                        <div className="dashboard-metricas__conversion-metricas">
-                                            <span className="dashboard-metricas__conversion-metrica">Respuesta: {item.tasaRespuesta}%</span>
-                                            <span className="dashboard-metricas__conversion-metrica">Interés: {item.tasaInteres}%</span>
-                                            <span className="dashboard-metricas__conversion-metrica">Reuniones: {item.tasaReuniones}%</span>
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div >
-            </main >
+                    </div >
+                </main >
+                <PdfPreviewModal
+                    isOpen={pdfPreview.isOpen}
+                    onClose={handleClosePreview}
+                    pdfUrl={pdfPreview.url}
+                    onDownload={handleDownloadFromPreview}
+                />
             </div>
         </>
     )

@@ -1180,22 +1180,89 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
 }
 
 .tratos-container .tratos-filters .filter-group.filter-width-auto {
-  min-width: auto;       
-  flex-basis: auto;      
-  width: fit-content;    
+  min-width: auto;
+  flex-basis: auto;
+  width: fit-content;
 }
 
 .trato-card.desatendido {
-    background-color: #ffebee; 
-    border: 1px solid #ef5350;
-    box-shadow: 0 2px 5px rgba(239, 83, 80, 0.4);
+  background-color: #ffebee;
+  border: 1px solid #ef5350;
+  box-shadow: 0 2px 5px rgba(239, 83, 80, 0.4);
 }
 
 .trato-card.desatendido:hover {
-    background-color: #ffcdd2; 
+  background-color: #ffcdd2;
 }
 
-/* Media query para pantallas extra grandes (desktops grandes y TVs) */
+.leyenda-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start; 
+  gap: 40px;                  
+  padding: var(--spacing-md) 0; 
+  align-items: flex-start;
+  margin-top: var(--spacing-md);
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.leyenda-columna {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.semaforo-vertical {
+  gap: 6px;
+}
+
+.leyenda-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #333;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.leyenda-icon-img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  opacity: 0.8;
+}
+
+.leyenda-indicador {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.indicador-verde {
+  background-color: #28a745;
+}
+
+.indicador-amarillo {
+  background-color: #ffc107;
+}
+
+.indicador-rojo {
+  background-color: #dc3545;
+}
+
+@media (max-width: 900px) {
+  .leyenda-container {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+}
+
 @media (min-width: 1921px) {
   .main-content {
     padding: var(--spacing-xl) 3rem;
@@ -1206,7 +1273,6 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
   }
 }
 
-/* Media query para pantallas de tamaño medio (laptops y tablets grandes) */
 @media (max-width: 1200px) {
   .tratos-controls {
     flex-direction: column;

@@ -602,8 +602,7 @@ const Calendario = () => {
               initialView="dayGridMonth"
               events={eventosFiltrados}
               eventClick={handleEventClick}
-              height="auto"
-              contentHeight="auto"
+              height="100%"
               selectable={true}
               locale="es"
               headerToolbar={false}
