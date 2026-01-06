@@ -184,8 +184,15 @@ const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
           <button
             type="button"
             onClick={onDownload}
-            className="cotizaciones-btn cotizaciones-btn-primary"
-            style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+            className="facturacion-btn facturacion-btn-primary"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              backgroundColor: '#c73232',
+              borderColor: '#c73232',
+              color: '#ffffff'
+            }}
           >
             Descargar PDF
           </button>

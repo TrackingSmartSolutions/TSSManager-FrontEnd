@@ -79,7 +79,14 @@ const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
             type="button"
             onClick={onDownload}
             className="facturacion-btn facturacion-btn-primary"
-            style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              backgroundColor: '#c73232', 
+              borderColor: '#c73232',     
+              color: '#ffffff'            
+            }}
           >
             Descargar PDF
           </button>
@@ -1397,20 +1404,20 @@ const AdminFacturacion = () => {
       if (!response.ok) throw new Error(`Error al descargar el archivo: ${response.statusText}`);
 
       const blob = await response.blob();
-      
+
       if (blob.type === 'application/pdf') {
-          const url = window.URL.createObjectURL(blob);
-          const filename = factura.archivoUrl?.split("/").pop() || "factura.pdf";
-          
-          handleOpenPreview(url, filename);
+        const url = window.URL.createObjectURL(blob);
+        const filename = factura.archivoUrl?.split("/").pop() || "factura.pdf";
+
+        handleOpenPreview(url, filename);
       } else {
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = factura.archivoUrl?.split("/").pop() || "archivo";
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = factura.archivoUrl?.split("/").pop() || "archivo";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       }
 
     } catch (error) {
