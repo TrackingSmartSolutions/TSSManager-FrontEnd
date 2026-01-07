@@ -6134,7 +6134,6 @@ const DetallesTrato = () => {
 
                           let statusColor = '#666';
                           let statusText = 'Enviado';
-                          let statusIcon = '📤';
 
                           if (currentStatus === 'delivered') {
                             statusColor = '#10B981';
