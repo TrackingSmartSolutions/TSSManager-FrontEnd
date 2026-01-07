@@ -581,6 +581,11 @@ const AdminCuentasPagar = () => {
     url: null,
     filename: ""
   });
+  const [pdfPreviewResumido, setPdfPreviewResumido] = useState({
+    isOpen: false,
+    url: null,
+    filename: ""
+  });
 
   useEffect(() => {
     const fetchCuentasPagar = async () => {
@@ -883,6 +888,87 @@ const AdminCuentasPagar = () => {
     setPdfPreview({ isOpen: false, url: null, filename: "" });
   };
 
+  const handleGenerarReporteResumido = async () => {
+    try {
+      const params = new URLSearchParams();
+
+      if (fechaInicio && fechaFin) {
+        const formatFecha = (date) => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+
+        params.append('fechaInicio', formatFecha(fechaInicio));
+        params.append('fechaFin', formatFecha(fechaFin));
+      } else {
+        const fechaInicio = new Date();
+        fechaInicio.setFullYear(fechaInicio.getFullYear() - 1);
+        const fechaFin = new Date();
+        fechaFin.setFullYear(fechaFin.getFullYear() + 1);
+
+        params.append('fechaInicio', fechaInicio.toISOString().split('T')[0]);
+        params.append('fechaFin', fechaFin.toISOString().split('T')[0]);
+      }
+
+      params.append('filtroEstatus', filtroEstatus);
+
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/cuentas-por-pagar/reporte/pdf-resumido?${params.toString()}`
+      );
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        const now = new Date();
+        const timestamp = now.toISOString().split('T')[0];
+        const estatusSuffix = filtroEstatus !== 'Todas' ? `_${filtroEstatus}` : '';
+        const filename = `reporte_resumido_cuentas_por_pagar_${timestamp}${estatusSuffix}.pdf`;
+
+        setPdfPreviewResumido({
+          isOpen: true,
+          url: url,
+          filename: filename
+        });
+      }
+    } catch (error) {
+      console.error("Error al generar reporte resumido:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo generar la vista previa del reporte resumido.",
+      });
+    }
+  };
+
+  const handleDownloadFromPreviewResumido = () => {
+    if (pdfPreviewResumido.url) {
+      const link = document.createElement('a');
+      link.href = pdfPreviewResumido.url;
+      link.download = pdfPreviewResumido.filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      Swal.fire({
+        icon: "success",
+        title: "Éxito",
+        text: "Reporte resumido descargado correctamente",
+        timer: 2000,
+        showConfirmButton: false
+      });
+    }
+  };
+
+  const handleClosePreviewResumido = () => {
+    if (pdfPreviewResumido.url) {
+      window.URL.revokeObjectURL(pdfPreviewResumido.url);
+    }
+    setPdfPreviewResumido({ isOpen: false, url: null, filename: "" });
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("es-MX", {
       style: "currency",
@@ -1045,7 +1131,14 @@ const AdminCuentasPagar = () => {
                     className="cuentaspagar-btn-reporte"
                     onClick={handleGenerarReporte}
                   >
-                    Visualizar Reporte
+                    Visualizar Reporte Detallado
+                  </button>
+                  <button
+                    className="cuentaspagar-btn-reporte"
+                    onClick={handleGenerarReporteResumido}
+                    style={{ marginLeft: '10px' }}
+                  >
+                    Visualizar Reporte Resumido
                   </button>
                 </div>
               </div>
@@ -1269,6 +1362,14 @@ const AdminCuentasPagar = () => {
             pdfUrl={pdfPreview.url}
             onDownload={handleDownloadFromPreview}
             filename={pdfPreview.filename}
+          />
+
+          <PdfPreviewModal
+            isOpen={pdfPreviewResumido.isOpen}
+            onClose={handleClosePreviewResumido}
+            pdfUrl={pdfPreviewResumido.url}
+            onDownload={handleDownloadFromPreviewResumido}
+            filename={pdfPreviewResumido.filename}
           />
         </main>
       </div>
