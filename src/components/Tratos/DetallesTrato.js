@@ -6161,7 +6161,6 @@ const DetallesTrato = () => {
                                 fontSize: '0.85rem'
                               }}
                             >
-                              <span>{statusIcon}</span>
                               {statusText}
                             </div>
                           );
