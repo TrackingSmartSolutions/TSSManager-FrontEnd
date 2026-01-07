@@ -502,25 +502,25 @@ const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload, filename }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Vista previa" size="xl" closeOnOverlayClick={false}>
       <div className="cuentaspagar-preview-content" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        
+
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
-          <button 
-            type="button" 
-            onClick={onDownload} 
+          <button
+            type="button"
+            onClick={onDownload}
             className="cuentaspagar-btn"
             style={{ backgroundColor: '#dc3545', color: 'white', display: 'flex', alignItems: 'center', gap: '5px' }}
           >
-             Descargar PDF
+            Descargar PDF
           </button>
         </div>
 
         <div style={{ flex: 1, border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden', minHeight: '600px' }}>
-          <iframe 
-            src={`${pdfUrl}#view=FitH&navpanes=0`} 
+          <iframe
+            src={`${pdfUrl}#view=FitH&navpanes=0&toolbar=0`}
             title="Vista Previa del Reporte"
-            width="100%" 
-            height="100%" 
-            style={{ border: 'none', height: '75vh' }} 
+            width="100%"
+            height="100%"
+            style={{ border: 'none', height: '75vh' }}
           />
         </div>
       </div>

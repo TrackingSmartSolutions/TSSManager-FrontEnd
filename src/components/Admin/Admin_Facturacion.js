@@ -83,9 +83,9 @@ const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
               display: 'flex',
               alignItems: 'center',
               gap: '5px',
-              backgroundColor: '#c73232', 
-              borderColor: '#c73232',     
-              color: '#ffffff'            
+              backgroundColor: '#c73232',
+              borderColor: '#c73232',
+              color: '#ffffff'
             }}
           >
             Descargar PDF
@@ -97,7 +97,7 @@ const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
           height: '75vh'
         }}>
           <iframe
-            src={`${pdfUrl}#view=FitH&navpanes=0`}
+            src={`${pdfUrl}#view=FitH&navpanes=0&toolbar=0`}
             title="Vista Previa"
             width="100%" height="100%" style={{ border: 'none' }}
           />

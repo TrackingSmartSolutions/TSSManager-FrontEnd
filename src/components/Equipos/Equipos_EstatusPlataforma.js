@@ -144,7 +144,7 @@ const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
           height: '75vh'
         }}>
           <iframe
-            src={`${pdfUrl}#view=FitH&navpanes=0`}
+            src={`${pdfUrl}#view=FitH&navpanes=0&toolbar=0`}
             title="Vista Previa"
             width="100%" height="100%" style={{ border: 'none' }}
           />
@@ -987,23 +987,23 @@ const EquiposEstatusPlataforma = () => {
     };
 
     try {
-        const blobUrl = await html2pdf().set(opt).from(element).output('bloburl');
-        
-        setPdfPreview({
-            isOpen: true,
-            url: blobUrl,
-            filename: opt.filename
-        });
-        
-        Swal.close(); 
-        
+      const blobUrl = await html2pdf().set(opt).from(element).output('bloburl');
+
+      setPdfPreview({
+        isOpen: true,
+        url: blobUrl,
+        filename: opt.filename
+      });
+
+      Swal.close();
+
     } catch (error) {
-        console.error("Error al generar PDF:", error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'No se pudo generar la vista previa del PDF'
-        });
+      console.error("Error al generar PDF:", error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo generar la vista previa del PDF'
+      });
     }
   };
 

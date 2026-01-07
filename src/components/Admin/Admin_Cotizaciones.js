@@ -174,6 +174,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayCl
 };
 
 // Modal de Vista Previa
+// Modal de Vista Previa
 const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
   if (!isOpen) return null;
 
@@ -184,7 +185,7 @@ const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
           <button
             type="button"
             onClick={onDownload}
-            className="facturacion-btn facturacion-btn-primary"
+            className="cotizaciones-btn cotizaciones-btn-primary" // Corregí la clase para que coincida con el módulo
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -203,7 +204,7 @@ const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
           height: '75vh'
         }}>
           <iframe
-            src={`${pdfUrl}#view=FitH&navpanes=0`}
+            src={`${pdfUrl}#view=FitH&navpanes=0&toolbar=0`}
             title="Vista Previa"
             width="100%" height="100%" style={{ border: 'none' }}
           />

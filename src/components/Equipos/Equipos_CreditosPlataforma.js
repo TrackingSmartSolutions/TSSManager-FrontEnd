@@ -58,12 +58,12 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayCl
     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050
   };
-  
-  let widthStyle = '500px'; 
+
+  let widthStyle = '500px';
   let maxWidthStyle = '95%';
 
   if (size === 'lg') widthStyle = '800px';
-  if (size === 'xl') widthStyle = '950px'; 
+  if (size === 'xl') widthStyle = '950px';
 
   const contentStyle = {
     backgroundColor: 'white', borderRadius: '8px', padding: '20px',
@@ -72,19 +72,19 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayCl
   };
 
   return (
-    <div style={overlayStyle} onClick={closeOnOverlayClick ? onClose : () => {}}>
+    <div style={overlayStyle} onClick={closeOnOverlayClick ? onClose : () => { }}>
       <div style={contentStyle} onClick={(e) => e.stopPropagation()}>
-        <div style={{ 
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            marginBottom: '10px', borderBottom: '1px solid #dee2e6', paddingBottom: '10px'
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          marginBottom: '10px', borderBottom: '1px solid #dee2e6', paddingBottom: '10px'
         }}>
           <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>{title}</h2>
-          <button onClick={onClose} style={{ 
-              border: 'none', background: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#6c757d', padding: '0 5px'
+          <button onClick={onClose} style={{
+            border: 'none', background: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#6c757d', padding: '0 5px'
           }}>✕</button>
         </div>
         <div style={{ flex: 1, overflowY: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            {children}
+          {children}
         </div>
       </div>
     </div>
@@ -99,22 +99,22 @@ const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
     <Modal isOpen={isOpen} onClose={onClose} title="Vista previa" size="xl" closeOnOverlayClick={false}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
-          <button 
-            type="button" 
-            onClick={onDownload} 
-            className="creditosplataforma-btn creditosplataforma-btn-pdf" 
+          <button
+            type="button"
+            onClick={onDownload}
+            className="creditosplataforma-btn creditosplataforma-btn-pdf"
             style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
           >
-             Descargar PDF
+            Descargar PDF
           </button>
         </div>
 
-        <div style={{ 
-            border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden', 
-            height: '75vh' 
+        <div style={{
+          border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden',
+          height: '75vh'
         }}>
-          <iframe 
-            src={`${pdfUrl}#view=FitH&navpanes=0`} 
+          <iframe
+            src={`${pdfUrl}#view=FitH&navpanes=0&toolbar=0`}
             title="Vista Previa"
             width="100%" height="100%" style={{ border: 'none' }}
           />
@@ -147,10 +147,10 @@ const EquiposCreditosPlataforma = () => {
   const [ordenFecha, setOrdenFecha] = useState("asc")
   const [plataformasDisponibles, setPlataformasDisponibles] = useState([]);
   const [isLoading, setIsLoading] = useState(false)
-  const [pdfPreview, setPdfPreview] = useState({ 
-    isOpen: false, 
-    url: null, 
-    filename: "" 
+  const [pdfPreview, setPdfPreview] = useState({
+    isOpen: false,
+    url: null,
+    filename: ""
   });
 
   const toggleOrdenFecha = () => {
@@ -313,7 +313,7 @@ const EquiposCreditosPlataforma = () => {
         scrollX: 0,
         scrollY: 0,
         windowWidth: 1200,
-        height: element.scrollHeight + 50, 
+        height: element.scrollHeight + 50,
         allowTaint: true
       },
       jsPDF: {
@@ -325,7 +325,7 @@ const EquiposCreditosPlataforma = () => {
 
     try {
       const blobUrl = await html2pdf().set(opt).from(element).output('bloburl');
-      
+
       setPdfPreview({
         isOpen: true,
         url: blobUrl,

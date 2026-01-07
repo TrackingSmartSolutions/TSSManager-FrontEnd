@@ -1209,37 +1209,22 @@ const AdminTransacciones = () => {
                   </button>
                 </div>
               </div>
-              <div className="transacciones-summary-cards">
-                <div className="summary-card ingreso">
-                  <span className="summary-label">Total Ingresos</span>
-                  <span className="summary-amount">
+              <div className="transacciones-resumen-grid">
+                <div className="transacciones-resumen-card transacciones-ingresos">
+                  <h4 className="transacciones-resumen-titulo">Total Ingresos</h4>
+                  <p className="transacciones-resumen-monto">
                     ${totalIngresos.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-                  </span>
+                  </p>
                 </div>
-                <div className="summary-card gasto">
-                  <span className="summary-label">Total Gastos</span>
-                  <span className="summary-amount">
+                <div className="transacciones-resumen-card transacciones-gastos">
+                  <h4 className="transacciones-resumen-titulo">Total Gastos</h4>
+                  <p className="transacciones-resumen-monto">
                     ${totalGastos.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-                  </span>
+                  </p>
                 </div>
               </div>
               <div className="transacciones-filters-section">
                 <div className="filters-left">
-
-                  <div className="transacciones-filter-group">
-                    <select
-                      value={filtroFormaPago}
-                      onChange={(e) => setFiltroFormaPago(e.target.value)}
-                      className="transacciones-filter-select"
-                    >
-                      <option value="Todas">Todas las formas de pago</option>
-                      {formasPago.map((forma) => (
-                        <option key={forma.value} value={forma.value}>
-                          {forma.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
 
                   <div className="transacciones-filter-group">
                     <select
@@ -1264,6 +1249,21 @@ const AdminTransacciones = () => {
                       {cuentasUnicas.map((cuenta) => (
                         <option key={cuenta} value={cuenta}>
                           {cuenta === "Todas" ? "Todas las cuentas" : cuenta}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="transacciones-filter-group">
+                    <select
+                      value={filtroFormaPago}
+                      onChange={(e) => setFiltroFormaPago(e.target.value)}
+                      className="transacciones-filter-select"
+                    >
+                      <option value="Todas">Todas las formas de pago</option>
+                      {formasPago.map((forma) => (
+                        <option key={forma.value} value={forma.value}>
+                          {forma.label}
                         </option>
                       ))}
                     </select>

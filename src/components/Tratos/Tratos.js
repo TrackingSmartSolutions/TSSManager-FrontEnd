@@ -2094,7 +2094,7 @@ const Tratos = () => {
               ))}
             </div>
 
-            <div className="leyenda-container">
+            <div className="leyenda-container leyenda-fixed">
 
               {/* Columna Izquierda: Tipos de Actividad */}
               <div className="leyenda-columna">

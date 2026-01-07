@@ -68,6 +68,7 @@ body {
   box-sizing: border-box;
   background-color: var(--background-color);
   min-height: calc(100vh - 60px);
+  position: relative;
 }
 
 .tratos-container {
@@ -75,6 +76,7 @@ body {
   flex-direction: column;
   gap: var(--spacing-lg);
   width: 100%;
+  padding-bottom: 120px;
 }
 
 /* Controles y filtros */
@@ -1198,16 +1200,39 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
 .leyenda-container {
   display: flex;
   flex-direction: row;
-  justify-content: flex-start; 
-  gap: 40px;                  
-  padding: var(--spacing-md) 0; 
+  justify-content: flex-start;
+  gap: 40px;
+  padding: var(--spacing-md) 0;
   align-items: flex-start;
   margin-top: var(--spacing-md);
-  background-color: transparent;
-  border: none;
-  box-shadow: none;
+  background-color: white;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--box-shadow);
+  border-radius: var(--border-radius-md);
   width: 100%;
   flex-wrap: wrap;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+.leyenda-fixed {
+  position: sticky;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-lg);
+}
+
+.leyenda-fixed::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.9), transparent);
 }
 
 .leyenda-columna {
@@ -1260,6 +1285,14 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
   .leyenda-container {
     flex-direction: column;
     gap: var(--spacing-md);
+    position: sticky;
+    bottom: 10px;
+    padding: var(--spacing-md);
+  }
+
+  .leyenda-fixed {
+    bottom: 10px;
+    padding: var(--spacing-md);
   }
 }
 
