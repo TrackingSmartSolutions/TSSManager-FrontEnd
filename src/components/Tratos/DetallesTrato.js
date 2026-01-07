@@ -6129,7 +6129,47 @@ const DetallesTrato = () => {
                       )}
 
                       <div className="email-footer">
-                        <div className="email-status">Enviado</div>
+                        {(() => {
+                          const currentStatus = email.status || (email.exito ? 'sent' : 'failed');
+
+                          let statusColor = '#666';
+                          let statusText = 'Enviado';
+                          let statusIcon = '📤';
+
+                          if (currentStatus === 'delivered') {
+                            statusColor = '#10B981';
+                            statusText = 'Entregado';
+                            statusIcon = '✅';
+                          } else if (currentStatus === 'bounced') {
+                            statusColor = '#EF4444';
+                            statusText = 'Rebotado';
+                            statusIcon = '❌';
+                          } else if (currentStatus === 'sent') {
+                            statusColor = '#3B82F6';
+                            statusText = 'Enviado';
+                            statusIcon = '✈️';
+                          }
+
+                          return (
+                            <div
+                              className="email-status"
+                              style={{
+                                color: statusColor,
+                                fontWeight: 'bold',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                backgroundColor: `${statusColor}15`,
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                fontSize: '0.85rem'
+                              }}
+                            >
+                              <span>{statusIcon}</span>
+                              {statusText}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   ))
