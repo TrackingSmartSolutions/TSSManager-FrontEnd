@@ -6139,15 +6139,12 @@ const DetallesTrato = () => {
                           if (currentStatus === 'delivered') {
                             statusColor = '#10B981';
                             statusText = 'Entregado';
-                            statusIcon = '✅';
                           } else if (currentStatus === 'bounced') {
                             statusColor = '#EF4444';
                             statusText = 'Rebotado';
-                            statusIcon = '❌';
                           } else if (currentStatus === 'sent') {
                             statusColor = '#3B82F6';
                             statusText = 'Enviado';
-                            statusIcon = '✈️';
                           }
 
                           return (
