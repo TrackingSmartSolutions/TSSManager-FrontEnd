@@ -422,7 +422,122 @@
   100% { transform: rotate(360deg); }
 }
 
+.creditosplataforma-date-picker-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  min-width: 250px;
+}
 
+.creditosplataforma-date-picker {
+  padding: 8px 70px 8px 12px;
+  border: 1px solid var(--creditosplataforma-border-color);
+  border-radius: var(--creditosplataforma-border-radius-sm);
+  font-size: var(--creditosplataforma-font-size-sm);
+  width: 100%;
+  background-color: white;
+  color: var(--creditosplataforma-text-color);
+  cursor: pointer;
+  box-sizing: border-box;
+  height: 35px;
+}
+
+.creditosplataforma-date-picker:focus {
+  outline: none;
+  border-color: var(--creditosplataforma-secondary-color);
+  box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
+.creditosplataforma-date-picker-icons {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.creditosplataforma-calendar-icon {
+  color: #666;
+  display: flex;
+  align-items: center;
+}
+
+.react-datepicker__close-icon {
+  right: 35px !important;
+  pointer-events: all;
+}
+
+.react-datepicker__close-icon::after {
+  background-color: #dc3545 !important;
+  font-size: 14px !important;
+  line-height: 16px !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.creditosplataforma-btn-limpiar {
+  background-color: #6c757d;
+  color: white;
+  height: 35px;
+}
+
+.creditosplataforma-btn-limpiar:hover {
+  background-color: #5a6268;
+}
+
+.react-datepicker {
+  font-family: inherit;
+  border: 1px solid var(--creditosplataforma-border-color);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+}
+
+.react-datepicker__header {
+  background-color: var(--creditosplataforma-primary-color);
+  border-bottom: 1px solid var(--creditosplataforma-border-color);
+}
+
+.react-datepicker__current-month,
+.react-datepicker__day-name {
+  color: white;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--in-selecting-range,
+.creditosplataforma__day--in-range {
+  background-color: var(--creditosplataforma-secondary-color);
+  color: white;
+}
+
+.react-datepicker__day--keyboard-selected {
+  background-color: var(--creditosplataforma-accent-color);
+}
+
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
+@media (max-width: 768px) {
+  .creditosplataforma-date-picker-wrapper {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .creditosplataforma-date-picker {
+    min-width: auto;
+  }
+  
+  .creditosplataforma-filtros-container {
+    width: 100%;
+  }
+  
+  .creditosplataforma-btn-limpiar {
+    width: 100%;
+  }
+}
 
 @media (max-width: 1200px) {
   .creditosplataforma-container { gap: var(--creditosplataforma-spacing-md); }
@@ -462,15 +577,24 @@
   .creditosplataforma-page-title { font-size: var(--creditosplataforma-font-size-lg); }
   
   /* Filtros de Fecha Verticales */
-  .creditosplataforma-header-actions {
+   .creditosplataforma-header-actions {
     flex-direction: column;
     align-items: stretch;
+    width: 100%;
   }
   
-  .creditosplataforma-date-range {
+  .creditosplataforma-filtros-container {
+    width: 100%;
+    display: flex;
     flex-direction: column;
-    align-items: stretch;
     gap: 10px;
+  }
+  
+  .creditosplataforma-date-input,
+  .creditosplataforma-btn-pdf,
+  .creditosplataforma-btn-limpiar {
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .creditosplataforma-date-input,

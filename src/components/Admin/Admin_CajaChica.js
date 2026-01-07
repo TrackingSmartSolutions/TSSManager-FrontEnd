@@ -4,6 +4,8 @@ import "./Admin_CajaChica.css"
 import Header from "../Header/Header"
 import Swal from "sweetalert2"
 import jsPDF from "jspdf"
+import DatePicker from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
 import { API_BASE_URL } from "../Config/Config"
 
 const fetchWithToken = async (url, options = {}) => {
@@ -144,6 +146,35 @@ const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
   );
 };
 
+const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
+  <div className="cajachica-date-picker-wrapper">
+    <input
+      type="text"
+      value={value}
+      onClick={onClick}
+      placeholder={placeholder}
+      readOnly
+      className="cajachica-date-picker"
+    />
+    <div className="cajachica-date-picker-icons">
+      <svg
+        className="cajachica-calendar-icon"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+    </div>
+  </div>
+);
+
 const AdminCajaChica = () => {
   const navigate = useNavigate()
   const userRol = localStorage.getItem("userRol")
@@ -159,10 +190,8 @@ const AdminCajaChica = () => {
   const [cuentas, setCuentas] = useState([])
   const formasPago = [{ value: "01", label: "Efectivo" }]
 
-  const [filtroFechas, setFiltroFechas] = useState({
-    fechaInicio: '',
-    fechaFin: ''
-  });
+  const [rangoFechas, setRangoFechas] = useState([null, null]);
+  const [fechaInicio, fechaFin] = rangoFechas;
 
   const [filtroCuenta, setFiltroCuenta] = useState("");
   const [pdfPreview, setPdfPreview] = useState({
@@ -179,17 +208,7 @@ const AdminCajaChica = () => {
     const primerDia = new Date(año, mes, 1);
     const ultimoDia = new Date(año, mes + 1, 0);
 
-    const formatearFecha = (fecha) => {
-      const año = fecha.getFullYear();
-      const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-      const dia = String(fecha.getDate()).padStart(2, '0');
-      return `${año}-${mes}-${dia}`;
-    };
-
-    return {
-      fechaInicio: formatearFecha(primerDia),
-      fechaFin: formatearFecha(ultimoDia)
-    };
+    return [primerDia, ultimoDia];
   };
 
 
@@ -215,7 +234,7 @@ const AdminCajaChica = () => {
         setCuentas(cuentasResp)
 
         const rangoMesActual = obtenerRangoMesActual();
-        setFiltroFechas(rangoMesActual);
+        setRangoFechas(rangoMesActual);
 
       } catch (error) {
         Swal.fire({
@@ -291,7 +310,7 @@ const AdminCajaChica = () => {
   }
 
   const calcularSaldoAcumulado = () => {
-    const fechaInicio = filtroFechas.fechaInicio ? new Date(filtroFechas.fechaInicio + 'T00:00:00') : null;
+    const fechaInicioNormalizada = fechaInicio ? new Date(fechaInicio.getFullYear(), fechaInicio.getMonth(), fechaInicio.getDate()) : null;
 
     const todasTransaccionesOrdenadas = [...transaccionesEfectivo]
       .sort((a, b) => new Date(a.fechaPago + 'T00:00:00') - new Date(b.fechaPago + 'T00:00:00'));
@@ -305,7 +324,7 @@ const AdminCajaChica = () => {
 
         const esCuentaCorrecta = filtroCuenta === "" || transaccion.cuenta.id.toString() === filtroCuenta;
 
-        if (fechaTransaccion < fechaInicio && esCuentaCorrecta) {
+        if (fechaTransaccion < fechaInicioNormalizada && esCuentaCorrecta) {
           if (transaccion.tipo === "INGRESO") saldoInicial += transaccion.monto;
           else saldoInicial -= transaccion.monto;
         }
@@ -336,10 +355,19 @@ const AdminCajaChica = () => {
   const filtrarTransacciones = (transacciones) => {
     return transacciones.filter(transaccion => {
       const fechaTransaccion = new Date(transaccion.fechaPago + 'T00:00:00');
-      const fechaInicio = filtroFechas.fechaInicio ? new Date(filtroFechas.fechaInicio + 'T00:00:00') : null;
-      const fechaFin = filtroFechas.fechaFin ? new Date(filtroFechas.fechaFin + 'T23:59:59') : null;
-      const pasaFechas = (!fechaInicio || fechaTransaccion >= fechaInicio) && (!fechaFin || fechaTransaccion <= fechaFin);
 
+      let inicio = fechaInicio ? new Date(fechaInicio) : null;
+      let fin = fechaFin ? new Date(fechaFin) : null;
+
+      if (inicio) {
+        inicio = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
+      }
+
+      if (fin) {
+        fin = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59, 59);
+      }
+
+      const pasaFechas = (!inicio || fechaTransaccion >= inicio) && (!fin || fechaTransaccion <= fin);
       const pasaCuenta = filtroCuenta === "" || transaccion.cuenta.id.toString() === filtroCuenta;
 
       return pasaFechas && pasaCuenta;
@@ -709,30 +737,38 @@ const AdminCajaChica = () => {
                     ))}
                   </select>
                 </div>
+
                 <div className="cajachica-filtro-grupo">
-                  <label>Fecha inicio:</label>
-                  <input
-                    type="date"
-                    value={filtroFechas.fechaInicio}
-                    onChange={(e) => setFiltroFechas(prev => ({ ...prev, fechaInicio: e.target.value }))}
-                    className="cajachica-date-input"
+                  <label>Filtro por fecha:</label>
+                  <DatePicker
+                    selectsRange={true}
+                    startDate={fechaInicio}
+                    endDate={fechaFin}
+                    onChange={(update) => {
+                      setRangoFechas(update);
+                    }}
+                    isClearable={true}
+                    placeholderText="Seleccione fecha o rango"
+                    dateFormat="dd/MM/yyyy"
+                    customInput={<CustomDatePickerInput />}
+                    locale="es"
                   />
                 </div>
-                <div className="cajachica-filtro-grupo">
-                  <label>Fecha fin:</label>
-                  <input
-                    type="date"
-                    value={filtroFechas.fechaFin}
-                    onChange={(e) => setFiltroFechas(prev => ({ ...prev, fechaFin: e.target.value }))}
-                    className="cajachica-date-input"
-                  />
-                </div>
+
                 <button
                   className="cajachica-btn cajachica-btn-filtro"
-                  onClick={() => setFiltroFechas(obtenerRangoMesActual())}
+                  onClick={() => setRangoFechas(obtenerRangoMesActual())}
                 >
                   Mes actual
                 </button>
+
+                <button
+                  className="cajachica-btn cajachica-btn-filtro cajachica-btn-limpiar"
+                  onClick={() => setRangoFechas([null, null])}
+                >
+                  Limpiar fechas
+                </button>
+
                 <button
                   className="cajachica-btn cajachica-btn-filtro cajachica-btn-orden"
                   onClick={toggleOrdenFecha}

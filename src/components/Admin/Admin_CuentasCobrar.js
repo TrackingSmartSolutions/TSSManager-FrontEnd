@@ -7,7 +7,10 @@ import deleteIcon from "../../assets/icons/eliminar.png"
 import downloadIcon from "../../assets/icons/descarga.png"
 import editIcon from "../../assets/icons/editar.png"
 import requestIcon from "../../assets/icons/cotizacion.png"
+import detailsIcon from "../../assets/icons/lupa.png"
 import checkIcon from "../../assets/icons/check.png"
+import DatePicker from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
 import { API_BASE_URL } from "../Config/Config";
 
 const fetchWithToken = async (url, options = {}) => {
@@ -212,7 +215,8 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
   const categoriasPermitidas = [
     { id: 1, descripcion: "Ventas" },
     { id: 2, descripcion: "Renta Mensual" },
-    { id: 25, descripcion: "Renta Anual" }
+    { id: 25, descripcion: "Renta Anual" },
+    { id: 3, descripcion: "Revisiones" }
   ];
 
   useEffect(() => {
@@ -1086,6 +1090,105 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta }) => {
   );
 };
 
+// Modal para Ver Detalles de Cuenta Por Cobrar
+const DetallesCuentaModal = ({ isOpen, onClose, cuenta, cotizacion, tratoNombre }) => {
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+    }).format(amount);
+  };
+
+  if (!cuenta || !cotizacion) return null;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Detalles de la Cuenta por Cobrar" size="md">
+      <div className="cuentascobrar-detalles-container">
+        <div className="cuentascobrar-detalle-section">
+          <h4 className="cuentascobrar-detalle-titulo">Cliente</h4>
+          <p className="cuentascobrar-detalle-valor">{cuenta.clienteNombre || cuenta.cliente?.razonSocial}</p>
+        </div>
+
+        {tratoNombre && (
+          <div className="cuentascobrar-detalle-section">
+            <h4 className="cuentascobrar-detalle-titulo">Trato Vinculado</h4>
+            <p className="cuentascobrar-detalle-valor">{tratoNombre}</p>
+          </div>
+        )}
+
+        <div className="cuentascobrar-detalle-section">
+          <h4 className="cuentascobrar-detalle-titulo">Cotización Vinculada</h4>
+          <p className="cuentascobrar-detalle-valor">ID: {cotizacion.id}</p>
+        </div>
+
+        <div className="cuentascobrar-detalle-section">
+          <h4 className="cuentascobrar-detalle-titulo">Conceptos</h4>
+          <div className="cuentascobrar-conceptos-lista">
+            {cotizacion.unidades && cotizacion.unidades.length > 0 ? (
+              cotizacion.unidades.map((unidad, index) => (
+                <div key={index} className="cuentascobrar-concepto-item-detalle">
+                  <span className="cuentascobrar-concepto-cantidad">{unidad.cantidad}x</span>
+                  <span className="cuentascobrar-concepto-nombre">{unidad.concepto}</span>
+                  <span className="cuentascobrar-concepto-precio">{formatCurrency(unidad.precioUnitario)}</span>
+                </div>
+              ))
+            ) : (
+              <p>No hay conceptos disponibles</p>
+            )}
+          </div>
+        </div>
+
+        <div className="cuentascobrar-detalle-section cuentascobrar-resumen-financiero">
+          <h4 className="cuentascobrar-detalle-titulo">Resumen Financiero</h4>
+          <div className="cuentascobrar-resumen-items">
+            <div className="cuentascobrar-resumen-item">
+              <span className="cuentascobrar-resumen-label">Subtotal:</span>
+              <span className="cuentascobrar-resumen-valor">{formatCurrency(cotizacion.subtotal)}</span>
+            </div>
+            <div className="cuentascobrar-resumen-item">
+              <span className="cuentascobrar-resumen-label">IVA (16%):</span>
+              <span className="cuentascobrar-resumen-valor">{formatCurrency(cotizacion.iva)}</span>
+            </div>
+            <div className="cuentascobrar-resumen-item cuentascobrar-resumen-total">
+              <span className="cuentascobrar-resumen-label">Total:</span>
+              <span className="cuentascobrar-resumen-valor">{formatCurrency(cotizacion.total)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
+  <div className="cuentascobrar-date-picker-wrapper">
+    <input
+      type="text"
+      value={value}
+      onClick={onClick}
+      placeholder={placeholder}
+      readOnly
+      className="cuentascobrar-date-picker"
+    />
+    <div className="cuentascobrar-date-picker-icons">
+      <svg
+        className="cuentascobrar-calendar-icon"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+    </div>
+  </div>
+);
+
 // Componente Principal
 const AdminCuentasCobrar = () => {
   const navigate = useNavigate();
@@ -1100,11 +1203,8 @@ const AdminCuentasCobrar = () => {
   const [filtroEstatus, setFiltroEstatus] = useState("PENDIENTE");
   const [categoriasIngreso, setCategoriasIngreso] = useState([]);
   const [ordenFecha, setOrdenFecha] = useState('asc');
-  const [filtroFechas, setFiltroFechas] = useState({
-    fechaInicio: "",
-    fechaFin: "",
-    activo: false
-  });
+  const [rangoFechas, setRangoFechas] = useState([null, null]);
+  const [fechaInicio, fechaFin] = rangoFechas;
   const [filtroCliente, setFiltroCliente] = useState("");
 
   const [modals, setModals] = useState({
@@ -1113,6 +1213,7 @@ const AdminCuentasCobrar = () => {
     comprobante: { isOpen: false, cuenta: null },
     confirmarEliminacion: { isOpen: false, cuenta: null },
     crearSolicitud: { isOpen: false, cotizacion: null, cuenta: null },
+    detalles: { isOpen: false, cuenta: null },
   });
 
   const formatCurrency = (amount) => {
@@ -1240,17 +1341,8 @@ const AdminCuentasCobrar = () => {
     }
   };
 
-  const handleFiltroFechas = (campo, valor) => {
-    setFiltroFechas(prev => {
-      const nuevoEstado = { ...prev, [campo]: valor };
-      const fechaInicioCompleta = campo === "fechaInicio" ? valor !== "" : prev.fechaInicio !== "";
-      const fechaFinCompleta = campo === "fechaFin" ? valor !== "" : prev.fechaFin !== "";
-      return { ...nuevoEstado, activo: fechaInicioCompleta && fechaFinCompleta };
-    });
-  };
-
   const limpiarFiltroFechas = () => {
-    setFiltroFechas({ fechaInicio: "", fechaFin: "", activo: false });
+    setRangoFechas([null, null]);
   };
 
   const clientesUnicos = [...new Set(cuentasPorCobrar.map(c => c.clienteNombre || c.cliente?.razonSocial))].filter(Boolean).sort();
@@ -1355,6 +1447,43 @@ const AdminCuentasCobrar = () => {
     }
   };
 
+  const handleVerDetalles = async (cuenta) => {
+    try {
+      Swal.showLoading();
+
+      const cotizacionData = await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cuenta.cotizacionId}`);
+
+      let tratoNombre = null;
+      if (cotizacionData.tratoId) {
+        try {
+          const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${cotizacionData.tratoId}`);
+          tratoNombre = tratoResponse.nombre;
+        } catch (error) {
+          console.warn("No se pudo cargar el trato:", error);
+        }
+      }
+
+      Swal.close();
+
+      setModals((prev) => ({
+        ...prev,
+        detalles: {
+          isOpen: true,
+          cuenta: cuenta,
+          cotizacion: cotizacionData,
+          tratoNombre: tratoNombre,
+        },
+      }));
+    } catch (error) {
+      Swal.close();
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo cargar la información de la cuenta: " + error.message,
+      });
+    }
+  };
+
   const handleDescargarComprobante = async (cuenta) => {
     if (!cuenta.id) {
       Swal.fire({
@@ -1445,11 +1574,21 @@ const AdminCuentasCobrar = () => {
     const pasaFiltroCliente = filtroCliente === "" || nombreCliente === filtroCliente;
 
     let pasaFiltroFechas = true;
-    if (filtroFechas.activo) {
-      const fechaCuenta = new Date(cuenta.fechaPago);
-      const fechaInicio = new Date(filtroFechas.fechaInicio + "T00:00:00");
-      const fechaFin = new Date(filtroFechas.fechaFin + "T23:59:59");
-      pasaFiltroFechas = fechaCuenta >= fechaInicio && fechaCuenta <= fechaFin;
+    if (fechaInicio || fechaFin) {
+      const fechaCuenta = new Date(cuenta.fechaPago + 'T00:00:00');
+
+      let inicio = fechaInicio ? new Date(fechaInicio) : null;
+      let fin = fechaFin ? new Date(fechaFin) : null;
+
+      // Normalizar fechas
+      if (inicio) {
+        inicio = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
+      }
+      if (fin) {
+        fin = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59, 59);
+      }
+
+      pasaFiltroFechas = (!inicio || fechaCuenta >= inicio) && (!fin || fechaCuenta <= fin);
     }
 
     return pasaFiltroEstatus && pasaFiltroCliente && pasaFiltroFechas;
@@ -1575,32 +1714,20 @@ const AdminCuentasCobrar = () => {
 
                     <div className="cuentascobrar-filter-container cuentascobrar-date-filter">
                       <label>Filtrar por fecha de pago:</label>
-                      <div className="cuentascobrar-date-inputs">
-                        <input
-                          type="date"
-                          value={filtroFechas.fechaInicio}
-                          onChange={(e) => handleFiltroFechas("fechaInicio", e.target.value)}
-                          className="cuentascobrar-date-input"
-                          placeholder="Fecha inicio"
+                      <div className="cuentascobrar-date-picker-container">
+                        <DatePicker
+                          selectsRange={true}
+                          startDate={fechaInicio}
+                          endDate={fechaFin}
+                          onChange={(update) => {
+                            setRangoFechas(update);
+                          }}
+                          isClearable={true}
+                          placeholderText="Seleccione fecha o rango"
+                          dateFormat="dd/MM/yyyy"
+                          customInput={<CustomDatePickerInput />}
+                          locale="es"
                         />
-                        <span className="cuentascobrar-date-separator">a</span>
-                        <input
-                          type="date"
-                          value={filtroFechas.fechaFin}
-                          onChange={(e) => handleFiltroFechas("fechaFin", e.target.value)}
-                          className="cuentascobrar-date-input"
-                          placeholder="Fecha fin"
-                        />
-                        {filtroFechas.activo && (
-                          <button
-                            type="button"
-                            onClick={limpiarFiltroFechas}
-                            className="cuentascobrar-clear-filter-btn"
-                            title="Limpiar filtro de fechas"
-                          >
-                            ✕
-                          </button>
-                        )}
                       </div>
                     </div>
 
@@ -1652,6 +1779,17 @@ const AdminCuentasCobrar = () => {
                             </td>
                             <td>
                               <div className="cuentascobrar-actions">
+                                <button
+                                  className="cuentascobrar-action-btn cuentascobrar-details-btn"
+                                  onClick={() => handleVerDetalles(cuenta)}
+                                  title="Ver detalles"
+                                >
+                                  <img
+                                    src={detailsIcon}
+                                    alt="Detalles"
+                                    className="cuentascobrar-action-icon"
+                                  />
+                                </button>
                                 <button
                                   className="cuentascobrar-action-btn cuentascobrar-delete-btn"
                                   onClick={() => handleDeleteCuenta(cuenta)}
@@ -1800,6 +1938,14 @@ const AdminCuentasCobrar = () => {
             onClose={() => closeModal("confirmarEliminacion")}
             onConfirm={handleConfirmDelete}
             cuenta={modals.confirmarEliminacion.cuenta}
+          />
+
+          <DetallesCuentaModal
+            isOpen={modals.detalles.isOpen}
+            onClose={() => closeModal("detalles")}
+            cuenta={modals.detalles.cuenta}
+            cotizacion={modals.detalles.cotizacion}
+            tratoNombre={modals.detalles.tratoNombre}
           />
         </main>
       </div>

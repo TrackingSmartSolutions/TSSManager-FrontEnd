@@ -452,41 +452,6 @@
   color: var(--cotizaciones-text-color);
 }
 
-/* Inputs de Fecha */
-.cotizaciones-date-inputs {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.cotizaciones-date-input {
-  padding: var(--cotizaciones-spacing-sm);
-  border: 1px solid var(--cotizaciones-border-color);
-  border-radius: var(--cotizaciones-border-radius-sm);
-  font-size: var(--cotizaciones-font-size-sm);
-  min-width: 130px;
-}
-
-.cotizaciones-date-separator {
-  color: #666;
-  font-weight: 500;
-}
-
-.cotizaciones-clear-filter-btn {
-  background: #ff4757;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.cotizaciones-clear-filter-btn:hover { background: #ff3742; }
-
 .cotizaciones-table-header-row {
   display: flex;
   justify-content: space-between;
@@ -530,37 +495,6 @@
   box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2); 
 }
 
-.cotizaciones-date-group {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.cotizaciones-date-input {
-  min-width: 125px; 
-}
-
-.cotizaciones-date-separator {
-  color: #666;
-  font-weight: 500;
-}
-
-.cotizaciones-clear-filter-btn {
-  background: #ff4757;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 5px;
-}
-.cotizaciones-clear-filter-btn:hover { background: #ff3742; }
-
 .cotizaciones-btn-orden {
   background-color: #6c757d;
   color: white;
@@ -586,6 +520,117 @@
   font-size: 16px;
   line-height: 1;
 }
+
+.cotizaciones-date-picker-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  min-width: 200px;
+}
+
+.cotizaciones-date-picker {
+  padding: 8px 70px 8px 12px; 
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 100%;
+  background-color: white;
+  color: #333;
+  cursor: pointer;
+  box-sizing: border-box;
+  height: 36px;
+}
+
+.cotizaciones-date-picker:focus {
+  outline: none;
+  border-color: var(--cotizaciones-secondary-color);
+  box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
+.cotizaciones-date-picker-icons {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.cotizaciones-calendar-icon {
+  color: #666;
+  display: flex;
+  align-items: center;
+}
+
+.cotizaciones-date-picker-container {
+  display: flex;
+  align-items: center;
+  min-width: 200px;
+}
+
+.react-datepicker__close-icon {
+  right: 35px !important;
+  pointer-events: all;
+}
+
+.react-datepicker__close-icon::after {
+  background-color: #dc3545 !important;
+  font-size: 14px !important;
+  line-height: 16px !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
+.react-datepicker {
+  font-family: inherit;
+  border: 1px solid var(--cotizaciones-border-color);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+}
+
+.react-datepicker__header {
+  background-color: var(--cotizaciones-primary-color);
+  border-bottom: 1px solid var(--cotizaciones-border-color);
+}
+
+.react-datepicker__current-month,
+.react-datepicker__day-name {
+  color: white;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--in-selecting-range,
+.react-datepicker__day--in-range {
+  background-color: var(--cotizaciones-secondary-color);
+  color: white;
+}
+
+.react-datepicker__day--keyboard-selected {
+  background-color: var(--cotizaciones-accent-color);
+}
+
+@media (max-width: 768px) {
+  .cotizaciones-date-picker-wrapper {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .cotizaciones-date-picker {
+    min-width: auto;
+  }
+  
+  .cotizaciones-date-picker-container {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
 
 @media (max-width: 768px) {
   .cotizaciones-btn-orden {
@@ -613,15 +658,6 @@
   .cotizaciones-header-controls {
     flex-direction: column;
     align-items: stretch;
-  }
-  
-  .cotizaciones-date-group {
-    width: 100%;
-    display: flex;
-  }
-
-  .cotizaciones-date-input {
-    flex: 1;
   }
 }
 

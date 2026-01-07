@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom"
 import "./Equipos_CreditosPlataforma.css"
 import Header from "../Header/Header"
 import { API_BASE_URL } from "../Config/Config";
+import DatePicker from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
 import { Line } from "react-chartjs-2"
 import {
   Chart as ChartJS,
@@ -35,15 +37,10 @@ const obtenerFechasDelMesActual = () => {
   const año = ahora.getFullYear()
   const mes = ahora.getMonth()
 
-  // Primer día del mes
   const primerDia = new Date(año, mes, 1)
-  // Último día del mes
   const ultimoDia = new Date(año, mes + 1, 0)
 
-  return {
-    inicio: primerDia.toISOString().split('T')[0],
-    fin: ultimoDia.toISOString().split('T')[0]
-  }
+  return [primerDia, ultimoDia];
 }
 
 const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayClick = true }) => {
@@ -91,6 +88,35 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayCl
   );
 };
 
+const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
+  <div className="creditosplataforma-date-picker-wrapper">
+    <input
+      type="text"
+      value={value}
+      onClick={onClick}
+      placeholder={placeholder}
+      readOnly
+      className="creditosplataforma-date-picker"
+    />
+    <div className="creditosplataforma-date-picker-icons">
+      <svg
+        className="creditosplataforma-calendar-icon"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+    </div>
+  </div>
+);
+
 // Modal de Vista Previa
 const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
   if (!isOpen) return null;
@@ -135,15 +161,9 @@ const EquiposCreditosPlataforma = () => {
     historialSaldos: [],
   })
 
-  const [filtros, setFiltros] = useState(() => {
-    const fechasDelMes = obtenerFechasDelMesActual()
-    return {
-      fechaInicio: fechasDelMes.inicio,
-      fechaFin: fechasDelMes.fin,
-      plataforma: "Todos",
-    }
-  })
-
+  const [rangoFechas, setRangoFechas] = useState(() => obtenerFechasDelMesActual());
+  const [fechaInicio, fechaFin] = rangoFechas;
+  const [filtroPlataforma, setFiltroPlataforma] = useState("Todos");
   const [ordenFecha, setOrdenFecha] = useState("asc")
   const [plataformasDisponibles, setPlataformasDisponibles] = useState([]);
   const [isLoading, setIsLoading] = useState(false)
@@ -160,7 +180,20 @@ const EquiposCreditosPlataforma = () => {
   const cargarDatos = async () => {
     setIsLoading(true)
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/creditos-plataforma/dashboard?fechaInicio=${filtros.fechaInicio}&fechaFin=${filtros.fechaFin}&plataforma=${filtros.plataforma}`)
+      const formatearFecha = (fecha) => {
+        if (!fecha) return '';
+        const año = fecha.getFullYear();
+        const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+        const dia = String(fecha.getDate()).padStart(2, '0');
+        return `${año}-${mes}-${dia}`;
+      };
+
+      const fechaInicioStr = formatearFecha(fechaInicio);
+      const fechaFinStr = formatearFecha(fechaFin);
+
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/creditos-plataforma/dashboard?fechaInicio=${fechaInicioStr}&fechaFin=${fechaFinStr}&plataforma=${filtroPlataforma}`
+      )
       const data = await response.json()
       setCreditosData(data)
     } catch (error) {
@@ -245,7 +278,7 @@ const EquiposCreditosPlataforma = () => {
 
   useEffect(() => {
     cargarDatos()
-  }, [filtros, ordenFecha])
+  }, [fechaInicio, fechaFin, filtroPlataforma, ordenFecha])
 
   useEffect(() => {
     const fetchPlataformas = async () => {
@@ -288,14 +321,6 @@ const EquiposCreditosPlataforma = () => {
     }
   }
 
-  // Manejar cambios en filtros
-  const handleFiltroChange = (campo, valor) => {
-    setFiltros((prev) => ({
-      ...prev,
-      [campo]: valor,
-    }))
-  }
-
   // Generar reporte PDF
   const handleGenerarReporte = async () => {
     const element = document.getElementById("creditos-reporte-content");
@@ -305,7 +330,7 @@ const EquiposCreditosPlataforma = () => {
 
     const opt = {
       margin: 0.5,
-      filename: `Informe_Creditos_Plataforma_${filtros.fechaInicio}_${filtros.fechaFin}.pdf`,
+      filename: `Informe_Creditos_Plataforma_${fechaInicio ? fechaInicio.toISOString().split('T')[0] : 'sin-fecha'}_${fechaFin ? fechaFin.toISOString().split('T')[0] : 'sin-fecha'}.pdf`,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: {
         scale: 1.2,
@@ -408,21 +433,19 @@ const EquiposCreditosPlataforma = () => {
                   <div className="creditosplataforma-header-actions">
                     <div className="creditosplataforma-filtros-container">
                       <label>Rango de fecha del movimiento</label>
-                      <div className="creditosplataforma-date-range">
-                        <input
-                          type="date"
-                          value={filtros.fechaInicio}
-                          onChange={(e) => handleFiltroChange("fechaInicio", e.target.value)}
-                          className="creditosplataforma-date-input"
-                        />
-                        <span>-</span>
-                        <input
-                          type="date"
-                          value={filtros.fechaFin}
-                          onChange={(e) => handleFiltroChange("fechaFin", e.target.value)}
-                          className="creditosplataforma-date-input"
-                        />
-                      </div>
+                      <DatePicker
+                        selectsRange={true}
+                        startDate={fechaInicio}
+                        endDate={fechaFin}
+                        onChange={(update) => {
+                          setRangoFechas(update);
+                        }}
+                        isClearable={true}
+                        placeholderText="Seleccione fecha o rango"
+                        dateFormat="dd/MM/yyyy"
+                        customInput={<CustomDatePickerInput />}
+                        locale="es"
+                      />
                     </div>
                     <button className="creditosplataforma-btn creditosplataforma-btn-pdf" onClick={handleGenerarReporte}>
                       Visualizar reporte
@@ -514,8 +537,8 @@ const EquiposCreditosPlataforma = () => {
                     <h4 className="creditosplataforma-table-title">Estado de cuenta</h4>
                     <div className="creditosplataforma-table-filters">
                       <select
-                        value={filtros.plataforma}
-                        onChange={(e) => handleFiltroChange("plataforma", e.target.value)}
+                        value={filtroPlataforma}
+                        onChange={(e) => setFiltroPlataforma(e.target.value)}
                         className="creditosplataforma-filter-select"
                       >
                         <option value="Todos">Todas las plataformas</option>

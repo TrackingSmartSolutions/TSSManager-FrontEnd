@@ -4,6 +4,8 @@ import "./Admin_Transacciones.css"
 import Header from "../Header/Header"
 import Swal from "sweetalert2"
 import deleteIcon from "../../assets/icons/eliminar.png"
+import DatePicker from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
 import { API_BASE_URL } from "../Config/Config"
 
 const fetchWithToken = async (url, options = {}) => {
@@ -105,7 +107,7 @@ const getDefaultPagos = (esquema) => {
   }
 };
 
-const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, formasPago }) => {
+const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, formasPago, setTransacciones }) => {
   const [formData, setFormData] = useState({
     fecha: getTodayDate(),
     tipo: "",
@@ -121,6 +123,9 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
   const [dynamicCuentas, setDynamicCuentas] = useState([]);
   const [apiCuentas, setApiCuentas] = useState([]);
   const esquemas = ["UNICA", "SEMANAL", "QUINCENAL", "MENSUAL", "BIMESTRAL", "TRIMESTRAL", "SEMESTRAL", "ANUAL"];
+  const [mostrarModalPagoInmediato, setMostrarModalPagoInmediato] = useState(false);
+  const [cuentaPorPagarCreada, setCuentaPorPagarCreada] = useState(null);
+  const [datosTransaccionCreada, setDatosTransaccionCreada] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -216,7 +221,7 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
     e.preventDefault();
     if (validateForm()) {
       try {
-        const newTransaccion = await fetchWithToken(`${API_BASE_URL}/transacciones/crear`, {
+        const response = await fetchWithToken(`${API_BASE_URL}/transacciones/crear`, {
           method: "POST",
           body: JSON.stringify({
             fecha: formData.fecha,
@@ -233,13 +238,22 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
           }),
         });
 
-        onSave(newTransaccion);
-        onClose();
-        Swal.fire({
-          icon: "success",
-          title: "Éxito",
-          text: "Transacción creada correctamente",
-        });
+        // Verificar si es GASTO con esquema UNICA
+        if (response.data.esUnicaGasto && response.data.cuentaPorPagarId) {
+          // Guardar datos para el modal de pago
+          setDatosTransaccionCreada(response.data.transaccion);
+          setCuentaPorPagarCreada(response.data.cuentaPorPagarId);
+          setMostrarModalPagoInmediato(true);
+        } else {
+          // Flujo normal
+          onSave(response.data.transaccion || response.data);
+          onClose();
+          Swal.fire({
+            icon: "success",
+            title: "Éxito",
+            text: "Transacción creada correctamente",
+          });
+        }
       } catch (error) {
         Swal.fire({
           icon: "error",
@@ -249,6 +263,7 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
       }
     }
   };
+
   const categoriasFiltradas = categorias ? categorias.filter((cat) => cat && cat.tipo === formData.tipo) : [];
   const cuentasFiltradas = dynamicCuentas;
 
@@ -444,6 +459,58 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
           </button>
         </div>
       </form>
+      <ModalPagoInmediato
+        isOpen={mostrarModalPagoInmediato}
+        monto={formData.monto}
+        formaPago={formData.formaPago}
+        formasPago={formasPago}
+        onConfirmarPago={async (datosPago) => {
+          try {
+            await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/marcar-como-pagada`, {
+              method: "POST",
+              body: JSON.stringify({
+                id: cuentaPorPagarCreada,
+                montoPago: datosPago.montoPago,
+                formaPago: datosPago.formaPago,
+                usuarioId: 1
+              }),
+            });
+
+            const transaccionActualizada = {
+              ...datosTransaccionCreada,
+              notas: " Transacción generada desde Cuentas por Pagar -" + (datosTransaccionCreada.notas || "")
+            };
+
+            onSave(transaccionActualizada);
+
+            setMostrarModalPagoInmediato(false);
+            onClose();
+
+            Swal.fire({
+              icon: "success",
+              title: "Éxito",
+              text: "Transacción creada y marcada como pagada",
+            });
+          } catch (error) {
+            Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: "No se pudo marcar como pagada: " + error.message,
+            });
+          }
+        }}
+        onOmitir={() => {
+          onSave(datosTransaccionCreada);
+          setMostrarModalPagoInmediato(false);
+          onClose();
+
+          Swal.fire({
+            icon: "success",
+            title: "Éxito",
+            text: "Transacción creada correctamente (Pendiente de pago)",
+          });
+        }}
+      />
     </Modal>
   );
 };
@@ -782,6 +849,91 @@ const GestionarCuentasModal = ({ isOpen, onClose, cuentas, categorias, onSaveCue
   );
 };
 
+const ModalPagoInmediato = ({ isOpen, onClose, onConfirmarPago, onOmitir, monto, formaPago, formasPago }) => {
+  const [montoPago, setMontoPago] = useState("");
+  const [formaPagoSeleccionada, setFormaPagoSeleccionada] = useState("01");
+
+  useEffect(() => {
+    if (isOpen) {
+      setMontoPago(monto || "");
+      setFormaPagoSeleccionada(formaPago || "01");
+    }
+  }, [isOpen, monto, formaPago]);
+
+  const handleConfirmar = () => {
+    if (!montoPago || parseFloat(montoPago) <= 0) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "El monto debe ser mayor a 0",
+      });
+      return;
+    }
+
+    onConfirmarPago({
+      montoPago: parseFloat(montoPago),
+      formaPago: formaPagoSeleccionada
+    });
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onOmitir} title="¿Marcar como pagada?" size="sm" closeOnOverlayClick={false}>
+      <div className="transacciones-pago-inmediato">
+        <p className="transacciones-pago-mensaje" style={{ marginBottom: "20px", fontSize: "14px" }}>
+          Esta cuenta por pagar ha sido creada. ¿Deseas marcarla como pagada ahora?
+        </p>
+
+        <div className="transacciones-form-group">
+          <label htmlFor="montoPagoInmediato">Monto a pagar <span className="required"> *</span></label>
+          <input
+            type="number"
+            id="montoPagoInmediato"
+            value={montoPago}
+            onChange={(e) => setMontoPago(e.target.value)}
+            className="transacciones-form-control"
+            step="0.01"
+            min="0"
+            placeholder="$"
+          />
+        </div>
+
+        <div className="transacciones-form-group">
+          <label htmlFor="formaPagoInmediato">Forma de pago <span className="required"> *</span></label>
+          <select
+            id="formaPagoInmediato"
+            value={formaPagoSeleccionada}
+            onChange={(e) => setFormaPagoSeleccionada(e.target.value)}
+            className="transacciones-form-control"
+          >
+            {formasPago.map((forma) => (
+              <option key={forma.value} value={forma.value}>
+                {forma.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="transacciones-modal-form-actions">
+          <button
+            type="button"
+            onClick={onOmitir}
+            className="transacciones-btn transacciones-btn-cancel"
+          >
+            Omitir
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirmar}
+            className="transacciones-btn transacciones-btn-confirm"
+          >
+            Marcar como pagada
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
 const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, tipo, item }) => {
   const getMessage = () => {
     switch (tipo) {
@@ -815,6 +967,35 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, tipo, item }) =
   )
 }
 
+const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
+  <div className="transacciones-date-picker-wrapper">
+    <input
+      type="text"
+      value={value}
+      onClick={onClick}
+      placeholder={placeholder}
+      readOnly
+      className="transacciones-date-picker"
+    />
+    <div className="transacciones-date-picker-icons">
+      <svg
+        className="transacciones-calendar-icon"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+    </div>
+  </div>
+);
+
 const AdminTransacciones = () => {
   const navigate = useNavigate();
   const userRol = localStorage.getItem("userRol")
@@ -833,10 +1014,8 @@ const AdminTransacciones = () => {
     confirmarEliminacion: { isOpen: false, tipo: "", item: null, onConfirm: null },
   });
 
-  const [filtroFechas, setFiltroFechas] = useState({
-    fechaInicio: '',
-    fechaFin: ''
-  });
+  const [rangoFechas, setRangoFechas] = useState([null, null]);
+  const [fechaInicio, fechaFin] = rangoFechas;
 
   const formasPago = [
     { value: "01", label: "01: Efectivo" },
@@ -857,17 +1036,7 @@ const AdminTransacciones = () => {
     const primerDia = new Date(año, mes, 1);
     const ultimoDia = new Date(año, mes + 1, 0);
 
-    const formatearFecha = (fecha) => {
-      const año = fecha.getFullYear();
-      const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-      const dia = String(fecha.getDate()).padStart(2, '0');
-      return `${año}-${mes}-${dia}`;
-    };
-
-    return {
-      fechaInicio: formatearFecha(primerDia),
-      fechaFin: formatearFecha(ultimoDia)
-    };
+    return [primerDia, ultimoDia];
   };
 
   useEffect(() => {
@@ -884,7 +1053,7 @@ const AdminTransacciones = () => {
         setCuentas(cuentasResp.data || []);
 
         const rangoMesActual = obtenerRangoMesActual();
-        setFiltroFechas(rangoMesActual);
+        setRangoFechas(rangoMesActual);
       } catch (error) {
         Swal.fire({
           icon: "error",
@@ -904,16 +1073,23 @@ const AdminTransacciones = () => {
   };
 
   const filtrarTransaccionesPorFecha = (transacciones) => {
-    if (!filtroFechas.fechaInicio || !filtroFechas.fechaFin) {
-      return transacciones;
-    }
-
     return transacciones.filter(transaccion => {
       const fechaTransaccion = new Date(transaccion.fechaPago + 'T00:00:00');
-      const fechaInicio = new Date(filtroFechas.fechaInicio + 'T00:00:00');
-      const fechaFin = new Date(filtroFechas.fechaFin + 'T23:59:59');
 
-      return fechaTransaccion >= fechaInicio && fechaTransaccion <= fechaFin;
+      let inicio = fechaInicio ? new Date(fechaInicio) : null;
+      let fin = fechaFin ? new Date(fechaFin) : null;
+
+      if (inicio) {
+        inicio = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
+      }
+
+      if (fin) {
+        fin = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59, 59);
+      }
+
+      const pasaFechas = (!inicio || fechaTransaccion >= inicio) && (!fin || fechaTransaccion <= fin);
+
+      return pasaFechas;
     });
   };
 
@@ -1273,30 +1449,37 @@ const AdminTransacciones = () => {
 
                 <div className="filters-right">
                   <div className="transacciones-filtro-grupo">
-                    <label>De:</label>
-                    <input
-                      type="date"
-                      value={filtroFechas.fechaInicio}
-                      onChange={(e) => setFiltroFechas(prev => ({ ...prev, fechaInicio: e.target.value }))}
-                      className="transacciones-date-input"
+                    <label>Filtro por fecha:</label>
+                    <DatePicker
+                      selectsRange={true}
+                      startDate={fechaInicio}
+                      endDate={fechaFin}
+                      onChange={(update) => {
+                        setRangoFechas(update);
+                      }}
+                      isClearable={true}
+                      placeholderText="Seleccione fecha o rango"
+                      dateFormat="dd/MM/yyyy"
+                      customInput={<CustomDatePickerInput />}
+                      locale="es"
                     />
                   </div>
-                  <div className="transacciones-filtro-grupo">
-                    <label>Hasta:</label>
-                    <input
-                      type="date"
-                      value={filtroFechas.fechaFin}
-                      onChange={(e) => setFiltroFechas(prev => ({ ...prev, fechaFin: e.target.value }))}
-                      className="transacciones-date-input"
-                    />
-                  </div>
+
                   <button
                     className="transacciones-btn transacciones-btn-filtro"
-                    onClick={() => setFiltroFechas(obtenerRangoMesActual())}
+                    onClick={() => setRangoFechas(obtenerRangoMesActual())}
                     title="Mes actual"
                   >
                     Mes
                   </button>
+
+                  <button
+                    className="transacciones-btn transacciones-btn-filtro transacciones-btn-limpiar"
+                    onClick={() => setRangoFechas([null, null])}
+                  >
+                    Limpiar fechas
+                  </button>
+
                   <button
                     className="transacciones-btn transacciones-btn-filtro transacciones-btn-orden"
                     onClick={toggleOrdenFecha}
@@ -1376,6 +1559,7 @@ const AdminTransacciones = () => {
             categorias={categorias}
             cuentas={cuentas}
             formasPago={formasPago}
+            setTransacciones={setTransacciones}
           />
           <GestionarCategoriasModal
             isOpen={modals.gestionarCategorias.isOpen}

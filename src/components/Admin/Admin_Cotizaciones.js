@@ -6,8 +6,10 @@ import Swal from "sweetalert2"
 import deleteIcon from "../../assets/icons/eliminar.png"
 import addIcon from "../../assets/icons/agregar.png"
 import editIcon from "../../assets/icons/editar.png"
-import downloadIcon from "../../assets/icons/descarga.png";
+import downloadIcon from "../../assets/icons/descarga.png"
 import receivableIcon from "../../assets/icons/cuenta-cobrar.png"
+import DatePicker from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
 import { API_BASE_URL } from "../Config/Config";
 
 
@@ -1208,6 +1210,35 @@ const SubirArchivoModal = ({ isOpen, onClose, onDownload, cotizacion }) => {
   );
 };
 
+const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
+  <div className="cotizaciones-date-picker-wrapper">
+    <input
+      type="text"
+      value={value}
+      onClick={onClick}
+      placeholder={placeholder}
+      readOnly
+      className="cotizaciones-date-picker"
+    />
+    <div className="cotizaciones-date-picker-icons">
+      <svg
+        className="cotizaciones-calendar-icon"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+    </div>
+  </div>
+);
+
 // Componente Principal
 const AdminCotizaciones = () => {
   const navigate = useNavigate()
@@ -1221,11 +1252,8 @@ const AdminCotizaciones = () => {
   const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
   const [ordenFecha, setOrdenFecha] = useState('asc');
   const [isLoading, setIsLoading] = useState(true);
-  const [filtroFechas, setFiltroFechas] = useState({
-    fechaInicio: "",
-    fechaFin: "",
-    activo: false
-  });
+  const [rangoFechas, setRangoFechas] = useState([null, null]);
+  const [fechaInicio, fechaFin] = rangoFechas;
   const [pdfPreview, setPdfPreview] = useState({
     isOpen: false,
     url: null,
@@ -1349,17 +1377,8 @@ const AdminCotizaciones = () => {
     }
   }
 
-  const handleFiltroFechas = (campo, valor) => {
-    setFiltroFechas(prev => {
-      const nuevoEstado = { ...prev, [campo]: valor };
-      const fechaInicioCompleta = campo === "fechaInicio" ? valor !== "" : prev.fechaInicio !== "";
-      const fechaFinCompleta = campo === "fechaFin" ? valor !== "" : prev.fechaFin !== "";
-      return { ...nuevoEstado, activo: fechaInicioCompleta && fechaFinCompleta };
-    });
-  };
-
   const limpiarFiltroFechas = () => {
-    setFiltroFechas({ fechaInicio: "", fechaFin: "", activo: false });
+    setRangoFechas([null, null]);
   };
 
   const handleSaveCotizacion = async (cotizacionData) => {
@@ -1548,13 +1567,21 @@ const AdminCotizaciones = () => {
       .includes(filterReceptor.toLowerCase());
 
     let pasaFechas = true;
-    if (filtroFechas.activo) {
+    if (fechaInicio || fechaFin) {
       const fechaItem = new Date(cotizacion.fechaCreacion || cotizacion.fecha);
-      const fechaInicio = new Date(filtroFechas.fechaInicio + "T00:00:00");
-      const fechaFin = new Date(filtroFechas.fechaFin + "T23:59:59");
+
+      let inicio = fechaInicio ? new Date(fechaInicio) : null;
+      let fin = fechaFin ? new Date(fechaFin) : null;
+
+      if (inicio) {
+        inicio = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
+      }
+      if (fin) {
+        fin = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59, 59);
+      }
 
       if (!isNaN(fechaItem.getTime())) {
-        pasaFechas = fechaItem >= fechaInicio && fechaItem <= fechaFin;
+        pasaFechas = (!inicio || fechaItem >= inicio) && (!fin || fechaItem <= fin);
       }
     }
 
@@ -1656,30 +1683,20 @@ const AdminCotizaciones = () => {
                     />
 
                     {/* Filtro Fechas */}
-                    <div className="cotizaciones-date-group">
-                      <input
-                        type="date"
-                        value={filtroFechas.fechaInicio}
-                        onChange={(e) => handleFiltroFechas("fechaInicio", e.target.value)}
-                        className="cotizaciones-filter-input cotizaciones-date-input"
+                    <div className="cotizaciones-date-picker-container">
+                      <DatePicker
+                        selectsRange={true}
+                        startDate={fechaInicio}
+                        endDate={fechaFin}
+                        onChange={(update) => {
+                          setRangoFechas(update);
+                        }}
+                        isClearable={true}
+                        placeholderText="Seleccionar rango de fechas"
+                        dateFormat="dd/MM/yyyy"
+                        customInput={<CustomDatePickerInput />}
+                        locale="es"
                       />
-                      <span className="cotizaciones-date-separator">a</span>
-                      <input
-                        type="date"
-                        value={filtroFechas.fechaFin}
-                        onChange={(e) => handleFiltroFechas("fechaFin", e.target.value)}
-                        className="cotizaciones-filter-input cotizaciones-date-input"
-                      />
-                      {filtroFechas.activo && (
-                        <button
-                          type="button"
-                          onClick={limpiarFiltroFechas}
-                          className="cotizaciones-clear-filter-btn"
-                          title="Limpiar fechas"
-                        >
-                          ✕
-                        </button>
-                      )}
                     </div>
 
                     {/* Botón Ordenar */}

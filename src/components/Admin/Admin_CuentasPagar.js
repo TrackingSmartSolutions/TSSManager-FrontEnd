@@ -6,6 +6,8 @@ import Swal from "sweetalert2"
 import deleteIcon from "../../assets/icons/eliminar.png"
 import editIcon from "../../assets/icons/editar.png"
 import checkIcon from "../../assets/icons/check.png"
+import DatePicker from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
 import { API_BASE_URL } from "../Config/Config";
 
 const fetchWithToken = async (url, options = {}) => {
@@ -528,6 +530,35 @@ const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload, filename }) => {
   );
 };
 
+const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
+  <div className="cuentaspagar-date-picker-wrapper">
+    <input
+      type="text"
+      value={value}
+      onClick={onClick}
+      placeholder={placeholder}
+      readOnly
+      className="cuentaspagar-date-picker"
+    />
+    <div className="cuentaspagar-date-picker-icons">
+      <svg
+        className="cuentaspagar-calendar-icon"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+    </div>
+  </div>
+);
+
 // Componente Principal
 const AdminCuentasPagar = () => {
   const navigate = useNavigate();
@@ -542,11 +573,8 @@ const AdminCuentasPagar = () => {
     confirmarEliminacion: { isOpen: false, cuenta: null },
     regenerar: { isOpen: false, cuenta: null },
   });
-  const [filtroFechas, setFiltroFechas] = useState({
-    fechaInicio: "",
-    fechaFin: "",
-    activo: false
-  });
+  const [rangoFechas, setRangoFechas] = useState([null, null]);
+  const [fechaInicio, fechaFin] = rangoFechas;
   const [filtroCuenta, setFiltroCuenta] = useState("");
   const [pdfPreview, setPdfPreview] = useState({
     isOpen: false,
@@ -775,9 +803,16 @@ const AdminCuentasPagar = () => {
     try {
       const params = new URLSearchParams();
 
-      if (filtroFechas.activo) {
-        params.append('fechaInicio', filtroFechas.fechaInicio);
-        params.append('fechaFin', filtroFechas.fechaFin);
+      if (fechaInicio && fechaFin) {
+        const formatFecha = (date) => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+
+        params.append('fechaInicio', formatFecha(fechaInicio));
+        params.append('fechaFin', formatFecha(fechaFin));
       } else {
         const fechaInicio = new Date();
         fechaInicio.setFullYear(fechaInicio.getFullYear() - 1);
@@ -888,12 +923,21 @@ const AdminCuentasPagar = () => {
     const pasaFiltroCuenta = filtroCuenta === "" || cuenta.cuenta?.nombre === filtroCuenta;
 
     let pasaFiltroFechas = true;
-    if (filtroFechas.activo) {
+    if (fechaInicio || fechaFin) {
       const [year, month, day] = cuenta.fechaPago.split('-').map(Number);
       const fechaCuenta = new Date(year, month - 1, day);
-      const fechaInicio = new Date(filtroFechas.fechaInicio + "T00:00:00");
-      const fechaFin = new Date(filtroFechas.fechaFin + "T23:59:59");
-      pasaFiltroFechas = fechaCuenta >= fechaInicio && fechaCuenta <= fechaFin;
+
+      let inicio = fechaInicio ? new Date(fechaInicio) : null;
+      let fin = fechaFin ? new Date(fechaFin) : null;
+
+      if (inicio) {
+        inicio = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
+      }
+      if (fin) {
+        fin = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59, 59);
+      }
+
+      pasaFiltroFechas = (!inicio || fechaCuenta >= inicio) && (!fin || fechaCuenta <= fin);
     }
 
     return pasaFiltroEstatus && pasaFiltroFechas && pasaFiltroCuenta;
@@ -940,29 +984,8 @@ const AdminCuentasPagar = () => {
     return diasPorEsquema[esquema] || 0;
   };
 
-  const handleFiltroFechas = (campo, valor) => {
-    setFiltroFechas(prev => {
-      const nuevoEstado = {
-        ...prev,
-        [campo]: valor
-      };
-
-      const fechaInicioCompleta = campo === "fechaInicio" ? valor !== "" : prev.fechaInicio !== "";
-      const fechaFinCompleta = campo === "fechaFin" ? valor !== "" : prev.fechaFin !== "";
-
-      return {
-        ...nuevoEstado,
-        activo: fechaInicioCompleta && fechaFinCompleta
-      };
-    });
-  };
-
   const limpiarFiltroFechas = () => {
-    setFiltroFechas({
-      fechaInicio: "",
-      fechaFin: "",
-      activo: false
-    });
+    setRangoFechas([null, null]);
   };
 
   return (
@@ -1078,32 +1101,20 @@ const AdminCuentasPagar = () => {
 
                     <div className="cuentaspagar-filter-container cuentaspagar-date-filter">
                       <label>Filtrar por fecha de pago:</label>
-                      <div className="cuentaspagar-date-inputs">
-                        <input
-                          type="date"
-                          value={filtroFechas.fechaInicio}
-                          onChange={(e) => handleFiltroFechas("fechaInicio", e.target.value)}
-                          className="cuentaspagar-date-input"
-                          placeholder="Fecha inicio"
+                      <div className="cuentaspagar-date-picker-container">
+                        <DatePicker
+                          selectsRange={true}
+                          startDate={fechaInicio}
+                          endDate={fechaFin}
+                          onChange={(update) => {
+                            setRangoFechas(update);
+                          }}
+                          isClearable={true}
+                          placeholderText="Seleccione fecha o rango"
+                          dateFormat="dd/MM/yyyy"
+                          customInput={<CustomDatePickerInput />}
+                          locale="es"
                         />
-                        <span className="cuentaspagar-date-separator">a</span>
-                        <input
-                          type="date"
-                          value={filtroFechas.fechaFin}
-                          onChange={(e) => handleFiltroFechas("fechaFin", e.target.value)}
-                          className="cuentaspagar-date-input"
-                          placeholder="Fecha fin"
-                        />
-                        {filtroFechas.activo && (
-                          <button
-                            type="button"
-                            onClick={limpiarFiltroFechas}
-                            className="cuentaspagar-clear-filter-btn"
-                            title="Limpiar filtro de fechas"
-                          >
-                            ✕
-                          </button>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -1197,15 +1208,18 @@ const AdminCuentasPagar = () => {
                         <tr>
                           <td colSpan="11" className="cuentaspagar-no-data">
                             {(() => {
-                              if (filtroEstatus === "Todas" && !filtroFechas.activo) {
+                              if (filtroEstatus === "Todas" && !fechaInicio && !fechaFin) {
                                 return "No hay cuentas por pagar registradas";
                               }
                               let mensaje = "No hay cuentas por pagar";
                               if (filtroEstatus !== "Todas") {
                                 mensaje += ` con estatus "${filtroEstatus}"`;
                               }
-                              if (filtroFechas.activo) {
-                                mensaje += ` entre ${filtroFechas.fechaInicio} y ${filtroFechas.fechaFin}`;
+                              if (fechaInicio && fechaFin) {
+                                const formatFecha = (date) => {
+                                  return new Date(date).toLocaleDateString("es-MX");
+                                };
+                                mensaje += ` entre ${formatFecha(fechaInicio)} y ${formatFecha(fechaFin)}`;
                               }
                               return mensaje;
                             })()}

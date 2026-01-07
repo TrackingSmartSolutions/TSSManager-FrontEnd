@@ -7,6 +7,8 @@ import deleteIcon from "../../assets/icons/eliminar.png";
 import editIcon from "../../assets/icons/editar.png";
 import downloadIcon from "../../assets/icons/descarga.png";
 import stampIcon from "../../assets/icons/timbrar.png"
+import DatePicker from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
 import { API_BASE_URL } from "../Config/Config";
 
 const fetchWithToken = async (url, options = {}) => {
@@ -1130,6 +1132,35 @@ const ConceptosModal = ({ isOpen, onClose, solicitud, onSave, onPreview }) => {
   );
 };
 
+const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
+  <div className="facturacion-date-picker-wrapper">
+    <input
+      type="text"
+      value={value}
+      onClick={onClick}
+      placeholder={placeholder}
+      readOnly
+      className="facturacion-date-picker"
+    />
+    <div className="facturacion-date-picker-icons">
+      <svg
+        className="facturacion-calendar-icon"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+    </div>
+  </div>
+);
+
 // Componente Principal
 const AdminFacturacion = () => {
   const navigate = useNavigate();
@@ -1143,11 +1174,8 @@ const AdminFacturacion = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [ordenFecha, setOrdenFecha] = useState('asc');
   const [solicitudesTimbradas, setSolicitudesTimbradas] = useState(new Set());
-  const [filtroFechas, setFiltroFechas] = useState({
-    fechaInicio: "",
-    fechaFin: "",
-    activo: false
-  });
+  const [rangoFechas, setRangoFechas] = useState([null, null]);
+  const [fechaInicio, fechaFin] = rangoFechas;
   const [filtroReceptor, setFiltroReceptor] = useState("");
   const [filtroTipo, setFiltroTipo] = useState("");
   const [pdfPreview, setPdfPreview] = useState({
@@ -1239,17 +1267,8 @@ const AdminFacturacion = () => {
     }
   };
 
-  const handleFiltroFechas = (campo, valor) => {
-    setFiltroFechas(prev => {
-      const nuevoEstado = { ...prev, [campo]: valor };
-      const fechaInicioCompleta = campo === "fechaInicio" ? valor !== "" : prev.fechaInicio !== "";
-      const fechaFinCompleta = campo === "fechaFin" ? valor !== "" : prev.fechaFin !== "";
-      return { ...nuevoEstado, activo: fechaInicioCompleta && fechaFinCompleta };
-    });
-  };
-
   const limpiarFiltroFechas = () => {
-    setFiltroFechas({ fechaInicio: "", fechaFin: "", activo: false });
+    setRangoFechas([null, null]);
   };
 
   const receptoresUnicos = [...new Set(solicitudes.map(s => s.receptor))].filter(Boolean).sort();
@@ -1474,11 +1493,21 @@ const AdminFacturacion = () => {
     const pasaTipo = filtroTipo === "" || solicitud.tipo === filtroTipo;
 
     let pasaFechas = true;
-    if (filtroFechas.activo) {
-      const fechaSol = new Date(solicitud.fechaEmision);
-      const fechaInicio = new Date(filtroFechas.fechaInicio + "T00:00:00");
-      const fechaFin = new Date(filtroFechas.fechaFin + "T23:59:59");
-      pasaFechas = fechaSol >= fechaInicio && fechaSol <= fechaFin;
+    if (fechaInicio || fechaFin) {
+      const fechaSol = new Date(solicitud.fechaEmision + 'T00:00:00');
+
+      let inicio = fechaInicio ? new Date(fechaInicio) : null;
+      let fin = fechaFin ? new Date(fechaFin) : null;
+
+      // Normalizar fechas
+      if (inicio) {
+        inicio = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
+      }
+      if (fin) {
+        fin = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59, 59);
+      }
+
+      pasaFechas = (!inicio || fechaSol >= inicio) && (!fin || fechaSol <= fin);
     }
 
     return pasaReceptor && pasaTipo && pasaFechas;
@@ -1648,32 +1677,20 @@ const AdminFacturacion = () => {
 
                     <div className="facturacion-filter-container facturacion-date-filter">
                       <label>Filtrar por fecha emisión:</label>
-                      <div className="facturacion-date-inputs">
-                        <input
-                          type="date"
-                          value={filtroFechas.fechaInicio}
-                          onChange={(e) => handleFiltroFechas("fechaInicio", e.target.value)}
-                          className="facturacion-date-input"
-                          placeholder="Inicio"
+                      <div className="facturacion-date-picker-container">
+                        <DatePicker
+                          selectsRange={true}
+                          startDate={fechaInicio}
+                          endDate={fechaFin}
+                          onChange={(update) => {
+                            setRangoFechas(update);
+                          }}
+                          isClearable={true}
+                          placeholderText="Seleccione fecha o rango"
+                          dateFormat="dd/MM/yyyy"
+                          customInput={<CustomDatePickerInput />}
+                          locale="es"
                         />
-                        <span className="facturacion-date-separator">a</span>
-                        <input
-                          type="date"
-                          value={filtroFechas.fechaFin}
-                          onChange={(e) => handleFiltroFechas("fechaFin", e.target.value)}
-                          className="facturacion-date-input"
-                          placeholder="Fin"
-                        />
-                        {filtroFechas.activo && (
-                          <button
-                            type="button"
-                            onClick={limpiarFiltroFechas}
-                            className="facturacion-clear-filter-btn"
-                            title="Limpiar fechas"
-                          >
-                            ✕
-                          </button>
-                        )}
                       </div>
                     </div>
 

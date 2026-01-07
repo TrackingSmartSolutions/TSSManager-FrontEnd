@@ -251,7 +251,7 @@
 /* Filtros en Header de Tabla */
 .cuentascobrar-filter-container {
   display: flex;
-  align-items: center;
+  align-items: left;
   gap: 10px;
   flex-wrap: wrap;
 }
@@ -955,51 +955,334 @@
   box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
 }
 
-/* Estilos de fechas */
-.cuentascobrar-date-filter {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+/* Contenedor principal del modal de detalles */
+.cuentascobrar-detalles-container {
+  padding: 0;
 }
 
-.cuentascobrar-date-inputs {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+/* Secciones del modal */
+.cuentascobrar-detalle-section {
+  margin-bottom: 0;
+  padding: var(--cuentascobrar-spacing-md) var(--cuentascobrar-spacing-lg);
+  border-bottom: 1px solid var(--cuentascobrar-border-color);
+  background-color: white;
 }
 
-.cuentascobrar-date-input {
-  padding: var(--cuentascobrar-spacing-sm);
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: var(--cuentascobrar-font-size-sm);
-  min-width: 130px;
+.cuentascobrar-detalle-section:first-child {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
-.cuentascobrar-date-separator {
-  color: #666;
+.cuentascobrar-detalle-section:last-of-type {
+  border-bottom: none;
+  border-bottom-left-radius: var(--cuentascobrar-border-radius-lg);
+  border-bottom-right-radius: var(--cuentascobrar-border-radius-lg);
+}
+
+.cuentascobrar-detalle-titulo {
+  color: #000000;
+  font-size: var(--cuentascobrar-font-size-md);
+  font-weight: 400;
+  margin-bottom: var(--cuentascobrar-spacing-xs);
+  letter-spacing: 0.5px;
+}
+
+.cuentascobrar-detalle-valor {
+  color: var(--cuentascobrar-primary-color);
+  font-size: var(--cuentascobrar-font-size-md);
+  margin: 0;
   font-weight: 500;
 }
 
-.cuentascobrar-clear-filter-btn {
-  background: #ff4757;
-  color: white;
+/* Lista de conceptos */
+.cuentascobrar-conceptos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cuentascobrar-spacing-sm);
+  margin-top: var(--cuentascobrar-spacing-sm);
+}
+
+/* Item individual de concepto */
+.cuentascobrar-concepto-item-detalle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--cuentascobrar-spacing-sm) var(--cuentascobrar-spacing-md);
+  background-color: var(--cuentascobrar-background-color);
+  border-radius: var(--cuentascobrar-border-radius-sm);
+  border-left: 3px solid var(--cuentascobrar-secondary-color);
+  transition: all 0.2s ease;
+}
+
+.cuentascobrar-concepto-item-detalle:hover {
+  background-color: #e3f2fd;
+  transform: translateX(2px);
+}
+
+/* Cantidad en conceptos */
+.cuentascobrar-concepto-cantidad {
+  font-weight: 600;
+  color: var(--cuentascobrar-secondary-color);
+  min-width: 50px;
+  font-size: var(--cuentascobrar-font-size-sm);
+}
+
+/* Nombre del concepto */
+.cuentascobrar-concepto-nombre {
+  flex: 1;
+  margin: 0 var(--cuentascobrar-spacing-md);
+  color: var(--cuentascobrar-text-color);
+  font-size: var(--cuentascobrar-font-size-sm);
+  line-height: 1.4;
+}
+
+/* Precio del concepto */
+.cuentascobrar-concepto-precio {
+  font-weight: 600;
+  color: var(--cuentascobrar-success-color);
+  font-size: var(--cuentascobrar-font-size-sm);
+  white-space: nowrap;
+}
+
+/* Sección de resumen financiero */
+.cuentascobrar-resumen-financiero {
+  background-color: #f8f9fa;
+  padding: var(--cuentascobrar-spacing-md) var(--cuentascobrar-spacing-lg);
+  border-radius: 0;
   border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  border-bottom: 1px solid var(--cuentascobrar-border-color);
+}
+
+/* Items del resumen */
+.cuentascobrar-resumen-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cuentascobrar-spacing-sm);
+}
+
+/* Item individual del resumen */
+.cuentascobrar-resumen-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--cuentascobrar-spacing-sm) var(--cuentascobrar-spacing-md);
+  background-color: white;
+  border-radius: var(--cuentascobrar-border-radius-sm);
+  border: 1px solid var(--cuentascobrar-border-color);
+}
+
+/* Etiqueta del resumen */
+.cuentascobrar-resumen-label {
+  font-weight: 500;
+  color: var(--cuentascobrar-text-color);
+  font-size: var(--cuentascobrar-font-size-sm);
+}
+
+/* Valor del resumen */
+.cuentascobrar-resumen-valor {
+  font-weight: 600;
+  color: var(--cuentascobrar-text-color);
+  font-size: var(--cuentascobrar-font-size-md);
+}
+
+/* Fila de total */
+.cuentascobrar-resumen-total {
+  background-color: var(--cuentascobrar-primary-color);
+  color: white;
+  padding: var(--cuentascobrar-spacing-md);
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.cuentascobrar-resumen-total .cuentascobrar-resumen-label,
+.cuentascobrar-resumen-total .cuentascobrar-resumen-valor {
+  color: white;
+  font-size: var(--cuentascobrar-font-size-lg);
+  font-weight: 700;
+}
+
+/* Botón de detalles en la tabla */
+.cuentascobrar-details-btn {
+  background-color: white;
+  border: 1px solid var(--cuentascobrar-border-color);
+}
+
+.cuentascobrar-details-btn:hover {
+  background-color: rgba(23, 162, 184, 0.1);
+  border-color: #17a2b8;
+}
+
+.cuentascobrar-details-btn .cuentascobrar-action-icon {
+  filter: brightness(0) saturate(100%) invert(47%) sepia(94%) saturate(445%) hue-rotate(144deg) brightness(95%) contrast(91%);
+}
+
+.cuentascobrar-date-picker-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  min-width: 250px;
+}
+
+.cuentascobrar-date-picker {
+  padding: 8px 70px 8px 12px; 
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 100%;
+  background-color: white;
+  color: #333;
   cursor: pointer;
-  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.cuentascobrar-date-picker:focus {
+  outline: none;
+  border-color: var(--cuentascobrar-secondary-color);
+  box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
+.cuentascobrar-date-picker-icons {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
+  pointer-events: none;
 }
 
-.cuentascobrar-clear-filter-btn:hover {
-  background: #ff3742;
+.cuentascobrar-calendar-icon {
+  color: #666;
+  display: flex;
+  align-items: center;
 }
 
+.react-datepicker__close-icon {
+  right: 35px !important;
+  pointer-events: all;
+}
+
+.react-datepicker__close-icon::after {
+  background-color: #dc3545 !important;
+  font-size: 14px !important;
+  line-height: 16px !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
+.react-datepicker {
+  font-family: inherit;
+  border: 1px solid var(--cuentascobrar-border-color);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+}
+
+.react-datepicker__header {
+  background-color: var(--cuentascobrar-primary-color);
+  border-bottom: 1px solid var(--cuentascobrar-border-color);
+}
+
+.react-datepicker__current-month,
+.react-datepicker__day-name {
+  color: white;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--in-selecting-range,
+.react-datepicker__day--in-range {
+  background-color: var(--cuentascobrar-secondary-color);
+  color: white;
+}
+
+.react-datepicker__day--keyboard-selected {
+  background-color: var(--cuentascobrar-accent-color);
+}
+
+.cuentascobrar-date-picker-container {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .cuentascobrar-date-picker-wrapper {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .cuentascobrar-date-picker {
+    min-width: auto;
+  }
+  
+  .cuentascobrar-date-filter {
+    width: 100%;
+  }
+  
+  .cuentascobrar-date-picker-container {
+    width: 100%;
+  }
+}
+
+/* Responsive para el modal de detalles */
+@media (max-width: 768px) {
+  .cuentascobrar-detalle-section {
+    padding: var(--cuentascobrar-spacing-sm) var(--cuentascobrar-spacing-md);
+  }
+
+  .cuentascobrar-concepto-item-detalle {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--cuentascobrar-spacing-xs);
+  }
+
+  .cuentascobrar-concepto-cantidad,
+  .cuentascobrar-concepto-nombre,
+  .cuentascobrar-concepto-precio {
+    margin: 0;
+  }
+
+  .cuentascobrar-concepto-precio {
+    align-self: flex-end;
+  }
+
+  .cuentascobrar-resumen-financiero {
+    padding: var(--cuentascobrar-spacing-sm) var(--cuentascobrar-spacing-md);
+  }
+
+  .cuentascobrar-resumen-item {
+    padding: var(--cuentascobrar-spacing-xs) var(--cuentascobrar-spacing-sm);
+  }
+
+  .cuentascobrar-resumen-total {
+    padding: var(--cuentascobrar-spacing-sm) var(--cuentascobrar-spacing-md);
+  }
+}
+
+@media (max-width: 576px) {
+  .cuentascobrar-detalle-titulo {
+    font-size: var(--cuentascobrar-font-size-xs);
+  }
+
+  .cuentascobrar-detalle-valor {
+    font-size: var(--cuentascobrar-font-size-sm);
+  }
+
+  .cuentascobrar-concepto-cantidad,
+  .cuentascobrar-concepto-nombre,
+  .cuentascobrar-concepto-precio,
+  .cuentascobrar-resumen-label,
+  .cuentascobrar-resumen-valor {
+    font-size: var(--cuentascobrar-font-size-xs);
+  }
+
+  .cuentascobrar-resumen-total .cuentascobrar-resumen-label,
+  .cuentascobrar-resumen-total .cuentascobrar-resumen-valor {
+    font-size: var(--cuentascobrar-font-size-sm);
+  }
+}
 
 @media (max-width: 1200px) {
   .cuentascobrar-container {
@@ -1148,22 +1431,7 @@
     width: 100%;
     box-sizing: border-box;
   }
-
-  .cuentascobrar-date-inputs {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .cuentascobrar-date-separator {
-    display: none;
-  }
-
-  .cuentascobrar-clear-filter-btn {
-    align-self: flex-end;
-    margin-top: 5px;
-  }
 }
-
 
 @media (max-width: 576px) {
   .cuentascobrar-main-content {

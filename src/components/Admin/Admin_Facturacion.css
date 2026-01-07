@@ -756,51 +756,6 @@
   box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
 }
 
-/* Fechas */
-.facturacion-date-filter {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.facturacion-date-inputs {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.facturacion-date-input {
-  padding: var(--facturacion-spacing-sm);
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: var(--facturacion-font-size-sm);
-  min-width: 125px;
-}
-
-.facturacion-date-separator {
-  color: #666;
-  font-weight: 500;
-}
-
-.facturacion-clear-filter-btn {
-  background: #ff4757;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.facturacion-clear-filter-btn:hover {
-  background: #ff3742;
-}
-
 .facturacion-btn-disabled {
   opacity: 0.5;
   cursor: not-allowed !important;
@@ -914,6 +869,116 @@
   background-color: #fff9e6;
   color: #f57c00;
   border: 1px solid #ffcc80;
+}
+
+.facturacion-date-picker-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  min-width: 250px;
+}
+
+.facturacion-date-picker {
+  padding: 8px 70px 8px 12px; 
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 100%;
+  background-color: white;
+  color: #333;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.facturacion-date-picker:focus {
+  outline: none;
+  border-color: var(--facturacion-secondary-color);
+  box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
+.facturacion-date-picker-icons {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.facturacion-calendar-icon {
+  color: #666;
+  display: flex;
+  align-items: center;
+}
+
+.react-datepicker__close-icon {
+  right: 35px !important;
+  pointer-events: all;
+}
+
+.react-datepicker__close-icon::after {
+  background-color: #dc3545 !important;
+  font-size: 14px !important;
+  line-height: 16px !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
+.react-datepicker {
+  font-family: inherit;
+  border: 1px solid var(--facturacion-border-color);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+}
+
+.react-datepicker__header {
+  background-color: var(--facturacion-primary-color);
+  border-bottom: 1px solid var(--facturacion-border-color);
+}
+
+.react-datepicker__current-month,
+.react-datepicker__day-name {
+  color: white;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--in-selecting-range,
+.react-datepicker__day--in-range {
+  background-color: var(--facturacion-secondary-color);
+  color: white;
+}
+
+.react-datepicker__day--keyboard-selected {
+  background-color: var(--facturacion-accent-color);
+}
+
+.facturacion-date-picker-container {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .facturacion-date-picker-wrapper {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .facturacion-date-picker {
+    min-width: auto;
+  }
+  
+  .facturacion-date-filter {
+    width: 100%;
+  }
+  
+  .facturacion-date-picker-container {
+    width: 100%;
+  }
 }
 
 @media (max-width: 1200px) {
@@ -1079,29 +1144,6 @@
     align-items: stretch;
     width: 100%;
     gap: 15px;
-  }
-
-  .facturacion-filter-container,
-  .facturacion-filter-select,
-  .facturacion-date-input,
-  .facturacion-btn-orden,
-  .facturacion-date-inputs {
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .facturacion-date-inputs {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .facturacion-date-separator {
-    display: none;
-  }
-
-  .facturacion-clear-filter-btn {
-    align-self: flex-end;
-    margin-top: 5px;
   }
 }
 

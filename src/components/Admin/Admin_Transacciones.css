@@ -695,6 +695,114 @@
   border-radius: 4px;
 }
 
+.transacciones-date-picker-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  min-width: 250px;
+}
+
+.transacciones-date-picker {
+  padding: 8px 70px 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 100%;
+  background-color: white;
+  color: #333;
+  cursor: pointer;
+  box-sizing: border-box;
+  height: 38px;
+}
+
+.transacciones-date-picker:focus {
+  outline: none;
+  border-color: var(--transacciones-secondary-color);
+  box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
+.transacciones-date-picker-icons {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.transacciones-calendar-icon {
+  color: #666;
+  display: flex;
+  align-items: center;
+}
+
+.react-datepicker__close-icon {
+  right: 35px !important;
+  pointer-events: all;
+}
+
+.react-datepicker__close-icon::after {
+  background-color: #dc3545 !important;
+  font-size: 14px !important;
+  line-height: 16px !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.transacciones-btn-limpiar {
+  background-color: #6c757d;
+  color: white;
+}
+
+.transacciones-btn-limpiar:hover {
+  background-color: #5a6268;
+}
+
+.react-datepicker {
+  font-family: inherit;
+  border: 1px solid var(--transacciones-border-color);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+}
+
+.react-datepicker__header {
+  background-color: var(--transacciones-primary-color);
+  border-bottom: 1px solid var(--transacciones-border-color);
+}
+
+.react-datepicker__current-month,
+.react-datepicker__day-name {
+  color: white;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--in-selecting-range,
+.react-datepicker__day--in-range {
+  background-color: var(--transacciones-secondary-color);
+  color: white;
+}
+
+.react-datepicker__day--keyboard-selected {
+  background-color: var(--transacciones-accent-color);
+}
+
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
+@media (max-width: 768px) {
+  .transacciones-date-picker-wrapper {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .transacciones-date-picker {
+    min-width: auto;
+  }
+}
+
 @media (max-width: 992px) {
   .transacciones-filters-section {
     flex-direction: column;
