@@ -4996,7 +4996,9 @@ const DetallesTrato = () => {
           medio: interaccion.medio,
           respuesta: interaccion.resultado === 'POSITIVO' ? 'SI' : interaccion.resultado === 'NEGATIVO' ? 'NO' : '',
           interes: interaccion.interes !== 'Sin interés' ? interaccion.interes : '',
-          informacion: interaccion.informacion && interaccion.informacion !== 'Sin información' ? interaccion.informacion : '',
+          informacion: interaccion.informacion === 'SI' || interaccion.informacion === 'NO'
+            ? interaccion.informacion
+            : '',
           siguienteAccion: interaccion.siguienteAccion || '',
           notas: interaccion.notas || '',
         },
