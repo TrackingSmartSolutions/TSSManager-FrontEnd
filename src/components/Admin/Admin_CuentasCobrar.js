@@ -1122,14 +1122,12 @@ const DetallesCuentaModal = ({ isOpen, onClose, cuenta, cotizacion, tratoNombre 
         </div>
 
         <div className="cuentascobrar-detalle-section">
-          <h4 className="cuentascobrar-detalle-titulo">Conceptos</h4>
+          <h4 className="cuentascobrar-detalle-titulo">Conceptos de esta Cuenta</h4>
           <div className="cuentascobrar-conceptos-lista">
-            {cotizacion.unidades && cotizacion.unidades.length > 0 ? (
-              cotizacion.unidades.map((unidad, index) => (
+            {cuenta.conceptos && cuenta.conceptos.length > 0 ? (
+              cuenta.conceptos.map((concepto, index) => (
                 <div key={index} className="cuentascobrar-concepto-item-detalle">
-                  <span className="cuentascobrar-concepto-cantidad">{unidad.cantidad}x</span>
-                  <span className="cuentascobrar-concepto-nombre">{unidad.concepto}</span>
-                  <span className="cuentascobrar-concepto-precio">{formatCurrency(unidad.precioUnitario)}</span>
+                  <span className="cuentascobrar-concepto-nombre">{concepto}</span>
                 </div>
               ))
             ) : (
@@ -1139,20 +1137,24 @@ const DetallesCuentaModal = ({ isOpen, onClose, cuenta, cotizacion, tratoNombre 
         </div>
 
         <div className="cuentascobrar-detalle-section cuentascobrar-resumen-financiero">
-          <h4 className="cuentascobrar-detalle-titulo">Resumen Financiero</h4>
+          <h4 className="cuentascobrar-detalle-titulo">Información Financiera</h4>
           <div className="cuentascobrar-resumen-items">
-            <div className="cuentascobrar-resumen-item">
-              <span className="cuentascobrar-resumen-label">Subtotal:</span>
-              <span className="cuentascobrar-resumen-valor">{formatCurrency(cotizacion.subtotal)}</span>
-            </div>
-            <div className="cuentascobrar-resumen-item">
-              <span className="cuentascobrar-resumen-label">IVA (16%):</span>
-              <span className="cuentascobrar-resumen-valor">{formatCurrency(cotizacion.iva)}</span>
-            </div>
             <div className="cuentascobrar-resumen-item cuentascobrar-resumen-total">
-              <span className="cuentascobrar-resumen-label">Total:</span>
-              <span className="cuentascobrar-resumen-valor">{formatCurrency(cotizacion.total)}</span>
+              <span className="cuentascobrar-resumen-label">Monto a Cobrar:</span>
+              <span className="cuentascobrar-resumen-valor">{formatCurrency(cuenta.cantidadCobrar)}</span>
             </div>
+            {cuenta.montoPagado > 0 && (
+              <>
+                <div className="cuentascobrar-resumen-item">
+                  <span className="cuentascobrar-resumen-label">Monto Pagado:</span>
+                  <span className="cuentascobrar-resumen-valor">{formatCurrency(cuenta.montoPagado)}</span>
+                </div>
+                <div className="cuentascobrar-resumen-item">
+                  <span className="cuentascobrar-resumen-label">Saldo Pendiente:</span>
+                  <span className="cuentascobrar-resumen-valor">{formatCurrency(cuenta.saldoPendiente)}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -473,13 +473,18 @@ const AdminBalance = () => {
           monto: formatCurrency(ac.monto),
         }))
 
-      const clientesConRenta = balanceData.acumuladoCuentas
-        .filter((item) => normalizarTexto(item.categoria).includes("renta"))
-        .map((item) => item.cuenta)
+      const categoriasExcluidasPDF = ['renta mensual', 'renta anual', 'revisiones', 'revision'];
+
+      const clientesExcluidosPDF = balanceData.acumuladoCuentas
+        .filter((item) => {
+          const categoriaLower = normalizarTexto(item.categoria);
+          return categoriasExcluidasPDF.some(catEx => categoriaLower.includes(catEx));
+        })
+        .map((item) => item.cuenta);
 
       const equiposRealesParaPDF = balanceData.equiposVendidos.filter((equipo) => {
-        return !clientesConRenta.includes(equipo.cliente)
-      })
+        return !clientesExcluidosPDF.includes(equipo.cliente) && equipo.numeroEquipos > 0;
+      });
 
       const equiposFormateados = equiposRealesParaPDF.map((equipo) => ({
         cliente: equipo.cliente,
@@ -800,13 +805,18 @@ const AdminBalance = () => {
       { Todas: ["Todas"] },
     )
 
-  const clientesConRenta = balanceData.acumuladoCuentas
-    .filter((item) => normalizarTexto(item.categoria).includes("renta"))
-    .map((item) => item.cuenta)
+  const categoriasExcluidas = ['renta mensual', 'renta anual', 'revisiones', 'revision'];
+
+  const clientesExcluidos = balanceData.acumuladoCuentas
+    .filter((item) => {
+      const categoriaLower = normalizarTexto(item.categoria);
+      return categoriasExcluidas.some(catEx => categoriaLower.includes(catEx));
+    })
+    .map((item) => item.cuenta);
 
   const equiposVendidosReales = balanceData.equiposVendidos.filter((equipo) => {
-    return !clientesConRenta.includes(equipo.cliente)
-  })
+    return !clientesExcluidos.includes(equipo.cliente) && equipo.numeroEquipos > 0;
+  });
 
   return (
     <>

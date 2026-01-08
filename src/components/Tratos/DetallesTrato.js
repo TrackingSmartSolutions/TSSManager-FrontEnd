@@ -1988,6 +1988,47 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
     }
   }, [isOpen, actividad, esEdicion]);
 
+  useEffect(() => {
+    if (isOpen && actividad) {
+      let medioInicial = actividad.medio || '';
+
+      if (actividad.tipo?.toUpperCase() === 'LLAMADA') {
+        medioInicial = 'TELEFONO';
+      }
+
+      if (actividad.tipo?.toUpperCase() === 'TAREA' && actividad.subtipoTarea) {
+        const subtipoUpper = actividad.subtipoTarea.toUpperCase();
+        if (subtipoUpper === 'CORREO') {
+          medioInicial = 'CORREO';
+        } else if (subtipoUpper === 'MENSAJE') {
+          medioInicial = 'WHATSAPP';
+        } else if (subtipoUpper === 'ACTIVIDAD') {
+          medioInicial = 'ACTIVIDAD';
+        }
+      }
+
+      setFormData({
+        respuesta: actividad.respuesta || '',
+        interes: actividad.interes || '',
+        informacion: actividad.informacion || '',
+        siguienteAccion: actividad.siguienteAccion || '',
+        notas: actividad.notas || '',
+        medio: medioInicial,
+      });
+      setErrors({});
+    } else if (isOpen && !actividad) {
+      setFormData({
+        respuesta: '',
+        interes: '',
+        informacion: '',
+        siguienteAccion: '',
+        notas: '',
+        medio: '',
+      });
+      setErrors({});
+    }
+  }, [isOpen, actividad, esEdicion]);
+
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -4840,6 +4881,7 @@ const DetallesTrato = () => {
     const actividad = trato.actividadesAbiertas[
       tipo === "llamada" ? "llamadas" : tipo === "reunion" ? "reuniones" : "tareas"
     ].find((a) => a.id === actividadId);
+
     if (!actividad || !actividad.tratoId) {
       Swal.fire({
         title: 'Error',
@@ -4848,7 +4890,14 @@ const DetallesTrato = () => {
       });
       return;
     }
-    openModal("completarActividad", { actividad, tratoId: actividad.tratoId });
+
+    openModal("completarActividad", {
+      actividad: {
+        ...actividad,
+        subtipoTarea: actividad.subtipoTarea || null,
+      },
+      tratoId: actividad.tratoId
+    });
   };
 
   const handleEliminarActividad = async (actividadId, tipo) => {
