@@ -807,15 +807,8 @@ const AdminBalance = () => {
 
   const categoriasExcluidas = ['renta mensual', 'renta anual', 'revisiones', 'revision'];
 
-  const clientesExcluidos = balanceData.acumuladoCuentas
-    .filter((item) => {
-      const categoriaLower = normalizarTexto(item.categoria);
-      return categoriasExcluidas.some(catEx => categoriaLower.includes(catEx));
-    })
-    .map((item) => item.cuenta);
-
   const equiposVendidosReales = balanceData.equiposVendidos.filter((equipo) => {
-    return !clientesExcluidos.includes(equipo.cliente) && equipo.numeroEquipos > 0;
+   return equipo.numeroEquipos > 0;
   });
 
   return (
