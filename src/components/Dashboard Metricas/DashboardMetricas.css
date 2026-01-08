@@ -728,6 +728,7 @@
 
 /* Mejoras de accesibilidad y usabilidad */
 @media (hover: none) and (pointer: coarse) {
+
   /* Dispositivos táctiles */
   .dashboard-metricas__barra,
   .dashboard-metricas__conversion-segmento {
@@ -765,44 +766,12 @@
 
 /* Preferencias de movimiento reducido */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-}
-
-/* Modo oscuro (si se implementa) */
-@media (prefers-color-scheme: dark) {
-  .dashboard-metricas {
-    background-color: #1a1a1a;
-  }
-
-  .dashboard-metricas__tarjeta-resumen,
-  .dashboard-metricas__grafica-container,
-  .dashboard-metricas__grafica-conversion,
-  .dashboard-metricas__conversion-usuario {
-    background: #2d2d2d;
-    border-color: #3d3d3d;
-    color: #e0e0e0;
-  }
-
-  .dashboard-metricas__tarjeta-valor,
-  .dashboard-metricas__grafica-titulo,
-  .dashboard-metricas__conversion-nombre {
-    color: #e0e0e0;
-  }
-
-  .dashboard-metricas__tarjeta-titulo,
-  .dashboard-metricas__leyenda-texto,
-  .dashboard-metricas__barra-label,
-  .dashboard-metricas__conversion-metrica {
-    color: #b0b0b0;
-  }
-
-  .dashboard-metricas__no-data {
-    background: #2d2d2d;
   }
 }
