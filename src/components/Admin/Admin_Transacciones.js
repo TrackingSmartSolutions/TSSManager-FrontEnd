@@ -1472,14 +1472,6 @@ const AdminTransacciones = () => {
                   >
                     Mes
                   </button>
-
-                  <button
-                    className="transacciones-btn transacciones-btn-filtro transacciones-btn-limpiar"
-                    onClick={() => setRangoFechas([null, null])}
-                  >
-                    Limpiar fechas
-                  </button>
-
                   <button
                     className="transacciones-btn transacciones-btn-filtro transacciones-btn-orden"
                     onClick={toggleOrdenFecha}
