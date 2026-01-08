@@ -4268,6 +4268,7 @@ const DetallesTrato = () => {
             : updatedActividad.medio || null,
           resultado: updatedActividad.respuesta === 'SI' ? 'POSITIVO' : updatedActividad.respuesta === 'NO' ? 'NEGATIVO' : 'Sin resultado',
           interes: updatedActividad.interes || 'Sin interés',
+          informacion: updatedActividad.informacion || 'Sin información', 
           notas: updatedActividad.notas || '',
           siguienteAccion: updatedActividad.siguienteAccion || '',
         };
