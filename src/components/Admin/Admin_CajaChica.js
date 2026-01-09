@@ -763,13 +763,6 @@ const AdminCajaChica = () => {
                 </button>
 
                 <button
-                  className="cajachica-btn cajachica-btn-filtro cajachica-btn-limpiar"
-                  onClick={() => setRangoFechas([null, null])}
-                >
-                  Limpiar fechas
-                </button>
-
-                <button
                   className="cajachica-btn cajachica-btn-filtro cajachica-btn-orden"
                   onClick={toggleOrdenFecha}
                   title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
