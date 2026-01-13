@@ -245,7 +245,6 @@ const Mapa = () => {
 
     // Renderiza el mapa y la barra lateral con detalles del marcador seleccionado
     return (
-        <div className="page-with-header">
 
             <div className="mapa-screen">
                 <Header isCrmDropdownOpen={isCrmDropdownOpen} setIsCrmDropdownOpen={setIsCrmDropdownOpen} />
@@ -336,7 +335,9 @@ const Mapa = () => {
                     <div className="mapa-sidebar">
                         {selectedMarker ? (
                             <>
-                                <h3>{selectedMarker.nombre}</h3>
+                                <div className="mapa-sidebar-header">
+                                    <h3>{selectedMarker.nombre}</h3>
+                                </div>
 
                                 <div className="mapa-details">
                                     <p><strong>Estatus:</strong> {getStatusText(selectedMarker.estatus)}</p>
@@ -355,11 +356,10 @@ const Mapa = () => {
                                 </div>
 
                                 <div className="mapa-sidebar-footer">
-                                    <div className="mapa-directions-button">
-                                        <button onClick={handleGetDirections} className="mapa-btn mapa-btn-directions" title="Obtener direcciones">
-                                            <img src={carIcon} alt="Obtener direcciones" className="mapa-car-icon" />
-                                        </button>
-                                    </div>
+                                    <button onClick={handleGetDirections} className="mapa-btn mapa-btn-directions" title="Obtener direcciones">
+                                        <img src={carIcon} alt="Obtener direcciones" className="mapa-car-icon" />
+                                        <span>Direcciones</span>
+                                    </button>
                                     <button className="mapa-btn mapa-btn-secondary" onClick={() => setSelectedMarker(null)}>
                                         Cerrar
                                     </button>
@@ -371,7 +371,6 @@ const Mapa = () => {
                     </div>
                 </div>
             </div>
-        </div>
     );
 };
 

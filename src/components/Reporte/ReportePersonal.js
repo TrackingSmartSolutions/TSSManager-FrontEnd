@@ -7,6 +7,8 @@ import { API_BASE_URL } from "../Config/Config";
 import Chart from "chart.js/auto";
 import html2canvas from "html2canvas";
 import { jwtDecode } from "jwt-decode";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token");
@@ -99,11 +101,38 @@ const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
   );
 };
 
+const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
+  <div className="reporte-date-picker-wrapper">
+    <input
+      type="text"
+      value={value}
+      onClick={onClick}
+      placeholder={placeholder}
+      readOnly
+      className="reporte-date-picker"
+    />
+    <div className="reporte-date-picker-icons">
+      <svg
+        className="reporte-calendar-icon"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+    </div>
+  </div>
+);
+
 const ReportePersonal = () => {
-  const [dateRange, setDateRange] = useState({
-    startDate: null,
-    endDate: null,
-  });
+  const [dateRange, setDateRange] = useState([null, null]);
+  const [startDate, endDate] = dateRange;
   const [loading, setLoading] = useState(false);
   const [actividadesData, setActividadesData] = useState([]);
   const [empresasData, setEmpresasData] = useState([]);
@@ -189,10 +218,10 @@ const ReportePersonal = () => {
 
   // Actualizar datos cuando cambie el rango de fechas
   useEffect(() => {
-    if (initialDataLoaded && (dateRange.startDate || dateRange.endDate)) {
+    if (initialDataLoaded && (startDate || endDate)) {
       fetchReportData();
     }
-  }, [dateRange, initialDataLoaded]);
+  }, [startDate, endDate, initialDataLoaded]);
 
   useEffect(() => {
     if (initialDataLoaded && selectedUser) {
@@ -223,11 +252,20 @@ const ReportePersonal = () => {
     setLoading(true);
     try {
       const todayDate = getTodayDate();
-      const startDate = dateRange.startDate || todayDate;
-      const endDate = dateRange.endDate || todayDate;
+
+      const formatDateForAPI = (date) => {
+        if (!date) return todayDate;
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const startDateFormatted = formatDateForAPI(startDate);
+      const endDateFormatted = formatDateForAPI(endDate);
       const userRol = localStorage.getItem("userRol");
 
-      let url = `${API_BASE_URL}/reportes/actividades?startDate=${startDate}&endDate=${endDate}`;
+      let url = `${API_BASE_URL}/reportes/actividades?startDate=${startDateFormatted}&endDate=${endDateFormatted}`;
 
       // Si es administrador y tiene un usuario seleccionado, agregarlo a la URL
       if (userRol === "ADMINISTRADOR" && selectedUser) {
@@ -498,10 +536,6 @@ const ReportePersonal = () => {
         });
       }
     }
-  };
-
-  const handleDateRangeChange = (field, value) => {
-    setDateRange((prev) => ({ ...prev, [field]: value }));
   };
 
   const formatDate = (dateString) => {
@@ -900,8 +934,12 @@ const ReportePersonal = () => {
                 <h1 className="reporte-page-title">Reportes de actividad</h1>
                 <p className="reporte-subtitle">
                   {(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR") && selectedUser
-                    ? `${selectedUser} - ${formatDate()}`
-                    : `${currentUser.nombre} ${currentUser.apellidos} - ${formatDate()}`
+                    ? `${selectedUser} - ${startDate && endDate
+                      ? `${formatDate(startDate.toISOString().split('T')[0])} a ${formatDate(endDate.toISOString().split('T')[0])}`
+                      : formatDate()}`
+                    : `${currentUser.nombre} ${currentUser.apellidos} - ${startDate && endDate
+                      ? `${formatDate(startDate.toISOString().split('T')[0])} a ${formatDate(endDate.toISOString().split('T')[0])}`
+                      : formatDate()}`
                   }
                 </p>
               </div>
@@ -924,21 +962,19 @@ const ReportePersonal = () => {
                 )}
                 <div className="reporte-date-range-container">
                   <label className="reporte-date-label">Rango de fecha</label>
-                  <div className="reporte-date-inputs">
-                    <input
-                      type="date"
-                      value={dateRange.startDate || ""}
-                      onChange={(e) => handleDateRangeChange("startDate", e.target.value)}
-                      className="reporte-date-input"
-                    />
-                    <span className="reporte-date-separator">-</span>
-                    <input
-                      type="date"
-                      value={dateRange.endDate || ""}
-                      onChange={(e) => handleDateRangeChange("endDate", e.target.value)}
-                      className="reporte-date-input"
-                    />
-                  </div>
+                  <DatePicker
+                    selectsRange={true}
+                    startDate={startDate}
+                    endDate={endDate}
+                    onChange={(update) => {
+                      setDateRange(update);
+                    }}
+                    isClearable={true}
+                    placeholderText="Seleccione fecha o rango"
+                    dateFormat="dd/MM/yyyy"
+                    customInput={<CustomDatePickerInput />}
+                    locale="es"
+                  />
                 </div>
                 <button className="reporte-btn reporte-btn-download" onClick={handleDownloadPDF}>
                   <img src={downloadIcon} alt="Descargar" className="reporte-btn-icon" />

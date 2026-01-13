@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { X, Clock, Video, Phone, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, Clock, Video, Phone, MapPin, ExternalLink } from 'lucide-react';
 import './RecordatorioPopup.css';
 
 const RecordatorioPopup = ({ actividad, onClose, onDismiss }) => {
     const [isVisible, setIsVisible] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         // Animación de entrada
@@ -15,6 +17,13 @@ const RecordatorioPopup = ({ actividad, onClose, onDismiss }) => {
         setTimeout(() => {
             onClose();
         }, 300);
+    };
+
+    const handleVerTrato = () => {
+        if (actividad.tratoId) {
+            navigate(`/detallestrato/${actividad.tratoId}`);
+            handleClose(); 
+        }
     };
 
     const handleDismissAndClose = () => {
@@ -90,6 +99,32 @@ const RecordatorioPopup = ({ actividad, onClose, onDismiss }) => {
                         <MapPin size={14} />
                         {actividad.lugarReunion}
                     </p>
+                )}
+
+                {actividad.tratoId && (
+                    <button 
+                        onClick={handleVerTrato}
+                        className="recordatorio-btn-accion"
+                        style={{
+                            marginTop: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            width: '100%',
+                            padding: '8px',
+                            backgroundColor: '#3b82f6', 
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            fontWeight: '500'
+                        }}
+                    >
+                        <ExternalLink size={14} />
+                        Ver detalles del trato
+                    </button>
                 )}
             </div>
 

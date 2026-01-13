@@ -1156,7 +1156,7 @@ body {
 }
 
 .date-picker-input {
-  padding: 8px 12px;
+  padding: 8px 40px 8px 12px !important;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 14px;
@@ -1164,6 +1164,11 @@ body {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   width: 100%;
   max-width: 280px;
+  cursor: pointer;
+  background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="%23666666" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 18px;
 }
 
 .date-picker-input:focus {
@@ -1177,40 +1182,58 @@ body {
   font-style: italic;
 }
 
-/* Para el calendario desplegable */
+.react-datepicker__close-icon {
+  right: 35px !important;
+  pointer-events: all;
+}
+
+.react-datepicker__close-icon::after {
+  background-color: #dc3545 !important;
+  font-size: 14px !important;
+  line-height: 16px !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
 .react-datepicker {
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   font-family: inherit;
 }
 
 .react-datepicker__header {
-  background-color: #f9fafb;
+  background-color: #00133b;
   border-bottom: 1px solid #e5e7eb;
   border-radius: 8px 8px 0 0;
 }
 
-.react-datepicker__current-month {
-  color: #374151;
-  font-weight: 600;
-}
-
-.react-datepicker__day--selected {
-  background-color: #3b82f6;
+.react-datepicker__current-month,
+.react-datepicker__day-name {
   color: white;
 }
 
+.react-datepicker__day--selected,
 .react-datepicker__day--in-selecting-range,
 .react-datepicker__day--in-range {
-  background-color: #dbeafe;
-  color: #1e40af;
+  background-color: #037ce0;
+  color: white;
+}
+
+.react-datepicker__day--keyboard-selected {
+  background-color: #f27100;
 }
 
 .react-datepicker__day:hover {
   background-color: #f3f4f6;
   border-radius: 4px;
 }
+
+
 
 .company-item.no-deals {
   border-left: 4px solid #f44336;
@@ -1252,7 +1275,7 @@ body {
   max-height: 200px;
   overflow-y: auto;
   z-index: 1000;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .autocomplete-option {
@@ -1281,6 +1304,30 @@ body {
   padding: 8px 12px;
   color: #999;
   font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .date-filter-row {
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+
+  .date-picker-input {
+    width: 100%;
+    max-width: 100%;
+    font-size: 1rem;
+    padding: var(--spacing-md) 40px var(--spacing-md) 12px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .date-filter-container {
+    width: 100%;
+  }
+
+  .date-picker-input {
+    padding: 12px 40px 12px 12px !important;
+  }
 }
 
 /* Ajustes para pantallas grandes */
@@ -1622,9 +1669,9 @@ body {
     font-size: var(--font-size-md);
     padding-left: var(--spacing-md);
   }
-  
+
   .modal-header {
-      border-radius: 0;
+    border-radius: 0;
   }
 
   .modal-body {
@@ -1642,10 +1689,10 @@ body {
     gap: var(--spacing-sm);
     align-items: stretch;
   }
-  
+
   .modal-form-actions .btn {
-      width: 100%;
-      padding: var(--spacing-md);
+    width: 100%;
+    padding: var(--spacing-md);
   }
 
   .detalles-grid {
@@ -1664,11 +1711,11 @@ body {
     background-color: #ffffff;
     color: #000000;
   }
-  
-  .companies-panel, 
-  .panel-header, 
-  .form-actions, 
-  .contacts-header, 
+
+  .companies-panel,
+  .panel-header,
+  .form-actions,
+  .contacts-header,
   .tratos-header .btn-add,
   .action-buttons,
   .btn-ver-en-el-mapa {
@@ -1682,10 +1729,10 @@ body {
     border: none;
     padding: 0;
   }
-  
+
   .empresas-container {
-      flex-direction: column;
-      min-height: auto;
+    flex-direction: column;
+    min-height: auto;
   }
 
   .contacts-table-container,
@@ -1694,14 +1741,16 @@ body {
     overflow: hidden;
     border: 1px solid #ccc;
   }
-  
-  .contacts-table, .tratos-table {
-      min-width: 100%;
-      font-size: 10pt;
+
+  .contacts-table,
+  .tratos-table {
+    min-width: 100%;
+    font-size: 10pt;
   }
-  
-  .contacts-table th, .tratos-table th {
-      background-color: #eee;
+
+  .contacts-table th,
+  .tratos-table th {
+    background-color: #eee;
   }
 }
 
@@ -1773,9 +1822,12 @@ body {
   .tratos-header {
     /* ESTA ES LA REGLA CORREGIDA */
     display: flex;
-    flex-direction: column; /* Apila los elementos */
-    align-items: stretch;    /* Estira el botón al 100% */
-    gap: var(--spacing-sm);  /* Añade espacio entre título y botón */
+    flex-direction: column;
+    /* Apila los elementos */
+    align-items: stretch;
+    /* Estira el botón al 100% */
+    gap: var(--spacing-sm);
+    /* Añade espacio entre título y botón */
     margin-bottom: var(--spacing-md);
   }
 
@@ -1861,6 +1913,7 @@ body {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

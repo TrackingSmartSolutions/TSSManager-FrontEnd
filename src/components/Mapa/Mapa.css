@@ -5,6 +5,9 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    margin: 0;
+    box-sizing: border-box;  
+    padding-top: 70px;     
 }
 
 /* Contenedor principal que organiza el mapa y la barra lateral */
@@ -75,16 +78,24 @@
 .mapa-sidebar {
     width: 300px;
     background: white;
-    padding: 15px;
+    padding: 0;
     border-left: 1px solid #ccc;
-    height: 100%;
+    height: 100%;       
     display: flex;
     flex-direction: column; 
     overflow: hidden; 
+    box-shadow: -2px 0 5px rgba(0,0,0,0.1);
 }
 
 /* Estilo para el título de la barra lateral */
-.mapa-sidebar h3 {
+.mapa-sidebar-header {
+    flex-shrink: 0;
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    background: #f8f9fa;
+}
+
+.mapa-sidebar-header h3 {
     margin: 0;
     font-size: 1.2em;
     color: #333;
@@ -92,14 +103,19 @@
 
 .mapa-details {
     flex-grow: 1;           
-    overflow-y: auto;      
-    margin-bottom: 10px;   
-    padding-right: 5px;     
+    overflow-y: auto;
+    padding: 12px 15px 8px 15px;
+    min-height: 0;
 }
 
 .mapa-details p {
     margin: 8px 0;         
     font-size: 0.95em;
+    line-height: 1.4;
+}
+
+.mapa-details p:last-child {
+    margin-bottom: 0;
 }
 
 /* Estilo para los enlaces en los detalles */
@@ -114,31 +130,44 @@
 }
 
 .mapa-sidebar-footer {
-    flex-shrink: 0; 
-    border-top: 1px solid #eee; 
-    padding-top: 10px;
+    flex-shrink: 0;
+    border-top: 1px solid #eee;
+    padding: 10px 15px;
     display: flex;
-    flex-direction: column;
-    gap: 10px; 
-}
-
-/* Contenedor para el botón de direcciones */
-.mapa-directions-button {
-    margin-top: 10px;
+    flex-direction: row;
+    gap: 8px;
+    background: #f8f9fa;
 }
 
 /* Botón de direcciones sin fondo ni borde */
 .mapa-btn-directions {
-    background: none;
+    flex: 1;
+    background: #007bff;
+    color: white;
     border: none;
     cursor: pointer;
-    padding: 0;
+    padding: 8px 12px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.9em;
+    transition: background 0.2s;
+}
+
+.mapa-btn-directions:hover {
+    background: #0056b3;
+}
+
+.mapa-btn-directions span {
+    font-weight: 500;
 }
 
 /* Tamaño del ícono de coche */
 .mapa-car-icon {
-    width: 24px;
-    height: 24px;
+    width: 18px;
+    height: 18px;
 }
 
 /* Estilo base para botones */
@@ -152,13 +181,17 @@
 
 /* Estilo para botones secundarios */
 .mapa-btn-secondary {
-    background: #ccc;
-    color: #333;
+    flex: 1;
+    background: #6c757d;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    transition: background 0.2s;
 }
 
-/* Efecto hover para botones secundarios */
 .mapa-btn-secondary:hover {
-    background: #b0b0b0;
+    background: #5a6268;
 }
 
 .mapa-controls {
@@ -482,5 +515,23 @@
 
     .mapa-sidebar {
         max-height: 45vh;
+    }
+}
+
+@media (max-width: 992px) {
+    .mapa-screen {
+        padding-top: 65px;
+    }
+}
+
+@media (max-width: 768px) {
+    .mapa-screen {
+        padding-top: 60px;
+    }
+}
+
+@media (max-width: 576px) {
+    .mapa-screen {
+        padding-top: 55px;
     }
 }
