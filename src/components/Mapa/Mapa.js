@@ -246,131 +246,135 @@ const Mapa = () => {
     // Renderiza el mapa y la barra lateral con detalles del marcador seleccionado
     return (
 
-            <div className="mapa-screen">
-                <Header isCrmDropdownOpen={isCrmDropdownOpen} setIsCrmDropdownOpen={setIsCrmDropdownOpen} />
-                <div className="mapa-content">
-                    {error && <div className="mapa-error">{error}</div>}
-                    <div className="mapa-container">
-                        <div className="mapa-filter">
-                            {/* Header principal del filtro */}
-                            <div className="mapa-filter-header">
-                                <button
-                                    className="mapa-collapse-btn mapa-main-collapse"
-                                    onClick={() => setIsFilterCollapsed(!isFilterCollapsed)}
+        <div className="mapa-screen">
+            <Header isCrmDropdownOpen={isCrmDropdownOpen} setIsCrmDropdownOpen={setIsCrmDropdownOpen} />
+            <div className="mapa-content">
+                {error && <div className="mapa-error">{error}</div>}
+                <div className="mapa-container">
+                    <div className="mapa-filter">
+                        {/* Header principal del filtro */}
+                        <div className="mapa-filter-header">
+                            <button
+                                className="mapa-collapse-btn mapa-main-collapse"
+                                onClick={() => setIsFilterCollapsed(!isFilterCollapsed)}
+                            >
+                                <span className="collapse-icon">{isFilterCollapsed ? '📍' : '✕'}</span>
+                                <span className="collapse-text">Filtros</span>
+                            </button>
+                        </div>
+
+                        {/* Contenido colapsable principal */}
+                        <div className={`mapa-filter-content ${isFilterCollapsed ? 'collapsed' : 'expanded'}`}>
+                            {/* Sección del filtro de sector */}
+                            <div className="mapa-sector-section">
+                                <div className="mapa-sector-header">
+                                    <label htmlFor="sectorFilter" className="sector-label">
+                                        <span className="label-icon">🏢</span>
+                                        Filtrar por Sector:
+                                    </label>
+                                </div>
+                                <select
+                                    id="sectorFilter"
+                                    value={selectedSector}
+                                    onChange={(e) => setSelectedSector(e.target.value)}
+                                    className="mapa-filter-select"
                                 >
-                                    <span className="collapse-icon">{isFilterCollapsed ? '📍' : '✕'}</span>
-                                    <span className="collapse-text">Filtros</span>
-                                </button>
+                                    <option value="TODOS">📋 Todos los Sectores</option>
+                                    {sectores.map((sector) => (
+                                        <option key={sector.id} value={sector.id}>
+                                            {sector.nombreSector}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
-                            {/* Contenido colapsable principal */}
-                            <div className={`mapa-filter-content ${isFilterCollapsed ? 'collapsed' : 'expanded'}`}>
-                                {/* Sección del filtro de sector */}
-                                <div className="mapa-sector-section">
-                                    <div className="mapa-sector-header">
-                                        <label htmlFor="sectorFilter" className="sector-label">
-                                            <span className="label-icon">🏢</span>
-                                            Filtrar por Sector:
-                                        </label>
-                                    </div>
-                                    <select
-                                        id="sectorFilter"
-                                        value={selectedSector}
-                                        onChange={(e) => setSelectedSector(e.target.value)}
-                                        className="mapa-filter-select"
-                                    >
-                                        <option value="TODOS">📋 Todos los Sectores</option>
-                                        {sectores.map((sector) => (
-                                            <option key={sector.id} value={sector.id}>
-                                                {sector.nombreSector}
-                                            </option>
-                                        ))}
-                                    </select>
+                            {/* Información adicional */}
+                            <div className="mapa-stats">
+                                <div className="stat-item">
+                                    <span className="stat-icon">📍</span>
+                                    <span className="stat-text">
+                                        {companiesWithCoords.length} empresas visibles
+                                    </span>
                                 </div>
-
-                                {/* Información adicional */}
-                                <div className="mapa-stats">
+                                {selectedSector !== "TODOS" && (
                                     <div className="stat-item">
-                                        <span className="stat-icon">📍</span>
+                                        <span className="stat-icon">🏷️</span>
                                         <span className="stat-text">
-                                            {companiesWithCoords.length} empresas visibles
+                                            Sector: {sectores.find(s => s.id === parseInt(selectedSector))?.nombreSector || selectedSector}
                                         </span>
                                     </div>
-                                    {selectedSector !== "TODOS" && (
-                                        <div className="stat-item">
-                                            <span className="stat-icon">🏷️</span>
-                                            <span className="stat-text">
-                                                Sector: {sectores.find(s => s.id === parseInt(selectedSector))?.nombreSector || selectedSector}
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
+                                )}
                             </div>
                         </div>
-                        <MapContainer center={center} zoom={13} className="leaflet-map" style={{ height: "calc(100% - 40px)", width: "100%" }}>
-                            <TileLayer
-                                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                                attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>'
-                                subdomains="abcd"
-                                tileSize={256}
-                                keepBuffer={2}
-                                preferCanvas={true}
-                                zoomSnap={0.5}
-                                zoomDelta={0.5}
-                                wheelPxPerZoomLevel={60}
-                                maxZoom={16}
-                                minZoom={9}
+                    </div>
+                    <MapContainer center={center} zoom={13} className="leaflet-map" style={{ height: "calc(100% - 40px)", width: "100%" }}>
+                        <TileLayer
+                            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                            attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>'
+                            subdomains="abcd"
+                            tileSize={256}
+                            keepBuffer={2}
+                            preferCanvas={true}
+                            zoomSnap={0.5}
+                            zoomDelta={0.5}
+                            wheelPxPerZoomLevel={60}
+                            maxZoom={16}
+                            minZoom={9}
+                        />
+                        <MapCenter center={center} />
+                        {displayedCompanies.map((company) => (
+                            <MarkerWithClick
+                                key={company.id}
+                                company={company}
+                                selectedMarker={selectedMarker}
+                                setSelectedMarker={setSelectedMarker}
                             />
-                            <MapCenter center={center} />
-                            {displayedCompanies.map((company) => (
-                                <MarkerWithClick
-                                    key={company.id}
-                                    company={company}
-                                    selectedMarker={selectedMarker}
-                                    setSelectedMarker={setSelectedMarker}
-                                />
-                            ))}
-                        </MapContainer>
-                    </div>
-                    <div className="mapa-sidebar">
-                        {selectedMarker ? (
-                            <>
-                                <div className="mapa-sidebar-header">
-                                    <h3>{selectedMarker.nombre}</h3>
-                                </div>
+                        ))}
+                    </MapContainer>
+                </div>
+                <div className="mapa-sidebar">
+                    {selectedMarker ? (
+                        <>
+                            <div className="mapa-sidebar-header">
+                                <h3>{selectedMarker.nombre}</h3>
+                            </div>
 
-                                <div className="mapa-details">
-                                    <p><strong>Estatus:</strong> {getStatusText(selectedMarker.estatus)}</p>
-                                    <p>
-                                        <strong>Sitio Web:</strong>{" "}
-                                        {selectedMarker.sitioWeb ? (
-                                            <a href={selectedMarker.sitioWeb} target="_blank" rel="noopener noreferrer">
-                                                {selectedMarker.sitioWeb}
-                                            </a>
-                                        ) : (
-                                            "N/A"
-                                        )}
-                                    </p>
-                                    <p><strong>Sector:</strong> {getSectorText(selectedMarker.sectorId)}</p>
-                                    <p><strong>Domicilio Físico:</strong> {selectedMarker.domicilioFisico}</p>
-                                </div>
+                            <div className="mapa-details">
+                                <p><strong>Estatus:</strong> {getStatusText(selectedMarker.estatus)}</p>
+                                <p>
+                                    <strong>Sitio Web:</strong>{" "}
+                                    {selectedMarker.sitioWeb ? (
+                                        <a href={selectedMarker.sitioWeb} target="_blank" rel="noopener noreferrer">
+                                            {selectedMarker.sitioWeb}
+                                        </a>
+                                    ) : (
+                                        "N/A"
+                                    )}
+                                </p>
+                                <p><strong>Sector:</strong> {getSectorText(selectedMarker.sectorId)}</p>
+                                <p><strong>Domicilio Físico:</strong> {selectedMarker.domicilioFisico}</p>
+                            </div>
 
-                                <div className="mapa-sidebar-footer">
-                                    <button onClick={handleGetDirections} className="mapa-btn mapa-btn-directions" title="Obtener direcciones">
-                                        <img src={carIcon} alt="Obtener direcciones" className="mapa-car-icon" />
-                                        <span>Direcciones</span>
-                                    </button>
-                                    <button className="mapa-btn mapa-btn-secondary" onClick={() => setSelectedMarker(null)}>
-                                        Cerrar
-                                    </button>
-                                </div>
-                            </>
-                        ) : (
-                            <p>Selecciona un marcador para ver los detalles</p>
-                        )}
-                    </div>
+                            <div className="mapa-sidebar-footer">
+                                <button onClick={handleGetDirections} className="mapa-btn mapa-btn-directions" title="Ir a la dirección">
+                                    <img src={carIcon} alt="Obtener direcciones" className="mapa-car-icon" />
+                                    <span>Dirección</span>
+                                </button>
+                                <button className="mapa-btn mapa-btn-secondary" onClick={() => setSelectedMarker(null)}>
+                                    Cerrar
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="mapa-empty-state">
+                            <div className="mapa-empty-icon">📍</div>
+                            <h3>Sin empresa seleccionada</h3>
+                            <p>Haz clic en un marcador del mapa para ver sus detalles completos aquí.</p>
+                        </div>
+                    )}
                 </div>
             </div>
+        </div>
     );
 };
 
