@@ -1468,10 +1468,14 @@ const Tratos = () => {
         params.append("propietarioId", selectedUser);
       }
       if (startDate) {
-        params.append("startDate", startDate.toISOString());
+        const startOfDay = new Date(startDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        params.append("startDate", startOfDay.toISOString());
       }
       if (endDate) {
-        params.append("endDate", endDate.toISOString());
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        params.append("endDate", endOfDay.toISOString());
       }
 
       let usersData = [];
