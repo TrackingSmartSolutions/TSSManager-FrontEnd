@@ -6421,4 +6421,5 @@ const DetallesTrato = () => {
   )
 }
 
+export { CompletarActividadModal };
 export default DetallesTrato
