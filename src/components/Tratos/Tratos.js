@@ -4,7 +4,6 @@ import Header from "../Header/Header";
 import Swal from "sweetalert2";
 import expandIcon from "../../assets/icons/expandir.png";
 import contractIcon from "../../assets/icons/contraer.png";
-import calendarFilter from "../../assets/icons/calendario3.png";
 import deploy from "../../assets/icons/desplegar.png";
 import addActivity from "../../assets/icons/agregar.png";
 import activityCall from "../../assets/icons/llamada.png";
@@ -1425,6 +1424,35 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
   );
 };
 
+const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
+  <div className="tratos-date-picker-wrapper">
+    <input
+      type="text"
+      value={value}
+      onClick={onClick}
+      placeholder={placeholder}
+      readOnly
+      className="tratos-date-picker"
+    />
+    <div className="tratos-date-picker-icons">
+      <svg
+        className="tratos-calendar-icon"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+    </div>
+  </div>
+);
+
 const Tratos = () => {
   const navigate = useNavigate();
   const [expandedColumns, setExpandedColumns] = useState([]);
@@ -1988,25 +2016,17 @@ const Tratos = () => {
                   </div>
                 )}
                 <div className="filter-group">
-                  <div className="date-range-container">
+                  <div className="tratos-date-picker-container">
                     <DatePicker
                       selectsRange={true}
                       startDate={startDate}
                       endDate={endDate}
                       onChange={onChangeDateRange}
+                      isClearable={true}
+                      placeholderText="Seleccionar rango de fechas"
                       dateFormat="dd/MM/yyyy"
-                      customInput={
-                        <button className="date-filter-btn">
-                          <span>{dateRangeText}</span>
-                          <div>
-                            <img
-                              src={calendarFilter || "/placeholder.svg"}
-                              alt="Filtro de Calendario"
-                              className="icon-calendar"
-                            />
-                          </div>
-                        </button>
-                      }
+                      customInput={<CustomDatePickerInput />}
+                      locale="es"
                     />
                   </div>
                   <span className="filter-legend">Filtro por un rango de tiempo</span>

@@ -1273,6 +1273,116 @@ input[type="number"].modal-form-control::-webkit-inner-spin-button {
   background-color: #dc3545;
 }
 
+.tratos-date-picker-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  min-width: 200px;
+}
+
+.tratos-date-picker {
+  padding: 8px 70px 8px 12px; 
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+  width: 100%;
+  background-color: white;
+  color: var(--text-color);
+  cursor: pointer;
+  box-sizing: border-box;
+  height: 36px;
+}
+
+.tratos-date-picker:focus {
+  outline: none;
+  border-color: var(--secondary-color);
+  box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
+.tratos-date-picker-icons {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.tratos-calendar-icon {
+  color: #666;
+  display: flex;
+  align-items: center;
+}
+
+.tratos-date-picker-container {
+  display: flex;
+  align-items: center;
+  min-width: 200px;
+}
+
+.react-datepicker__close-icon {
+  right: 35px !important;
+  pointer-events: all;
+}
+
+.react-datepicker__close-icon::after {
+  background-color: #dc3545 !important;
+  font-size: 14px !important;
+  line-height: 16px !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
+.react-datepicker {
+  font-family: inherit;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+}
+
+.react-datepicker__header {
+  background-color: var(--primary-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.react-datepicker__current-month,
+.react-datepicker__day-name {
+  color: white;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--in-selecting-range,
+.react-datepicker__day--in-range {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.react-datepicker__day--keyboard-selected {
+  background-color: var(--accent-color);
+}
+
+@media (max-width: 768px) {
+  .tratos-date-picker-wrapper {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .tratos-date-picker {
+    min-width: auto;
+  }
+  
+  .tratos-date-picker-container {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
 @media (max-width: 900px) {
   .leyenda-container {
     flex-direction: column;
