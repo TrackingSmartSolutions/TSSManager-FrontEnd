@@ -611,88 +611,88 @@ body {
 }
 
 /* Colores específicos para cada columna */
-.clasificacion {
+.column-header.clasificacion {
   background-color: #e180f4;
 }
 
-.primer-contacto {
+.column-header.primer-contacto {
   background-color: #c680f4;
 }
 
-.envio-de-informacion {
+.column-header.envio-de-informacion {
   background-color: #ab80f4;
 }
 
-.reunion {
+.column-header.reunion {
   background-color: #9280f4;
 }
 
-.cotizacion-propuesta-practica {
+.column-header.cotizacion-propuesta-practica {
   background-color: #8098f4;
 }
 
-.negociacion-revision {
+.column-header.negociacion-revision {
   background-color: #80c0f4;
 }
 
-.cerrado-ganado {
+.column-header.cerrado-ganado {
   background-color: #69ed95;
 }
 
-.respuesta-por-correo {
+.column-header.respuesta-por-correo {
   background-color: #efd47b;
 }
 
-.interes-futuro {
+.column-header.interes-futuro {
   background-color: #ffbc79;
 }
 
-.cerrado-perdido {
+.column-header.cerrado-perdido {
   background-color: #fa8585;
 }
+
 
 /* Líneas de color específicas */
-.clasificacion-line {
+.column-color-line.clasificacion-line {
   background-color: #e180f4;
 }
 
-.primer-contacto-line {
+.column-color-line.primer-contacto-line {
   background-color: #c680f4;
 }
 
-.envio-de-informacion-line {
+.column-color-line.envio-de-informacion-line {
   background-color: #ab80f4;
 }
 
-.reunion-line {
+.column-color-line.reunion-line {
   background-color: #9280f4;
 }
 
-.cotizacion-propuesta-practica-line {
+.column-color-line.cotizacion-propuesta-practica-line {
   background-color: #8098f4;
 }
 
-.negociacion-revision-line {
+.column-color-line.negociacion-revision-line {
   background-color: #80c0f4;
 }
 
-.cerrado-ganado-line {
+.column-color-line.cerrado-ganado-line {
   background-color: #69ed95;
 }
 
-.respuesta-por-correo-line {
+.column-color-line.respuesta-por-correo-line {
   background-color: #efd47b;
 }
 
-.interes-futuro-line {
+.column-color-line.interes-futuro-line {
   background-color: #ffbc79;
 }
 
-.cerrado-perdido-line {
+.column-color-line.cerrado-perdido-line {
   background-color: #fa8585;
 }
 
-/* ===== ESTILOS DE MODALES ESPECÍFICOS PARA TRATOS ===== */
 
 /* Modal Overlay específico para tratos */
 .tratos-modal-overlay {
