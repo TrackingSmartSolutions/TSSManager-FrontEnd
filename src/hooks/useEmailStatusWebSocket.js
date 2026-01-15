@@ -17,9 +17,6 @@ export const useEmailStatusWebSocket = (tratoId, onStatusUpdate) => {
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
-      debug: (str) => {
-        console.log('STOMP:', str);
-      }
     });
 
     stompClient.onConnect = () => {      
@@ -42,7 +39,6 @@ export const useEmailStatusWebSocket = (tratoId, onStatusUpdate) => {
 
     return () => {
       if (stompClientRef.current) {
-        console.log('Desconectando WebSocket');
         stompClientRef.current.deactivate();
       }
     };
