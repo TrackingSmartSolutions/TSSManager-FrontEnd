@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import "./DetallesTrato.css"
 import Header from "../Header/Header"
@@ -23,6 +23,7 @@ import { API_BASE_URL } from "../Config/Config";
 import EditorToolbar from '../EditorToolbar/EditorToolbar';
 import '../EditorToolbar/EditorToolbar.css';
 import { CotizacionModal, CrearCuentasModal, SubirArchivoModal } from '../Admin/Admin_Cotizaciones';
+import { useEmailStatusWebSocket } from '../../hooks/useEmailStatusWebSocket';
 
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token");
@@ -4108,6 +4109,18 @@ const DetallesTrato = () => {
     toggleCorreosSeguimiento(trato.id, isChecked);
   };
 
+  // Callback para actualizar estado de emails en tiempo real
+  const handleEmailStatusUpdate = useCallback((data) => {
+    console.log('Actualizando estado de email:', data);
+    setEmailRecords(prevRecords =>
+      prevRecords.map(email =>
+        email.id === data.emailId
+          ? { ...email, status: data.status }
+          : email
+      )
+    );
+  }, []);
+
   // useEffect para cargar el estado inicial cuando se carga el trato
   useEffect(() => {
     if (trato && trato.id && ['ENVIO_DE_INFORMACION', 'RESPUESTA_POR_CORREO'].includes(trato.fase)) {
@@ -4268,7 +4281,7 @@ const DetallesTrato = () => {
             : updatedActividad.medio || null,
           resultado: updatedActividad.respuesta === 'SI' ? 'POSITIVO' : updatedActividad.respuesta === 'NO' ? 'NEGATIVO' : 'Sin resultado',
           interes: updatedActividad.interes || 'Sin interés',
-          informacion: updatedActividad.informacion || 'Sin información', 
+          informacion: updatedActividad.informacion || 'Sin información',
           notas: updatedActividad.notas || '',
           siguienteAccion: updatedActividad.siguienteAccion || '',
         };
@@ -5425,6 +5438,9 @@ const DetallesTrato = () => {
       });
     }
   };
+
+  // WebSocket para actualizaciones en tiempo real de emails
+  useEmailStatusWebSocket(params.id, handleEmailStatusUpdate);
 
   if (loading) {
     return (
