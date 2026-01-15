@@ -1508,7 +1508,7 @@ const Tratos = () => {
 
       let usersData = [];
       try {
-        const usersResponse = await fetchWithRetry(`${API_BASE_URL}/auth/users`);
+        const usersResponse = await fetchWithRetry(`${API_BASE_URL}/auth/users/active`);
         usersData = await usersResponse.json();
         setUsers(usersData);
       } catch (error) {

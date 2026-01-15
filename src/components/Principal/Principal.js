@@ -94,7 +94,7 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
     const fetchInitialData = async () => {
       if (actividad && isOpen) {
         try {
-          const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+          const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users/active`);
           const usersData = await usersResponse.json();
           setUsers(usersData.map((user) => ({ id: user.id, nombre: user.nombre })));
 
@@ -313,7 +313,7 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
       if (actividad && isOpen) {
         try {
           setLoading(true);
-          const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+          const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users/active`);
           const usersData = await usersResponse.json();
           setUsers(usersData.map((user) => ({ id: user.id, nombre: user.nombre })));
 
@@ -649,7 +649,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
     const fetchInitialData = async () => {
       if (actividad && isOpen) {
         try {
-          const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+          const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users/active`);
           const usersData = await usersResponse.json();
           setUsers(usersData.map((user) => ({ id: user.id, nombre: user.nombre })));
 
@@ -1113,7 +1113,7 @@ const Principal = () => {
   // Función auxiliar para obtener el ID del usuario por nombre
   const obtenerIdUsuarioPorNombre = async (nombreUsuario) => {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+      const response = await fetchWithToken(`${API_BASE_URL}/auth/users/active`);
       const usuarios = await response.json();
       const usuario = usuarios.find(u => u.nombre === nombreUsuario);
       return usuario ? usuario.id : null;
@@ -1232,7 +1232,7 @@ const Principal = () => {
     const fetchUsuarios = async () => {
       try {
         setIsLoadingUsuarios(true);
-        const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+        const response = await fetchWithToken(`${API_BASE_URL}/auth/users/active`);
         const data = await response.json();
         setUsuarios(["Todos", ...data.map((u) => u.nombre)]);
       } catch (error) {

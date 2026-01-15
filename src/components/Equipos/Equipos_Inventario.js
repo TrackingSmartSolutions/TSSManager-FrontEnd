@@ -347,7 +347,7 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
         </div>
 
         <div className="inventario-form-group">
-          <label htmlFor="plataforma" className="inventario-form-label">Plataforma <span className="required"> *</span></label>
+          <label htmlFor="plataforma" className="inventario-form-label">Plataforma</label>
           <select
             id="plataforma"
             name="plataforma"

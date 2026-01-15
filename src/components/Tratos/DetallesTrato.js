@@ -22,7 +22,7 @@ import receivableIcon from "../../assets/icons/cuenta-cobrar.png"
 import { API_BASE_URL } from "../Config/Config";
 import EditorToolbar from '../EditorToolbar/EditorToolbar';
 import '../EditorToolbar/EditorToolbar.css';
-import { CotizacionModal, CrearCuentasModal, SubirArchivoModal } from '../Admin/Admin_Cotizaciones';
+import { CotizacionModal, CrearCuentasModal, SubirArchivoModal, CompartirCotizacionModal } from '../Admin/Admin_Cotizaciones';
 import { useEmailStatusWebSocket } from '../../hooks/useEmailStatusWebSocket';
 
 const fetchWithToken = async (url, options = {}) => {
@@ -1108,7 +1108,7 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
     const fetchInitialData = async () => {
       if (actividad && isOpen) {
         try {
-          const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+          const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users/active`);
           const usersData = await usersResponse.json();
           setUsers(usersData.map((user) => ({ id: user.id, nombre: user.nombre })));
 
@@ -1368,7 +1368,7 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
       if (actividad && isOpen) {
         try {
           setLoading(true);
-          const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+          const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users/active`);
           const usersData = await usersResponse.json();
           setUsers(usersData.map((user) => ({ id: user.id, nombre: user.nombre })));
 
@@ -1750,7 +1750,7 @@ const ReprogramarTareaModal = ({ isOpen, onClose, onSave, actividad }) => {
     const fetchInitialData = async () => {
       if (actividad && isOpen) {
         try {
-          const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+          const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users/active`);
           const usersData = await usersResponse.json();
           setUsers(usersData.map((user) => ({ id: user.id, nombre: user.nombre })));
 
@@ -3941,6 +3941,7 @@ const DetallesTrato = () => {
     seleccionarPlantilla: { isOpen: false },
     agregarInteraccion: { isOpen: false, props: {} },
     subirArchivo: { isOpen: false, cotizacion: null },
+    compartirCotizacion: { isOpen: false, cotizacion: null },
   })
 
   const openModal = async (modalType, data = {}) => {
@@ -4372,7 +4373,7 @@ const DetallesTrato = () => {
       // Recargar completamente el trato desde el servidor
       const loadTrato = async () => {
         const updatedData = await fetchTrato(params.id);
-        const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+        const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users/active`);
         const usersData = await usersResponse.json();
         const users = usersData.map((user) => ({
           id: user.id,
@@ -4435,7 +4436,7 @@ const DetallesTrato = () => {
       try {
         // Cargar datos básicos primero
         const tratoData = await fetchTrato(params.id);
-        const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+        const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users/active`);
         const usersData = await usersResponse.json();
         const companiesResponse = await fetchWithToken(`${API_BASE_URL}/empresas`);
         const companiesData = await companiesResponse.json();
@@ -4608,7 +4609,8 @@ const DetallesTrato = () => {
     const fasesPermitidas = [
       'COTIZACION_PROPUESTA_PRACTICA',
       'NEGOCIACION_REVISION',
-      'CERRADO_GANADO'
+      'CERRADO_GANADO',
+      'CERRADO_PERDIDO'
     ];
 
     setShowCotizacionesSection(fasesPermitidas.includes(trato.fase));
@@ -5214,6 +5216,10 @@ const DetallesTrato = () => {
   };
 
   const handleCompartirCotizacion = async (cotizacion) => {
+    openModal('compartirCotizacion', { cotizacion });
+  };
+
+  const handleOpcionCompartir = async (incluirArchivos, cotizacion) => {
     const limpiarNombreArchivo = (texto) => {
       return texto
         .replace(/[^a-z0-9]/gi, '_')
@@ -5221,7 +5227,7 @@ const DetallesTrato = () => {
         .toLowerCase();
     };
 
-    const obtenerArchivoPDF = async () => {
+    const obtenerArchivoPDF = async (incluirArchivos) => {
       try {
         Swal.fire({
           title: 'Preparando archivo...',
@@ -5231,7 +5237,7 @@ const DetallesTrato = () => {
         });
 
         const response = await fetchWithToken(
-          `${API_BASE_URL}/cotizaciones/${cotizacion.id}/download-pdf?incluirArchivos=false`,
+          `${API_BASE_URL}/cotizaciones/${cotizacion.id}/download-pdf?incluirArchivos=${incluirArchivos}`,
           { method: 'GET', headers: { 'Accept': 'application/pdf' } }
         );
 
@@ -5273,26 +5279,33 @@ const DetallesTrato = () => {
       }
     };
 
+    // Mostrar opciones de WhatsApp o Email
     await Swal.fire({
       title: 'Compartir Cotización',
       text: 'Selecciona el medio de envío',
       showConfirmButton: false,
       showCloseButton: true,
       html: `
-        <div class="swal-share-container">
-          <button id="btn-share-whatsapp" class="btn-share-option btn-share-whatsapp">
-            <img src="${whatsappIcon}" class="share-icon-img" alt="" />
-            WhatsApp
-          </button>
-          <button id="btn-share-email" class="btn-share-option btn-share-email">
-            <img src="${emailIcon}" class="share-icon-img" alt="" />
-            Correo
-          </button>
-        </div>
-      `,
+      <div class="swal-share-container">
+        <button id="btn-share-whatsapp" class="btn-share-option btn-share-whatsapp">
+          <img src="${whatsappIcon}" class="share-icon-img" alt="" />
+          WhatsApp
+        </button>
+        <button id="btn-share-email" class="btn-share-option btn-share-email">
+          <img src="${emailIcon}" class="share-icon-img" alt="" />
+          Correo
+        </button>
+      </div>
+    `,
       didOpen: () => {
-        document.getElementById('btn-share-whatsapp').addEventListener('click', () => {
+        document.getElementById('btn-share-whatsapp').addEventListener('click', async () => {
           Swal.close();
+
+          // Si incluye archivos, primero descargar para el usuario
+          if (incluirArchivos) {
+            executeDownload(cotizacion.id, true);
+          }
+
           const contacto = trato.contacto;
           let numero = contacto?.whatsapp || contacto?.celular;
 
@@ -5308,14 +5321,14 @@ const DetallesTrato = () => {
           const cleanNumber = numero.replace(/\D/g, '');
           const mensaje = `Hola ${contacto.nombre || ''}, te comparto la cotización #${cotizacion.id} del trato ${trato.nombre}.`;
 
-          handleDescargarCotizacion(cotizacion.id);
-
           window.open(`https://wa.me/52${cleanNumber}?text=${encodeURIComponent(mensaje)}`, '_blank');
           marcarComoEnviada();
         });
 
         document.getElementById('btn-share-email').addEventListener('click', async () => {
-          const file = await obtenerArchivoPDF();
+          Swal.close();
+
+          const file = await obtenerArchivoPDF(incluirArchivos);
 
           if (file) {
             openModal('crearCorreo', {
@@ -6425,6 +6438,16 @@ const DetallesTrato = () => {
           onClose={() => closeModal("subirArchivo")}
           onDownload={executeDownload}
           cotizacion={modals.subirArchivo.cotizacion}
+        />
+        <CompartirCotizacionModal
+          isOpen={modals.compartirCotizacion.isOpen}
+          onClose={() => closeModal("compartirCotizacion")}
+          onCompartir={(incluirArchivos) => {
+            const cotizacion = modals.compartirCotizacion.cotizacion;
+            closeModal("compartirCotizacion");
+            handleOpcionCompartir(incluirArchivos, cotizacion);
+          }}
+          cotizacion={modals.compartirCotizacion.cotizacion}
         />
         <PdfPreviewModal
           isOpen={pdfPreview.isOpen}

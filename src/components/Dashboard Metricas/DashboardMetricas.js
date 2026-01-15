@@ -218,7 +218,7 @@ const DashboardMetricas = () => {
 
     const fetchAllUsers = async () => {
         try {
-            const response = await fetchWithToken(`${API_BASE_URL}/auth/users`)
+            const response = await fetchWithToken(`${API_BASE_URL}/auth/users/active`)
             const users = await response.json()
 
             const usuariosList = [

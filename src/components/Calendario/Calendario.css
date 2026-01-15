@@ -494,6 +494,35 @@
   line-height: 1;
 }
 
+.fc .fc-timegrid-axis-frame::-webkit-scrollbar,
+.fc .fc-daygrid-body::-webkit-scrollbar,
+.fc .fc-scrollgrid-section-body .fc-scroller::-webkit-scrollbar {
+  display: none !important;
+  width: 0px;
+  background: transparent;
+}
+
+.fc .fc-timegrid-axis-frame,
+.fc .fc-daygrid-body,
+.fc .fc-scrollgrid-section-body .fc-scroller {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none;
+}
+
+.fc .fc-scrollgrid-section-header .fc-scroller::-webkit-scrollbar {
+  display: none !important;
+}
+
+.fc .fc-scrollgrid-section-header .fc-scroller {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none;
+  overflow: hidden !important;
+}
+
+.fc-timegrid-event-harness-inset .fc-timegrid-event {
+    box-shadow: none !important;
+}
+
 /* Responsivo */
 @media (max-width: 768px) {
   .ts-calendar-container {

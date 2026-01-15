@@ -117,7 +117,7 @@ const Calendario = () => {
   useEffect(() => {
     const loadUsers = async () => {
       try {
-        const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+        const response = await fetchWithToken(`${API_BASE_URL}/auth/users/active`);
         const data = await response.json();
         const activeUsers = data.filter(user => user.estatus === "ACTIVO");
 
@@ -535,32 +535,34 @@ const Calendario = () => {
                 </div>
               )}
 
-              <div className="ts-calendar-filters">
-                <label className="ts-calendar-filter-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={filtrosCategoria.CRM}
-                    onChange={(e) => setFiltrosCategoria({ ...filtrosCategoria, CRM: e.target.checked })}
-                  />
-                  <span>CRM</span>
-                </label>
-                <label className="ts-calendar-filter-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={filtrosCategoria.ADMON}
-                    onChange={(e) => setFiltrosCategoria({ ...filtrosCategoria, ADMON: e.target.checked })}
-                  />
-                  <span>ADMON</span>
-                </label>
-                <label className="ts-calendar-filter-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={filtrosCategoria.EQUIPOS}
-                    onChange={(e) => setFiltrosCategoria({ ...filtrosCategoria, EQUIPOS: e.target.checked })}
-                  />
-                  <span>EQUIPOS</span>
-                </label>
-              </div>
+              {userRol !== "EMPLEADO" && (
+                <div className="ts-calendar-filters">
+                  <label className="ts-calendar-filter-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={filtrosCategoria.CRM}
+                      onChange={(e) => setFiltrosCategoria({ ...filtrosCategoria, CRM: e.target.checked })}
+                    />
+                    <span>CRM</span>
+                  </label>
+                  <label className="ts-calendar-filter-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={filtrosCategoria.ADMON}
+                      onChange={(e) => setFiltrosCategoria({ ...filtrosCategoria, ADMON: e.target.checked })}
+                    />
+                    <span>ADMON</span>
+                  </label>
+                  <label className="ts-calendar-filter-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={filtrosCategoria.EQUIPOS}
+                      onChange={(e) => setFiltrosCategoria({ ...filtrosCategoria, EQUIPOS: e.target.checked })}
+                    />
+                    <span>EQUIPOS</span>
+                  </label>
+                </div>
+              )}
             </div>
 
             <div className="ts-calendar-header-center">

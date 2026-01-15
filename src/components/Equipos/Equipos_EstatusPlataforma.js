@@ -191,7 +191,11 @@ const CheckEquiposSidePanel = ({
 
   const allPlatforms = [...new Set(equipos.map(e => e.plataforma?.nombrePlataforma))]
     .filter(p => p && p.trim() !== "");
-  const plataformas = ["Todos", ...allPlatforms.sort()];
+
+  const hasSinPlataforma = equipos.some(e => !e.plataforma?.nombrePlataforma || e.plataforma?.nombrePlataforma.trim() === "");
+  const plataformas = hasSinPlataforma
+    ? ["Todos", ...allPlatforms.sort(), "Sin plataforma"]
+    : ["Todos", ...allPlatforms.sort()];
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const nextCheckTime = lastCheckTime ? lastCheckTime + (6 * 60 * 60 * 1000) : null;
@@ -261,9 +265,15 @@ const CheckEquiposSidePanel = ({
 
   const filteredEquipos = equipos
     .filter(
-      (equipo) =>
-        selectedPlatform === "Todos" ||
-        equipo.plataforma?.nombrePlataforma === selectedPlatform
+      (equipo) => {
+        if (selectedPlatform === "Todos") {
+          return true;
+        }
+        if (selectedPlatform === "Sin plataforma") {
+          return !equipo.plataforma?.nombrePlataforma || equipo.plataforma?.nombrePlataforma.trim() === "";
+        }
+        return equipo.plataforma?.nombrePlataforma === selectedPlatform;
+      }
     )
     .sort((a, b) => {
       const nombreA = a.nombre ? a.nombre.toLowerCase() : "";
@@ -362,6 +372,10 @@ const CheckEquiposSidePanel = ({
   };
 
   const canCheck = !lastCheckTime || countdown === null;
+
+  // Verificar si TODOS los equipos tienen un estatus asignado
+  const allEquiposHaveStatus = equipos.length > 0 &&
+    equipos.every(equipo => equiposStatus[equipo.id]?.status !== null && equiposStatus[equipo.id]?.status !== undefined);
 
   return (
     <>
@@ -493,9 +507,20 @@ const CheckEquiposSidePanel = ({
             type="button"
             onClick={handleSaveChecklist}
             className="estatusplataforma-btn estatusplataforma-btn-primary estatusplataforma-btn-full-width"
-            disabled={!canCheck || filteredEquipos.length === 0 || isSaving}
+            disabled={!canCheck || filteredEquipos.length === 0 || isSaving || !allEquiposHaveStatus}
+            style={{
+              opacity: (!canCheck || filteredEquipos.length === 0 || isSaving || !allEquiposHaveStatus) ? 0.5 : 1,
+              cursor: (!canCheck || filteredEquipos.length === 0 || isSaving || !allEquiposHaveStatus) ? 'not-allowed' : 'pointer'
+            }}
           >
-            {isSaving ? "Guardando..." : countdown ? `Disponible en ${formatCountdown(countdown)}` : "Guardar checklist"}
+            {isSaving
+              ? "Guardando..."
+              : countdown
+                ? `Disponible en ${formatCountdown(countdown)}`
+                : !allEquiposHaveStatus
+                 ? `Selecciona todos los equipos (${equipos.filter(e => equiposStatus[e.id]?.status !== null).length}/${equipos.length})`
+                  : "Guardar checklist"
+            }
           </button>
         </div>
       </div>

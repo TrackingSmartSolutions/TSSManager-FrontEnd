@@ -202,7 +202,7 @@ const ReportePersonal = () => {
 
       if (userRol === "ADMINISTRADOR" || userRol === "GESTOR") {
         try {
-          const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+          const response = await fetchWithToken(`${API_BASE_URL}/auth/users/active`);
           const data = await response.json();
           const usersList = data.map(user => user.nombre.trim());
           console.log("Lista de usuarios cargada:", usersList);

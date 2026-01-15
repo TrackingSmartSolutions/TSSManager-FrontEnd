@@ -176,7 +176,6 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayCl
 };
 
 // Modal de Vista Previa
-// Modal de Vista Previa
 const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
   if (!isOpen) return null;
 
@@ -1210,6 +1209,182 @@ const SubirArchivoModal = ({ isOpen, onClose, onDownload, cotizacion }) => {
   );
 };
 
+// Modal para Compartir Cotización con opción de archivos
+const CompartirCotizacionModal = ({ isOpen, onClose, onCompartir, cotizacion }) => {
+  const [notasComerciales, setNotasComerciales] = useState(null);
+  const [fichaTecnica, setFichaTecnica] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (isOpen) {
+      setNotasComerciales(null);
+      setFichaTecnica(null);
+      setErrors({});
+    }
+  }, [isOpen]);
+
+  const handleFileChange = (tipo, e) => {
+    const file = e.target.files[0];
+    if (file && (file.type === 'application/pdf' || file.type === 'image/png')) {
+      if (tipo === 'notas') {
+        setNotasComerciales(file);
+      } else {
+        setFichaTecnica(file);
+      }
+      setErrors(prev => ({ ...prev, [tipo]: null }));
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Solo se permiten archivos PDF y PNG'
+      });
+      e.target.value = '';
+    }
+  };
+
+  const validateFiles = () => {
+    const newErrors = {};
+
+    if ((notasComerciales && !fichaTecnica) || (!notasComerciales && fichaTecnica)) {
+      newErrors.general = 'Si subes un archivo, debes subir ambos: Notas Comerciales y Ficha Técnica';
+      setErrors(newErrors);
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleCompartirConArchivos = async () => {
+    if (!validateFiles()) return;
+
+    setUploading(true);
+    const formData = new FormData();
+
+    if (notasComerciales) {
+      formData.append('notasComerciales', notasComerciales);
+    }
+    if (fichaTecnica) {
+      formData.append('fichaTecnica', fichaTecnica);
+    }
+
+    try {
+      await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacion.id}/upload-archivos`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      await onCompartir(true);
+      onClose();
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al subir los archivos: ' + error.message
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleCompartirSinArchivos = async () => {
+    await onCompartir(false);
+    onClose();
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Compartir Cotización" size="lg" closeOnOverlayClick={false}>
+      <div className="cotizaciones-form">
+        <div className="cotizaciones-form-group">
+          <p className="cotizaciones-modal-text">
+            ¿Deseas agregar archivos adicionales antes de compartir esta cotización?
+          </p>
+          {errors.general && (
+            <div className="cotizaciones-error-message">{errors.general}</div>
+          )}
+        </div>
+
+        <div className="cotizaciones-form-group">
+          <div className="cotizaciones-size-warning">
+            <h4 className="cotizaciones-warning-title">Recomendaciones para imágenes PNG:</h4>
+            <ul className="cotizaciones-warning-list">
+              <li><strong>Tamaño recomendado:</strong> 1240 x 1754 píxeles (proporción A4)</li>
+              <li><strong>Orientación:</strong> Vertical (portrait) preferentemente</li>
+            </ul>
+            <p className="cotizaciones-warning-note">
+              <strong>Nota:</strong> Las imágenes PNG se convertirán automáticamente a PDF y se ajustarán al tamaño de página A4.
+            </p>
+          </div>
+        </div>
+
+        <div className="cotizaciones-form-group">
+          <label>Notas Comerciales (PDF o PNG):</label>
+          <input
+            type="file"
+            accept=".pdf,.png"
+            onChange={(e) => handleFileChange('notas', e)}
+            className="cotizaciones-form-control"
+          />
+          {notasComerciales && (
+            <div className="cotizaciones-file-info">
+              <p className="cotizaciones-file-selected">
+                <strong>Archivo seleccionado:</strong> {notasComerciales.name}
+              </p>
+              <p className="cotizaciones-file-details">
+                <strong>Tamaño:</strong> {(notasComerciales.size / 1024 / 1024).toFixed(2)} MB
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="cotizaciones-form-group">
+          <label>Ficha Técnica (PDF o PNG):</label>
+          <input
+            type="file"
+            accept=".pdf,.png"
+            onChange={(e) => handleFileChange('ficha', e)}
+            className="cotizaciones-form-control"
+          />
+          {fichaTecnica && (
+            <div className="cotizaciones-file-info">
+              <p className="cotizaciones-file-selected">
+                <strong>Archivo seleccionado:</strong> {fichaTecnica.name}
+              </p>
+              <p className="cotizaciones-file-details">
+                <strong>Tamaño:</strong> {(fichaTecnica.size / 1024 / 1024).toFixed(2)} MB
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="cotizaciones-form-actions">
+          <button
+            onClick={onClose}
+            className="cotizaciones-btn cotizaciones-btn-cancel"
+            disabled={uploading}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleCompartirSinArchivos}
+            className="cotizaciones-btn cotizaciones-btn-secondary"
+            disabled={uploading}
+          >
+            Compartir sin archivos
+          </button>
+          <button
+            onClick={handleCompartirConArchivos}
+            className="cotizaciones-btn cotizaciones-btn-primary"
+            disabled={uploading || (!notasComerciales && !fichaTecnica)}
+          >
+            {uploading ? 'Cargando...' : 'Compartir con archivos'}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
 const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
   <div className="cotizaciones-date-picker-wrapper">
     <input
@@ -1265,6 +1440,7 @@ const AdminCotizaciones = () => {
     confirmarEliminacion: { isOpen: false, cotizacion: null },
     crearCuentas: { isOpen: false, cotizacion: null },
     subirArchivo: { isOpen: false, cotizacion: null },
+    compartirCotizacion: { isOpen: false, cotizacion: null },
   });
 
 
@@ -1880,3 +2056,4 @@ export default AdminCotizaciones;
 export { CotizacionModal };
 export { CrearCuentasModal };
 export { SubirArchivoModal };
+export { CompartirCotizacionModal }; 
