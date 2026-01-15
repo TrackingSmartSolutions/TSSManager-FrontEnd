@@ -22,15 +22,12 @@ export const useEmailStatusWebSocket = (tratoId, onStatusUpdate) => {
       }
     });
 
-    stompClient.onConnect = () => {
-      console.log('WebSocket conectado para emails');
-      
+    stompClient.onConnect = () => {      
       stompClient.subscribe('/topic/email-status', (message) => {
         const data = JSON.parse(message.body);
         
         // Solo actualizar si es del trato actual
         if (data.tratoId === parseInt(tratoId)) {
-          console.log('Estado de email actualizado:', data);
           onStatusUpdate(data);
         }
       });
