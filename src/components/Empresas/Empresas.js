@@ -1672,9 +1672,52 @@ const Empresas = () => {
     }
   };
 
-
   const handleTratoClick = (tratoId) => {
     navigate(`/detallestrato/${tratoId}`);
+  };
+
+  const handleDeleteTrato = async (tratoId, e) => {
+    e.stopPropagation();
+
+    const result = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: "Esta acción eliminará el trato y todos sus datos asociados (actividades, notas, cotizaciones). Esta acción no se puede deshacer.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al eliminar el trato");
+      }
+
+      setTratos(prevTratos => prevTratos.filter(t => t.id !== tratoId));
+
+      await Swal.fire({
+        icon: "success",
+        title: "¡Trato eliminado!",
+        text: "El trato y todos sus datos asociados han sido eliminados exitosamente.",
+        confirmButtonText: 'OK'
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.message,
+      });
+    }
   };
 
   const openModal = (modalType, mode = "add", data = null, extra = {}) => {
@@ -2268,6 +2311,7 @@ const Empresas = () => {
                             <th>Propietario</th>
                             <th>Fase</th>
                             <th>Fecha de Cierre</th>
+                            <th>Acciones</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2275,19 +2319,29 @@ const Empresas = () => {
                             tratos.map((trato, index) => (
                               <tr
                                 key={trato.id}
-                                onClick={() => handleTratoClick(trato.id)}
                                 style={{ cursor: 'pointer' }}
                                 className="trato-row-clickable"
                               >
-                                <td>{trato.noTrato || index + 1}</td>
-                                <td>{trato.nombre || "N/A"}</td>
-                                <td>{trato.contacto?.nombre || "N/A"}</td>
-                                <td>{trato.propietarioNombre || "N/A"}</td>
-                                <td>{trato.fase || "N/A"}</td>
-                                <td>
+                                <td onClick={() => handleTratoClick(trato.id)}>{trato.noTrato || index + 1}</td>
+                                <td onClick={() => handleTratoClick(trato.id)}>{trato.nombre || "N/A"}</td>
+                                <td onClick={() => handleTratoClick(trato.id)}>{trato.contacto?.nombre || "N/A"}</td>
+                                <td onClick={() => handleTratoClick(trato.id)}>{trato.propietarioNombre || "N/A"}</td>
+                                <td onClick={() => handleTratoClick(trato.id)}>{trato.fase || "N/A"}</td>
+                                <td onClick={() => handleTratoClick(trato.id)}>
                                   {trato.fechaCierre
                                     ? new Date(trato.fechaCierre).toLocaleDateString("es-MX")
                                     : "N/A"}
+                                </td>
+                                <td>
+                                  <div className="action-buttons">
+                                    <button
+                                      className="btn-action delete"
+                                      onClick={(e) => handleDeleteTrato(trato.id, e)}
+                                      title="Eliminar trato"
+                                    >
+                                      <img src={deleteIcon} alt="Eliminar" />
+                                    </button>
+                                  </div>
                                 </td>
                               </tr>
                             ))

@@ -157,7 +157,13 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
   }, [isOpen, emisor]);
 
   const handleInputChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (field === "telefono") {
+      const numericValue = value.replace(/\D/g, '').slice(0, 10);
+      setFormData((prev) => ({ ...prev, [field]: numericValue }));
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    }
+
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
@@ -196,7 +202,11 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
     } else if (formData.rfc.trim().length > 13) {
       newErrors.rfc = "El RFC no puede tener más de 13 caracteres";
     }
-    if (!formData.telefono.trim()) newErrors.telefono = "El teléfono es obligatorio";
+    if (!formData.telefono.trim()) {
+      newErrors.telefono = "El teléfono es obligatorio";
+    } else if (formData.telefono.trim().length < 10) {
+      newErrors.telefono = "El teléfono debe tener 10 dígitos";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -305,6 +315,7 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
             value={formData.telefono}
             onChange={(e) => handleInputChange("telefono", e.target.value)}
             className={`facturacion-form-control ${errors.telefono ? "error" : ""}`}
+            maxLength={10}
           />
           {errors.telefono && <span className="facturacion-error-message">{errors.telefono}</span>}
         </div>
@@ -1026,30 +1037,16 @@ const ConceptosModal = ({ isOpen, onClose, solicitud, onSave, onPreview }) => {
     }
   };
 
-  const handleSave = async () => {
+  const handleDescargarPDF = async () => {
     try {
       setIsLoading(true);
+
       await fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/solicitudes/${solicitud.id}/conceptos`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ conceptosPersonalizados: conceptosEditables })
       });
 
-      Swal.fire({
-        icon: "success",
-        title: "Éxito",
-        text: "Conceptos actualizados correctamente"
-      });
-      onSave();
-    } catch (error) {
-      Swal.fire({ icon: "error", title: "Error", text: error.message });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDescargarPDF = async () => {
-    try {
       const response = await fetchWithToken(
         `${API_BASE_URL}/solicitudes-factura-nota/solicitudes/${solicitud.id}/download-pdf`,
         {
@@ -1074,6 +1071,8 @@ const ConceptosModal = ({ isOpen, onClose, solicitud, onSave, onPreview }) => {
         title: "Error",
         text: `No se pudo generar la vista previa: ${error.message}`,
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -1118,9 +1117,6 @@ const ConceptosModal = ({ isOpen, onClose, solicitud, onSave, onPreview }) => {
             </button>
             <button type="button" onClick={resetearConceptos} className="facturacion-btn facturacion-btn-secondary">
               Restaurar Originales
-            </button>
-            <button type="button" onClick={handleSave} className="facturacion-btn facturacion-btn-secondary" disabled={isLoading}>
-              {isLoading ? "Guardando..." : "Guardar Cambios"}
             </button>
             <button type="button" onClick={handleDescargarPDF} className="facturacion-btn facturacion-btn-primary">
               Visualizar PDF

@@ -609,6 +609,16 @@ const Calendario = () => {
               locale="es"
               headerToolbar={false}
 
+              eventTimeFormat={{
+                hour: '2-digit',
+                minute: '2-digit',
+                meridiem: false,
+                hour12: false
+              }}
+
+              displayEventTime={true}
+              displayEventEnd={false}
+
               slotMinTime="06:00:00"
               slotMaxTime="22:00:00"
               slotDuration="00:30:00"

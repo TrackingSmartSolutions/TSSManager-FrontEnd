@@ -492,7 +492,7 @@ const AdminCajaChica = () => {
       pdf.setFillColor(245, 245, 245)
       pdf.rect(margin + 2 * boxWidth + 20, currentY, boxWidth, boxHeight, "F")
       pdf.setFontSize(10)
-      pdf.text("Utilidad", margin + 2 * boxWidth + 20 + boxWidth / 2, currentY + 6, { align: "center" })
+      pdf.text("Saldo", margin + 2 * boxWidth + 20 + boxWidth / 2, currentY + 6, { align: "center" })
       pdf.setFontSize(12)
       pdf.text(
         formatCurrency(resumenCajaChica.utilidadPerdida),
@@ -527,13 +527,16 @@ const AdminCajaChica = () => {
 
         // Configurar tabla
         const headers = ["Fecha", "Cuenta", "Nota", "Gastos", "Ingresos", "Saldo"]
-        const colWidths = [25, 35, 40, 25, 25, 25] // Anchos de columna en mm
-        const rowHeight = 8
+        const colWidths = [20, 30, 50, 22, 22, 22] // Anchos de columna en mm
+        const rowHeightBase = 8
+        const splitText = (text, maxWidth) => {
+          return pdf.splitTextToSize(text, maxWidth)
+        }
 
         // Headers
-        checkPageBreak(rowHeight + 5)
+        checkPageBreak(rowHeightBase + 5)
         pdf.setFillColor(245, 245, 245)
-        pdf.rect(margin, currentY, pageWidth - 2 * margin, rowHeight, "F")
+        pdf.rect(margin, currentY, pageWidth - 2 * margin, rowHeightBase, "F")
 
         pdf.setFontSize(9)
         pdf.setFont("helvetica", "bold")
@@ -542,47 +545,54 @@ const AdminCajaChica = () => {
           pdf.text(header, xPosition + 2, currentY + 5)
           xPosition += colWidths[index]
         })
-        currentY += rowHeight
+        currentY += rowHeightBase
 
         // Datos
         pdf.setFont("helvetica", "normal")
         datos.forEach((fila, index) => {
+          const valores = [fila.fecha, fila.cuenta, fila.nota, fila.gastos, fila.ingresos, fila.saldo]
+
+          let rowHeight = rowHeightBase
+          let lineasNota = []
+          if (valores[2] !== "-") {
+            lineasNota = splitText(valores[2], colWidths[2] - 4)
+            rowHeight = Math.max(rowHeightBase, lineasNota.length * 4 + 4)
+          }
+
           checkPageBreak(rowHeight)
 
-          // Alternar color de fondo
           if (index % 2 === 1) {
             pdf.setFillColor(249, 249, 249)
             pdf.rect(margin, currentY, pageWidth - 2 * margin, rowHeight, "F")
           }
 
           xPosition = margin
-          const valores = [fila.fecha, fila.cuenta, fila.nota, fila.gastos, fila.ingresos, fila.saldo]
 
           valores.forEach((valor, colIndex) => {
-            // Ajustar color del texto para gastos e ingresos
             if (colIndex === 3 && valor !== "-") {
-              // Gastos en rojo
               pdf.setTextColor(139, 38, 53)
             } else if (colIndex === 4 && valor !== "-") {
-              // Ingresos en verde
               pdf.setTextColor(45, 90, 45)
             } else if (colIndex === 5) {
-              // Saldo en negrita
               pdf.setFont("helvetica", "bold")
             } else {
               pdf.setTextColor(0, 0, 0)
               pdf.setFont("helvetica", "normal")
             }
-
             if (colIndex >= 3) {
               pdf.text(valor.toString(), xPosition + colWidths[colIndex] - 2, currentY + 5, { align: "right" })
-            } else {
-              let textoMostrar = valor.toString()
-              if (textoMostrar.length > 15 && colIndex === 2) {
-                textoMostrar = textoMostrar.substring(0, 12) + "..."
+            } else if (colIndex === 2) {
+              if (valor !== "-" && lineasNota.length > 0) {
+                lineasNota.forEach((linea, i) => {
+                  pdf.text(linea, xPosition + 2, currentY + 5 + (i * 4))
+                })
+              } else {
+                pdf.text(valor.toString(), xPosition + 2, currentY + 5)
               }
-              pdf.text(textoMostrar, xPosition + 2, currentY + 5)
+            } else {
+              pdf.text(valor.toString(), xPosition + 2, currentY + 5)
             }
+
             xPosition += colWidths[colIndex]
           })
 

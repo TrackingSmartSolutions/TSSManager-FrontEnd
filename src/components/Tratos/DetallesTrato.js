@@ -934,7 +934,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
   const [errors, setErrors] = useState({});
   const [contactos, setContactos] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
-   const [usuariosActivos, setUsuariosActivos] = useState([]);
+  const [usuariosActivos, setUsuariosActivos] = useState([]);
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
@@ -943,7 +943,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
     }
   }, []);
 
-   useEffect(() => {
+  useEffect(() => {
     const cargarUsuariosActivos = async () => {
       if (isOpen) {
         try {
@@ -971,7 +971,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
           const response = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}`);
           const trato = await response.json();
           setFormData({
-             asignadoAId: localStorage.getItem('userId') || creatorId || (usuariosActivos.length > 0 ? usuariosActivos[0].id : ""),
+            asignadoAId: localStorage.getItem('userId') || creatorId || (usuariosActivos.length > 0 ? usuariosActivos[0].id : ""),
             nombreContacto: trato.contacto?.id || "",
             fechaLimite: "",
             tipo: initialTipo || "",
@@ -2725,9 +2725,18 @@ const EditarTratoModal = ({ isOpen, onClose, onSave, trato, users, companies }) 
   const [contacts, setContacts] = useState([]);
 
   useEffect(() => {
-    if (trato && isOpen && trato.id && companies.length > 0) {
+    if (trato && isOpen && trato.id && companies.length > 0 && users.length > 0) {
+
+      const propietarioExiste = users.find(
+        u => u.nombreReal === trato.propietario || u.nombre === trato.propietario
+      );
+
+      const propietarioSeguro = propietarioExiste
+        ? (propietarioExiste.nombreReal)
+        : (users[0].nombreReal);
+
       setFormData({
-        propietario: trato.propietario || "",
+        propietario: propietarioSeguro, 
         nombreTrato: trato.nombre || "",
         nombreEmpresa: trato.nombreEmpresa || "",
         nombreContacto: trato.contacto?.nombre || "",
@@ -2738,7 +2747,8 @@ const EditarTratoModal = ({ isOpen, onClose, onSave, trato, users, companies }) 
       loadContacts(trato.nombreEmpresa);
     }
     setErrors({});
-  }, [trato, isOpen, companies]);
+
+  }, [trato, isOpen, companies, users]);
 
   const loadContacts = async (empresaNombre) => {
     try {

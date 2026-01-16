@@ -473,17 +473,8 @@ const AdminBalance = () => {
           monto: formatCurrency(ac.monto),
         }))
 
-      const categoriasExcluidasPDF = ['renta mensual', 'renta anual', 'revisiones', 'revision'];
-
-      const clientesExcluidosPDF = balanceData.acumuladoCuentas
-        .filter((item) => {
-          const categoriaLower = normalizarTexto(item.categoria);
-          return categoriasExcluidasPDF.some(catEx => categoriaLower.includes(catEx));
-        })
-        .map((item) => item.cuenta);
-
       const equiposRealesParaPDF = balanceData.equiposVendidos.filter((equipo) => {
-        return !clientesExcluidosPDF.includes(equipo.cliente) && equipo.numeroEquipos > 0;
+        return equipo.numeroEquipos > 0;
       });
 
       const equiposFormateados = equiposRealesParaPDF.map((equipo) => ({
@@ -610,7 +601,7 @@ const AdminBalance = () => {
           pdf.setFont("helvetica", "normal")
           pdf.text("No hay datos disponibles", margin, currentY)
           currentY += 15
-          return false 
+          return false
         }
 
         const nuevaPagina = checkPageBreak(20)
@@ -654,7 +645,7 @@ const AdminBalance = () => {
           currentY += 10
         }
 
-        return nuevaPagina 
+        return nuevaPagina
       }
 
       if (acumuladoFiltrado.length > 0) {

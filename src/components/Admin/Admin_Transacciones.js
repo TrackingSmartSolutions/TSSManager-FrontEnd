@@ -587,25 +587,31 @@ const GestionarCategoriasModal = ({ isOpen, onClose, categorias, onSaveCategoria
                   </tr>
                 </thead>
                 <tbody>
-                  {categorias.map((categoria) => (
-                    <tr key={categoria.id}>
-                      <td>{categoria.tipo}</td>
-                      <td>{categoria.descripcion}</td>
-                      <td>
-                        <button
-                          className="transacciones-action-btn transacciones-delete-btn"
-                          onClick={() => onDeleteCategoria(categoria)}
-                          title="Eliminar"
-                        >
-                          <img
-                            src={deleteIcon || "/placeholder.svg"}
-                            alt="Eliminar"
-                            className="transacciones-action-icon"
-                          />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {[...categorias]
+                    .sort((a, b) => {
+                      const tipoCompare = a.tipo.localeCompare(b.tipo);
+                      if (tipoCompare !== 0) return tipoCompare;
+                      return a.descripcion.localeCompare(b.descripcion);
+                    })
+                    .map((categoria) => (
+                      <tr key={categoria.id}>
+                        <td>{categoria.tipo}</td>
+                        <td>{categoria.descripcion}</td>
+                        <td>
+                          <button
+                            className="transacciones-action-btn transacciones-delete-btn"
+                            onClick={() => onDeleteCategoria(categoria)}
+                            title="Eliminar"
+                          >
+                            <img
+                              src={deleteIcon || "/placeholder.svg"}
+                              alt="Eliminar"
+                              className="transacciones-action-icon"
+                            />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -764,25 +770,31 @@ const GestionarCuentasModal = ({ isOpen, onClose, cuentas, categorias, onSaveCue
                   </tr>
                 </thead>
                 <tbody>
-                  {cuentasFiltradas.map((cuenta) => (
-                    <tr key={cuenta.id}>
-                      <td>{cuenta.categoria.descripcion}</td>
-                      <td>{cuenta.nombre}</td>
-                      <td>
-                        <button
-                          className="transacciones-action-btn transacciones-delete-btn"
-                          onClick={() => onDeleteCuenta(cuenta)}
-                          title="Eliminar"
-                        >
-                          <img
-                            src={deleteIcon || "/placeholder.svg"}
-                            alt="Eliminar"
-                            className="transacciones-action-icon"
-                          />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {[...cuentasFiltradas]
+                    .sort((a, b) => {
+                      const categoriaCompare = a.categoria.descripcion.localeCompare(b.categoria.descripcion);
+                      if (categoriaCompare !== 0) return categoriaCompare;
+                      return a.nombre.localeCompare(b.nombre);
+                    })
+                    .map((cuenta) => (
+                      <tr key={cuenta.id}>
+                        <td>{cuenta.categoria.descripcion}</td>
+                        <td>{cuenta.nombre}</td>
+                        <td>
+                          <button
+                            className="transacciones-action-btn transacciones-delete-btn"
+                            onClick={() => onDeleteCuenta(cuenta)}
+                            title="Eliminar"
+                          >
+                            <img
+                              src={deleteIcon || "/placeholder.svg"}
+                              alt="Eliminar"
+                              className="transacciones-action-icon"
+                            />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>

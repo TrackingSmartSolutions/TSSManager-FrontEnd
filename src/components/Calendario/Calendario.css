@@ -523,6 +523,25 @@
     box-shadow: none !important;
 }
 
+.fc-daygrid-event .fc-event-time {
+  display: block !important;
+  font-size: 0.75em;
+  font-weight: 600;
+  margin-bottom: 2px;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.fc-daygrid-event .fc-event-title {
+  font-size: 0.85em;
+  white-space: normal;
+  line-height: 1.2;
+}
+
+.fc-daygrid-event .fc-event-main-frame {
+  padding: 2px 4px;
+}
+
 /* Responsivo */
 @media (max-width: 768px) {
   .ts-calendar-container {
