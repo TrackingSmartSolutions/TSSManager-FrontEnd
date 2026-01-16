@@ -323,46 +323,47 @@ const EquiposCreditosPlataforma = () => {
 
   // Generar reporte PDF
   const handleGenerarReporte = async () => {
-    const element = document.getElementById("creditos-reporte-content");
-    element.classList.add('generating-pdf');
+  const element = document.getElementById("creditos-reporte-content");
+  element.classList.add('generating-pdf');
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 500));
 
-    const opt = {
-      margin: 0.5,
-      filename: `Informe_Creditos_Plataforma_${fechaInicio ? fechaInicio.toISOString().split('T')[0] : 'sin-fecha'}_${fechaFin ? fechaFin.toISOString().split('T')[0] : 'sin-fecha'}.pdf`,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: {
-        scale: 1.2,
-        useCORS: true,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: 1200,
-        height: element.scrollHeight + 50,
-        allowTaint: true
-      },
-      jsPDF: {
-        unit: "in",
-        format: "a4",
-        orientation: "portrait"
-      },
-    };
+  const opt = {
+    margin: 0.5,
+    filename: `Informe_Creditos_Plataforma_${fechaInicio ? fechaInicio.toISOString().split('T')[0] : 'sin-fecha'}_${fechaFin ? fechaFin.toISOString().split('T')[0] : 'sin-fecha'}.pdf`,
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight,
+      allowTaint: true
+    },
+    jsPDF: {
+      unit: "in",
+      format: "a4",
+      orientation: "portrait"
+    },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+  };
 
-    try {
-      const blobUrl = await html2pdf().set(opt).from(element).output('bloburl');
+  try {
+    const blobUrl = await html2pdf().set(opt).from(element).output('bloburl');
 
-      setPdfPreview({
-        isOpen: true,
-        url: blobUrl,
-        filename: opt.filename
-      });
+    setPdfPreview({
+      isOpen: true,
+      url: blobUrl,
+      filename: opt.filename
+    });
 
-    } catch (error) {
-      console.error("Error generando PDF:", error);
-    } finally {
-      element.classList.remove('generating-pdf');
-    }
+  } catch (error) {
+    console.error("Error generando PDF:", error);
+  } finally {
+    element.classList.remove('generating-pdf');
   }
+}
 
   const handleDownloadFromPreview = () => {
     if (pdfPreview.url) {

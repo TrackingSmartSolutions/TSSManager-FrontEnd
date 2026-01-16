@@ -176,6 +176,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
   const [errors, setErrors] = useState({});
   const [contactos, setContactos] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  const [usuariosActivos, setUsuariosActivos] = useState([]);
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
@@ -185,13 +186,34 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
   }, []);
 
   useEffect(() => {
+    const cargarUsuariosActivos = async () => {
+      if (isOpen) {
+        try {
+          const response = await fetchWithToken(`${API_BASE_URL}/auth/users/active`);
+          const data = await response.json();
+          const activeUsers = data.map(user => ({
+            id: user.id,
+            nombre: user.nombreUsuario,
+            nombreReal: user.nombre
+          }));
+          setUsuariosActivos(activeUsers);
+        } catch (error) {
+          console.error("Error cargando usuarios activos:", error);
+          setUsuariosActivos([]);
+        }
+      }
+    };
+    cargarUsuariosActivos();
+  }, [isOpen]);
+
+  useEffect(() => {
     if (isOpen) {
       const fetchTrato = async () => {
         try {
           const response = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}`);
           const trato = await response.json();
           setFormData({
-            asignadoAId: localStorage.getItem('userId') || creatorId || (users.length > 0 ? users[0].id : ""),
+            asignadoAId: localStorage.getItem('userId') || creatorId || (usuariosActivos.length > 0 ? usuariosActivos[0].id : ""),
             nombreContacto: trato.contacto?.id || "",
             fecha: "",
             horaInicio: "",
@@ -204,7 +226,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
       };
       if (tratoId) fetchTrato();
     }
-  }, [isOpen, creatorId, users, tratoId]);
+  }, [isOpen, creatorId, tratoId, usuariosActivos]);
 
   const fetchContactos = async (empresaId) => {
     try {
@@ -355,7 +377,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
               onChange={(e) => handleInputChange("asignadoAId", e.target.value)}
               className="modal-form-control"
             >
-              {users.map((user) => (
+              {usuariosActivos.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.nombreReal}
                 </option>
@@ -446,6 +468,8 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
   const [actividadCreada, setActividadCreada] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [usuariosActivos, setUsuariosActivos] = useState([]);
+
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
@@ -453,6 +477,27 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
       setCurrentUser({ id: userId });
     }
   }, []);
+
+  useEffect(() => {
+    const cargarUsuariosActivos = async () => {
+      if (isOpen) {
+        try {
+          const response = await fetchWithToken(`${API_BASE_URL}/auth/users/active`);
+          const data = await response.json();
+          const activeUsers = data.map(user => ({
+            id: user.id,
+            nombre: user.nombreUsuario,
+            nombreReal: user.nombre
+          }));
+          setUsuariosActivos(activeUsers);
+        } catch (error) {
+          console.error("Error cargando usuarios activos:", error);
+          setUsuariosActivos([]);
+        }
+      }
+    };
+    cargarUsuariosActivos();
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -477,7 +522,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             }
           }
           setFormData({
-            asignadoAId: localStorage.getItem('userId') || creatorId || (users.length > 0 ? users[0].id : ""),
+            asignadoAId: localStorage.getItem('userId') || creatorId || (usuariosActivos.length > 0 ? usuariosActivos[0].id : ""),
             nombreContacto: trato.contacto?.id || "",
             fecha: "",
             horaInicio: "",
@@ -505,7 +550,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
       };
       if (tratoId) fetchTrato();
     }
-  }, [isOpen, creatorId, users, tratoId, initialModalidad]);
+  }, [isOpen, creatorId, usuariosActivos, tratoId, initialModalidad]);
 
   const fetchEmpresaDetails = async (tratoId) => {
     try {
@@ -689,7 +734,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
               onChange={(e) => handleInputChange("asignadoAId", e.target.value)}
               className="modal-form-control"
             >
-              {users.map((user) => (
+              {usuariosActivos.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.nombreReal}
                 </option>
@@ -889,6 +934,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
   const [errors, setErrors] = useState({});
   const [contactos, setContactos] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+   const [usuariosActivos, setUsuariosActivos] = useState([]);
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
@@ -897,6 +943,27 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
     }
   }, []);
 
+   useEffect(() => {
+    const cargarUsuariosActivos = async () => {
+      if (isOpen) {
+        try {
+          const response = await fetchWithToken(`${API_BASE_URL}/auth/users/active`);
+          const data = await response.json();
+          const activeUsers = data.map(user => ({
+            id: user.id,
+            nombre: user.nombreUsuario,
+            nombreReal: user.nombre
+          }));
+          setUsuariosActivos(activeUsers);
+        } catch (error) {
+          console.error("Error cargando usuarios activos:", error);
+          setUsuariosActivos([]);
+        }
+      }
+    };
+    cargarUsuariosActivos();
+  }, [isOpen]);
+
   useEffect(() => {
     if (isOpen) {
       const fetchTrato = async () => {
@@ -904,7 +971,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
           const response = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}`);
           const trato = await response.json();
           setFormData({
-            asignadoAId: localStorage.getItem('userId') || creatorId || (users.length > 0 ? users[0].id : ""),
+             asignadoAId: localStorage.getItem('userId') || creatorId || (usuariosActivos.length > 0 ? usuariosActivos[0].id : ""),
             nombreContacto: trato.contacto?.id || "",
             fechaLimite: "",
             tipo: initialTipo || "",
@@ -918,7 +985,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
       };
       if (tratoId) fetchTrato();
     }
-  }, [isOpen, creatorId, users, tratoId, initialTipo]);
+  }, [isOpen, creatorId, usuariosActivos, tratoId, initialTipo]);
 
   const fetchContactos = async (empresaId) => {
     try {
@@ -1004,7 +1071,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
               onChange={(e) => handleInputChange("asignadoAId", e.target.value)}
               className="modal-form-control"
             >
-              {users.map((user) => (
+              {usuariosActivos.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.nombreReal}
                 </option>
@@ -6277,15 +6344,6 @@ const DetallesTrato = () => {
           isOpen={modals.crearNuevaActividad.isOpen}
           onClose={() => closeModal("crearNuevaActividad")}
           onSelectActivity={handleSelectActivity}
-        />
-
-        <ProgramarLlamadaModal
-          isOpen={modals.programarLlamada.isOpen}
-          onClose={() => closeModal("programarLlamada")}
-          onSave={(data) => handleSaveActividad(data, "llamada")}
-          tratoId={modals.programarLlamada.tratoId}
-          users={users}
-          creatorId={modals.programarLlamada.creatorId}
         />
 
         <ProgramarLlamadaModal

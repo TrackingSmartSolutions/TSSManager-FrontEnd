@@ -112,11 +112,19 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
     if (name === 'numero') {
       const numericValue = value.replace(/\D/g, '').slice(0, 10);
       setFormData((prev) => ({
         ...prev,
         [name]: numericValue,
+      }));
+    } else if (name === 'tarifa') {
+      setFormData((prev) => ({
+        ...prev,
+        tarifa: value,
+        grupo: value === 'M2M_GLOBAL_15' ? '0' : prev.grupo,
+        principal: value === 'M2M_GLOBAL_15' ? 'NO' : prev.principal
       }));
     } else {
       setFormData((prev) => ({
@@ -391,7 +399,7 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
                 value={formData.principal}
                 onChange={handleInputChange}
                 className="sim-form-control"
-                disabled={!gruposDisponibles.length}
+                disabled={!gruposDisponibles.length || formData.tarifa === 'M2M_GLOBAL_15'}
               >
                 <option value="SI">Sí</option>
                 <option value="NO" disabled={!gruposDisponibles.length}>No</option>
@@ -409,8 +417,8 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
                   name="grupo"
                   value={formData.grupo}
                   onChange={handleInputChange}
-                  className={`sim-form-control ${errors.grupo ? "sim-form-control-error" : ""}`}
-                  disabled={isPrincipal}
+                  className={`sim-form-control ${errors.grupo ? "sim-form-control-error" : ""} ${formData.tarifa === 'M2M_GLOBAL_15' ? 'sim-form-control-disabled' : ''}`}
+                  disabled={isPrincipal || formData.tarifa === 'M2M_GLOBAL_15'}
                   required={!isPrincipal}
                 >
                   <option value="">Seleccionar grupo</option>
@@ -437,7 +445,13 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
                         .filter(option => option !== null)
                     ))}
                 </select>
-                {!isPrincipal && <small className="sim-help-text">Seleccione un grupo disponible</small>}
+                {!isPrincipal && (
+                  <small className="sim-help-text">
+                    {formData.tarifa === 'M2M_GLOBAL_15'
+                      ? 'Las SIMs M2M Global 15 deben ir en el Grupo 0'
+                      : 'Seleccione un grupo disponible'}
+                  </small>
+                )}
                 {errors.grupo && <span className="sim-form-error">{errors.grupo}</span>}
               </div>
             )}
@@ -472,7 +486,7 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
                 name="contrasena"
                 value={formData.contrasena}
                 onChange={handleInputChange}
-                className="sim-form-control"
+                className={`sim-form-control ${formData.tarifa === 'M2M_GLOBAL_15' ? 'sim-form-control-disabled' : ''}`}
                 placeholder="Contraseña de la SIM"
               />
             </div>
