@@ -598,7 +598,7 @@ const AdminBalance = () => {
       }
 
       // Función para crear tabla en PDF
-      const crearTablaPDF = (datos, headers, titulo, isLastTable = false) => {
+      const crearTablaPDF = (datos, headers, titulo, isLastTable = false, mostrarContinuacion = false) => {
         if (!datos || datos.length === 0) {
           checkPageBreak(30)
           pdf.setFontSize(14)
@@ -610,13 +610,15 @@ const AdminBalance = () => {
           pdf.setFont("helvetica", "normal")
           pdf.text("No hay datos disponibles", margin, currentY)
           currentY += 15
-          return
+          return false 
         }
 
-        checkPageBreak(20)
+        const nuevaPagina = checkPageBreak(20)
+
         pdf.setFontSize(14)
         pdf.setFont("helvetica", "bold")
-        pdf.text(titulo, margin, currentY)
+        const tituloFinal = (mostrarContinuacion && nuevaPagina) ? `${titulo} (Continuación)` : titulo
+        pdf.text(tituloFinal, margin, currentY)
         currentY += 10
 
         const colWidth = (pageWidth - 2 * margin) / headers.length
@@ -651,24 +653,18 @@ const AdminBalance = () => {
         if (!isLastTable) {
           currentY += 10
         }
+
+        return nuevaPagina 
       }
 
-      // Agregar tablas de acumulado de cuentas
-      if (chunksAcumulado.length > 0) {
-        chunksAcumulado.forEach((chunk, index) => {
-          const titulo = index === 0 ? "ACUMULADO DE CUENTAS" : `ACUMULADO DE CUENTAS (Continuación ${index + 1})`
-          crearTablaPDF(chunk, ["Categoría", "Cuenta", "Monto"], titulo)
-        })
+      if (acumuladoFiltrado.length > 0) {
+        crearTablaPDF(acumuladoFiltrado, ["Categoría", "Cuenta", "Monto"], "ACUMULADO DE CUENTAS")
       } else {
         crearTablaPDF([], ["Categoría", "Cuenta", "Monto"], "ACUMULADO DE CUENTAS")
       }
 
-      if (chunksEquipos.length > 0) {
-        chunksEquipos.forEach((chunk, index) => {
-          const titulo = index === 0 ? "EQUIPOS VENDIDOS" : `EQUIPOS VENDIDOS (Continuación ${index + 1})`
-          const isLast = index === chunksEquipos.length - 1
-          crearTablaPDF(chunk, ["Cliente", "Fecha", "N° Equipos"], titulo, isLast)
-        })
+      if (equiposFormateados.length > 0) {
+        crearTablaPDF(equiposFormateados, ["Cliente", "Fecha", "N° Equipos"], "EQUIPOS VENDIDOS", true)
       } else {
         crearTablaPDF([], ["Cliente", "Fecha", "N° Equipos"], "EQUIPOS VENDIDOS", true)
       }
@@ -808,7 +804,7 @@ const AdminBalance = () => {
   const categoriasExcluidas = ['renta mensual', 'renta anual', 'revisiones', 'revision'];
 
   const equiposVendidosReales = balanceData.equiposVendidos.filter((equipo) => {
-   return equipo.numeroEquipos > 0;
+    return equipo.numeroEquipos > 0;
   });
 
   return (

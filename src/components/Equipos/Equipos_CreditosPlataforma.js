@@ -2,10 +2,12 @@ import { useState, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import "./Equipos_CreditosPlataforma.css"
 import Header from "../Header/Header"
-import { API_BASE_URL } from "../Config/Config";
+import { API_BASE_URL } from "../Config/Config"
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import { Line } from "react-chartjs-2"
+import jsPDF from 'jspdf'
+import 'jspdf-autotable'
 import {
   Chart as ChartJS,
   CategoryScale,
