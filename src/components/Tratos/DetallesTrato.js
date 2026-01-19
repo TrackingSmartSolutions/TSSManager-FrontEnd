@@ -2736,7 +2736,7 @@ const EditarTratoModal = ({ isOpen, onClose, onSave, trato, users, companies }) 
         : (users[0].nombreReal);
 
       setFormData({
-        propietario: propietarioSeguro, 
+        propietario: propietarioSeguro,
         nombreTrato: trato.nombre || "",
         nombreEmpresa: trato.nombreEmpresa || "",
         nombreContacto: trato.contacto?.nombre || "",
@@ -6287,42 +6287,50 @@ const DetallesTrato = () => {
                       )}
 
                       <div className="email-footer">
-                        {(() => {
-                          const currentStatus = email.status || (email.exito ? 'sent' : 'failed');
+                        <div className="email-destinatarios-estados">
+                          {email.estadosDestinatarios && email.estadosDestinatarios.length > 0 ? (
+                            email.estadosDestinatarios.map((estado, index) => {
+                              let statusColor = '#666';
+                              let statusText = 'Enviado';
 
-                          let statusColor = '#666';
-                          let statusText = 'Enviado';
+                              if (estado.status === 'delivered') {
+                                statusColor = '#10B981';
+                                statusText = 'Entregado';
+                              } else if (estado.status === 'bounced') {
+                                statusColor = '#EF4444';
+                                statusText = 'Rebotado';
+                              } else if (estado.status === 'sent') {
+                                statusColor = '#3B82F6';
+                                statusText = 'Enviado';
+                              }
 
-                          if (currentStatus === 'delivered') {
-                            statusColor = '#10B981';
-                            statusText = 'Entregado';
-                          } else if (currentStatus === 'bounced') {
-                            statusColor = '#EF4444';
-                            statusText = 'Rebotado';
-                          } else if (currentStatus === 'sent') {
-                            statusColor = '#3B82F6';
-                            statusText = 'Enviado';
-                          }
-
-                          return (
-                            <div
-                              className="email-status"
-                              style={{
-                                color: statusColor,
-                                fontWeight: 'bold',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '5px',
-                                backgroundColor: `${statusColor}15`,
-                                padding: '4px 8px',
-                                borderRadius: '4px',
-                                fontSize: '0.85rem'
-                              }}
-                            >
-                              {statusText}
-                            </div>
-                          );
-                        })()}
+                              return (
+                                <div
+                                  key={index}
+                                  className="email-status-individual"
+                                  style={{
+                                    color: statusColor,
+                                    fontWeight: 'bold',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                    backgroundColor: `${statusColor}15`,
+                                    padding: '4px 8px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.75rem',
+                                    marginRight: '5px'
+                                  }}
+                                >
+                                  <span>{estado.email}</span>
+                                  <span>•</span>
+                                  <span>{statusText}</span>
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <div className="email-status">Estado desconocido</div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))

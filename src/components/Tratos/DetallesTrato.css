@@ -2944,6 +2944,13 @@
   display: block;
 }
 
+.email-destinatarios-estados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
 /* Responsive para el modal de PDF */
 @media (max-width: 768px) {
   .pdf-preview-modal .modal-content {
