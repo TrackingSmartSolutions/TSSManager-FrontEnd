@@ -6537,4 +6537,8 @@ const DetallesTrato = () => {
 }
 
 export { CompletarActividadModal };
+export { SeleccionarActividadModal };
+export {ProgramarLlamadaModal} ;
+export {ProgramarReunionModal};
+export { ProgramarTareaModal };
 export default DetallesTrato

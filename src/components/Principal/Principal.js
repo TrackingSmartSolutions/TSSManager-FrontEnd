@@ -10,7 +10,7 @@ import meetingIcon from "../../assets/icons/reunion.png";
 import emailIcon from "../../assets/icons/correo.png";
 import deploy from "../../assets/icons/desplegar.png";
 import { API_BASE_URL } from "../Config/Config";
-import { CompletarActividadModal } from '../Tratos/DetallesTrato';
+import { CompletarActividadModal, ProgramarLlamadaModal, ProgramarReunionModal, ProgramarTareaModal, SeleccionarActividadModal } from '../Tratos/DetallesTrato';
 import Swal from "sweetalert2";
 
 // Registra componentes de Chart.js
@@ -1190,6 +1190,17 @@ const Principal = () => {
     setModals((prev) => ({ ...prev, [modalType]: { isOpen: false } }));
   };
 
+  const handleSelectActivity = (tipo) => {
+    const modalMap = {
+      llamada: "programarLlamada",
+      reunion: "programarReunion",
+      tarea: "programarTarea",
+    };
+
+    closeModal('seleccionarActividad');
+    openModal(modalMap[tipo], { tratoId: modals.completarActividad.actividad?.tratoId });
+  };
+
   const handleSaveReprogramar = (data, tipo) => {
     setTareasPendientes((prev) =>
       prev.map((task) =>
@@ -1215,13 +1226,70 @@ const Principal = () => {
   const handleSiguienteAccionAutomatica = (siguienteAccion, tratoId) => {
     closeModal('completarActividad');
 
+    if (!siguienteAccion) {
+      openModal('seleccionarActividad', { tratoId });
+      return;
+    }
+
+    const accionesLlamada = [
+      'REGRESAR_LLAMADA',
+      'BUSCAR_OTRO_CONTACTO',
+      'CONTACTAR_DESPUES'
+    ];
+
+    if (accionesLlamada.includes(siguienteAccion)) {
+      openModal('programarLlamada', { tratoId });
+      return;
+    }
+
+    const accionesReunion = [
+      'REUNION',
+      'REALIZAR_DEMO',
+      'INSTALACION',
+      'REVISION_TECNICA',
+      'VISITAR_EN_FISICO'
+    ];
+
+    if (accionesReunion.includes(siguienteAccion)) {
+      let modalidadSugerida = 'VIRTUAL';
+      if (['VISITAR_EN_FISICO', 'INSTALACION', 'REVISION_TECNICA'].includes(siguienteAccion)) {
+        modalidadSugerida = 'PRESENCIAL';
+      }
+      openModal('programarReunion', { tratoId, modalidad: modalidadSugerida });
+      return;
+    }
+
+    if (['MANDAR_COTIZACION', 'MANDAR_INFORMACION'].includes(siguienteAccion)) {
+      openModal('programarTarea', { tratoId, tipo: 'Correo' });
+      return;
+    }
+
+    if (siguienteAccion === 'MANDAR_MENSAJE') {
+      openModal('programarTarea', { tratoId, tipo: 'Mensaje' });
+      return;
+    }
+
+    if (['_1ER_SEGUIMIENTO', '_2DO_SEGUIMIENTO', '_3ER_SEGUIMIENTO'].includes(siguienteAccion)) {
+      openModal('programarTarea', { tratoId, tipo: 'Actividad' });
+      return;
+    }
+
+    openModal('seleccionarActividad', { tratoId });
+  };
+
+  const handleSaveNewActividad = async (data, tipo) => {
+    const modalType = `programar${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`;
+    closeModal(modalType);
+
     Swal.fire({
-      title: '¡Actividad completada!',
-      text: 'La actividad se completó exitosamente',
-      icon: 'success',
+      title: `¡${tipo.charAt(0).toUpperCase() + tipo.slice(1)} programada!`,
+      text: `La ${tipo} se ha programado exitosamente`,
+      icon: "success",
       timer: 2000,
       showConfirmButton: false
     });
+
+    await fetchTareasPendientes();
   };
 
   const handleEmpresaClick = (tratoId) => {
@@ -1339,6 +1407,10 @@ const Principal = () => {
       esEdicion: false,
       contactos: []
     },
+    seleccionarActividad: { isOpen: false },
+    programarLlamada: { isOpen: false, loading: false },
+    programarReunion: { isOpen: false, loading: false },
+    programarTarea: { isOpen: false, loading: false },
   });
 
   const options = {
@@ -1597,6 +1669,44 @@ const Principal = () => {
           openModal={openModal}
           esEdicion={false}
           onNextAction={handleSiguienteAccionAutomatica}
+        />
+
+        <SeleccionarActividadModal
+          isOpen={modals.seleccionarActividad.isOpen}
+          onClose={() => closeModal("seleccionarActividad")}
+          onSelectActivity={handleSelectActivity}
+        />
+
+        <ProgramarLlamadaModal
+          isOpen={modals.programarLlamada.isOpen}
+          loading={modals.programarLlamada.loading}
+          onClose={() => closeModal("programarLlamada")}
+          onSave={(data) => handleSaveNewActividad(data, "llamada")}
+          tratoId={modals.programarLlamada.tratoId}
+          users={[]} // Principal no tiene lista de usuarios, se carga internamente
+          creatorId={localStorage.getItem('userId')}
+        />
+
+        <ProgramarReunionModal
+          isOpen={modals.programarReunion.isOpen}
+          loading={modals.programarReunion.loading}
+          onClose={() => closeModal("programarReunion")}
+          onSave={(data) => handleSaveNewActividad(data, "reunion")}
+          tratoId={modals.programarReunion.tratoId}
+          users={[]}
+          creatorId={localStorage.getItem('userId')}
+          initialModalidad={modals.programarReunion.modalidad}
+        />
+
+        <ProgramarTareaModal
+          isOpen={modals.programarTarea.isOpen}
+          loading={modals.programarTarea.loading}
+          onClose={() => closeModal("programarTarea")}
+          onSave={(data) => handleSaveNewActividad(data, "tarea")}
+          tratoId={modals.programarTarea.tratoId}
+          users={[]}
+          creatorId={localStorage.getItem('userId')}
+          initialTipo={modals.programarTarea.tipo}
         />
       </div>
     </>
