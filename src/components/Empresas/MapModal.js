@@ -167,6 +167,16 @@ const MapModal = ({ isOpen, onClose, onLocationSelect, initialAddress }) => {
     }, [map, position]);
 
     useEffect(() => {
+        if (map && isOpen) {
+            const timer = setTimeout(() => {
+                map.invalidateSize(); 
+            }, 300);
+
+            return () => clearTimeout(timer);
+        }
+    }, [map, isOpen]);
+
+    useEffect(() => {
         if (map && selectedPosition && leafletLoaded) {
             try {
                 if (marker) {
@@ -399,7 +409,7 @@ const MapModal = ({ isOpen, onClose, onLocationSelect, initialAddress }) => {
                     </div>
 
                     <div
-                        className="map-container"
+                        className="location-picker-container"
                         style={{
                             height: '400px',
                             width: '100%',
@@ -413,15 +423,9 @@ const MapModal = ({ isOpen, onClose, onLocationSelect, initialAddress }) => {
                     >
                         <div
                             ref={mapRef}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onMouseMove={(e) => e.stopPropagation()}
-                            onWheel={(e) => e.stopPropagation()}
-                            onClick={(e) => e.stopPropagation()}
                             style={{
                                 height: '100%',
                                 width: '100%',
-                                cursor: 'grab',
-                                touchAction: 'none'
                             }}
                         />
                     </div>

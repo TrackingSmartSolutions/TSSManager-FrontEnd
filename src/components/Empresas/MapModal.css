@@ -106,12 +106,12 @@
     transform: translateY(-1px);
 }
 
-.map-container .leaflet-container {
+.location-picker-container .leaflet-container {
     cursor: grab !important;
-  }
-  .map-container .leaflet-container:active {
+}
+.location-picker-container .leaflet-container:active {
     cursor: grabbing !important;
-  }
+}
 
 @media (max-width: 768px) {
     .address-input-container {
