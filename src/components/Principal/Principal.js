@@ -1183,61 +1183,61 @@ const Principal = () => {
   };
 
   const openModal = async (modalType, data = {}) => {
-  const tratoId = data.tratoId;
-  
-  setModals((prev) => ({
-    ...prev,
-    [modalType]: { isOpen: true, loading: true, tratoId, ...data },
-  }));
+    const tratoId = data.tratoId;
 
-  if (
-    [
-      'programarLlamada',
-      'programarReunion',
-      'programarTarea',
-    ].includes(modalType) && tratoId
-  ) {
-    try {
-      const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}`);
-      const trato = await tratoResponse.json();
-
-      let contactos = [];
-      if (trato.empresaId) {
-        const contactosResponse = await fetchWithToken(
-          `${API_BASE_URL}/empresas/${trato.empresaId}/contactos`
-        );
-        const contactosData = await contactosResponse.json();
-        contactos = contactosData || [];
-      }
-
-      setModals((prev) => ({
-        ...prev,
-        [modalType]: {
-          ...prev[modalType],
-          contactos,
-          loading: false
-        },
-      }));
-
-    } catch (error) {
-      console.error('Error fetching contactos for modal:', error);
-
-      setModals((prev) => ({
-        ...prev,
-        [modalType]: {
-          ...prev[modalType],
-          contactos: [],
-          loading: false
-        },
-      }));
-    }
-  } else {
     setModals((prev) => ({
       ...prev,
-      [modalType]: { ...prev[modalType], loading: false },
+      [modalType]: { isOpen: true, loading: true, tratoId, ...data },
     }));
-  }
-};
+
+    if (
+      [
+        'programarLlamada',
+        'programarReunion',
+        'programarTarea',
+      ].includes(modalType) && tratoId
+    ) {
+      try {
+        const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}`);
+        const trato = await tratoResponse.json();
+
+        let contactos = [];
+        if (trato.empresaId) {
+          const contactosResponse = await fetchWithToken(
+            `${API_BASE_URL}/empresas/${trato.empresaId}/contactos`
+          );
+          const contactosData = await contactosResponse.json();
+          contactos = contactosData || [];
+        }
+
+        setModals((prev) => ({
+          ...prev,
+          [modalType]: {
+            ...prev[modalType],
+            contactos,
+            loading: false
+          },
+        }));
+
+      } catch (error) {
+        console.error('Error fetching contactos for modal:', error);
+
+        setModals((prev) => ({
+          ...prev,
+          [modalType]: {
+            ...prev[modalType],
+            contactos: [],
+            loading: false
+          },
+        }));
+      }
+    } else {
+      setModals((prev) => ({
+        ...prev,
+        [modalType]: { ...prev[modalType], loading: false },
+      }));
+    }
+  };
 
   const closeModal = (modalType) => {
     setModals((prev) => ({ ...prev, [modalType]: { isOpen: false } }));
@@ -1689,10 +1689,10 @@ const Principal = () => {
           onClose={() => closeModal("programarLlamada")}
           onSave={(data) => handleSaveNewActividad(data, "llamada")}
           tratoId={modals.programarLlamada.tratoId}
-          users={[]} // Principal no tiene lista de usuarios, se carga internamente
+          users={[]}
           creatorId={localStorage.getItem('userId')}
+          contactos={modals.programarLlamada.contactos || []}
         />
-
         <ProgramarReunionModal
           isOpen={modals.programarReunion.isOpen}
           loading={modals.programarReunion.loading}
@@ -1702,6 +1702,7 @@ const Principal = () => {
           users={[]}
           creatorId={localStorage.getItem('userId')}
           initialModalidad={modals.programarReunion.modalidad}
+          contactos={modals.programarReunion.contactos || []}
         />
 
         <ProgramarTareaModal
@@ -1713,6 +1714,7 @@ const Principal = () => {
           users={[]}
           creatorId={localStorage.getItem('userId')}
           initialTipo={modals.programarTarea.tipo}
+          contactos={modals.programarTarea.contactos || []}
         />
       </div>
     </>
