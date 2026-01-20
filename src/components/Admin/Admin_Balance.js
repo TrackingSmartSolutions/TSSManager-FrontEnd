@@ -378,8 +378,12 @@ const AdminBalance = () => {
   }
 
   const handleCategoriaChange = (nuevaCategoria) => {
-    setFiltros((prev) => ({ ...prev, categoriaSeleccionada: nuevaCategoria }))
-  }
+  setFiltros((prev) => ({ 
+    ...prev, 
+    categoriaSeleccionada: nuevaCategoria,
+    cuentaSeleccionada: "Todas"  
+  }))
+}
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("es-MX", {
