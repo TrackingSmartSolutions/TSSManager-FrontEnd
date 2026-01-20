@@ -1182,9 +1182,62 @@ const Principal = () => {
     }
   };
 
-  const openModal = (modalType, data = {}) => {
-    setModals((prev) => ({ ...prev, [modalType]: { isOpen: true, ...data } }));
-  };
+  const openModal = async (modalType, data = {}) => {
+  const tratoId = data.tratoId;
+  
+  setModals((prev) => ({
+    ...prev,
+    [modalType]: { isOpen: true, loading: true, tratoId, ...data },
+  }));
+
+  if (
+    [
+      'programarLlamada',
+      'programarReunion',
+      'programarTarea',
+    ].includes(modalType) && tratoId
+  ) {
+    try {
+      const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}`);
+      const trato = await tratoResponse.json();
+
+      let contactos = [];
+      if (trato.empresaId) {
+        const contactosResponse = await fetchWithToken(
+          `${API_BASE_URL}/empresas/${trato.empresaId}/contactos`
+        );
+        const contactosData = await contactosResponse.json();
+        contactos = contactosData || [];
+      }
+
+      setModals((prev) => ({
+        ...prev,
+        [modalType]: {
+          ...prev[modalType],
+          contactos,
+          loading: false
+        },
+      }));
+
+    } catch (error) {
+      console.error('Error fetching contactos for modal:', error);
+
+      setModals((prev) => ({
+        ...prev,
+        [modalType]: {
+          ...prev[modalType],
+          contactos: [],
+          loading: false
+        },
+      }));
+    }
+  } else {
+    setModals((prev) => ({
+      ...prev,
+      [modalType]: { ...prev[modalType], loading: false },
+    }));
+  }
+};
 
   const closeModal = (modalType) => {
     setModals((prev) => ({ ...prev, [modalType]: { isOpen: false } }));
@@ -1197,8 +1250,10 @@ const Principal = () => {
       tarea: "programarTarea",
     };
 
+    const tratoId = modals.seleccionarActividad.tratoId;
+
     closeModal('seleccionarActividad');
-    openModal(modalMap[tipo], { tratoId: modals.completarActividad.actividad?.tratoId });
+    openModal(modalMap[tipo], { tratoId });
   };
 
   const handleSaveReprogramar = (data, tipo) => {
@@ -1225,57 +1280,8 @@ const Principal = () => {
 
   const handleSiguienteAccionAutomatica = (siguienteAccion, tratoId) => {
     closeModal('completarActividad');
-
-    if (!siguienteAccion) {
-      openModal('seleccionarActividad', { tratoId });
-      return;
-    }
-
-    const accionesLlamada = [
-      'REGRESAR_LLAMADA',
-      'BUSCAR_OTRO_CONTACTO',
-      'CONTACTAR_DESPUES'
-    ];
-
-    if (accionesLlamada.includes(siguienteAccion)) {
-      openModal('programarLlamada', { tratoId });
-      return;
-    }
-
-    const accionesReunion = [
-      'REUNION',
-      'REALIZAR_DEMO',
-      'INSTALACION',
-      'REVISION_TECNICA',
-      'VISITAR_EN_FISICO'
-    ];
-
-    if (accionesReunion.includes(siguienteAccion)) {
-      let modalidadSugerida = 'VIRTUAL';
-      if (['VISITAR_EN_FISICO', 'INSTALACION', 'REVISION_TECNICA'].includes(siguienteAccion)) {
-        modalidadSugerida = 'PRESENCIAL';
-      }
-      openModal('programarReunion', { tratoId, modalidad: modalidadSugerida });
-      return;
-    }
-
-    if (['MANDAR_COTIZACION', 'MANDAR_INFORMACION'].includes(siguienteAccion)) {
-      openModal('programarTarea', { tratoId, tipo: 'Correo' });
-      return;
-    }
-
-    if (siguienteAccion === 'MANDAR_MENSAJE') {
-      openModal('programarTarea', { tratoId, tipo: 'Mensaje' });
-      return;
-    }
-
-    if (['_1ER_SEGUIMIENTO', '_2DO_SEGUIMIENTO', '_3ER_SEGUIMIENTO'].includes(siguienteAccion)) {
-      openModal('programarTarea', { tratoId, tipo: 'Actividad' });
-      return;
-    }
-
     openModal('seleccionarActividad', { tratoId });
-  };
+  }
 
   const handleSaveNewActividad = async (data, tipo) => {
     const modalType = `programar${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`;
