@@ -1208,6 +1208,9 @@ const Principal = () => {
           );
           const contactosData = await contactosResponse.json();
           contactos = contactosData || [];
+
+          console.log('🔍 CONTACTOS CARGADOS:', contactos); // DEBUG
+          console.log('🔍 TRATO ID:', tratoId); // DEBUG
         }
 
         setModals((prev) => ({
