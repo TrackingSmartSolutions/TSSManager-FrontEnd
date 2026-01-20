@@ -4190,12 +4190,28 @@ const DetallesTrato = () => {
   // Callback para actualizar estado de emails en tiempo real
   const handleEmailStatusUpdate = useCallback((data) => {
     console.log('Actualizando estado de email:', data);
+
     setEmailRecords(prevRecords =>
-      prevRecords.map(email =>
-        email.id === data.emailId
-          ? { ...email, status: data.status }
-          : email
-      )
+      prevRecords.map(emailRecord => {
+        if (emailRecord.id === data.emailId) {
+
+          const destinatariosActualizados = emailRecord.estadosDestinatarios
+            ? emailRecord.estadosDestinatarios.map(dest => {
+              if (dest.email.trim().toLowerCase() === data.emailDestinatario.trim().toLowerCase()) {
+                return { ...dest, status: data.status };
+              }
+              return dest;
+            })
+            : [];
+
+          return {
+            ...emailRecord,
+            status: data.status,
+            estadosDestinatarios: destinatariosActualizados
+          };
+        }
+        return emailRecord;
+      })
     );
   }, []);
 
@@ -6538,7 +6554,7 @@ const DetallesTrato = () => {
 
 export { CompletarActividadModal };
 export { SeleccionarActividadModal };
-export {ProgramarLlamadaModal} ;
-export {ProgramarReunionModal};
+export { ProgramarLlamadaModal };
+export { ProgramarReunionModal };
 export { ProgramarTareaModal };
 export default DetallesTrato
