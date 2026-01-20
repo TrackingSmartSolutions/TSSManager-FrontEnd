@@ -226,7 +226,9 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             horaInicio: "",
           });
           setErrors({});
-          if (trato.empresaId) fetchContactos(trato.empresaId);
+          if (trato.empresaId && (!contactosProp || contactosProp.length === 0)) {
+             fetchContactos(trato.empresaId);
+          }
         } catch (error) {
           Swal.fire({ icon: "error", title: "Error", text: "No se pudo cargar el trato" });
         }
@@ -244,19 +246,6 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
       Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los contactos" });
     }
   };
-
-  useEffect(() => {
-    const fetchEmpresaId = async () => {
-      try {
-        const response = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}`);
-        const trato = await response.json();
-        if (trato.empresaId) fetchContactos(trato.empresaId);
-      } catch (error) {
-        Swal.fire({ icon: "error", title: "Error", text: "No se pudo cargar la empresa del trato" });
-      }
-    };
-    if (isOpen && tratoId) fetchEmpresaId();
-  }, [isOpen, tratoId]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -526,7 +515,9 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             const empresaResponse = await fetchWithToken(`${API_BASE_URL}/empresas/${trato.empresaId}`);
             empresaData = await empresaResponse.json();
             setEmpresa(empresaData);
-            fetchContactos(trato.empresaId);
+            if (!contactosProp || contactosProp.length === 0) {
+               fetchContactos(trato.empresaId);
+            }
 
             if (initialModalidad === "PRESENCIAL" && empresaData.domicilioFisico) {
               lugarPorDefecto = empresaData.domicilioFisico;
@@ -552,7 +543,9 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             const empresaResponse = await fetchWithToken(`${API_BASE_URL}/empresas/${trato.empresaId}`);
             const empresaData = await empresaResponse.json();
             setEmpresa(empresaData);
-            fetchContactos(trato.empresaId);
+            if (!contactosProp || contactosProp.length === 0) {
+               fetchContactos(trato.empresaId);
+            }
             if (defaultContactName === "" && empresaData.domicilioFisico) {
               setFormData((prev) => ({ ...prev, lugarReunion: empresaData.domicilioFisico }));
             }
@@ -998,7 +991,9 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
             notas: ""
           });
           setErrors({});
-          if (trato.empresaId) fetchContactos(trato.empresaId);
+          if (trato.empresaId && (!contactosProp || contactosProp.length === 0)) {
+             fetchContactos(trato.empresaId);
+          }
         } catch (error) {
           Swal.fire({ icon: "error", title: "Error", text: "No se pudo cargar el trato" });
         }
@@ -1016,19 +1011,6 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
       Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los contactos" });
     }
   };
-
-  useEffect(() => {
-    const fetchEmpresaId = async () => {
-      try {
-        const response = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}`);
-        const trato = await response.json();
-        if (trato.empresaId) fetchContactos(trato.empresaId);
-      } catch (error) {
-        Swal.fire({ icon: "error", title: "Error", text: "No se pudo cargar la empresa del trato" });
-      }
-    };
-    if (isOpen && tratoId) fetchEmpresaId();
-  }, [isOpen, tratoId]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
