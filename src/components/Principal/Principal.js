@@ -1195,7 +1195,6 @@ const Principal = () => {
         'programarLlamada',
         'programarReunion',
         'programarTarea',
-        'completarActividad',
       ].includes(modalType) && tratoId
     ) {
       try {
@@ -1673,10 +1672,11 @@ const Principal = () => {
           onSave={(data, tipo) => handleSaveCompletarActividad(data, tipo)}
           actividad={modals.completarActividad.actividad}
           tratoId={modals.completarActividad.actividad?.tratoId}
-          contactos={modals.completarActividad.contactos || []} 
           openModal={openModal}
           esEdicion={false}
-          onNextAction={handleSiguienteAccionAutomatica}
+          onNextAction={(siguienteAccion) =>
+            handleSiguienteAccionAutomatica(siguienteAccion, modals.completarActividad.actividad?.tratoId)
+          }
         />
 
         <SeleccionarActividadModal
