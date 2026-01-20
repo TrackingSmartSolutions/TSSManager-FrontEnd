@@ -54,7 +54,7 @@ const Header = ({ logoUrl }) => {
   const logoFetchedRef = useRef(false)
   const touchHandledRef = useRef(false)
   const logoErrorHandled = useRef(false)
-  const HELP_URL = "https://drive.google.com/file/d/1AsgJBmqi-r2X65Gz4soyGO5WCOJ_v2XF/view?usp=drive_link";
+  const HELP_URL = "https://drive.google.com/file/d/1CWj95H6aMCoSguADDtzVerI3XMZ4Z4VS/view?usp=drive_link";
 
   const preloadImage = (url) => {
     return new Promise((resolve, reject) => {
