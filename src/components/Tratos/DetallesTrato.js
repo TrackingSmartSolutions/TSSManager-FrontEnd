@@ -166,7 +166,7 @@ const generateMeetingLink = (medio) => {
 };
 
 // Modal para programar llamada 
-const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId }) => {
+const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId, contactos: contactosProp }) => {
   const [formData, setFormData] = useState({
     asignadoAId: "",
     nombreContacto: "",
@@ -184,6 +184,13 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
       setCurrentUser({ id: userId });
     }
   }, []);
+
+  useEffect(() => {
+  if (contactosProp && contactosProp.length > 0) {
+    console.log('📥 CONTACTOS RECIBIDOS POR PROP:', contactosProp);
+    setContactos(contactosProp);
+  }
+}, [contactosProp]);
 
   useEffect(() => {
     const cargarUsuariosActivos = async () => {
@@ -449,7 +456,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
 };
 
 // Modal para programar reunión
-const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId, initialModalidad }) => {
+const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId, initialModalidad, contactos: contactosProp }) => {
   const [formData, setFormData] = useState({
     asignadoAId: "",
     nombreContacto: "",
@@ -470,13 +477,19 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
   const [currentUser, setCurrentUser] = useState(null);
   const [usuariosActivos, setUsuariosActivos] = useState([]);
 
-
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     if (userId) {
       setCurrentUser({ id: userId });
     }
   }, []);
+
+  useEffect(() => {
+  if (contactosProp && contactosProp.length > 0) {
+    console.log('📥 CONTACTOS RECIBIDOS POR PROP (Reunión):', contactosProp);
+    setContactos(contactosProp);
+  }
+}, [contactosProp]);
 
   useEffect(() => {
     const cargarUsuariosActivos = async () => {
@@ -923,7 +936,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
 };
 
 // Modal para programar tarea
-const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId, initialTipo }) => {
+const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorId, initialTipo, contactos: contactosProp }) => {
   const [formData, setFormData] = useState({
     aasignadoAId: "",
     nombreContacto: "",
@@ -942,6 +955,13 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
       setCurrentUser({ id: userId });
     }
   }, []);
+
+  useEffect(() => {
+  if (contactosProp && contactosProp.length > 0) {
+    console.log('📥 CONTACTOS RECIBIDOS POR PROP (Tarea):', contactosProp);
+    setContactos(contactosProp);
+  }
+}, [contactosProp]);
 
   useEffect(() => {
     const cargarUsuariosActivos = async () => {
