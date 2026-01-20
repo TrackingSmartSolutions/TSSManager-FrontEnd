@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef, memo } from "react";
 import "./Tratos.css";
 import Header from "../Header/Header";
 import Swal from "sweetalert2";
@@ -1281,7 +1281,7 @@ const ConfirmacionEnvioModal = ({ isOpen, onClose, onConfirm, tratoId, actividad
   );
 };
 
-const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdded, navigate }) => {
+const TratoCard = memo(({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdded, navigate }) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDragStart = (e) => {
@@ -1422,7 +1422,7 @@ const TratoCard = ({ trato, onDragStart, onDragEnd, onTratoClick, onActivityAdde
 
     </div>
   );
-};
+});
 
 const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
   <div className="tratos-date-picker-wrapper">
@@ -1452,6 +1452,61 @@ const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
     </div>
   </div>
 );
+
+const LazyTratoList = ({ tratos, onDragStart, onDragEnd, onTratoClick, onActivityAdded, navigate, handleDragOver, handleDrop, columnaId }) => {
+  const [visibleCount, setVisibleCount] = useState(20);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [tratos.length]);
+
+  const handleScroll = useCallback(() => {
+    if (containerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+      if (scrollTop + clientHeight >= scrollHeight - 100) {
+        setVisibleCount((prev) => Math.min(prev + 20, tratos.length));
+      }
+    }
+  }, [tratos.length]);
+
+  const tratosVisibles = tratos.slice(0, visibleCount);
+
+  return (
+    <div
+      className="column-content"
+      ref={containerRef}
+      onScroll={handleScroll}
+      onDragOver={handleDragOver}
+      onDrop={(e) => handleDrop(e, columnaId)}
+      style={{ contentVisibility: 'auto', containIntrinsicSize: '100px' }}
+    >
+      {tratosVisibles.length > 0 ? (
+        tratosVisibles.map((trato) => (
+          <TratoCard
+            key={trato.id}
+            trato={trato}
+            onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
+            onTratoClick={onTratoClick}
+            onActivityAdded={onActivityAdded}
+            navigate={navigate}
+          />
+        ))
+      ) : (
+        <div className="empty-column">
+          <p>No se encontró ningún trato</p>
+        </div>
+      )}
+
+      {visibleCount < tratos.length && (
+        <div style={{ height: '50px', textAlign: 'center', color: '#999', fontSize: '12px' }}>
+          Cargando más tratos...
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Tratos = () => {
   const navigate = useNavigate();
@@ -2081,29 +2136,17 @@ const Tratos = () => {
                     <div className="column-count">{columna.count}</div>
                   </div>
 
-                  <div
-                    className="column-content"
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, columna.id)}
-                  >
-                    {columna.tratos.length > 0 ? (
-                      filtrarYOrdenarTratos(columna.tratos).map((trato) => (
-                        <TratoCard
-                          key={trato.id}
-                          trato={trato}
-                          onDragStart={handleDragStart}
-                          onDragEnd={handleDragEnd}
-                          onTratoClick={handleTratoClick}
-                          onActivityAdded={handleActivityAdded}
-                          navigate={navigate}
-                        />
-                      ))
-                    ) : (
-                      <div className="empty-column">
-                        <p>No se encontró ningún trato</p>
-                      </div>
-                    )}
-                  </div>
+                  <LazyTratoList
+                    tratos={filtrarYOrdenarTratos(columna.tratos)}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                    onTratoClick={handleTratoClick}
+                    onActivityAdded={handleActivityAdded}
+                    navigate={navigate}
+                    handleDragOver={handleDragOver}
+                    handleDrop={handleDrop}
+                    columnaId={columna.id}
+                  />
 
                   <div className="column-navigation">
                     <span className="nav-icon" onClick={() => handleToggleColumn(columna.id)}>
