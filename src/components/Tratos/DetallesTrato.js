@@ -4022,9 +4022,11 @@ const DetallesTrato = () => {
   })
 
   const openModal = async (modalType, data = {}) => {
+    const tratoId = data.tratoId || params.id;
+
     setModals((prev) => ({
       ...prev,
-      [modalType]: { isOpen: true, loading: true, tratoId: params.id, ...data },
+      [modalType]: { isOpen: true, loading: true, tratoId, ...data },
     }));
 
     if (
@@ -4039,7 +4041,7 @@ const DetallesTrato = () => {
       ].includes(modalType)
     ) {
       try {
-        const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}`);
+        const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}`);
         const trato = await tratoResponse.json();
 
         let contactos = [];
@@ -4213,7 +4215,12 @@ const DetallesTrato = () => {
       reunion: "programarReunion",
       tarea: "programarTarea",
     }
-    openModal(modalMap[tipo])
+
+    closeModal('seleccionarActividad');
+
+    const tratoId = modals.seleccionarActividad.tratoId;
+
+    openModal(modalMap[tipo], { tratoId });
   }
 
   const handleSaveActividad = async (data, tipo) => {
@@ -5124,62 +5131,12 @@ const DetallesTrato = () => {
     }
   };
 
-  // Función para determinar y abrir el modal siguiente automáticamente
+  // Función para abrir el modal siguiente automáticamente
   const handleSiguienteAccionAutomatica = (siguienteAccion, tratoId) => {
-    if (!siguienteAccion) {
-      openModal('seleccionarActividad', { tratoId });
-      return;
-    }
+    closeModal('completarActividad');
 
-    const accion = siguienteAccion;
-
-    const accionesLlamada = [
-      'REGRESAR_LLAMADA',
-      'BUSCAR_OTRO_CONTACTO',
-      'CONTACTAR_DESPUES'
-    ];
-
-    if (accionesLlamada.includes(accion)) {
-      openModal('programarLlamada', { tratoId });
-      return;
-    }
-
-    const accionesReunion = [
-      'REUNION',
-      'REALIZAR_DEMO',
-      'INSTALACION',
-      'REVISION_TECNICA',
-      'VISITAR_EN_FISICO'
-    ];
-
-    if (accionesReunion.includes(accion)) {
-      let modalidadSugerida = 'VIRTUAL';
-      if (['VISITAR_EN_FISICO', 'INSTALACION', 'REVISION_TECNICA'].includes(accion)) {
-        modalidadSugerida = 'PRESENCIAL';
-      }
-
-      openModal('programarReunion', {
-        tratoId,
-        modalidad: modalidadSugerida
-      });
-      return;
-    }
-
-    if (['MANDAR_COTIZACION', 'MANDAR_INFORMACION'].includes(accion)) {
-      openModal('programarTarea', { tratoId, tipo: 'Correo' });
-      return;
-    }
-    if (accion === 'MANDAR_MENSAJE') {
-      openModal('programarTarea', { tratoId, tipo: 'Mensaje' });
-      return;
-    }
-
-    if (['_1ER_SEGUIMIENTO', '_2DO_SEGUIMIENTO', '_3ER_SEGUIMIENTO'].includes(accion)) {
-      openModal('programarTarea', { tratoId, tipo: 'Actividad' });
-      return;
-    }
     openModal('seleccionarActividad', { tratoId });
-  };
+  }
 
   const handleSaveAgregarInteraccion = async () => {
     try {
@@ -6538,7 +6495,7 @@ const DetallesTrato = () => {
 
 export { CompletarActividadModal };
 export { SeleccionarActividadModal };
-export {ProgramarLlamadaModal} ;
-export {ProgramarReunionModal};
+export { ProgramarLlamadaModal };
+export { ProgramarReunionModal };
 export { ProgramarTareaModal };
 export default DetallesTrato
