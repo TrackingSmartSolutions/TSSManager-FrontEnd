@@ -4189,8 +4189,6 @@ const DetallesTrato = () => {
 
   // Callback para actualizar estado de emails en tiempo real
   const handleEmailStatusUpdate = useCallback((data) => {
-    console.log('Actualizando estado de email:', data);
-
     setEmailRecords(prevRecords =>
       prevRecords.map(emailRecord => {
         if (emailRecord.id === data.emailId) {
