@@ -785,9 +785,8 @@ const EquiposEstatusPlataforma = () => {
 
     element.innerHTML = `
     <style>
-      /* Reglas generales */
       .pdf-page {
-        position: relative;
+        position: relative; 
         width: 100%;
         box-sizing: border-box;
       }
@@ -811,68 +810,80 @@ const EquiposEstatusPlataforma = () => {
         break-before: always; 
         margin-top: 20px;
       }
+
+      .footer-fixed {
+        position: absolute;
+        bottom: 20px;       
+        left: 0;
+        width: 100%;
+        text-align: center;
+        font-size: 12px;
+        color: #9ca3af;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 15px;
+      }
     </style>
 
     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.4;">
       
-      <div class="pdf-page" style="padding: 20px; height: 1080px; display: flex; flex-direction: column;">
+      <div class="pdf-page" style="padding: 20px; height: 980px; display: flex; flex-direction: column;">
         
-        <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #2563eb; padding-bottom: 20px;">
+        <div style="text-align: center; margin-bottom: 20px; border-bottom: 3px solid #2563eb; padding-bottom: 10px;">
           <h1 style="margin: 0; font-size: 28px; color: #1e40af; font-weight: bold;">
             Reporte de Estatus de Plataforma
           </h1>
-          <p style="margin: 10px 0 0 0; font-size: 16px; color: #6b7280;">
+          <p style="margin: 5px 0 0 0; font-size: 16px; color: #6b7280;">
             Generado el ${currentDate}
           </p>
         </div>
 
-        <div style="flex: 1; display: flex; flex-direction: column; gap: 15px;">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 15px; padding-bottom: 60px;">
+           
            <div style="flex: 1; display: flex; flex-direction: column;">
-            <h2 style="margin: 0 0 15px 0; font-size: 20px; color: #374151; text-align: center; 
+            <h2 style="margin: 0 0 10px 0; font-size: 18px; color: #374151; text-align: center; 
                        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); 
-                       padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                       padding: 8px; border-radius: 8px; border-left: 4px solid #3b82f6;">
               📊 Estatus por Cliente
             </h2>
             <div style="flex: 1; display: flex; justify-content: center; align-items: center; 
                         background: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
-                        padding: 15px;">
-              <img src="${chartImages[0]}" style="max-width: 100%; max-height: 260px; height: auto; object-fit: contain;" />
+                        padding: 10px;">
+              <img src="${chartImages[0]}" style="max-width: 100%; max-height: 220px; height: auto; object-fit: contain;" />
             </div>
           </div>
 
-          <div style="margin: 10px 0; padding: 10px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 10px; border-left: 4px solid #0ea5e9;">
+          <div style="margin: 5px 0; padding: 8px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 10px; border-left: 4px solid #0ea5e9;">
             <div style="display: flex; justify-content: center; gap: 40px; flex-wrap: wrap;">
-              <div style="text-align: center; min-width: 120px;">
-                <div style="font-size: 24px; font-weight: bold; color: #22c55e; margin-bottom: 5px;">${totalEquiposOnline}</div>
-                <div style="font-size: 12px; color: #374151; font-weight: 500;">Equipos Online</div>
+              <div style="text-align: center; min-width: 100px;">
+                <div style="font-size: 20px; font-weight: bold; color: #22c55e;">${totalEquiposOnline}</div>
+                <div style="font-size: 11px; color: #374151;">Online</div>
               </div>
-              <div style="text-align: center; min-width: 120px;">
-                <div style="font-size: 24px; font-weight: bold; color: #ef4444; margin-bottom: 5px;">${totalEquiposOffline}</div>
-                <div style="font-size: 12px; color: #374151; font-weight: 500;">Equipos Offline</div>
+              <div style="text-align: center; min-width: 100px;">
+                <div style="font-size: 20px; font-weight: bold; color: #ef4444;">${totalEquiposOffline}</div>
+                <div style="font-size: 11px; color: #374151;">Offline</div>
               </div>
-              <div style="text-align: center; min-width: 120px;">
-                <div style="font-size: 24px; font-weight: bold; color: #3b82f6; margin-bottom: 5px;">${totalEquipos}</div>
-                <div style="font-size: 12px; color: #374151; font-weight: 500;">Total Equipos</div>
+              <div style="text-align: center; min-width: 100px;">
+                <div style="font-size: 20px; font-weight: bold; color: #3b82f6;">${totalEquipos}</div>
+                <div style="font-size: 11px; color: #374151;">Total</div>
               </div>
             </div>
           </div>
 
           <div style="flex: 1; display: flex; flex-direction: column;">
-            <h2 style="margin: 0 0 15px 0; font-size: 20px; color: #374151; text-align: center; 
+            <h2 style="margin: 0 0 10px 0; font-size: 18px; color: #374151; text-align: center; 
                        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); 
-                       padding: 12px; border-radius: 8px; border-left: 4px solid #10b981;">
+                       padding: 8px; border-radius: 8px; border-left: 4px solid #10b981;">
               🖥️ Equipos por Plataforma
             </h2>
             <div style="flex: 1; display: flex; justify-content: center; align-items: center; 
                         background: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
-                        padding: 15px;">
-              <img src="${chartImages[1]}" style="max-width: 100%; max-height: 260px; height: auto; object-fit: contain;" />
+                        padding: 10px;">
+              <img src="${chartImages[1]}" style="max-width: 100%; max-height: 220px; height: auto; object-fit: contain;" />
             </div>
           </div>
         </div>
 
-        <div style="margin-top: auto; text-align: center; font-size: 12px; color: #9ca3af; 
-                    border-top: 1px solid #e5e7eb; padding-top: 15px;">
+        <div class="footer-fixed">
           Página 1 de 2 - Análisis Gráfico
         </div>
       </div>
@@ -889,7 +900,7 @@ const EquiposEstatusPlataforma = () => {
         </div>
 
         <div style="margin-bottom: 25px;">
-             <h3 style="margin: 0 0 15px 0; font-size: 18px; color: #7c2d12; 
+           <h3 style="margin: 0 0 15px 0; font-size: 18px; color: #7c2d12; 
                     background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%); 
                     padding: 10px; border-radius: 6px; border-left: 4px solid #ea580c; text-align: center;">
             📈 Distribución por Motivos de Desconexión
