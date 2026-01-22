@@ -808,7 +808,6 @@ const EquiposEstatusPlataforma = () => {
       .page-break {
         page-break-before: always;
         break-before: always; 
-        margin-top: 20px;
       }
 
       .footer-fixed {
@@ -827,7 +826,7 @@ const EquiposEstatusPlataforma = () => {
 
     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.4;">
       
-      <div class="pdf-page" style="padding: 20px; height: 1025px; display: flex; flex-direction: column;">
+      <div class="pdf-page" style="padding: 20px; height: 980px; display: flex; flex-direction: column;">
         
         <div style="text-align: center; margin-bottom: 20px; border-bottom: 3px solid #2563eb; padding-bottom: 10px;">
           <h1 style="margin: 0; font-size: 28px; color: #1e40af; font-weight: bold;">
@@ -888,7 +887,7 @@ const EquiposEstatusPlataforma = () => {
         </div>
       </div>
 
-      <div class="page-break pdf-page" style="padding: 20px; min-height: 1025px; display: flex; flex-direction: column;">
+      <div class="page-break pdf-page" style="padding: 20px; min-height: 980px; display: flex; flex-direction: column;">
         
         <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #ef4444; padding-bottom: 15px;">
           <h2 style="margin: 0; font-size: 24px; color: #dc2626; font-weight: bold;">
