@@ -518,7 +518,7 @@ const CheckEquiposSidePanel = ({
               : countdown
                 ? `Disponible en ${formatCountdown(countdown)}`
                 : !allEquiposHaveStatus
-                 ? `Selecciona todos los equipos (${equipos.filter(e => equiposStatus[e.id]?.status !== null).length}/${equipos.length})`
+                  ? `Selecciona todos los equipos (${equipos.filter(e => equiposStatus[e.id]?.status !== null).length}/${equipos.length})`
                   : "Guardar checklist"
             }
           </button>
@@ -785,7 +785,7 @@ const EquiposEstatusPlataforma = () => {
     element.innerHTML = `
     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.4;">
       <!-- PÁGINA 1: Encabezado y Gráficas -->
-      <div style="page-break-after: always; padding: 20px; min-height: 100vh; display: flex; flex-direction: column;">
+      <div style="page-break-after: always; padding: 20px; height: 1050px; display: flex; flex-direction: column; box-sizing: border-box;">
         <!-- Encabezado Principal -->
         <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #2563eb; padding-bottom: 20px;">
           <h1 style="margin: 0; font-size: 28px; color: #1e40af; font-weight: bold;">
@@ -865,7 +865,7 @@ const EquiposEstatusPlataforma = () => {
       </div>
 
       <!-- PÁGINA 2: Tabla de Equipos Offline -->
-      <div style="padding: 20px; min-height: 100vh; display: flex; flex-direction: column;">
+      <div style="padding: 20px; min-height: 1050px; display: flex; flex-direction: column; box-sizing: border-box;">
         <!-- Encabezado de Página 2 -->
         <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #ef4444; padding-bottom: 15px;">
           <h2 style="margin: 0; font-size: 24px; color: #dc2626; font-weight: bold;">
@@ -979,8 +979,7 @@ const EquiposEstatusPlataforma = () => {
         </div>
 
         <!-- Pie de página 2 -->
-        <div style="margin-top: 25px; text-align: center; font-size: 12px; color: #9ca3af; 
-                    border-top: 1px solid #e5e7eb; padding-top: 15px;">
+        <div style="margin-top: auto; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 15px; padding-bottom: 10px;">
           <div>Página 2 de 2 - Detalle de Equipos Offline</div>
           <div style="margin-top: 5px; font-size: 10px;">
             Reporte generado automáticamente - ${new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })}
@@ -991,16 +990,17 @@ const EquiposEstatusPlataforma = () => {
   `;
 
     const opt = {
-      margin: [0.3, 0.3, 0.3, 0.3],
+      margin: [0.3, 0.3, 0.4, 0.3], 
       filename: `reporte_estatus_${new Date().toISOString().split('T')[0]}.pdf`,
-      image: { type: 'jpeg', quality: 0.95 },
+      image: { type: 'jpeg', quality: 0.98 }, 
       html2canvas: {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
         letterRendering: true,
-        logging: false
+        logging: false,
+        windowWidth: 800 
       },
       jsPDF: {
         unit: 'in',
