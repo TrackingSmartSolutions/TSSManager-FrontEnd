@@ -765,7 +765,7 @@ const EquiposEstatusPlataforma = () => {
       allowOutsideClick: false,
       didOpen: () => Swal.showLoading()
     });
-    
+
     const element = document.createElement("div");
     const chartImages = await Promise.all([
       getChartImage("estatusClienteChart"),
@@ -785,8 +785,9 @@ const EquiposEstatusPlataforma = () => {
 
     element.innerHTML = `
     <style>
+      /* Reglas generales */
       .pdf-page {
-        position: relative; 
+        position: relative;
         width: 100%;
         box-sizing: border-box;
       }
@@ -813,20 +814,21 @@ const EquiposEstatusPlataforma = () => {
 
       .footer-fixed {
         position: absolute;
-        bottom: 20px;       
+        bottom: 0px;        
         left: 0;
         width: 100%;
         text-align: center;
         font-size: 12px;
         color: #9ca3af;
         border-top: 1px solid #e5e7eb;
-        padding-top: 15px;
+        padding-top: 10px;  
+        padding-bottom: 0px;
       }
     </style>
 
     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.4;">
       
-      <div class="pdf-page" style="padding: 20px; height: 980px; display: flex; flex-direction: column;">
+      <div class="pdf-page" style="padding: 20px; height: 1025px; display: flex; flex-direction: column;">
         
         <div style="text-align: center; margin-bottom: 20px; border-bottom: 3px solid #2563eb; padding-bottom: 10px;">
           <h1 style="margin: 0; font-size: 28px; color: #1e40af; font-weight: bold;">
@@ -837,7 +839,7 @@ const EquiposEstatusPlataforma = () => {
           </p>
         </div>
 
-        <div style="flex: 1; display: flex; flex-direction: column; gap: 15px; padding-bottom: 60px;">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 15px;">
            
            <div style="flex: 1; display: flex; flex-direction: column;">
             <h2 style="margin: 0 0 10px 0; font-size: 18px; color: #374151; text-align: center; 
@@ -848,7 +850,7 @@ const EquiposEstatusPlataforma = () => {
             <div style="flex: 1; display: flex; justify-content: center; align-items: center; 
                         background: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
                         padding: 10px;">
-              <img src="${chartImages[0]}" style="max-width: 100%; max-height: 220px; height: auto; object-fit: contain;" />
+              <img src="${chartImages[0]}" style="max-width: 100%; max-height: 230px; height: auto; object-fit: contain;" />
             </div>
           </div>
 
@@ -878,7 +880,7 @@ const EquiposEstatusPlataforma = () => {
             <div style="flex: 1; display: flex; justify-content: center; align-items: center; 
                         background: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
                         padding: 10px;">
-              <img src="${chartImages[1]}" style="max-width: 100%; max-height: 220px; height: auto; object-fit: contain;" />
+              <img src="${chartImages[1]}" style="max-width: 100%; max-height: 230px; height: auto; object-fit: contain;" />
             </div>
           </div>
         </div>
@@ -969,8 +971,8 @@ const EquiposEstatusPlataforma = () => {
     </div>
   `;
 
-  const opt = {
-      margin: [0.5, 0.4, 0.5, 0.4], 
+    const opt = {
+      margin: [0.5, 0.4, 0.5, 0.4],
       filename: `reporte_estatus_${new Date().toISOString().split('T')[0]}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: {
@@ -978,7 +980,7 @@ const EquiposEstatusPlataforma = () => {
         useCORS: true,
         allowTaint: true,
         letterRendering: true,
-        scrollY: 0, 
+        scrollY: 0,
       },
       jsPDF: {
         unit: 'in',
@@ -986,7 +988,7 @@ const EquiposEstatusPlataforma = () => {
         orientation: 'portrait',
         compress: true
       },
-      pagebreak: { mode: ['css', 'legacy'] } 
+      pagebreak: { mode: ['css', 'legacy'] }
     };
 
     try {
