@@ -765,6 +765,7 @@ const EquiposEstatusPlataforma = () => {
       allowOutsideClick: false,
       didOpen: () => Swal.showLoading()
     });
+    
     const element = document.createElement("div");
     const chartImages = await Promise.all([
       getChartImage("estatusClienteChart"),
@@ -783,10 +784,39 @@ const EquiposEstatusPlataforma = () => {
     const totalEquipos = totalEquiposOnline + totalEquiposOffline;
 
     element.innerHTML = `
+    <style>
+      /* Reglas generales */
+      .pdf-page {
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      
+      table { 
+        width: 100%; 
+        border-collapse: collapse; 
+      }
+      
+      tr { 
+        page-break-inside: avoid !important; 
+        break-inside: avoid !important;
+      }
+      
+      thead { 
+        display: table-header-group; 
+      }
+      
+      .page-break {
+        page-break-before: always;
+        break-before: always; 
+        margin-top: 20px;
+      }
+    </style>
+
     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.4;">
-      <!-- PÁGINA 1: Encabezado y Gráficas -->
-      <div style="page-break-after: always; padding: 20px; height: 1050px; display: flex; flex-direction: column; box-sizing: border-box;">
-        <!-- Encabezado Principal -->
+      
+      <div class="pdf-page" style="padding: 20px; height: 1080px; display: flex; flex-direction: column;">
+        
         <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #2563eb; padding-bottom: 20px;">
           <h1 style="margin: 0; font-size: 28px; color: #1e40af; font-weight: bold;">
             Reporte de Estatus de Plataforma
@@ -796,10 +826,8 @@ const EquiposEstatusPlataforma = () => {
           </p>
         </div>
 
-        <!-- Contenedor de Gráficas -->
         <div style="flex: 1; display: flex; flex-direction: column; gap: 15px;">
-          <!-- Gráfica 1 -->
-          <div style="flex: 1; display: flex; flex-direction: column;">
+           <div style="flex: 1; display: flex; flex-direction: column;">
             <h2 style="margin: 0 0 15px 0; font-size: 20px; color: #374151; text-align: center; 
                        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); 
                        padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6;">
@@ -812,37 +840,23 @@ const EquiposEstatusPlataforma = () => {
             </div>
           </div>
 
-          <!-- Resumen de Equipos -->
-           <div style="margin: 10px 0; padding: 10px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);                      border-radius: 10px; border-left: 4px solid #0ea5e9;">
+          <div style="margin: 10px 0; padding: 10px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 10px; border-left: 4px solid #0ea5e9;">
             <div style="display: flex; justify-content: center; gap: 40px; flex-wrap: wrap;">
               <div style="text-align: center; min-width: 120px;">
-                <div style="font-size: 24px; font-weight: bold; color: #22c55e; margin-bottom: 5px;">
-                  ${totalEquiposOnline}
-                </div>
-                <div style="font-size: 12px; color: #374151; font-weight: 500;">
-                  Equipos Online
-                </div>
+                <div style="font-size: 24px; font-weight: bold; color: #22c55e; margin-bottom: 5px;">${totalEquiposOnline}</div>
+                <div style="font-size: 12px; color: #374151; font-weight: 500;">Equipos Online</div>
               </div>
               <div style="text-align: center; min-width: 120px;">
-                <div style="font-size: 24px; font-weight: bold; color: #ef4444; margin-bottom: 5px;">
-                  ${totalEquiposOffline}
-                </div>
-                <div style="font-size: 12px; color: #374151; font-weight: 500;">
-                  Equipos Offline
-                </div>
+                <div style="font-size: 24px; font-weight: bold; color: #ef4444; margin-bottom: 5px;">${totalEquiposOffline}</div>
+                <div style="font-size: 12px; color: #374151; font-weight: 500;">Equipos Offline</div>
               </div>
               <div style="text-align: center; min-width: 120px;">
-                <div style="font-size: 24px; font-weight: bold; color: #3b82f6; margin-bottom: 5px;">
-                  ${totalEquipos}
-                </div>
-                <div style="font-size: 12px; color: #374151; font-weight: 500;">
-                  Total Equipos
-                </div>
+                <div style="font-size: 24px; font-weight: bold; color: #3b82f6; margin-bottom: 5px;">${totalEquipos}</div>
+                <div style="font-size: 12px; color: #374151; font-weight: 500;">Total Equipos</div>
               </div>
             </div>
           </div>
 
-          <!-- Gráfica 2 -->
           <div style="flex: 1; display: flex; flex-direction: column;">
             <h2 style="margin: 0 0 15px 0; font-size: 20px; color: #374151; text-align: center; 
                        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); 
@@ -857,16 +871,14 @@ const EquiposEstatusPlataforma = () => {
           </div>
         </div>
 
-        <!-- Pie de página 1 -->
-        <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #9ca3af; 
+        <div style="margin-top: auto; text-align: center; font-size: 12px; color: #9ca3af; 
                     border-top: 1px solid #e5e7eb; padding-top: 15px;">
           Página 1 de 2 - Análisis Gráfico
         </div>
       </div>
 
-      <!-- PÁGINA 2: Tabla de Equipos Offline -->
-      <div style="padding: 20px; min-height: 1050px; display: flex; flex-direction: column; box-sizing: border-box;">
-        <!-- Encabezado de Página 2 -->
+      <div class="page-break pdf-page" style="padding: 20px; min-height: 100vh; display: flex; flex-direction: column;">
+        
         <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #ef4444; padding-bottom: 15px;">
           <h2 style="margin: 0; font-size: 24px; color: #dc2626; font-weight: bold;">
             ⚠️ Equipos Offline - Detalle
@@ -876,110 +888,67 @@ const EquiposEstatusPlataforma = () => {
           </p>
         </div>
 
-        <!-- Sección de Motivos de Desconexión -->
-<div style="margin-bottom: 25px;">
-  <h3 style="margin: 0 0 15px 0; font-size: 18px; color: #7c2d12; 
-             background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%); 
-             padding: 10px; border-radius: 6px; border-left: 4px solid #ea580c; text-align: center;">
-    📈 Distribución por Motivos de Desconexión
-  </h3>
-  
-  ${equiposData.equiposPorMotivo.length > 0 ? `
-    <table style="width: 100%; border-collapse: collapse; font-size: 12px; 
-                  background: #ffffff; border-radius: 8px; overflow: hidden; 
-                  box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-      <thead>
-        <tr style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #92400e;">
-          <th style="border: 1px solid #f59e0b; padding: 12px 8px; font-weight: bold; text-align: left;">
-            Motivo
-          </th>
-          <th style="border: 1px solid #f59e0b; padding: 12px 8px; font-weight: bold; text-align: center; width: 100px;">
-            Cantidad
-          </th>
-          <th style="border: 1px solid #f59e0b; padding: 12px 8px; font-weight: bold; text-align: center; width: 100px;">
-            Porcentaje
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        ${equiposData.equiposPorMotivo.map((item, index) => `
-          <tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#fffbeb'}; 
-                     border-bottom: 1px solid #fde68a;">
-            <td style="border: 1px solid #fde68a; padding: 10px 8px; 
-                       word-wrap: break-word; vertical-align: top;">
-              ${item.motivo}
-            </td>
-            <td style="border: 1px solid #fde68a; padding: 10px 8px; text-align: center; 
-                       font-weight: bold; color: #dc2626; vertical-align: top;">
-              ${item.cantidad}
-            </td>
-            <td style="border: 1px solid #fde68a; padding: 10px 8px; text-align: center; 
-                       color: #7c2d12; vertical-align: top;">
-              ${((item.cantidad / equiposData.equiposOffline.length) * 100).toFixed(1)}%
-            </td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  ` : `
-    <div style="text-align: center; color: #6b7280; font-style: italic; padding: 20px; 
-                background: #f9fafb; border-radius: 8px; border: 1px dashed #d1d5db;">
-      No hay datos de motivos disponibles
-    </div>
-  `}
-</div>
+        <div style="margin-bottom: 25px;">
+             <h3 style="margin: 0 0 15px 0; font-size: 18px; color: #7c2d12; 
+                    background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%); 
+                    padding: 10px; border-radius: 6px; border-left: 4px solid #ea580c; text-align: center;">
+            📈 Distribución por Motivos de Desconexión
+          </h3>
+          ${equiposData.equiposPorMotivo.length > 0 ? `
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; 
+                          background: #ffffff; border-radius: 8px; overflow: hidden; 
+                          box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+              <thead>
+                <tr style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #92400e;">
+                  <th style="border: 1px solid #f59e0b; padding: 12px 8px; font-weight: bold; text-align: left;">Motivo</th>
+                  <th style="border: 1px solid #f59e0b; padding: 12px 8px; font-weight: bold; text-align: center; width: 100px;">Cantidad</th>
+                  <th style="border: 1px solid #f59e0b; padding: 12px 8px; font-weight: bold; text-align: center; width: 100px;">Porcentaje</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${equiposData.equiposPorMotivo.map((item, index) => `
+                  <tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#fffbeb'}; border-bottom: 1px solid #fde68a;">
+                    <td style="border: 1px solid #fde68a; padding: 10px 8px;">${item.motivo}</td>
+                    <td style="border: 1px solid #fde68a; padding: 10px 8px; text-align: center; font-weight: bold; color: #dc2626;">${item.cantidad}</td>
+                    <td style="border: 1px solid #fde68a; padding: 10px 8px; text-align: center; color: #7c2d12;">${((item.cantidad / equiposData.equiposOffline.length) * 100).toFixed(1)}%</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          ` : `<div style="text-align: center; color: #6b7280; font-style: italic;">No hay datos</div>`}
+        </div>
 
-        <!-- Tabla -->
-        <div style="flex: 1; overflow: hidden;">
+        <div style="flex: 1;">
           <table style="width: 100%; border-collapse: collapse; font-size: 11px; 
-                        background: #ffffff; border-radius: 8px; overflow: hidden; 
+                        background: #ffffff; border-radius: 8px; 
                         box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
             <thead>
               <tr style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #991b1b;">
-                <th style="border: 1px solid #f87171; padding: 12px 8px; font-weight: bold; 
-                           text-align: left; width: 18%;">Cliente</th>
-                <th style="border: 1px solid #f87171; padding: 12px 8px; font-weight: bold; 
-                           text-align: left; width: 25%;">Nombre del Equipo</th>
-                <th style="border: 1px solid #f87171; padding: 12px 8px; font-weight: bold; 
-                           text-align: center; width: 15%;">Plataforma</th>
-                <th style="border: 1px solid #f87171; padding: 12px 8px; font-weight: bold; 
-                           text-align: center; width: 12%;">Estado</th>
-                <th style="border: 1px solid #f87171; padding: 12px 8px; font-weight: bold; 
-                           text-align: left; width: 30%;">Motivo</th>
+                <th style="border: 1px solid #f87171; padding: 12px 8px; font-weight: bold; text-align: left; width: 18%;">Cliente</th>
+                <th style="border: 1px solid #f87171; padding: 12px 8px; font-weight: bold; text-align: left; width: 25%;">Nombre del Equipo</th>
+                <th style="border: 1px solid #f87171; padding: 12px 8px; font-weight: bold; text-align: center; width: 15%;">Plataforma</th>
+                <th style="border: 1px solid #f87171; padding: 12px 8px; font-weight: bold; text-align: center; width: 12%;">Estado</th>
+                <th style="border: 1px solid #f87171; padding: 12px 8px; font-weight: bold; text-align: left; width: 30%;">Motivo</th>
               </tr>
             </thead>
             <tbody>
               ${equiposData.equiposOffline.map((e, index) => `
-                <tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#fef2f2'}; 
-                           border-bottom: 1px solid #fee2e2;">
-                  <td style="border: 1px solid #fecaca; padding: 10px 8px; 
-                             word-wrap: break-word; vertical-align: top; font-weight: 500;">
-                    ${e.cliente}
-                  </td>
-                  <td style="border: 1px solid #fecaca; padding: 10px 8px; 
-                             word-wrap: break-word; vertical-align: top;">
-                    ${e.nombre}
-                  </td>
-                  <td style="border: 1px solid #fecaca; padding: 10px 8px; 
-                             text-align: center; vertical-align: top; font-weight: 500;">
-                    ${e.plataforma}
-                  </td>
-                  <td style="border: 1px solid #fecaca; padding: 10px 8px; 
-                             text-align: center; vertical-align: top;">
+                <tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#fef2f2'}; border-bottom: 1px solid #fee2e2;">
+                  <td style="border: 1px solid #fecaca; padding: 10px 8px; word-wrap: break-word; font-weight: 500;">${e.cliente}</td>
+                  <td style="border: 1px solid #fecaca; padding: 10px 8px; word-wrap: break-word;">${e.nombre}</td>
+                  <td style="border: 1px solid #fecaca; padding: 10px 8px; text-align: center; font-weight: 500;">${e.plataforma}</td>
+                  <td style="border: 1px solid #fecaca; padding: 10px 8px; text-align: center;">
                     <span style="color: #dc2626; font-size: 16px; font-weight: bold;">✗</span>
                   </td>
-                  <td style="border: 1px solid #fecaca; padding: 10px 8px; 
-                             word-wrap: break-word; vertical-align: top; color: #7f1d1d;">
-                    ${e.motivo}
-                  </td>
+                  <td style="border: 1px solid #fecaca; padding: 10px 8px; word-wrap: break-word; color: #7f1d1d;">${e.motivo}</td>
                 </tr>
               `).join('')}
             </tbody>
           </table>
         </div>
 
-        <!-- Pie de página 2 -->
-        <div style="margin-top: auto; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 15px; padding-bottom: 10px;">
+        <div style="margin-top: 25px; text-align: center; font-size: 12px; color: #9ca3af; 
+                    border-top: 1px solid #e5e7eb; padding-top: 15px; page-break-inside: avoid;">
           <div>Página 2 de 2 - Detalle de Equipos Offline</div>
           <div style="margin-top: 5px; font-size: 10px;">
             Reporte generado automáticamente - ${new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })}
@@ -989,18 +958,16 @@ const EquiposEstatusPlataforma = () => {
     </div>
   `;
 
-    const opt = {
-      margin: [0.3, 0.3, 0.4, 0.3], 
+  const opt = {
+      margin: [0.5, 0.4, 0.5, 0.4], 
       filename: `reporte_estatus_${new Date().toISOString().split('T')[0]}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 }, 
+      image: { type: 'jpeg', quality: 0.98 },
       html2canvas: {
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff',
         letterRendering: true,
-        logging: false,
-        windowWidth: 800 
+        scrollY: 0, 
       },
       jsPDF: {
         unit: 'in',
@@ -1008,7 +975,7 @@ const EquiposEstatusPlataforma = () => {
         orientation: 'portrait',
         compress: true
       },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      pagebreak: { mode: ['css', 'legacy'] } 
     };
 
     try {
