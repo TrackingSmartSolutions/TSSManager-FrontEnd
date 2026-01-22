@@ -785,7 +785,6 @@ const EquiposEstatusPlataforma = () => {
 
     element.innerHTML = `
     <style>
-      /* Reglas generales */
       .pdf-page {
         position: relative;
         width: 100%;
@@ -840,7 +839,6 @@ const EquiposEstatusPlataforma = () => {
         </div>
 
         <div style="flex: 1; display: flex; flex-direction: column; gap: 15px;">
-           
            <div style="flex: 1; display: flex; flex-direction: column;">
             <h2 style="margin: 0 0 10px 0; font-size: 18px; color: #374151; text-align: center; 
                        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); 
@@ -890,7 +888,7 @@ const EquiposEstatusPlataforma = () => {
         </div>
       </div>
 
-      <div class="page-break pdf-page" style="padding: 20px; min-height: 100vh; display: flex; flex-direction: column;">
+      <div class="page-break pdf-page" style="padding: 20px; min-height: 1025px; display: flex; flex-direction: column;">
         
         <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #ef4444; padding-bottom: 15px;">
           <h2 style="margin: 0; font-size: 24px; color: #dc2626; font-weight: bold;">
@@ -960,7 +958,7 @@ const EquiposEstatusPlataforma = () => {
           </table>
         </div>
 
-        <div style="margin-top: 25px; text-align: center; font-size: 12px; color: #9ca3af; 
+        <div style="margin-top: auto; text-align: center; font-size: 12px; color: #9ca3af; 
                     border-top: 1px solid #e5e7eb; padding-top: 15px; page-break-inside: avoid;">
           <div>Página 2 de 2 - Detalle de Equipos Offline</div>
           <div style="margin-top: 5px; font-size: 10px;">
@@ -981,6 +979,7 @@ const EquiposEstatusPlataforma = () => {
         allowTaint: true,
         letterRendering: true,
         scrollY: 0,
+        windowWidth: 800,
       },
       jsPDF: {
         unit: 'in',
