@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import "./Mapa.css";
 import Header from "../Header/Header";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
@@ -85,6 +85,7 @@ const MarkerWithClick = ({ company, selectedMarker, setSelectedMarker }) => {
 
 const Mapa = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const { companies: initialCompanies, selectedCompany } = location.state || {};
     const [companies, setCompanies] = useState(initialCompanies || []);
 
@@ -250,6 +251,50 @@ const Mapa = () => {
             <Header isCrmDropdownOpen={isCrmDropdownOpen} setIsCrmDropdownOpen={setIsCrmDropdownOpen} />
             <div className="mapa-content">
                 {error && <div className="mapa-error">{error}</div>}
+                <div className="mapa-sidebar">
+                    {selectedMarker ? (
+                        <>
+                            <div className="mapa-sidebar-header">
+                                <h3>{selectedMarker.nombre}</h3>
+                            </div>
+
+                            <div className="mapa-details">
+                                <p><strong>Estatus:</strong> {getStatusText(selectedMarker.estatus)}</p>
+                                <p>
+                                    <strong>Sitio Web:</strong>{" "}
+                                    {selectedMarker.sitioWeb ? (
+                                        <a href={selectedMarker.sitioWeb} target="_blank" rel="noopener noreferrer">
+                                            {selectedMarker.sitioWeb}
+                                        </a>
+                                    ) : (
+                                        "N/A"
+                                    )}
+                                </p>
+                                <p><strong>Sector:</strong> {getSectorText(selectedMarker.sectorId)}</p>
+                                <p><strong>Domicilio Físico:</strong> {selectedMarker.domicilioFisico}</p>
+                            </div>
+
+                            <div className="mapa-sidebar-footer">
+                                <button onClick={handleGetDirections} className="mapa-btn mapa-btn-directions" title="Ir a la dirección">
+                                    <img src={carIcon} alt="Obtener direcciones" className="mapa-car-icon" />
+                                    <span>Dirección</span>
+                                </button>
+                                <button
+                                    className="mapa-btn mapa-btn-secondary"
+                                    onClick={() => navigate(`/empresas/${selectedMarker.id}`)}
+                                >
+                                    Volver
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="mapa-empty-state">
+                            <div className="mapa-empty-icon">📍</div>
+                            <h3>Sin empresa seleccionada</h3>
+                            <p>Haz clic en un marcador del mapa para ver sus detalles completos aquí.</p>
+                        </div>
+                    )}
+                </div>
                 <div className="mapa-container">
                     <div className="mapa-filter">
                         {/* Header principal del filtro */}
@@ -307,7 +352,7 @@ const Mapa = () => {
                             </div>
                         </div>
                     </div>
-                    <MapContainer center={center} zoom={13} className="leaflet-map" style={{ height: "calc(100% - 40px)", width: "100%" }}>
+                    <MapContainer center={center} zoom={13} className="leaflet-map" style={{ height: "100%", width: "100%" }}>
                         <TileLayer
                             url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
                             attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>'
@@ -331,47 +376,6 @@ const Mapa = () => {
                             />
                         ))}
                     </MapContainer>
-                </div>
-                <div className="mapa-sidebar">
-                    {selectedMarker ? (
-                        <>
-                            <div className="mapa-sidebar-header">
-                                <h3>{selectedMarker.nombre}</h3>
-                            </div>
-
-                            <div className="mapa-details">
-                                <p><strong>Estatus:</strong> {getStatusText(selectedMarker.estatus)}</p>
-                                <p>
-                                    <strong>Sitio Web:</strong>{" "}
-                                    {selectedMarker.sitioWeb ? (
-                                        <a href={selectedMarker.sitioWeb} target="_blank" rel="noopener noreferrer">
-                                            {selectedMarker.sitioWeb}
-                                        </a>
-                                    ) : (
-                                        "N/A"
-                                    )}
-                                </p>
-                                <p><strong>Sector:</strong> {getSectorText(selectedMarker.sectorId)}</p>
-                                <p><strong>Domicilio Físico:</strong> {selectedMarker.domicilioFisico}</p>
-                            </div>
-
-                            <div className="mapa-sidebar-footer">
-                                <button onClick={handleGetDirections} className="mapa-btn mapa-btn-directions" title="Ir a la dirección">
-                                    <img src={carIcon} alt="Obtener direcciones" className="mapa-car-icon" />
-                                    <span>Dirección</span>
-                                </button>
-                                <button className="mapa-btn mapa-btn-secondary" onClick={() => setSelectedMarker(null)}>
-                                    Cerrar
-                                </button>
-                            </div>
-                        </>
-                    ) : (
-                        <div className="mapa-empty-state">
-                            <div className="mapa-empty-icon">📍</div>
-                            <h3>Sin empresa seleccionada</h3>
-                            <p>Haz clic en un marcador del mapa para ver sus detalles completos aquí.</p>
-                        </div>
-                    )}
                 </div>
             </div>
         </div>

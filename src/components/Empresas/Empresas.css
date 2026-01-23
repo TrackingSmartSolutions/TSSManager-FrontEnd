@@ -1306,6 +1306,20 @@ body {
   font-style: italic;
 }
 
+.btn-array-action:disabled {
+  background-color: #e0e0e0; 
+  color: #a0a0a0; 
+  cursor: not-allowed;
+  border: 1px solid #dcdcdc;
+  transform: none; 
+  box-shadow: none;
+}
+
+btn-array-action.add:disabled:hover {
+  background-color: #e0e0e0;
+  transform: none;
+}
+
 @media (max-width: 768px) {
   .date-filter-row {
     margin-top: 12px;

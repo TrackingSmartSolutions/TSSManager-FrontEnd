@@ -24,17 +24,24 @@ const fetchWithToken = async (url, options = {}) => {
 };
 
 const Calendario = () => {
-  const [currentView, setCurrentView] = useState("dayGridMonth");
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentView, setCurrentView] = useState(() => {
+    return sessionStorage.getItem("calendarView") || "dayGridMonth";
+  });
+
+  const [currentDate, setCurrentDate] = useState(() => {
+    const savedDate = sessionStorage.getItem("calendarDate");
+    return savedDate ? new Date(savedDate) : new Date();
+  });
   const userRol = localStorage.getItem("userRol");
   const userName = localStorage.getItem("userName");
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const navigate = useNavigate();
 
-  const [selectedUser, setSelectedUser] = useState(
-    userRol === "EMPLEADO" ? (userName || null) : null
-  );
+  const [selectedUser, setSelectedUser] = useState(() => {
+    if (userRol === "EMPLEADO") return userName || null;
+    return sessionStorage.getItem("calendarSelectedUser") || null;
+  });
 
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -53,10 +60,11 @@ const Calendario = () => {
     sim: null
   });
 
-  const [filtrosCategoria, setFiltrosCategoria] = useState({
-    CRM: true,
-    ADMON: true,
-    EQUIPOS: true
+  const [filtrosCategoria, setFiltrosCategoria] = useState(() => {
+    const savedFilters = sessionStorage.getItem("calendarFilters");
+    return savedFilters 
+      ? JSON.parse(savedFilters) 
+      : { CRM: true, ADMON: true, EQUIPOS: true };
   });
 
   const [equipos, setEquipos] = useState([]);
@@ -71,6 +79,10 @@ const Calendario = () => {
     "99": "Por definir",
     "02": "Tarjeta Spin"
   });
+
+  useEffect(() => {
+    sessionStorage.setItem("calendarFilters", JSON.stringify(filtrosCategoria));
+  }, [filtrosCategoria]);
 
   useEffect(() => {
     const loadCurrentUser = async () => {
@@ -285,9 +297,25 @@ const Calendario = () => {
     setIsEventModalOpen(true);
   };
 
+  const handleDateClick = (info) => {
+    const newDate = info.date;
+
+    setCurrentDate(newDate);
+
+    sessionStorage.setItem("calendarDate", newDate.toISOString());
+
+    const calendarApi = calendarRef.current.getApi();
+    calendarApi.gotoDate(newDate);
+  
+  };
+
   const handleViewChange = (view) => {
     const calendarApi = calendarRef.current.getApi();
     const fullCalendarView = view === "Día" ? "timeGridDay" : view === "Semana" ? "timeGridWeek" : "dayGridMonth";
+
+    // Guardamos la preferencia en sessionStorage
+    sessionStorage.setItem("calendarView", fullCalendarView);
+
     calendarApi.changeView(fullCalendarView);
     setCurrentView(fullCalendarView);
   };
@@ -295,6 +323,7 @@ const Calendario = () => {
   const handleUserChange = (e) => {
     const newUser = e.target.value;
     setSelectedUser(newUser);
+    sessionStorage.setItem("calendarSelectedUser", newUser);
   };
 
   const handleMarcarComoPagadaDesdeCalendario = async (evento) => {
@@ -601,8 +630,10 @@ const Calendario = () => {
             <FullCalendar
               ref={calendarRef}
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-              initialView="dayGridMonth"
+              initialView={currentView}
+              initialDate={currentDate}
               events={eventosFiltrados}
+              dateClick={handleDateClick}
               eventClick={handleEventClick}
               height="100%"
               selectable={true}
@@ -651,8 +682,8 @@ const Calendario = () => {
               allDayText="Todo el día"
               popoverClassNames="custom-popover"
               datesSet={(dateInfo) => {
-                // Se ejecuta cuando cambia el rango visible (navegación o cambio de vista)
-                setCurrentDate(dateInfo.start);
+                setCurrentDate(dateInfo.start); 
+                sessionStorage.setItem("calendarDate", dateInfo.start.toISOString()); 
               }}
             />
           </div>

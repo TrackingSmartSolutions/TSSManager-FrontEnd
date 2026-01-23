@@ -1443,44 +1443,50 @@ const AdminCotizaciones = () => {
     compartirCotizacion: { isOpen: false, cotizacion: null },
   });
 
-
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [clientesClienteResp, clientesEnProcesoResp, cotizacionesResp, usersResp, emisoresResp, cuentasResp] = await Promise.all([
-          fetchWithToken(`${API_BASE_URL}/empresas?estatus=CLIENTE`),
-          fetchWithToken(`${API_BASE_URL}/empresas?estatus=EN_PROCESO`),
+        const fasesInteres = "COTIZACION_PROPUESTA_PRACTICA,NEGOCIACION_REVISION,CERRADO_GANADO";
+        const [
+          empresasPorFaseResp, 
+          cotizacionesResp,    
+          usersResp,           
+          emisoresResp,        
+          cuentasResp          
+        ] = await Promise.all([
+          fetchWithToken(`${API_BASE_URL}/empresas/por-fases-trato?fases=${fasesInteres}`),
           fetchWithToken(`${API_BASE_URL}/cotizaciones`),
           fetchWithToken(`${API_BASE_URL}/auth/users`),
           fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/emisores`),
           fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar`),
         ]);
 
-        const clientesClienteData = await clientesClienteResp.json();
-        const clientesEnProcesoData = await clientesEnProcesoResp.json();
+        // Procesamos las respuestas
+        const empresasData = await empresasPorFaseResp.json();
         const cotizacionesData = await cotizacionesResp.json();
         const usersData = await usersResp.json();
         const emisoresData = await emisoresResp.json();
         const cuentasData = await cuentasResp.json();
 
-        const clientesCliente = Array.isArray(clientesClienteData) ? clientesClienteData.map(c => ({ id: c.id, nombre: c.nombre, estatus: c.estatus })) : clientesClienteData.data?.map(c => ({ id: c.id, nombre: c.nombre, estatus: c.estatus })) || [];
-        const clientesEnProceso = Array.isArray(clientesEnProcesoData) ? clientesEnProcesoData.map(c => ({ id: c.id, nombre: c.nombre, estatus: c.estatus })) : clientesEnProcesoData.data?.map(c => ({ id: c.id, nombre: c.nombre, estatus: c.estatus })) || [];
-        const clientes = [...clientesCliente, ...clientesEnProceso];
+        const listaClientes = Array.isArray(empresasData) ? empresasData : empresasData.data || [];
         const cotizaciones = Array.isArray(cotizacionesData) ? cotizacionesData : cotizacionesData.data || [];
         const users = Array.isArray(usersData) ? usersData : usersData.data || [];
         const emisores = Array.isArray(emisoresData) ? emisoresData : emisoresData.data || [];
         const cuentasPorCobrar = Array.isArray(cuentasData) ? cuentasData : cuentasData.data || [];
 
-        setClientes(clientes);
+        setClientes(listaClientes); 
         setCotizaciones(cotizaciones);
+
         if (cotizaciones.length > 0) {
           await checkVinculaciones(cotizaciones);
         }
         setUsers(users);
         setEmisores(emisores);
         setCuentasPorCobrar(cuentasPorCobrar);
+
       } catch (error) {
+        console.error("Error en fetchData:", error);
         Swal.fire({
           icon: "error",
           title: "Error",

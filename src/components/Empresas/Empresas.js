@@ -1018,6 +1018,7 @@ const ContactoModal = ({
                   onClick={() => addArrayItem("correos")}
                   className="btn-array-action add"
                   title="Agregar correo"
+                  disabled={formData.correos.some(c => !c || c.trim() === "")}
                 >
                   +
                 </button>
@@ -1044,7 +1045,7 @@ const ContactoModal = ({
               <input
                 type="tel"
                 value={telefono}
-                onChange={(e) => handleArrayChange("telefonos", index, e.target.value)}
+                onChange={(e) => handleArrayChange("telefonos", index, e.target.value.replace(/\D/g, ""))}
                 className={`modal-form-control ${errors.telefonos?.[index] ? "error" : ""}`}
                 placeholder="4771234567"
                 maxLength="10"
@@ -1055,6 +1056,7 @@ const ContactoModal = ({
                   onClick={() => addArrayItem("telefonos")}
                   className="btn-array-action add"
                   title="Agregar teléfono"
+                  disabled={formData.telefonos.some(t => !t || t.trim() === "")}
                 >
                   +
                 </button>
@@ -1081,7 +1083,7 @@ const ContactoModal = ({
               type="tel"
               id="celular"
               value={formData.celular}
-              onChange={(e) => handleInputChange("celular", e.target.value)}
+              onChange={(e) => handleInputChange("celular", e.target.value.replace(/\D/g, ""))}
               className={`modal-form-control ${errors.celular ? "error" : ""}`}
               placeholder="4771234567"
               maxLength="10"
@@ -1232,6 +1234,10 @@ const DetallesEmpresaModal = ({ isOpen, onClose, empresa, sectores }) => {
         <div className="auditoria-section">
           <h3>Información de Auditoría</h3>
           <div className="detalles-grid">
+            <div className="detalle-item">
+              <label>Creado Por:</label>
+              <span>{empresa.creadoPor || "N/A"}</span>
+            </div>
             <div className="detalle-item">
               <label>Fecha Creación:</label>
               <span>{formatDate(empresa.fechaCreacion)}</span>
@@ -1882,6 +1888,18 @@ const Empresas = () => {
   }
 
   const handleSaveContacto = async (contactoData) => {
+
+    const tieneCorreo = contactoData.correos && contactoData.correos.some(c => c.correo && c.correo.trim() !== "");
+    const tieneTelefono = contactoData.telefonos && contactoData.telefonos.some(t => t.telefono && t.telefono.trim() !== "");
+
+    if (!tieneCorreo && !tieneTelefono) {
+      Swal.fire({
+        icon: "warning",
+        title: "Información requerida",
+        text: "Es obligatorio ingresar al menos un teléfono o un correo electrónico para guardar el contacto.",
+      });
+      return;
+    }
     const normalizedContacto = {
       ...contactoData,
       correos: contactoData.correos || [],

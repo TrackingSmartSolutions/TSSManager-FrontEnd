@@ -276,6 +276,7 @@ const ModeloFormModal = ({ isOpen, onClose, modelo = null, onSave }) => {
             onChange={handleInputChange}
             className={`modelos-form-control ${errors.uso ? "modelos-form-control-error" : ""}`}
           >
+            <option value="">Selecciona un uso</option>
             {usoOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -371,6 +372,15 @@ const ModeloCard = ({ modelo, onEdit, onDelete }) => {
             <button
               className="modelos-option-item modelos-option-danger"
               onClick={() => {
+                if (modelo.cantidad > 0) {
+                    Swal.fire({
+                        icon: "warning",
+                        title: "No se puede eliminar",
+                        text: `Este modelo tiene ${modelo.cantidad} equipo(s) asociado(s). Debes eliminar o reasignar los equipos antes de borrar el modelo.`,
+                    });
+                    setShowOptions(false);
+                    return; 
+                }
                 onDelete(modelo);
                 setShowOptions(false);
               }}
@@ -463,13 +473,11 @@ const EquiposModelos = () => {
   const handleSaveModelo = (modeloData) => {
     setModelos((prevModelos) => {
       if (modeloData.id) {
-        // Actualizar modelo existente
         return prevModelos.map((m) =>
-          m.id === modeloData.id ? modeloData : m
+          m.id === modeloData.id ? { ...m, ...modeloData } : m
         );
       } else {
-        // Agregar nuevo modelo
-        return [...prevModelos, modeloData];
+        return [...prevModelos, { ...modeloData, cantidad: 0 }];
       }
     });
     fetchData();
