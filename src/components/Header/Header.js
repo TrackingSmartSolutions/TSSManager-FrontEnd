@@ -221,7 +221,10 @@ const Header = ({ logoUrl }) => {
 
   const [notificaciones, setNotificaciones] = useState([]);
   const [cantidadNoLeidas, setCantidadNoLeidas] = useState(0);
-  const [actividadesProximas, setActividadesProximas] = useState([]);
+  const [actividadesProximas, setActividadesProximas] = useState(() => {
+    const guardadas = localStorage.getItem("actividadesPendientesPopup");
+    return guardadas ? JSON.parse(guardadas) : [];
+  });
   const [actividadesDismissed, setActividadesDismissed] = useState(() => {
     const saved = localStorage.getItem('actividadesDismissed');
     return saved ? new Set(JSON.parse(saved)) : new Set();
@@ -305,33 +308,22 @@ const Header = ({ logoUrl }) => {
         const dismissedFromStorage = localStorage.getItem('actividadesDismissed');
         const dismissedSet = dismissedFromStorage ? new Set(JSON.parse(dismissedFromStorage)) : new Set();
 
-        const actividadesNuevas = data.filter(act => {
-          const esDismissed = dismissedSet.has(act.id);
-          return !esDismissed;
-        });
+        const actividadesDelBackend = data.filter(act => !dismissedSet.has(act.id));
 
-        // Solo actualizar si hay nuevas actividades que no estaban antes
         setActividadesProximas(prev => {
-          const idsActuales = prev.map(a => a.id);
+          const idsActuales = new Set(prev.map(a => a.id));
+          const nuevasReales = actividadesDelBackend.filter(act => !idsActuales.has(act.id));
+          if (nuevasReales.length === 0) return prev;
+          try {
+            const audio = new Audio(actividadProxSound);
+            audio.volume = 0.8;
+            audio.play().catch(e => console.error("Error audio:", e));
+          } catch (e) { console.error("Error audio:", e); }
+          const nuevaLista = [...prev, ...nuevasReales];
 
-          const realmenteNuevas = actividadesNuevas.filter(
-            act => !idsActuales.includes(act.id)
-          );
+          localStorage.setItem("actividadesPendientesPopup", JSON.stringify(nuevaLista));
 
-          // Solo reproducir sonido si hay actividades realmente nuevas
-          if (realmenteNuevas.length > 0) {
-            try {
-              const audio = new Audio(actividadProxSound);
-              audio.volume = 0.8;
-              audio.play().catch(error => {
-                console.error("Error reproduciendo sonido de actividad:", error);
-              });
-            } catch (error) {
-              console.error("Error reproduciendo sonido de actividad:", error);
-            }
-          }
-
-          return actividadesNuevas;
+          return nuevaLista;
         });
       }
     } catch (error) {
@@ -341,20 +333,13 @@ const Header = ({ logoUrl }) => {
 
   // Función para marcar actividad como dismissed (persistente)
   const handleDismissActividad = (actividadId) => {
+    // 1. Lógica existente: Agregar a la lista negra (blacklist)
     const currentDismissed = localStorage.getItem('actividadesDismissed');
     const dismissedSet = currentDismissed ? new Set(JSON.parse(currentDismissed)) : new Set();
     dismissedSet.add(actividadId);
     localStorage.setItem('actividadesDismissed', JSON.stringify([...dismissedSet]));
-
-    // Luego actualizar el estado
     setActividadesDismissed(dismissedSet);
-
-    // Remover de las actividades visibles
-    setActividadesProximas(prev => {
-      const filtered = prev.filter(act => act.id !== actividadId);
-      return filtered;
-    });
-
+    handleCloseActividad(actividadId);
   };
 
   // Función para marcar como leída
@@ -706,6 +691,14 @@ const Header = ({ logoUrl }) => {
     })
   }
 
+  const handleCloseActividad = (actividadId) => {
+    setActividadesProximas(prev => {
+      const filtradas = prev.filter(act => act.id !== actividadId);
+      localStorage.setItem("actividadesPendientesPopup", JSON.stringify(filtradas));
+      return filtradas;
+    });
+  };
+
   return (
     <>
       <header className="ts-header-navbar">
@@ -1013,11 +1006,11 @@ const Header = ({ logoUrl }) => {
         </div>
       )}
       {/* Popups de recordatorio */}
-      {actividadesProximas.map((actividad, index) => (
+      {actividadesProximas.map((actividad) => (
         <RecordatorioPopup
           key={actividad.id}
           actividad={actividad}
-          onClose={() => setActividadesProximas(prev => prev.filter(act => act.id !== actividad.id))}
+          onClose={() => handleCloseActividad(actividad.id)}
           onDismiss={handleDismissActividad}
         />
       ))}

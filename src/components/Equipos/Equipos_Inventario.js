@@ -74,6 +74,7 @@ const useDebounce = (value, delay) => {
 
 // Modal para Agregar/Editar Equipo
 const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equipos, proveedores, clientes }) => {
+  const userRole = localStorage.getItem("userRol");
   const [formData, setFormData] = useState({
     imei: "",
     nombre: "",
@@ -86,6 +87,7 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
     tipoActivacion: "ANUAL",
     plataforma: "",
     creditosUsados: 0,
+    fechaActivacion: "",
   });
   const [errors, setErrors] = useState({});
   const [plataformas, setPlataformas] = useState([]);
@@ -105,6 +107,7 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
           tipoActivacion: equipo.tipoActivacion || "ANUAL",
           plataforma: equipo.plataforma?.id || "",
           creditosUsados: equipo.creditosUsados || 0,
+          fechaActivacion: equipo.fechaActivacion ? new Date(equipo.fechaActivacion).toISOString().split('T')[0] : "",
         });
       } else {
         setFormData({
@@ -119,6 +122,7 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
           tipoActivacion: "ANUAL",
           plataforma: " ",
           creditosUsados: 0,
+          fechaActivacion: "",
         });
       }
       setErrors({});
@@ -346,6 +350,25 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
           {isTipoActivacionDisabled && <small className="inventario-help-text">Deshabilitado cuando el estatus es "INACTIVO"</small>}
         </div>
 
+        {userRole === "ADMINISTRADOR" && formData.estatus === "ACTIVO" && (
+          <div className="inventario-form-group">
+            <label htmlFor="fechaActivacion" className="inventario-form-label">
+              Fecha de Activación
+            </label>
+            <input
+              type="date"
+              id="fechaActivacion"
+              name="fechaActivacion"
+              value={formData.fechaActivacion}
+              onChange={handleInputChange}
+              className="inventario-form-control"
+            />
+            <small className="inventario-help-text">
+              Modificar esto recalculará la fecha de expiración automáticamente.
+            </small>
+          </div>
+        )}
+
         <div className="inventario-form-group">
           <label htmlFor="plataforma" className="inventario-form-label">Plataforma</label>
           <select
@@ -495,13 +518,14 @@ const ConfirmarActivacionModal = ({ isOpen, onClose, onConfirm, equipo }) => {
 };
 
 const CreditosModal = ({ isOpen, onClose, onConfirm, titulo }) => {
-  const [creditos, setCreditos] = useState(0);
+  const [creditos, setCreditos] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onConfirm(creditos);
+    const valorFinal = creditos === "" ? 0 : parseInt(creditos);
+    onConfirm(valorFinal);
     onClose();
-    setCreditos(0);
+    setCreditos("");
   };
 
   return (
@@ -515,7 +539,10 @@ const CreditosModal = ({ isOpen, onClose, onConfirm, titulo }) => {
             type="number"
             id="creditos"
             value={creditos}
-            onChange={(e) => setCreditos(parseInt(e.target.value) || 0)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setCreditos(val === "" ? "" : parseInt(val));
+            }}
             className="inventario-form-control"
             placeholder="Número de créditos"
             min="0"
@@ -538,6 +565,7 @@ const CreditosModal = ({ isOpen, onClose, onConfirm, titulo }) => {
 // Componente Principal
 const EquiposInventario = () => {
   const navigate = useNavigate();
+  const userRole = localStorage.getItem("userRol");
   const [equipos, setEquipos] = useState([]);
   const [modelos, setModelos] = useState([]);
   const [proveedores, setProveedores] = useState([]);
@@ -971,12 +999,12 @@ const EquiposInventario = () => {
                                 <button className="inventario-btn-action inventario-details" onClick={() => openModal("detalles", { equipo })} title="Detalles">
                                   <img src={detailsIcon || "/placeholder.svg"} alt="Detalles" />
                                 </button>
-                                {equipo.estatus === "INACTIVO" && (
+                                {userRole === "ADMINISTRADOR" && equipo.estatus === "INACTIVO" && (
                                   <button className="inventario-btn inventario-btn-activate" onClick={() => handleActivateEquipo(equipo.id)} title="Activar">
                                     <img src={activateIcon || "/placeholder.svg"} alt="Activar" className="inventario-action-icon" /> Activar
                                   </button>
                                 )}
-                                {(needsRenewal(equipo) || isExpired(equipo) || equipo.estatus === "EXPIRADO") && (
+                                {userRole === "ADMINISTRADOR" && (needsRenewal(equipo) || isExpired(equipo) || equipo.estatus === "EXPIRADO") && (
                                   <button className="inventario-btn inventario-btn-renew" onClick={() => handleRenewEquipo(equipo.id)} title="Renovar">
                                     <img src={renewIcon || "/placeholder.svg"} alt="Renovar" className="inventario-action-icon" /> Renovar
                                   </button>

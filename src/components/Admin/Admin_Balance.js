@@ -378,12 +378,12 @@ const AdminBalance = () => {
   }
 
   const handleCategoriaChange = (nuevaCategoria) => {
-  setFiltros((prev) => ({ 
-    ...prev, 
-    categoriaSeleccionada: nuevaCategoria,
-    cuentaSeleccionada: "Todas"  
-  }))
-}
+    setFiltros((prev) => ({
+      ...prev,
+      categoriaSeleccionada: nuevaCategoria,
+      cuentaSeleccionada: "Todas"
+    }))
+  }
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("es-MX", {
@@ -471,6 +471,12 @@ const AdminBalance = () => {
       const acumuladoFiltrado = balanceData.acumuladoCuentas
         .filter((ac) => filtros.categoriaSeleccionada === "Todas" || ac.categoria === filtros.categoriaSeleccionada)
         .filter((ac) => filtros.cuentaSeleccionada === "Todas" || ac.cuenta === filtros.cuentaSeleccionada)
+        .sort((a, b) => {
+          const comparacionCategoria = a.categoria.localeCompare(b.categoria);
+          if (comparacionCategoria !== 0) return comparacionCategoria;
+
+          return a.cuenta.localeCompare(b.cuenta);
+        })
         .map((ac) => ({
           categoria: ac.categoria,
           cuenta: ac.cuenta,
@@ -960,6 +966,12 @@ const AdminBalance = () => {
                               filtros.cuentaSeleccionada === "Todas" ||
                               ac.cuenta === filtros.cuentaSeleccionada
                             )
+                            .sort((a, b) => {
+                              const catCompare = a.categoria.localeCompare(b.categoria);
+                              if (catCompare !== 0) return catCompare;
+
+                              return a.cuenta.localeCompare(b.cuenta);
+                            })
                             .map((ac, index) => (
                               <tr key={index}>
                                 <td>{ac.categoria}</td>

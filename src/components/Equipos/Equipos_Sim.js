@@ -713,7 +713,7 @@ const SimDetailsModal = ({ isOpen, onClose, sim = null, equipos }) => {
   );
 };
 
-const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
+const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate }) => { 
   const [formData, setFormData] = useState({
     saldoActual: "",
     datos: "",
@@ -721,6 +721,7 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
   });
   const [historialSaldos, setHistorialSaldos] = useState([]);
   const [errors, setErrors] = useState({});
+  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
     if (isOpen && sim) {
@@ -730,7 +731,6 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
         fecha: new Date().toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" }).split("/").reverse().join("-"),
       });
       setErrors({});
-      // Cargar el historial al abrir el modal
       fetchHistorialSaldos(sim.id);
     }
   }, [isOpen, sim]);
@@ -744,6 +744,91 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
       console.error("Error fetching historial saldos:", error);
       setHistorialSaldos([]);
     }
+  };
+
+  const handleEdit = (registro) => {
+    setEditingId(registro.id);
+    setFormData({
+      saldoActual: registro.saldoActual || "",
+      datos: registro.datos || "",
+      fecha: registro.fecha.split("T")[0],
+    });
+    document.querySelector('.sim-side-panel-content')?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setFormData({
+      saldoActual: "",
+      datos: "",
+      fecha: new Date().toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" }).split("/").reverse().join("-"),
+    });
+    setErrors({});
+  };
+
+  const handleDelete = async (id) => {
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: "No podrás revertir esto",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await fetchWithToken(`${API_BASE_URL}/sims/historial/${id}`, { method: 'DELETE' });
+          fetchHistorialSaldos(sim.id);
+          if (onUpdate) onUpdate();
+          Swal.fire('Eliminado', 'El registro ha sido eliminado.', 'success');
+        } catch (error) {
+          Swal.fire('Error', 'No se pudo eliminar el registro', 'error');
+        }
+      }
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    if (editingId) {
+      try {
+        const params = new URLSearchParams();
+        if (formData.saldoActual) params.append("saldoActual", parseFloat(formData.saldoActual).toFixed(2));
+        if (formData.datos) params.append("datos", parseFloat(formData.datos));
+        params.append("fecha", formData.fecha);
+
+        const response = await fetchWithToken(`${API_BASE_URL}/sims/historial/${editingId}?${params.toString()}`, {
+          method: "PUT",
+        });
+
+        if (!response.ok) throw new Error("Error al actualizar");
+
+        Swal.fire({ icon: "success", title: "Actualizado", text: "Registro actualizado correctamente" });
+        fetchHistorialSaldos(sim.id);
+        if (onUpdate) onUpdate();
+        handleCancelEdit();
+      } catch (error) {
+        Swal.fire({ icon: "error", title: "Error", text: error.message });
+      }
+      return;
+    }
+
+    const saldoData = {
+      saldoActual: sim.tarifa === "POR_SEGUNDO" ? parseFloat(formData.saldoActual).toFixed(2) : null,
+      datos: (sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") ? parseFloat(formData.datos) : null,
+      fecha: formData.fecha,
+    };
+
+    onSaveSaldo(sim.id, saldoData);
+    setFormData({
+      saldoActual: "",
+      datos: "",
+      fecha: new Date().toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" }).split("/").reverse().join("-"),
+    });
   };
 
   const handleInputChange = (e) => {
@@ -763,24 +848,6 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-
-    const saldoData = {
-      saldoActual: sim.tarifa === "POR_SEGUNDO" ? parseFloat(formData.saldoActual).toFixed(2) : null,
-      datos: (sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") ? parseFloat(formData.datos) : null,
-      fecha: formData.fecha,
-    };
-
-    onSaveSaldo(sim.id, saldoData);
-    setFormData({
-      saldoActual: "",
-      datos: "",
-      fecha: new Date().toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" }).split("/").reverse().join("-"),
-    });
-  };
-
   if (!sim) return null;
 
   return (
@@ -788,18 +855,19 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
       {isOpen && <div className="sim-side-panel-overlay" onClick={onClose}></div>}
       <div className={`sim-side-panel ${isOpen ? "sim-side-panel-open" : ""}`}>
         <div className="sim-side-panel-header">
-          <h2 className="sim-side-panel-title">Reporte Saldos</h2>
-          <button className="sim-side-panel-close" onClick={onClose}>✕</button>
+          <h2 className="sim-side-panel-title">{editingId ? "Editar Saldo" : "Reporte Saldos"}</h2>
+          <button className="sim-side-panel-close" onClick={() => { handleCancelEdit(); onClose(); }}>✕</button>
         </div>
         <div className="sim-side-panel-content">
           <form onSubmit={handleSubmit} className="sim-saldos-form">
+            
             <div className="sim-side-panel-form-group">
-              <label htmlFor="numero" className="sim-form-label">Número  <span className="required"> *</span></label>
+              <label htmlFor="numero" className="sim-form-label">Número <span className="required"> *</span></label>
               <input type="text" id="numero" value={sim.numero} className="sim-side-panel-form-control" readOnly />
             </div>
             {sim.tarifa === "POR_SEGUNDO" && (
               <div className="sim-side-panel-form-group">
-                <label htmlFor="saldoActual" className="sim-form-label">Saldo Actual  <span className="required"> *</span></label>
+                <label htmlFor="saldoActual" className="sim-form-label">Saldo Actual <span className="required"> *</span></label>
                 <div className="sim-input-group">
                   <span className="sim-input-prefix">$</span>
                   <input
@@ -819,7 +887,7 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
             )}
             {(sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") && (
               <div className="sim-side-panel-form-group">
-                <label htmlFor="datos" className="sim-form-label">Datos  <span className="required"> *</span></label>
+                <label htmlFor="datos" className="sim-form-label">Datos <span className="required"> *</span></label>
                 <div className="sim-input-group">
                   <input
                     type="number"
@@ -831,7 +899,6 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
                     placeholder="0"
                     min="0"
                     step="any"
-
                   />
                   <span className="sim-input-suffix">MB</span>
                 </div>
@@ -846,15 +913,28 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
                 name="fecha"
                 value={formData.fecha}
                 className="sim-side-panel-form-control"
-                readOnly
+                readOnly 
               />
             </div>
-            <div className="sim-side-panel-form-actions">
+
+            <div className="sim-side-panel-form-actions" style={{ display: 'flex', gap: '10px' }}>
               <button type="submit" className="sim-btn sim-btn-primary sim-btn-full-width">
-                Guardar
+                {editingId ? "Actualizar" : "Guardar"}
               </button>
+              
+              {editingId && (
+                <button 
+                  type="button" 
+                  onClick={handleCancelEdit} 
+                  className="sim-btn sim-btn-cancel sim-btn-full-width"
+                >
+                  Cancelar
+                </button>
+              )}
             </div>
+
           </form>
+
           <div className="sim-historial-section">
             <h4 className="sim-historial-title">Historial de saldos</h4>
             <div className="sim-side-panel-table-container">
@@ -864,20 +944,46 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo }) => {
                     <th>Fecha</th>
                     {sim.tarifa === "POR_SEGUNDO" && <th>Saldo Actual</th>}
                     {(sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") && <th>Datos</th>}
+                    
+                    {userRole === "ADMINISTRADOR" && <th style={{width: '90px'}}>Acciones</th>}
                   </tr>
                 </thead>
                 <tbody>
                   {historialSaldos.length > 0 ? (
                     historialSaldos.map((registro, index) => (
-                      <tr key={index}>
+                      <tr key={index} style={editingId === registro.id ? {backgroundColor: '#e6f7ff'} : {}}>
                         <td>{new Date(registro.fecha + "T00:00:00-06:00").toLocaleDateString("es-MX", { timeZone: "America/Mexico_City" })}</td>
                         {sim.tarifa === "POR_SEGUNDO" && <td>${registro.saldoActual ?? '0'}</td>}
                         {(sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") && <td>{registro.datos ?? '0'} MB</td>}
+                        
+                        {userRole === "ADMINISTRADOR" && (
+                          <td>
+                            <div className="sim-action-buttons" style={{justifyContent: 'center'}}>
+                              <button 
+                                type="button"
+                                className="sim-btn-action sim-edit" 
+                                onClick={() => handleEdit(registro)}
+                                title="Editar"
+                              >
+                                <img src={editIcon} alt="Editar" />
+                              </button>
+                              <button 
+                                type="button"
+                                className="sim-btn-action sim-delete"
+                                onClick={() => handleDelete(registro.id)}
+                                title="Eliminar"
+                              >
+                                <img src={deleteIcon} alt="Eliminar" />
+                              </button>
+                            </div>
+                          </td>
+                        )}
+
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={sim.tarifa === "POR_SEGUNDO" ? 2 : 2} className="sim-no-data">
+                      <td colSpan={userRole === "ADMINISTRADOR" ? 4 : 3} className="sim-no-data">
                         No hay registros de saldos
                       </td>
                     </tr>
@@ -1394,11 +1500,23 @@ const EquiposSim = () => {
   };
 
   const getSimsOrdenados = () => {
-    // Ya vienen ordenados del backend, solo aplicar el toggle si es necesario
-    if (ordenFechaVigencia === 'desc') {
-      return [...sims].reverse();
-    }
-    return sims;
+    const simsOrdenados = [...sims];
+
+    return simsOrdenados.sort((a, b) => {      
+      const fechaA = a.vigencia ? new Date(a.vigencia).getTime() : 0;
+      const fechaB = b.vigencia ? new Date(b.vigencia).getTime() : 0;
+
+      if (fechaA !== fechaB) {
+        if (ordenFechaVigencia === 'asc') {
+          return fechaA - fechaB; 
+        } else {
+          return fechaB - fechaA; 
+        }
+      }
+      const numA = parseInt(a.numero || "0", 10);
+      const numB = parseInt(b.numero || "0", 10);
+      return numA - numB; 
+    });
   };
 
   const getSaldoClassName = (sim) => {
@@ -1672,6 +1790,8 @@ const EquiposSim = () => {
             onClose={() => closeModal("saldos")}
             sim={modals.saldos.sim}
             onSaveSaldo={handleSaveSaldo}
+            userRole={userRole}
+            onUpdate={fetchSims}
           />
 
           <ConfirmarEliminacionModal

@@ -1285,13 +1285,15 @@ const AdminCuentasPagar = () => {
                                       <img src={checkIcon || "/placeholder.svg"} alt="Marcar como pagada" className="cuentaspagar-action-icon" />
                                     </button>
                                   )}
-                                  <button
-                                    className="cuentaspagar-action-btn cuentaspagar-delete-btn"
-                                    onClick={() => handleDeleteCuenta(cuenta)}
-                                    title="Eliminar"
-                                  >
-                                    <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" className="cuentaspagar-action-icon" />
-                                  </button>
+                                  {cuenta.estatus !== "Pagado" && !cuenta.sim && (
+                                    <button
+                                      className="cuentaspagar-action-btn cuentaspagar-delete-btn"
+                                      onClick={() => handleDeleteCuenta(cuenta)}
+                                      title="Eliminar"
+                                    >
+                                      <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" className="cuentaspagar-action-icon" />
+                                    </button>
+                                  )}
                                 </div>
                               </td>
                             </tr>

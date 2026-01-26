@@ -186,11 +186,11 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
   }, []);
 
   useEffect(() => {
-  if (contactosProp && contactosProp.length > 0) {
-    console.log('📥 CONTACTOS RECIBIDOS POR PROP:', contactosProp);
-    setContactos(contactosProp);
-  }
-}, [contactosProp]);
+    if (contactosProp && contactosProp.length > 0) {
+      console.log('📥 CONTACTOS RECIBIDOS POR PROP:', contactosProp);
+      setContactos(contactosProp);
+    }
+  }, [contactosProp]);
 
   useEffect(() => {
     const cargarUsuariosActivos = async () => {
@@ -227,7 +227,7 @@ const ProgramarLlamadaModal = ({ isOpen, onClose, onSave, tratoId, users, creato
           });
           setErrors({});
           if (trato.empresaId && (!contactosProp || contactosProp.length === 0)) {
-             fetchContactos(trato.empresaId);
+            fetchContactos(trato.empresaId);
           }
         } catch (error) {
           Swal.fire({ icon: "error", title: "Error", text: "No se pudo cargar el trato" });
@@ -474,11 +474,11 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
   }, []);
 
   useEffect(() => {
-  if (contactosProp && contactosProp.length > 0) {
-    console.log('📥 CONTACTOS RECIBIDOS POR PROP (Reunión):', contactosProp);
-    setContactos(contactosProp);
-  }
-}, [contactosProp]);
+    if (contactosProp && contactosProp.length > 0) {
+      console.log('📥 CONTACTOS RECIBIDOS POR PROP (Reunión):', contactosProp);
+      setContactos(contactosProp);
+    }
+  }, [contactosProp]);
 
   useEffect(() => {
     const cargarUsuariosActivos = async () => {
@@ -516,7 +516,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             empresaData = await empresaResponse.json();
             setEmpresa(empresaData);
             if (!contactosProp || contactosProp.length === 0) {
-               fetchContactos(trato.empresaId);
+              fetchContactos(trato.empresaId);
             }
 
             if (initialModalidad === "PRESENCIAL" && empresaData.domicilioFisico) {
@@ -544,7 +544,7 @@ const ProgramarReunionModal = ({ isOpen, onClose, onSave, tratoId, users, creato
             const empresaData = await empresaResponse.json();
             setEmpresa(empresaData);
             if (!contactosProp || contactosProp.length === 0) {
-               fetchContactos(trato.empresaId);
+              fetchContactos(trato.empresaId);
             }
             if (defaultContactName === "" && empresaData.domicilioFisico) {
               setFormData((prev) => ({ ...prev, lugarReunion: empresaData.domicilioFisico }));
@@ -950,11 +950,11 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
   }, []);
 
   useEffect(() => {
-  if (contactosProp && contactosProp.length > 0) {
-    console.log('📥 CONTACTOS RECIBIDOS POR PROP (Tarea):', contactosProp);
-    setContactos(contactosProp);
-  }
-}, [contactosProp]);
+    if (contactosProp && contactosProp.length > 0) {
+      console.log('📥 CONTACTOS RECIBIDOS POR PROP (Tarea):', contactosProp);
+      setContactos(contactosProp);
+    }
+  }, [contactosProp]);
 
   useEffect(() => {
     const cargarUsuariosActivos = async () => {
@@ -992,7 +992,7 @@ const ProgramarTareaModal = ({ isOpen, onClose, onSave, tratoId, users, creatorI
           });
           setErrors({});
           if (trato.empresaId && (!contactosProp || contactosProp.length === 0)) {
-             fetchContactos(trato.empresaId);
+            fetchContactos(trato.empresaId);
           }
         } catch (error) {
           Swal.fire({ icon: "error", title: "Error", text: "No se pudo cargar el trato" });
@@ -4584,7 +4584,11 @@ const DetallesTrato = () => {
           .then(res => res.status === 204 ? [] : res.json())
           .catch(() => []);
 
-        setEmailRecords(Array.isArray(emailData) ? emailData : []);
+        const correosOrdenados = Array.isArray(emailData)
+          ? emailData.sort((a, b) => new Date(b.fechaEnvio) - new Date(a.fechaEnvio))
+          : [];
+
+        setEmailRecords(correosOrdenados);
 
         // Solo cargar contactos si hay actividades que los necesiten
         const allActividades = [
@@ -6453,7 +6457,12 @@ const DetallesTrato = () => {
             const loadEmails = async () => {
               const emailResponse = await fetchWithToken(`${API_BASE_URL}/correos/trato/${params.id}`);
               const emailData = await emailResponse.json();
-              setEmailRecords(emailData);
+
+              const correosOrdenados = Array.isArray(emailData)
+                ? emailData.sort((a, b) => new Date(b.fechaEnvio) - new Date(a.fechaEnvio))
+                : [];
+
+              setEmailRecords(correosOrdenados);
             };
             loadEmails();
           }}
@@ -6540,7 +6549,7 @@ const DetallesTrato = () => {
 
 export { CompletarActividadModal };
 export { SeleccionarActividadModal };
-export {ProgramarLlamadaModal} ;
-export {ProgramarReunionModal};
+export { ProgramarLlamadaModal };
+export { ProgramarReunionModal };
 export { ProgramarTareaModal };
 export default DetallesTrato

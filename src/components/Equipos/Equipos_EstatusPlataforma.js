@@ -179,7 +179,10 @@ const CheckEquiposSidePanel = ({
   setLastCheckTime,
 }) => {
   const [selectedPlatform, setSelectedPlatform] = useState("Todos");
-  const [equiposStatus, setEquiposStatus] = useState({});
+  const [equiposStatus, setEquiposStatus] = useState(() => {
+    const savedData = localStorage.getItem("checklist_temp_data");
+    return savedData ? JSON.parse(savedData) : {};
+  });
   const [isSaving, setIsSaving] = useState(false);
 
   const platformMap = {
@@ -236,6 +239,10 @@ const CheckEquiposSidePanel = ({
       refreshEquipos();
     }
   }, [isOpen, refreshEquipos]);
+
+  useEffect(() => {
+    localStorage.setItem("checklist_temp_data", JSON.stringify(equiposStatus));
+  }, [equiposStatus]);
 
   useEffect(() => {
     if (isOpen && equipos.length > 0) {
@@ -355,6 +362,8 @@ const CheckEquiposSidePanel = ({
         text: `Se ha guardado el checklist de ${equiposConStatus.length} equipos.`,
       });
 
+      localStorage.removeItem("checklist_temp_data"); 
+      setEquiposStatus({}); 
       const currentTime = Date.now();
       setLastCheckTime(currentTime);
       fetchData();
