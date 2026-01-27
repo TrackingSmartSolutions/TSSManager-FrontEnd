@@ -699,6 +699,38 @@ const Header = ({ logoUrl }) => {
     });
   };
 
+  const handleNotificationClickNavigation = (notificacion) => {
+    if (notificacion.estatus === 'NO_LEIDA') {
+      marcarComoLeida(notificacion.id);
+    }
+    setIsNotificationModalOpen(false);
+
+    if (['CUENTA_COBRAR', 'CUENTA_PAGAR'].includes(notificacion.tipoNotificacion)) {
+      let folio = "";
+      const match = notificacion.mensaje.match(/: (.*?),/);
+      if (match && match[1]) {
+        folio = match[1].trim();
+      }
+      
+      if (notificacion.tipoNotificacion === 'CUENTA_COBRAR') {
+        navigate("/admin_cuentas_cobrar", { state: { filtroFolio: folio } });
+      } else {
+        navigate("/admin_cuentas_pagar", { state: { filtroFolio: folio } });
+      }
+    } 
+    
+    else if (['TRATO_GANADO', 'ESCALAMIENTO'].includes(notificacion.tipoNotificacion)) {
+      const idMatch = notificacion.mensaje.match(/\(ID:\s*(\d+)\)/);
+
+      if (idMatch && idMatch[1]) {
+        const tratoId = idMatch[1];
+        navigate(`/detallestrato/${tratoId}`);
+      } else {
+        console.warn("Esta notificación antigua no contiene ID para redirigir.");
+      }
+    }
+  };
+
   return (
     <>
       <header className="ts-header-navbar">
@@ -805,6 +837,8 @@ const Header = ({ logoUrl }) => {
                       <div
                         key={notificacion.id}
                         className={`ts-header-notification-item ${notificacion.estatus === 'NO_LEIDA' ? 'unread' : ''}`}
+                        onClick={() => handleNotificationClickNavigation(notificacion)} 
+                        style={{ cursor: 'pointer' }} 
                       >
                         <div className="ts-header-notification-content">
                           <div className="ts-header-notification-title">

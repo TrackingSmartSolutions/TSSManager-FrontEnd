@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import "./Admin_CuentasPagar.css"
 import Header from "../Header/Header"
 import Swal from "sweetalert2"
@@ -562,8 +562,10 @@ const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
 // Componente Principal
 const AdminCuentasPagar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const userRol = localStorage.getItem("userRol")
   const [cuentasPagar, setCuentasPagar] = useState([]);
+  const [filtroFolio, setFiltroFolio] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [filtroEstatus, setFiltroEstatus] = useState("Pendiente");
   const [ordenFecha, setOrdenFecha] = useState('asc');
@@ -609,6 +611,14 @@ const AdminCuentasPagar = () => {
     fetchCuentasPagar();
   }, [filtroEstatus]);
 
+  useEffect(() => {
+    if (location.state && location.state.filtroFolio) {
+      setFiltroFolio(location.state.filtroFolio);
+      setFiltroEstatus("Todas");
+
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const formasPago = {
     "01": "Efectivo",
@@ -684,16 +694,18 @@ const AdminCuentasPagar = () => {
 
         const cuentaRecienActualizada = cuentasActualizadas.find(c => c.id === cuentaActualizada.id);
 
-        // Solo mostrar modal de regeneración si:
-        // 1. La cuenta está completamente pagada (estatus = "Pagado")
-        // 2. Es la última cuenta de la serie
-        // 3. No es esquema UNICA
         const esCompletamentePagada = cuentaRecienActualizada?.estatus === "Pagado";
         const esUltimaCuenta = cuentaRecienActualizada?.numeroPago === cuentaRecienActualizada?.totalPagos;
         const noEsUnica = cuentaRecienActualizada?.transaccion?.esquema !== "UNICA";
 
+        const esSim = cuentaRecienActualizada?.sim;
+
         if (esCompletamentePagada && esUltimaCuenta && noEsUnica) {
-          openModal("regenerar", { cuenta: cuentaRecienActualizada });
+          if (esSim) {
+            await handleRegenerar(true, cuentaRecienActualizada);
+          } else {
+            openModal("regenerar", { cuenta: cuentaRecienActualizada });
+          }
         } else {
           Swal.fire({
             icon: "success",
@@ -703,6 +715,7 @@ const AdminCuentasPagar = () => {
         }
       }
     } catch (error) {
+      console.error(error);
       Swal.fire({
         icon: "error",
         title: "Error",
@@ -1003,9 +1016,11 @@ const AdminCuentasPagar = () => {
 
   const cuentasUnicas = [...new Set(cuentasPagar.map(c => c.cuenta?.nombre))].filter(Boolean).sort();
   const cuentasFiltradas = cuentasPagar.filter((cuenta) => {
+    if (filtroFolio) {
+      return cuenta.folio === filtroFolio;
+    }
     const estatusReal = getEstatusReal(cuenta);
     const pasaFiltroEstatus = filtroEstatus === "Todas" || estatusReal === filtroEstatus;
-
     const pasaFiltroCuenta = filtroCuenta === "" || cuenta.cuenta?.nombre === filtroCuenta;
 
     let pasaFiltroFechas = true;
@@ -1147,7 +1162,18 @@ const AdminCuentasPagar = () => {
                 <div className="cuentaspagar-table-header">
                   <h4 className="cuentaspagar-table-title">Cuentas por pagar</h4>
                   <div className="cuentaspagar-filters-container">
-
+                    {filtroFolio && (
+                      <div className="cuentaspagar-filter-container">
+                        <div style={{ height: '21px' }}></div>
+                        <button
+                          className="cuentaspagar-btn cuentaspagar-btn-cancel"
+                          onClick={() => { setFiltroFolio(""); setFiltroEstatus("Pendiente"); }}
+                          style={{ backgroundColor: '#6c757d', color: 'white' }}
+                        >
+                          Ver lista completa (Filtro: {filtroFolio}) ✕
+                        </button>
+                      </div>
+                    )}
                     <div className="cuentaspagar-filter-container">
                       <div style={{ height: '21px' }}></div>
                       <button

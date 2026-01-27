@@ -23,14 +23,34 @@ const fetchWithToken = async (url, options = {}) => {
   return response;
 };
 
+const toLocalDateString = (date) => {
+  if (!date) return null;
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return null;
+
+  const offset = d.getTimezoneOffset();
+  const localDate = new Date(d.getTime() - (offset * 60 * 1000));
+  return localDate.toISOString().split('T')[0];
+};
+
 const Calendario = () => {
   const [currentView, setCurrentView] = useState(() => {
     return sessionStorage.getItem("calendarView") || "dayGridMonth";
   });
 
   const [currentDate, setCurrentDate] = useState(() => {
-    const savedDate = sessionStorage.getItem("calendarDate");
-    return savedDate ? new Date(savedDate) : new Date();
+    try {
+      const savedDate = sessionStorage.getItem("calendarDate");
+      if (savedDate && savedDate !== "null" && savedDate !== "undefined") {
+        const parsedDate = new Date(savedDate + "T00:00:00");
+        if (!isNaN(parsedDate.getTime())) {
+          return parsedDate;
+        }
+      }
+    } catch (error) {
+      console.error("Error al leer fecha del storage", error);
+    }
+    return new Date();
   });
   const userRol = localStorage.getItem("userRol");
   const userName = localStorage.getItem("userName");
@@ -62,8 +82,8 @@ const Calendario = () => {
 
   const [filtrosCategoria, setFiltrosCategoria] = useState(() => {
     const savedFilters = sessionStorage.getItem("calendarFilters");
-    return savedFilters 
-      ? JSON.parse(savedFilters) 
+    return savedFilters
+      ? JSON.parse(savedFilters)
       : { CRM: true, ADMON: true, EQUIPOS: true };
   });
 
@@ -299,14 +319,10 @@ const Calendario = () => {
 
   const handleDateClick = (info) => {
     const newDate = info.date;
-
     setCurrentDate(newDate);
-
-    sessionStorage.setItem("calendarDate", newDate.toISOString());
-
+    sessionStorage.setItem("calendarDate", toLocalDateString(newDate));
     const calendarApi = calendarRef.current.getApi();
     calendarApi.gotoDate(newDate);
-  
   };
 
   const handleViewChange = (view) => {
@@ -632,6 +648,27 @@ const Calendario = () => {
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
               initialView={currentView}
               initialDate={currentDate}
+              dayCellClassNames={(arg) => {
+                if (currentView === 'timeGridDay') return [];
+                const celdaStr = toLocalDateString(arg.date);
+                const selectedStr = toLocalDateString(currentDate);
+                if (!celdaStr || !selectedStr) return []; // Protección
+                return celdaStr === selectedStr ? ['ts-fecha-seleccionada'] : [];
+              }}
+
+              datesSet={(dateInfo) => {
+                const selected = new Date(currentDate);
+                const start = dateInfo.start;
+                const end = dateInfo.end;
+                const isVisible = !isNaN(selected.getTime()) && selected >= start && selected < end;
+
+                if (!isVisible) {
+                  const newDate = dateInfo.start;
+                  setCurrentDate(newDate);
+                  sessionStorage.setItem("calendarDate", toLocalDateString(newDate));
+                }
+
+              }}
               events={eventosFiltrados}
               dateClick={handleDateClick}
               eventClick={handleEventClick}
@@ -681,10 +718,6 @@ const Calendario = () => {
               }
               allDayText="Todo el día"
               popoverClassNames="custom-popover"
-              datesSet={(dateInfo) => {
-                setCurrentDate(dateInfo.start); 
-                sessionStorage.setItem("calendarDate", dateInfo.start.toISOString()); 
-              }}
             />
           </div>
 

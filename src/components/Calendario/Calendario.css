@@ -542,6 +542,21 @@
   padding: 2px 4px;
 }
 
+.ts-fecha-seleccionada {
+  background-color: rgba(59, 130, 246, 0.15) !important; 
+  transition: background-color 0.3s ease;
+}
+
+.ts-fecha-seleccionada .fc-daygrid-day-number {
+  color: #2563eb !important; 
+  font-weight: bold;
+}
+
+
+.fc-timegrid-col.ts-fecha-seleccionada {
+  background-color: rgba(59, 130, 246, 0.10) !important;
+}
+
 /* Responsivo */
 @media (max-width: 768px) {
   .ts-calendar-container {
