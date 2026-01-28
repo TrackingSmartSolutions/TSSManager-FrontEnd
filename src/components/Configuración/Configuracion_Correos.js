@@ -111,7 +111,7 @@ const ConfiguracionCorreos = () => {
                                                     {correo.status === 'sent' ? 'Enviado' : 
                                                     correo.status === 'delivered' ? 'Entregado' :
                                                     correo.status === 'bounced' ? 'Rebotado' :
-                                                    correo.exito ? 'Enviado' : 'Error'}
+                                                    correo.exito ? 'Enviado' : 'Rebotado'}
                                                 </span>
                                             </td>
                                         </tr>
