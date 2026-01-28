@@ -3986,6 +3986,7 @@ const DetallesTrato = () => {
   const [editingNoteId, setEditingNoteId] = useState(null)
   const [editingNoteText, setEditingNoteText] = useState("")
   const [users, setUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [correosSeguimientoActivo, setCorreosSeguimientoActivo] = useState(false);
   const [cargandoCorreos, setCargandoCorreos] = useState(false);
@@ -4454,6 +4455,8 @@ const DetallesTrato = () => {
         const updatedData = await fetchTrato(params.id);
         const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users/active`);
         const usersData = await usersResponse.json();
+        const allUsersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+        const allUsersData = await allUsersResponse.json();
         const users = usersData.map((user) => ({
           id: user.id,
           nombre: user.nombreUsuario,
@@ -4486,7 +4489,6 @@ const DetallesTrato = () => {
           })),
           nombreEmpresa: updatedData.empresaNombre,
           numeroTrato: updatedData.noTrato,
-          // Mantener las actividades y el historial existente si están disponibles
           actividadesAbiertas: prev.actividadesAbiertas,
           historialInteracciones: prev.historialInteracciones,
         }));
@@ -4517,6 +4519,8 @@ const DetallesTrato = () => {
         const tratoData = await fetchTrato(params.id);
         const usersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users/active`);
         const usersData = await usersResponse.json();
+        const allUsersResponse = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+        const allUsersData = await allUsersResponse.json();
         const companiesResponse = await fetchWithToken(`${API_BASE_URL}/empresas`);
         const companiesData = await companiesResponse.json();
 
@@ -4527,8 +4531,13 @@ const DetallesTrato = () => {
           nombreReal: user.nombre
         }));
         setUsers(users);
+        const todosLosUsuarios = allUsersData.map((user) => ({
+          id: user.id,
+          nombre: user.nombreUsuario,
+          nombreReal: user.nombre
+        }));
+        setAllUsers(todosLosUsuarios);
         setCompanies(companiesData || []);
-
         const propietarioUser = users.find((user) => user.id === tratoData.propietarioId);
         const propietarioNombre = propietarioUser ? propietarioUser.nombreReal : tratoData.propietarioNombre || "";
 
@@ -4564,7 +4573,7 @@ const DetallesTrato = () => {
         setLoading(false);
 
         // Cargar datos secundarios de forma asíncrona
-        loadSecondaryData(tratoData, users);
+        loadSecondaryData(tratoData, users, todosLosUsuarios);
 
       } catch (error) {
         console.error("Error fetching trato:", error);
@@ -4577,7 +4586,7 @@ const DetallesTrato = () => {
       }
     };
 
-    const loadSecondaryData = async (tratoData, users) => {
+    const loadSecondaryData = async (tratoData, users, allUsers) => {
       try {
         // Solo cargar emails del trato
         const emailData = await fetchWithToken(`${API_BASE_URL}/correos/trato/${params.id}`)
@@ -4660,7 +4669,7 @@ const DetallesTrato = () => {
             id: interaccion.id,
             fecha: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toLocaleDateString('en-CA') : "Sin fecha",
             hora: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : "Sin hora",
-            responsable: users.find(u => u.id === interaccion.usuarioCompletadoId)?.nombreReal || "Sin asignado",
+            responsable: allUsers.find(u => u.id === interaccion.usuarioCompletadoId)?.nombreReal || "Sin asignado",
             tipo: interaccion.tipo,
             medio: interaccion.medio || (interaccion.modalidad === "PRESENCIAL" ? "PRESENCIAL" : interaccion.medio),
             resultado: interaccion.respuesta ? (interaccion.respuesta === "SI" ? "POSITIVO" : "NEGATIVO") : "Sin resultado",

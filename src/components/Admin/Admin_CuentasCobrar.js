@@ -704,7 +704,9 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
       let total = parseFloat(formData.total) || 0;
       let subtotal = parseFloat(formData.subtotal) || 0;
 
-      if (formData.tipo === "SOLICITUD_DE_FACTURA" && cotizacionSeleccionada?.empresaData?.regimenFiscal === "601") {
+      if (formData.tipo === "SOLICITUD_DE_FACTURA" &&
+        (cotizacionSeleccionada?.empresaData?.regimenFiscal === "601" ||
+          cotizacionSeleccionada?.empresaData?.regimenFiscal === "627")) {
         const domicilioFiscal = (cotizacionSeleccionada.empresaData.domicilioFiscal || "").toLowerCase();
         const hasGuanajuato = domicilioFiscal.includes("gto") || domicilioFiscal.includes("guanajuato") || domicilioFiscal.includes("Gto") || domicilioFiscal.includes("Guanajuato");
         const cpMatch = domicilioFiscal.match(/\b(36|37|38)\d{4}\b/);
@@ -1364,580 +1366,580 @@ const AdminCuentasCobrar = () => {
     );
 
     Swal.fire({
-        icon: "success",
-        title: "Éxito",
-        text: "Cuenta marcada como pagada y transacción generada automáticamente por el sistema",
-    });
-};
-
-const handleDeleteCuenta = async (cuenta) => {
-  try {
-    const data = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/check-vinculada`);
-    if (data.vinculada) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "No se puede eliminar la cuenta por cobrar porque está vinculada a una solicitud de factura o nota.",
-      });
-      return;
-    }
-    openModal("confirmarEliminacion", { cuenta });
-  } catch (error) {
-    console.error("Error verifying vinculation:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "No se pudo verificar la vinculación de la cuenta por cobrar.",
-    });
-  }
-};
-
-const handleConfirmDelete = (cuentaId) => {
-  setCuentasPorCobrar((prev) => prev.filter((cuenta) => cuenta.id !== cuentaId));
-  closeModal("confirmarEliminacion");
-};
-
-const handleCheckMarcarCompletada = async (cuenta) => {
-  try {
-    const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/check-vinculada`);
-    if (!response.vinculada) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "La cuenta por cobrar no está vinculada a una solicitud de factura. No se puede marcar como completada.",
-      });
-      return;
-    }
-    openModal("comprobante", { cuenta });
-  } catch (error) {
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "No se pudo verificar la vinculación: " + error.message,
-    });
-  }
-};
-
-const handleVerDetalles = async (cuenta) => {
-  try {
-    Swal.showLoading();
-
-    const cotizacionData = await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cuenta.cotizacionId}`);
-
-    let tratoNombre = null;
-    if (cotizacionData.tratoId) {
-      try {
-        const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${cotizacionData.tratoId}`);
-        tratoNombre = tratoResponse.nombre;
-      } catch (error) {
-        console.warn("No se pudo cargar el trato:", error);
-      }
-    }
-
-    Swal.close();
-
-    setModals((prev) => ({
-      ...prev,
-      detalles: {
-        isOpen: true,
-        cuenta: cuenta,
-        cotizacion: cotizacionData,
-        tratoNombre: tratoNombre,
-      },
-    }));
-  } catch (error) {
-    Swal.close();
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "No se pudo cargar la información de la cuenta: " + error.message,
-    });
-  }
-};
-
-const handleDescargarComprobante = async (cuenta) => {
-  if (!cuenta.id) {
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "No se encontró el ID de la cuenta por cobrar.",
-    });
-    return;
-  }
-
-  if (!cuenta.comprobantePagoUrl) {
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "No se encontró un comprobante de pago asociado a esta cuenta.",
-    });
-    return;
-  }
-
-  // Verificar si hay errores en la subida del comprobante
-  if (cuenta.comprobantePagoUrl === "ERROR_UPLOAD") {
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "El comprobante de pago no se pudo subir correctamente. Intente subirlo nuevamente.",
-    });
-    return;
-  }
-
-  if (cuenta.comprobantePagoUrl === "UPLOADING") {
-    Swal.fire({
-      icon: "warning",
-      title: "En proceso",
-      text: "El comprobante de pago está siendo procesado. Intente más tarde.",
-    });
-    return;
-  }
-
-  try {
-    const response = await fetchFileWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/download-comprobante`, {
-      method: "GET",
-    });
-
-    if (!response.ok) throw new Error(`Error al descargar el archivo: ${response.statusText}`);
-
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = cuenta.comprobantePagoUrl.split("/").pop() || "comprobante_pago.pdf";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-
-    Swal.fire({
       icon: "success",
-      title: "Descarga Completada",
-      text: "El comprobante de pago se ha descargado correctamente.",
+      title: "Éxito",
+      text: "Cuenta marcada como pagada y transacción generada automáticamente por el sistema",
     });
-  } catch (error) {
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: `No se pudo descargar el comprobante: ${error.message}`,
-    });
-  }
-};
+  };
 
-const getEstatusClass = (estatus) => {
-  switch (estatus) {
-    case "PAGADO":
-      return "cuentascobrar-estatus-pagado";
-    case "EN_PROCESO":
-      return "cuentascobrar-estatus-en-proceso";
-    case "VENCIDA":
-      return "cuentascobrar-estatus-vencida";
-    case "PENDIENTE":
-    default:
-      return "cuentascobrar-estatus-pendiente";
-  }
-};
-
-const cuentasFiltradas = cuentasPorCobrar.filter((cuenta) => {
-  if (filtroFolio) {
-    return cuenta.folio === filtroFolio;
-  }
-  const pasaFiltroEstatus = filtroEstatus === "Todas" || cuenta.estatus === filtroEstatus;
-
-  const nombreCliente = cuenta.clienteNombre || cuenta.cliente?.razonSocial;
-  const pasaFiltroCliente = filtroCliente === "" || nombreCliente === filtroCliente;
-
-  let pasaFiltroFechas = true;
-  if (fechaInicio || fechaFin) {
-    const fechaCuenta = new Date(cuenta.fechaPago + 'T00:00:00');
-
-    let inicio = fechaInicio ? new Date(fechaInicio) : null;
-    let fin = fechaFin ? new Date(fechaFin) : null;
-
-    // Normalizar fechas
-    if (inicio) {
-      inicio = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
+  const handleDeleteCuenta = async (cuenta) => {
+    try {
+      const data = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/check-vinculada`);
+      if (data.vinculada) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se puede eliminar la cuenta por cobrar porque está vinculada a una solicitud de factura o nota.",
+        });
+        return;
+      }
+      openModal("confirmarEliminacion", { cuenta });
+    } catch (error) {
+      console.error("Error verifying vinculation:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo verificar la vinculación de la cuenta por cobrar.",
+      });
     }
-    if (fin) {
-      fin = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59, 59);
+  };
+
+  const handleConfirmDelete = (cuentaId) => {
+    setCuentasPorCobrar((prev) => prev.filter((cuenta) => cuenta.id !== cuentaId));
+    closeModal("confirmarEliminacion");
+  };
+
+  const handleCheckMarcarCompletada = async (cuenta) => {
+    try {
+      const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/check-vinculada`);
+      if (!response.vinculada) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "La cuenta por cobrar no está vinculada a una solicitud de factura. No se puede marcar como completada.",
+        });
+        return;
+      }
+      openModal("comprobante", { cuenta });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo verificar la vinculación: " + error.message,
+      });
+    }
+  };
+
+  const handleVerDetalles = async (cuenta) => {
+    try {
+      Swal.showLoading();
+
+      const cotizacionData = await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cuenta.cotizacionId}`);
+
+      let tratoNombre = null;
+      if (cotizacionData.tratoId) {
+        try {
+          const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${cotizacionData.tratoId}`);
+          tratoNombre = tratoResponse.nombre;
+        } catch (error) {
+          console.warn("No se pudo cargar el trato:", error);
+        }
+      }
+
+      Swal.close();
+
+      setModals((prev) => ({
+        ...prev,
+        detalles: {
+          isOpen: true,
+          cuenta: cuenta,
+          cotizacion: cotizacionData,
+          tratoNombre: tratoNombre,
+        },
+      }));
+    } catch (error) {
+      Swal.close();
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo cargar la información de la cuenta: " + error.message,
+      });
+    }
+  };
+
+  const handleDescargarComprobante = async (cuenta) => {
+    if (!cuenta.id) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se encontró el ID de la cuenta por cobrar.",
+      });
+      return;
     }
 
-    pasaFiltroFechas = (!inicio || fechaCuenta >= inicio) && (!fin || fechaCuenta <= fin);
-  }
+    if (!cuenta.comprobantePagoUrl) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se encontró un comprobante de pago asociado a esta cuenta.",
+      });
+      return;
+    }
 
-  return pasaFiltroEstatus && pasaFiltroCliente && pasaFiltroFechas;
-});
+    // Verificar si hay errores en la subida del comprobante
+    if (cuenta.comprobantePagoUrl === "ERROR_UPLOAD") {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "El comprobante de pago no se pudo subir correctamente. Intente subirlo nuevamente.",
+      });
+      return;
+    }
 
-const cuentasOrdenadas = cuentasFiltradas.sort((a, b) => {
-  const fechaA = new Date(a.fechaPago);
-  const fechaB = new Date(b.fechaPago);
+    if (cuenta.comprobantePagoUrl === "UPLOADING") {
+      Swal.fire({
+        icon: "warning",
+        title: "En proceso",
+        text: "El comprobante de pago está siendo procesado. Intente más tarde.",
+      });
+      return;
+    }
 
-  if (ordenFecha === 'asc') {
-    return fechaA - fechaB;
-  } else {
-    return fechaB - fechaA;
-  }
-});
+    try {
+      const response = await fetchFileWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/download-comprobante`, {
+        method: "GET",
+      });
 
-const toggleOrdenFecha = () => {
-  setOrdenFecha(prevOrden => prevOrden === 'asc' ? 'desc' : 'asc');
-};
+      if (!response.ok) throw new Error(`Error al descargar el archivo: ${response.statusText}`);
 
-return (
-  <>
-    <div className="page-with-header">
-      <Header />
-      {isLoading && (
-        <div className="cuentascobrar-loading">
-          <div className="spinner"></div>
-          <p>Cargando datos de cuentas por cobrar...</p>
-        </div>
-      )}
-      <main className="cuentascobrar-main-content">
-        <div className="cuentascobrar-container">
-          <section className="cuentascobrar-sidebar">
-            <div className="cuentascobrar-sidebar-header">
-              <h3 className="cuentascobrar-sidebar-title">Administración</h3>
-            </div>
-            <div className="cuentascobrar-sidebar-menu">
-              {userRol === "ADMINISTRADOR" && (
-                <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("balance")}>
-                  Balance
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = cuenta.comprobantePagoUrl.split("/").pop() || "comprobante_pago.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      Swal.fire({
+        icon: "success",
+        title: "Descarga Completada",
+        text: "El comprobante de pago se ha descargado correctamente.",
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: `No se pudo descargar el comprobante: ${error.message}`,
+      });
+    }
+  };
+
+  const getEstatusClass = (estatus) => {
+    switch (estatus) {
+      case "PAGADO":
+        return "cuentascobrar-estatus-pagado";
+      case "EN_PROCESO":
+        return "cuentascobrar-estatus-en-proceso";
+      case "VENCIDA":
+        return "cuentascobrar-estatus-vencida";
+      case "PENDIENTE":
+      default:
+        return "cuentascobrar-estatus-pendiente";
+    }
+  };
+
+  const cuentasFiltradas = cuentasPorCobrar.filter((cuenta) => {
+    if (filtroFolio) {
+      return cuenta.folio === filtroFolio;
+    }
+    const pasaFiltroEstatus = filtroEstatus === "Todas" || cuenta.estatus === filtroEstatus;
+
+    const nombreCliente = cuenta.clienteNombre || cuenta.cliente?.razonSocial;
+    const pasaFiltroCliente = filtroCliente === "" || nombreCliente === filtroCliente;
+
+    let pasaFiltroFechas = true;
+    if (fechaInicio || fechaFin) {
+      const fechaCuenta = new Date(cuenta.fechaPago + 'T00:00:00');
+
+      let inicio = fechaInicio ? new Date(fechaInicio) : null;
+      let fin = fechaFin ? new Date(fechaFin) : null;
+
+      // Normalizar fechas
+      if (inicio) {
+        inicio = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
+      }
+      if (fin) {
+        fin = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59, 59);
+      }
+
+      pasaFiltroFechas = (!inicio || fechaCuenta >= inicio) && (!fin || fechaCuenta <= fin);
+    }
+
+    return pasaFiltroEstatus && pasaFiltroCliente && pasaFiltroFechas;
+  });
+
+  const cuentasOrdenadas = cuentasFiltradas.sort((a, b) => {
+    const fechaA = new Date(a.fechaPago);
+    const fechaB = new Date(b.fechaPago);
+
+    if (ordenFecha === 'asc') {
+      return fechaA - fechaB;
+    } else {
+      return fechaB - fechaA;
+    }
+  });
+
+  const toggleOrdenFecha = () => {
+    setOrdenFecha(prevOrden => prevOrden === 'asc' ? 'desc' : 'asc');
+  };
+
+  return (
+    <>
+      <div className="page-with-header">
+        <Header />
+        {isLoading && (
+          <div className="cuentascobrar-loading">
+            <div className="spinner"></div>
+            <p>Cargando datos de cuentas por cobrar...</p>
+          </div>
+        )}
+        <main className="cuentascobrar-main-content">
+          <div className="cuentascobrar-container">
+            <section className="cuentascobrar-sidebar">
+              <div className="cuentascobrar-sidebar-header">
+                <h3 className="cuentascobrar-sidebar-title">Administración</h3>
+              </div>
+              <div className="cuentascobrar-sidebar-menu">
+                {userRol === "ADMINISTRADOR" && (
+                  <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("balance")}>
+                    Balance
+                  </div>
+                )}
+                <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
+                  Transacciones
                 </div>
-              )}
-              <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
-                Transacciones
+                <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("cotizaciones")}>
+                  Cotizaciones
+                </div>
+                <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("facturacion")}>
+                  Facturas/Notas
+                </div>
+                <div
+                  className="cuentascobrar-menu-item cuentascobrar-menu-item-active"
+                  onClick={() => handleMenuNavigation("cuentas-cobrar")}
+                >
+                  Cuentas por Cobrar
+                </div>
+                <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("cuentas-pagar")}>
+                  Cuentas por Pagar
+                </div>
+                <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>
+                  Caja chica
+                </div>
               </div>
-              <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("cotizaciones")}>
-                Cotizaciones
-              </div>
-              <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("facturacion")}>
-                Facturas/Notas
-              </div>
-              <div
-                className="cuentascobrar-menu-item cuentascobrar-menu-item-active"
-                onClick={() => handleMenuNavigation("cuentas-cobrar")}
-              >
-                Cuentas por Cobrar
-              </div>
-              <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("cuentas-pagar")}>
-                Cuentas por Pagar
-              </div>
-              <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>
-                Caja chica
-              </div>
-            </div>
-          </section>
+            </section>
 
-          <section className="cuentascobrar-content-panel">
-            <div className="cuentascobrar-header">
-              <div className="cuentascobrar-header-info">
-                <h3 className="cuentascobrar-page-title">Cuentas por Cobrar</h3>
-                <p className="cuentascobrar-subtitle">Gestión de cobros pendientes</p>
+            <section className="cuentascobrar-content-panel">
+              <div className="cuentascobrar-header">
+                <div className="cuentascobrar-header-info">
+                  <h3 className="cuentascobrar-page-title">Cuentas por Cobrar</h3>
+                  <p className="cuentascobrar-subtitle">Gestión de cobros pendientes</p>
+                </div>
               </div>
-            </div>
 
-            <div className="cuentascobrar-table-card">
-              <div className="cuentascobrar-table-header">
-                <h4 className="cuentascobrar-table-title">Cuentas por cobrar</h4>
-                <div className="cuentascobrar-filters-container">
+              <div className="cuentascobrar-table-card">
+                <div className="cuentascobrar-table-header">
+                  <h4 className="cuentascobrar-table-title">Cuentas por cobrar</h4>
+                  <div className="cuentascobrar-filters-container">
 
-                  {filtroFolio && (
+                    {filtroFolio && (
+                      <div className="cuentascobrar-filter-container">
+                        <div style={{ height: '21px' }}></div>
+                        <button
+                          className="cuentascobrar-btn cuentascobrar-btn-cancel"
+                          onClick={() => { setFiltroFolio(""); setFiltroEstatus("PENDIENTE"); }}
+                          style={{ backgroundColor: '#6c757d', color: 'white' }}
+                        >
+                          Ver lista completa (Filtro: {filtroFolio}) ✕
+                        </button>
+                      </div>
+                    )}
+
                     <div className="cuentascobrar-filter-container">
                       <div style={{ height: '21px' }}></div>
                       <button
-                        className="cuentascobrar-btn cuentascobrar-btn-cancel"
-                        onClick={() => { setFiltroFolio(""); setFiltroEstatus("PENDIENTE"); }}
-                        style={{ backgroundColor: '#6c757d', color: 'white' }}
+                        className="cuentascobrar-btn-orden"
+                        onClick={toggleOrdenFecha}
+                        title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'}`}
                       >
-                        Ver lista completa (Filtro: {filtroFolio}) ✕
+                        {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
                       </button>
                     </div>
-                  )}
 
-                  <div className="cuentascobrar-filter-container">
-                    <div style={{ height: '21px' }}></div>
-                    <button
-                      className="cuentascobrar-btn-orden"
-                      onClick={toggleOrdenFecha}
-                      title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'}`}
-                    >
-                      {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
-                    </button>
-                  </div>
-
-                  <div className="cuentascobrar-filter-container">
-                    <label htmlFor="filtroCliente">Filtrar por cliente:</label>
-                    <select
-                      id="filtroCliente"
-                      value={filtroCliente}
-                      onChange={(e) => setFiltroCliente(e.target.value)}
-                      className="cuentascobrar-filter-select"
-                    >
-                      <option value="">Todos los clientes</option>
-                      {clientesUnicos.map((nombre, index) => (
-                        <option key={index} value={nombre}>
-                          {nombre}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="cuentascobrar-filter-container">
-                    <label htmlFor="filtroEstatus">Filtrar por estatus:</label>
-                    <select
-                      id="filtroEstatus"
-                      value={filtroEstatus}
-                      onChange={(e) => setFiltroEstatus(e.target.value)}
-                      className="cuentascobrar-filter-select"
-                    >
-                      <option value="Todas">Todas</option>
-                      <option value="PENDIENTE">Pendiente</option>
-                      <option value="VENCIDA">Vencida</option>
-                      <option value="EN_PROCESO">En Proceso</option>
-                      <option value="PAGADO">Pagado</option>
-                    </select>
-                  </div>
-
-                  <div className="cuentascobrar-filter-container cuentascobrar-date-filter">
-                    <label>Filtrar por fecha de pago:</label>
-                    <div className="cuentascobrar-date-picker-container">
-                      <DatePicker
-                        selectsRange={true}
-                        startDate={fechaInicio}
-                        endDate={fechaFin}
-                        onChange={(update) => {
-                          setRangoFechas(update);
-                        }}
-                        isClearable={true}
-                        placeholderText="Seleccione fecha o rango"
-                        dateFormat="dd/MM/yyyy"
-                        customInput={<CustomDatePickerInput />}
-                        locale="es"
-                      />
+                    <div className="cuentascobrar-filter-container">
+                      <label htmlFor="filtroCliente">Filtrar por cliente:</label>
+                      <select
+                        id="filtroCliente"
+                        value={filtroCliente}
+                        onChange={(e) => setFiltroCliente(e.target.value)}
+                        className="cuentascobrar-filter-select"
+                      >
+                        <option value="">Todos los clientes</option>
+                        {clientesUnicos.map((nombre, index) => (
+                          <option key={index} value={nombre}>
+                            {nombre}
+                          </option>
+                        ))}
+                      </select>
                     </div>
+
+                    <div className="cuentascobrar-filter-container">
+                      <label htmlFor="filtroEstatus">Filtrar por estatus:</label>
+                      <select
+                        id="filtroEstatus"
+                        value={filtroEstatus}
+                        onChange={(e) => setFiltroEstatus(e.target.value)}
+                        className="cuentascobrar-filter-select"
+                      >
+                        <option value="Todas">Todas</option>
+                        <option value="PENDIENTE">Pendiente</option>
+                        <option value="VENCIDA">Vencida</option>
+                        <option value="EN_PROCESO">En Proceso</option>
+                        <option value="PAGADO">Pagado</option>
+                      </select>
+                    </div>
+
+                    <div className="cuentascobrar-filter-container cuentascobrar-date-filter">
+                      <label>Filtrar por fecha de pago:</label>
+                      <div className="cuentascobrar-date-picker-container">
+                        <DatePicker
+                          selectsRange={true}
+                          startDate={fechaInicio}
+                          endDate={fechaFin}
+                          onChange={(update) => {
+                            setRangoFechas(update);
+                          }}
+                          isClearable={true}
+                          placeholderText="Seleccione fecha o rango"
+                          dateFormat="dd/MM/yyyy"
+                          customInput={<CustomDatePickerInput />}
+                          locale="es"
+                        />
+                      </div>
+                    </div>
+
                   </div>
-
                 </div>
-              </div>
 
-              <div className="cuentascobrar-table-container">
-                <table className="cuentascobrar-table">
-                  <thead className="cuentascobrar-table-header-fixed">
-                    <tr>
-                      <th>Folio</th>
-                      <th>Fecha de Pago</th>
-                      <th>Cliente</th>
-                      <th>Estatus</th>
-                      <th>Esquema</th>
-                      <th>Monto a Cobrar</th>
-                      <th>Concepto/s</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cuentasOrdenadas.length > 0 ? (
-                      cuentasOrdenadas.map((cuenta) => (
-                        <tr key={cuenta.id}>
-                          <td>{cuenta.folio}</td>
-                          <td>{cuenta.fechaPago}</td>
-                          <td>{cuenta.clienteNombre || cuenta.cliente}</td>
-                          <td>
-                            <span className={`cuentascobrar-estatus-badge ${getEstatusClass(cuenta.estatus)}`}>
-                              {cuenta.estatus}
-                            </span>
-                          </td>
-                          <td>{cuenta.esquema}</td>
-                          <td>
-                            <div className="cuentascobrar-monto-info">
-                              <div>{formatCurrency(cuenta.cantidadCobrar)}</div>
-                              {cuenta.montoPagado > 0 && (
-                                <div className="cuentascobrar-monto-detalle">
-                                  <small>Pagado: {formatCurrency(cuenta.montoPagado)}</small>
-                                  <small>Pendiente: {formatCurrency(cuenta.saldoPendiente)}</small>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="cuentascobrar-concepto-cell">
-                            {cuenta.conceptos.length > 1
-                              ? `${cuenta.conceptos.length} conceptos`
-                              : cuenta.conceptos[0]?.substring(0, 50) + "..."}
-                          </td>
-                          <td>
-                            <div className="cuentascobrar-actions">
-                              <button
-                                className="cuentascobrar-action-btn cuentascobrar-details-btn"
-                                onClick={() => handleVerDetalles(cuenta)}
-                                title="Ver detalles"
-                              >
-                                <img
-                                  src={detailsIcon}
-                                  alt="Detalles"
-                                  className="cuentascobrar-action-icon"
-                                />
-                              </button>
-                              <button
-                                className="cuentascobrar-action-btn cuentascobrar-delete-btn"
-                                onClick={() => handleDeleteCuenta(cuenta)}
-                                title="Eliminar"
-                              >
-                                <img
-                                  src={deleteIcon || "/placeholder.svg"}
-                                  alt="Eliminar"
-                                  className="cuentascobrar-action-icon"
-                                />
-                              </button>
-                              {cuenta.estatus !== "PAGADO" && (
+                <div className="cuentascobrar-table-container">
+                  <table className="cuentascobrar-table">
+                    <thead className="cuentascobrar-table-header-fixed">
+                      <tr>
+                        <th>Folio</th>
+                        <th>Fecha de Pago</th>
+                        <th>Cliente</th>
+                        <th>Estatus</th>
+                        <th>Esquema</th>
+                        <th>Monto a Cobrar</th>
+                        <th>Concepto/s</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cuentasOrdenadas.length > 0 ? (
+                        cuentasOrdenadas.map((cuenta) => (
+                          <tr key={cuenta.id}>
+                            <td>{cuenta.folio}</td>
+                            <td>{cuenta.fechaPago}</td>
+                            <td>{cuenta.clienteNombre || cuenta.cliente}</td>
+                            <td>
+                              <span className={`cuentascobrar-estatus-badge ${getEstatusClass(cuenta.estatus)}`}>
+                                {cuenta.estatus}
+                              </span>
+                            </td>
+                            <td>{cuenta.esquema}</td>
+                            <td>
+                              <div className="cuentascobrar-monto-info">
+                                <div>{formatCurrency(cuenta.cantidadCobrar)}</div>
+                                {cuenta.montoPagado > 0 && (
+                                  <div className="cuentascobrar-monto-detalle">
+                                    <small>Pagado: {formatCurrency(cuenta.montoPagado)}</small>
+                                    <small>Pendiente: {formatCurrency(cuenta.saldoPendiente)}</small>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                            <td className="cuentascobrar-concepto-cell">
+                              {cuenta.conceptos.length > 1
+                                ? `${cuenta.conceptos.length} conceptos`
+                                : cuenta.conceptos[0]?.substring(0, 50) + "..."}
+                            </td>
+                            <td>
+                              <div className="cuentascobrar-actions">
                                 <button
-                                  className="cuentascobrar-action-btn cuentascobrar-edit-btn"
-                                  onClick={() => openModal("editarCuenta", { cuenta })}
-                                  title="Editar cuenta"
+                                  className="cuentascobrar-action-btn cuentascobrar-details-btn"
+                                  onClick={() => handleVerDetalles(cuenta)}
+                                  title="Ver detalles"
                                 >
                                   <img
-                                    src={editIcon}
-                                    alt="Editar"
+                                    src={detailsIcon}
+                                    alt="Detalles"
                                     className="cuentascobrar-action-icon"
                                   />
                                 </button>
-                              )}
-                              {cuenta.estatus !== "PAGADO" && (
                                 <button
-                                  className="cuentascobrar-action-btn cuentascobrar-check-btn"
-                                  onClick={() => handleCheckMarcarCompletada(cuenta)}
-                                  title="Marcar como completado"
+                                  className="cuentascobrar-action-btn cuentascobrar-delete-btn"
+                                  onClick={() => handleDeleteCuenta(cuenta)}
+                                  title="Eliminar"
                                 >
                                   <img
-                                    src={checkIcon || "/placeholder.svg"}
-                                    alt="Completar"
+                                    src={deleteIcon || "/placeholder.svg"}
+                                    alt="Eliminar"
                                     className="cuentascobrar-action-icon"
                                   />
                                 </button>
-                              )}
-                              {cuenta.estatus === "PAGADO" &&
-                                cuenta.comprobantePagoUrl &&
-                                cuenta.comprobantePagoUrl !== "ERROR_UPLOAD" &&
-                                cuenta.comprobantePagoUrl !== "UPLOADING" && (
+                                {cuenta.estatus !== "PAGADO" && (
                                   <button
-                                    className="cuentascobrar-action-btn cuentascobrar-download-btn"
-                                    onClick={() => handleDescargarComprobante(cuenta)}
-                                    title="Descargar comprobante de pago"
+                                    className="cuentascobrar-action-btn cuentascobrar-edit-btn"
+                                    onClick={() => openModal("editarCuenta", { cuenta })}
+                                    title="Editar cuenta"
                                   >
                                     <img
-                                      src={downloadIcon || "/placeholder.svg"}
-                                      alt="Descargar"
+                                      src={editIcon}
+                                      alt="Editar"
                                       className="cuentascobrar-action-icon"
                                     />
                                   </button>
                                 )}
-                              <button
-                                className={`cuentascobrar-action-btn cuentascobrar-download-btn ${cuentasVinculadas.has(cuenta.id)
-                                  ? 'cuentascobrar-request-btn-vinculada'
-                                  : 'cuentascobrar-request-btn-disponible'
-                                  }`}
-                                onClick={async () => {
-                                  if (cuentasVinculadas.has(cuenta.id)) {
-                                    Swal.fire({
-                                      icon: "warning",
-                                      title: "Alerta",
-                                      text: "Ya se generó su solicitud de factura/nota",
-                                    });
-                                  } else {
-                                    openModal("crearSolicitud", { cuenta: cuenta });
+                                {cuenta.estatus !== "PAGADO" && (
+                                  <button
+                                    className="cuentascobrar-action-btn cuentascobrar-check-btn"
+                                    onClick={() => handleCheckMarcarCompletada(cuenta)}
+                                    title="Marcar como completado"
+                                  >
+                                    <img
+                                      src={checkIcon || "/placeholder.svg"}
+                                      alt="Completar"
+                                      className="cuentascobrar-action-icon"
+                                    />
+                                  </button>
+                                )}
+                                {cuenta.estatus === "PAGADO" &&
+                                  cuenta.comprobantePagoUrl &&
+                                  cuenta.comprobantePagoUrl !== "ERROR_UPLOAD" &&
+                                  cuenta.comprobantePagoUrl !== "UPLOADING" && (
+                                    <button
+                                      className="cuentascobrar-action-btn cuentascobrar-download-btn"
+                                      onClick={() => handleDescargarComprobante(cuenta)}
+                                      title="Descargar comprobante de pago"
+                                    >
+                                      <img
+                                        src={downloadIcon || "/placeholder.svg"}
+                                        alt="Descargar"
+                                        className="cuentascobrar-action-icon"
+                                      />
+                                    </button>
+                                  )}
+                                <button
+                                  className={`cuentascobrar-action-btn cuentascobrar-download-btn ${cuentasVinculadas.has(cuenta.id)
+                                    ? 'cuentascobrar-request-btn-vinculada'
+                                    : 'cuentascobrar-request-btn-disponible'
+                                    }`}
+                                  onClick={async () => {
+                                    if (cuentasVinculadas.has(cuenta.id)) {
+                                      Swal.fire({
+                                        icon: "warning",
+                                        title: "Alerta",
+                                        text: "Ya se generó su solicitud de factura/nota",
+                                      });
+                                    } else {
+                                      openModal("crearSolicitud", { cuenta: cuenta });
+                                    }
+                                  }}
+                                  title={
+                                    cuentasVinculadas.has(cuenta.id)
+                                      ? "Solicitud ya generada"
+                                      : "Generar Solicitud de Factura o Nota"
                                   }
-                                }}
-                                title={
-                                  cuentasVinculadas.has(cuenta.id)
-                                    ? "Solicitud ya generada"
-                                    : "Generar Solicitud de Factura o Nota"
-                                }
-                              >
-                                <img
-                                  src={requestIcon || "/placeholder.svg"}
-                                  alt="Emitir"
-                                  className="cuentascobrar-action-icon"
-                                />
-                              </button>
-                            </div>
+                                >
+                                  <img
+                                    src={requestIcon || "/placeholder.svg"}
+                                    alt="Emitir"
+                                    className="cuentascobrar-action-icon"
+                                  />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="8" className="cuentascobrar-no-data">
+                            {filtroEstatus === "Todas"
+                              ? "No hay cuentas por cobrar registradas"
+                              : `No hay cuentas por cobrar con estatus "${filtroEstatus}"`}
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="8" className="cuentascobrar-no-data">
-                          {filtroEstatus === "Todas"
-                            ? "No hay cuentas por cobrar registradas"
-                            : `No hay cuentas por cobrar con estatus "${filtroEstatus}"`}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          </section>
-        </div>
+            </section>
+          </div>
 
-        <SolicitudModal
-          isOpen={modals.crearSolicitud.isOpen}
-          onClose={() => closeModal("crearSolicitud")}
-          onSave={(savedSolicitud) => {
-            setSolicitudes((prev) => [...prev, savedSolicitud]);
-            const cuentaId = modals.crearSolicitud.cuenta?.id;
-            if (cuentaId) {
-              setCuentasVinculadas(prev => new Set([...prev, cuentaId]));
-            }
-            Swal.fire({
-              icon: "success",
-              title: "Éxito",
-              text: "Solicitud creada correctamente",
-            });
-            closeModal("crearSolicitud");
-          }}
-          cotizaciones={modals.crearSolicitud.cotizacion ? [modals.crearSolicitud.cotizacion] : []}
-          cuentasPorCobrar={cuentasPorCobrar}
-          emisores={emisores}
-          preloadedCotizacion={modals.crearSolicitud.cotizacion}
-          preloadedCuenta={modals.crearSolicitud.cuenta}
-        />
+          <SolicitudModal
+            isOpen={modals.crearSolicitud.isOpen}
+            onClose={() => closeModal("crearSolicitud")}
+            onSave={(savedSolicitud) => {
+              setSolicitudes((prev) => [...prev, savedSolicitud]);
+              const cuentaId = modals.crearSolicitud.cuenta?.id;
+              if (cuentaId) {
+                setCuentasVinculadas(prev => new Set([...prev, cuentaId]));
+              }
+              Swal.fire({
+                icon: "success",
+                title: "Éxito",
+                text: "Solicitud creada correctamente",
+              });
+              closeModal("crearSolicitud");
+            }}
+            cotizaciones={modals.crearSolicitud.cotizacion ? [modals.crearSolicitud.cotizacion] : []}
+            cuentasPorCobrar={cuentasPorCobrar}
+            emisores={emisores}
+            preloadedCotizacion={modals.crearSolicitud.cotizacion}
+            preloadedCuenta={modals.crearSolicitud.cuenta}
+          />
 
-        <ComprobanteModal
-          isOpen={modals.comprobante.isOpen}
-          onClose={() => closeModal("comprobante")}
-          onSave={handleMarcarPagada}
-          cuenta={modals.comprobante.cuenta}
-        />
+          <ComprobanteModal
+            isOpen={modals.comprobante.isOpen}
+            onClose={() => closeModal("comprobante")}
+            onSave={handleMarcarPagada}
+            cuenta={modals.comprobante.cuenta}
+          />
 
-        <EditarCuentaModal
-          isOpen={modals.editarCuenta.isOpen}
-          onClose={() => closeModal("editarCuenta")}
-          onSave={(updatedCuenta) => {
-            setCuentasPorCobrar(prev =>
-              prev.map(c => c.id === updatedCuenta.id ? updatedCuenta : c)
-            );
-            closeModal("editarCuenta");
-          }}
-          cuenta={modals.editarCuenta.cuenta}
-        />
+          <EditarCuentaModal
+            isOpen={modals.editarCuenta.isOpen}
+            onClose={() => closeModal("editarCuenta")}
+            onSave={(updatedCuenta) => {
+              setCuentasPorCobrar(prev =>
+                prev.map(c => c.id === updatedCuenta.id ? updatedCuenta : c)
+              );
+              closeModal("editarCuenta");
+            }}
+            cuenta={modals.editarCuenta.cuenta}
+          />
 
-        <ConfirmarEliminacionModal
-          isOpen={modals.confirmarEliminacion.isOpen}
-          onClose={() => closeModal("confirmarEliminacion")}
-          onConfirm={handleConfirmDelete}
-          cuenta={modals.confirmarEliminacion.cuenta}
-        />
+          <ConfirmarEliminacionModal
+            isOpen={modals.confirmarEliminacion.isOpen}
+            onClose={() => closeModal("confirmarEliminacion")}
+            onConfirm={handleConfirmDelete}
+            cuenta={modals.confirmarEliminacion.cuenta}
+          />
 
-        <DetallesCuentaModal
-          isOpen={modals.detalles.isOpen}
-          onClose={() => closeModal("detalles")}
-          cuenta={modals.detalles.cuenta}
-          cotizacion={modals.detalles.cotizacion}
-          tratoNombre={modals.detalles.tratoNombre}
-        />
-      </main>
-    </div>
-  </>
-);
+          <DetallesCuentaModal
+            isOpen={modals.detalles.isOpen}
+            onClose={() => closeModal("detalles")}
+            cuenta={modals.detalles.cuenta}
+            cotizacion={modals.detalles.cotizacion}
+            tratoNombre={modals.detalles.tratoNombre}
+          />
+        </main>
+      </div>
+    </>
+  );
 };
 
 export default AdminCuentasCobrar

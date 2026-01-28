@@ -423,138 +423,81 @@ const ConfiguracionAdministrador = () => {
   }
 
   const cargarDatosIniciales = async () => {
-  setIsLoading(true)
-  try {
-    await Promise.all([
-      fetchExportHistory(),
-      fetchImportHistory()
-    ])
-  } catch (error) {
-    console.error('Error al cargar datos iniciales:', error)
-  } finally {
-    setIsLoading(false)
+    setIsLoading(true)
+    try {
+      await Promise.all([
+        fetchExportHistory(),
+        fetchImportHistory()
+      ])
+    } catch (error) {
+      console.error('Error al cargar datos iniciales:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
-}
 
   useEffect(() => {
-  cargarDatosIniciales()
-}, [])
+    cargarDatosIniciales()
+  }, [])
 
 
   return (
     <>
-     <div className="page-with-header">
-      <Header />
-      {isLoading && (
-        <div className="config-admin-loading">
-          <div className="spinner"></div>
-          <p>Cargando configuración...</p>
+      <div className="page-with-header">
+        <Header />
+        {isLoading && (
+          <div className="config-admin-loading">
+            <div className="spinner"></div>
+            <p>Cargando configuración...</p>
+          </div>
+        )}
+        {/* Configuration Navigation */}
+        <div className="config-admin-config-header">
+          <h2 className="config-admin-config-title">Configuración</h2>
+          <nav className="config-admin-config-nav">
+            <div className="config-admin-nav-item" onClick={() => navigate("/configuracion_plantillas")}>
+              Plantillas de correo
+            </div>
+            <div className="config-admin-nav-item config-admin-nav-item-active">Administrador de datos</div>
+            <div className="config-admin-nav-item" onClick={() => navigate("/configuracion_empresa")}>
+              Configuración de la empresa
+            </div>
+            <div className="config-admin-nav-item" onClick={() => navigate("/configuracion_almacenamiento")}>
+              Almacenamiento
+            </div>
+            <div className="config-admin-nav-item" onClick={() => navigate("/configuracion_copias_seguridad")}>
+              Copias de Seguridad
+            </div>
+            <div className="config-admin-nav-item" onClick={() => navigate("/configuracion_usuarios")}>
+              Usuarios y roles
+            </div>
+            <div
+              className="config-admin-nav-item"
+              onClick={() => navigate("/configuracion_gestion_sectores_plataformas")}
+            >
+              Sectores y plataformas
+            </div>
+            <div
+              className="config-admin-nav-item"
+              onClick={() => navigate("/configuracion_correos")}
+            >
+              Historial de Correos
+            </div>
+          </nav>
         </div>
-      )}
-      {/* Configuration Navigation */}
-      <div className="config-admin-config-header">
-        <h2 className="config-admin-config-title">Configuración</h2>
-        <nav className="config-admin-config-nav">
-          <div className="config-admin-nav-item" onClick={() => navigate("/configuracion_plantillas")}>
-            Plantillas de correo
-          </div>
-          <div className="config-admin-nav-item config-admin-nav-item-active">Administrador de datos</div>
-          <div className="config-admin-nav-item" onClick={() => navigate("/configuracion_empresa")}>
-            Configuración de la empresa
-          </div>
-          <div className="config-admin-nav-item" onClick={() => navigate("/configuracion_almacenamiento")}>
-            Almacenamiento
-          </div>
-          <div className="config-admin-nav-item" onClick={() => navigate("/configuracion_copias_seguridad")}>
-            Copias de Seguridad
-          </div>
-          <div className="config-admin-nav-item" onClick={() => navigate("/configuracion_usuarios")}>
-            Usuarios y roles
-          </div>
-          <div
-            className="correo-plantillas-nav-item"
-            onClick={() => navigate("/configuracion_gestion_sectores_plataformas")}
-          >
-            Sectores y plataformas
-          </div>
-        </nav>
-      </div>
 
-      <main className="config-admin-main-content">
-        <div className="config-admin-container">
-          {/* Importar Datos */}
-          <section className="config-admin-section">
-            <h3 className="config-admin-section-title">Importar datos</h3>
+        <main className="config-admin-main-content">
+          <div className="config-admin-container">
+            {/* Importar Datos */}
+            <section className="config-admin-section">
+              <h3 className="config-admin-section-title">Importar datos</h3>
 
-            <div className="config-admin-form-group">
-              <label htmlFor="import-tipos-datos">Tipos de datos</label>
-              <select
-                id="import-tipos-datos"
-                value={importData.tiposDatos}
-                onChange={(e) => handleImportInputChange("tiposDatos", e.target.value)}
-                className="config-admin-form-control"
-              >
-                {tiposDatosOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="config-admin-template-section">
-              <label>Plantilla de importación</label>
-              <button className="config-admin-btn config-admin-btn-template" onClick={handleDownloadTemplate}>
-                <img src={downloadIcon || "/placeholder.svg"} alt="Descargar" className="config-admin-btn-icon" />
-                Descargar plantilla específica
-              </button>
-            </div>
-
-            <div className="config-admin-file-upload-area">
-              <div className="config-admin-file-drop-zone">
-                <div className="config-admin-upload-icon">
-                  <img src={uploadIcon || "/placeholder.svg"} alt="Upload" />
-                </div>
-                <p>Arrastra y suelta un archivo CSV aquí</p>
-                <p className="config-admin-file-formats">o haz clic para seleccionar un archivo</p>
-                <input type="file" accept=".csv" onChange={handleFileUpload} className="config-admin-file-input" />
-                {importData.archivo && (
-                  <div className="config-admin-selected-file">
-                    <span>📄 {importData.archivo.name}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="config-admin-info-box">
-              <div className="config-admin-info-icon">
-                <img src={alertIcon || "/placeholder.svg"} alt="Info" />
-              </div>
-              <div className="config-admin-info-content">
-                <strong>Formato de archivo</strong>
-                <p>{getDataTypeInfo(importData.tiposDatos).descripcion}</p>
-                <p>{getDataTypeInfo(importData.tiposDatos).campos}</p>
-              </div>
-            </div>
-
-            <div className="config-admin-form-actions">
-              <button className="config-admin-btn config-admin-btn-primary" onClick={handleImportData}>
-                Importar datos
-              </button>
-            </div>
-          </section>
-
-          {/* Exportar Datos */}
-          <section className="config-admin-section">
-            <h3 className="config-admin-section-title">Exportar datos</h3>
-
-            <div className="config-admin-form-row">
               <div className="config-admin-form-group">
-                <label htmlFor="export-tipos-datos">Tipos de datos</label>
+                <label htmlFor="import-tipos-datos">Tipos de datos</label>
                 <select
-                  id="export-tipos-datos"
-                  value={exportData.tiposDatos}
-                  onChange={(e) => handleExportInputChange("tiposDatos", e.target.value)}
+                  id="import-tipos-datos"
+                  value={importData.tiposDatos}
+                  onChange={(e) => handleImportInputChange("tiposDatos", e.target.value)}
                   className="config-admin-form-control"
                 >
                   {tiposDatosOptions.map((option) => (
@@ -565,128 +508,191 @@ const ConfiguracionAdministrador = () => {
                 </select>
               </div>
 
-              <div className="config-admin-form-group">
-                <label htmlFor="export-formato">Formato de exportación</label>
-                <select
-                  id="export-formato"
-                  value={exportData.formato}
-                  onChange={(e) => handleExportInputChange("formato", e.target.value)}
-                  className="config-admin-form-control"
-                >
-                  {formatosExportacion.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+              <div className="config-admin-template-section">
+                <label>Plantilla de importación</label>
+                <button className="config-admin-btn config-admin-btn-template" onClick={handleDownloadTemplate}>
+                  <img src={downloadIcon || "/placeholder.svg"} alt="Descargar" className="config-admin-btn-icon" />
+                  Descargar plantilla específica
+                </button>
               </div>
-            </div>
 
-            <div className="config-admin-date-range-section">
-              <label>Rango de fechas (opcional)</label>
-              <div className="config-admin-date-row">
-                <input
-                  type="date"
-                  value={exportData.fechaInicio}
-                  onChange={(e) => handleExportInputChange("fechaInicio", e.target.value)}
-                  className="config-admin-form-control config-admin-date-input"
-                  placeholder="dd/mm/aaaa"
-                />
-                <input
-                  type="date"
-                  value={exportData.fechaFin}
-                  onChange={(e) => handleExportInputChange("fechaFin", e.target.value)}
-                  className="config-admin-form-control config-admin-date-input"
-                  placeholder="dd/mm/aaaa"
-                />
+              <div className="config-admin-file-upload-area">
+                <div className="config-admin-file-drop-zone">
+                  <div className="config-admin-upload-icon">
+                    <img src={uploadIcon || "/placeholder.svg"} alt="Upload" />
+                  </div>
+                  <p>Arrastra y suelta un archivo CSV aquí</p>
+                  <p className="config-admin-file-formats">o haz clic para seleccionar un archivo</p>
+                  <input type="file" accept=".csv" onChange={handleFileUpload} className="config-admin-file-input" />
+                  {importData.archivo && (
+                    <div className="config-admin-selected-file">
+                      <span>📄 {importData.archivo.name}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-              <small className="config-admin-help-text">Deja en blanco para exportar todos los datos</small>
-            </div>
 
-            <div className="config-admin-form-actions">
-              <button className="config-admin-btn config-admin-btn-primary" onClick={handleExportData}>
-                Exportar datos
-              </button>
-            </div>
-          </section>
+              <div className="config-admin-info-box">
+                <div className="config-admin-info-icon">
+                  <img src={alertIcon || "/placeholder.svg"} alt="Info" />
+                </div>
+                <div className="config-admin-info-content">
+                  <strong>Formato de archivo</strong>
+                  <p>{getDataTypeInfo(importData.tiposDatos).descripcion}</p>
+                  <p>{getDataTypeInfo(importData.tiposDatos).campos}</p>
+                </div>
+              </div>
 
-          {/* Historial de Exportaciones */}
-          <section className="config-admin-section">
-            <h3 className="config-admin-section-title">Historial de exportaciones</h3>
-            <div className="config-admin-export-history">
-              {exportHistory.length > 0 ? (
-                <div className="config-admin-history-list">
-                  {exportHistory.map((exportItem) => (
-                    <div key={exportItem.id} className="config-admin-history-item">
-                      <div className="config-admin-history-info">
-                        <h4>{exportItem.nombre}</h4>
-                        <div className="config-admin-history-details">
-                          <span className="config-admin-history-type">
-                            {tiposDatosOptions.find((t) => t.value === exportItem.tipoDatos)?.label} - {exportItem.formato.toUpperCase()}
-                          </span>
-                          <span className="config-admin-history-size">{exportItem.tamaño}</span>
-                          <span className="config-admin-history-date">{formatDate(exportItem.fecha)}</span>
+              <div className="config-admin-form-actions">
+                <button className="config-admin-btn config-admin-btn-primary" onClick={handleImportData}>
+                  Importar datos
+                </button>
+              </div>
+            </section>
+
+            {/* Exportar Datos */}
+            <section className="config-admin-section">
+              <h3 className="config-admin-section-title">Exportar datos</h3>
+
+              <div className="config-admin-form-row">
+                <div className="config-admin-form-group">
+                  <label htmlFor="export-tipos-datos">Tipos de datos</label>
+                  <select
+                    id="export-tipos-datos"
+                    value={exportData.tiposDatos}
+                    onChange={(e) => handleExportInputChange("tiposDatos", e.target.value)}
+                    className="config-admin-form-control"
+                  >
+                    {tiposDatosOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="config-admin-form-group">
+                  <label htmlFor="export-formato">Formato de exportación</label>
+                  <select
+                    id="export-formato"
+                    value={exportData.formato}
+                    onChange={(e) => handleExportInputChange("formato", e.target.value)}
+                    className="config-admin-form-control"
+                  >
+                    {formatosExportacion.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="config-admin-date-range-section">
+                <label>Rango de fechas (opcional)</label>
+                <div className="config-admin-date-row">
+                  <input
+                    type="date"
+                    value={exportData.fechaInicio}
+                    onChange={(e) => handleExportInputChange("fechaInicio", e.target.value)}
+                    className="config-admin-form-control config-admin-date-input"
+                    placeholder="dd/mm/aaaa"
+                  />
+                  <input
+                    type="date"
+                    value={exportData.fechaFin}
+                    onChange={(e) => handleExportInputChange("fechaFin", e.target.value)}
+                    className="config-admin-form-control config-admin-date-input"
+                    placeholder="dd/mm/aaaa"
+                  />
+                </div>
+                <small className="config-admin-help-text">Deja en blanco para exportar todos los datos</small>
+              </div>
+
+              <div className="config-admin-form-actions">
+                <button className="config-admin-btn config-admin-btn-primary" onClick={handleExportData}>
+                  Exportar datos
+                </button>
+              </div>
+            </section>
+
+            {/* Historial de Exportaciones */}
+            <section className="config-admin-section">
+              <h3 className="config-admin-section-title">Historial de exportaciones</h3>
+              <div className="config-admin-export-history">
+                {exportHistory.length > 0 ? (
+                  <div className="config-admin-history-list">
+                    {exportHistory.map((exportItem) => (
+                      <div key={exportItem.id} className="config-admin-history-item">
+                        <div className="config-admin-history-info">
+                          <h4>{exportItem.nombre}</h4>
+                          <div className="config-admin-history-details">
+                            <span className="config-admin-history-type">
+                              {tiposDatosOptions.find((t) => t.value === exportItem.tipoDatos)?.label} - {exportItem.formato.toUpperCase()}
+                            </span>
+                            <span className="config-admin-history-size">{exportItem.tamaño}</span>
+                            <span className="config-admin-history-date">{formatDate(exportItem.fecha)}</span>
+                          </div>
+                        </div>
+                        <div className="config-admin-history-actions">
+                          <button
+                            className="config-admin-btn-action config-admin-download"
+                            onClick={() => handleDownloadExport(exportItem)}
+                            title="Descargar"
+                          >
+                            <img src={downloadIcon || "/placeholder.svg"} alt="Descargar" />
+                          </button>
+                          <button
+                            className="config-admin-btn-action config-admin-delete"
+                            onClick={() => handleDeleteExport(exportItem.id)}
+                            title="Eliminar"
+                          >
+                            ✕
+                          </button>
                         </div>
                       </div>
-                      <div className="config-admin-history-actions">
-                        <button
-                          className="config-admin-btn-action config-admin-download"
-                          onClick={() => handleDownloadExport(exportItem)}
-                          title="Descargar"
-                        >
-                          <img src={downloadIcon || "/placeholder.svg"} alt="Descargar" />
-                        </button>
-                        <button
-                          className="config-admin-btn-action config-admin-delete"
-                          onClick={() => handleDeleteExport(exportItem.id)}
-                          title="Eliminar"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="config-admin-no-history">
-                  <p>No hay exportaciones en el historial</p>
-                </div>
-              )}
-            </div>
-          </section>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="config-admin-no-history">
+                    <p>No hay exportaciones en el historial</p>
+                  </div>
+                )}
+              </div>
+            </section>
 
-          <section className="config-admin-section">
-            <h3 className="config-admin-section-title">Historial de importaciones</h3>
-            <div className="config-admin-export-history">
-              {importHistory.length > 0 ? (
-                <div className="config-admin-history-list">
-                  {importHistory.map((importItem) => (
-                    <div key={importItem.id} className="config-admin-history-item">
-                      <div className="config-admin-history-info">
-                        <h4>{importItem.nombreArchivo}</h4>
-                        <div className="config-admin-history-details">
-                          <span className="config-admin-history-type">
-                            {tiposDatosOptions.find((t) => t.value === importItem.tipoDatos)?.label}
-                          </span>
-                          <span className="config-admin-history-date">{formatDate(importItem.fechaCreacion)}</span>
-                          <span className="config-admin-history-size">
-                            {importItem.registrosExitosos} exitosos / {importItem.registrosFallidos} fallidos
-                          </span>
+            <section className="config-admin-section">
+              <h3 className="config-admin-section-title">Historial de importaciones</h3>
+              <div className="config-admin-export-history">
+                {importHistory.length > 0 ? (
+                  <div className="config-admin-history-list">
+                    {importHistory.map((importItem) => (
+                      <div key={importItem.id} className="config-admin-history-item">
+                        <div className="config-admin-history-info">
+                          <h4>{importItem.nombreArchivo}</h4>
+                          <div className="config-admin-history-details">
+                            <span className="config-admin-history-type">
+                              {tiposDatosOptions.find((t) => t.value === importItem.tipoDatos)?.label}
+                            </span>
+                            <span className="config-admin-history-date">{formatDate(importItem.fechaCreacion)}</span>
+                            <span className="config-admin-history-size">
+                              {importItem.registrosExitosos} exitosos / {importItem.registrosFallidos} fallidos
+                            </span>
+                          </div>
+                          {importItem.errores && <p className="config-admin-history-errors">Errores: {importItem.errores}</p>}
                         </div>
-                        {importItem.errores && <p className="config-admin-history-errors">Errores: {importItem.errores}</p>}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="config-admin-no-history">
-                  <p>No hay importaciones en el historial</p>
-                </div>
-              )}
-            </div>
-          </section>
-        </div>
-      </main>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="config-admin-no-history">
+                    <p>No hay importaciones en el historial</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        </main>
       </div>
     </>
   )

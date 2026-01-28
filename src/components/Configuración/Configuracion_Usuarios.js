@@ -1087,10 +1087,16 @@ const ConfiguracionUsuarios = () => {
             </div>
             <div className="config-usuarios-nav-item config-usuarios-nav-item-active">Usuarios y roles</div>
             <div
-              className="correo-plantillas-nav-item"
+              className="config-usuarios-nav-item"
               onClick={() => navigate("/configuracion_gestion_sectores_plataformas")}
             >
               Sectores y plataformas
+            </div>
+            <div
+              className="config-usuarios-nav-item"
+              onClick={() => navigate("/configuracion_correos")}
+            >
+              Historial de Correos
             </div>
           </nav>
         </div>

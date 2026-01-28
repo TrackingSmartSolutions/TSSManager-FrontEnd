@@ -43,7 +43,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true,
   }
 
   return (
-    <div className="modal-overlay" onClick={closeOnOverlayClick ? onClose : () => {}}>
+    <div className="modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
       <div className={`modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">{title}</h2>
@@ -544,6 +544,12 @@ const ConfiguracionGestionSectoresPlataformas = () => {
             </div>
             <div className="sectores-plataformas-nav-item sectores-plataformas-nav-item-active">
               Sectores y Plataformas
+            </div>
+            <div
+              className="sectores-plataformas-nav-item"
+              onClick={() => navigate("/configuracion_correos")}
+            >
+              Historial de Correos
             </div>
           </nav>
         </div>

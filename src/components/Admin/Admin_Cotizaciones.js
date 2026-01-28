@@ -563,7 +563,8 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
     let isrEstatal = 0;
     let isrFederal = 0;
 
-    if (formData.empresaData && formData.empresaData.regimenFiscal === "601") {
+    if (formData.empresaData &&
+      (formData.empresaData.regimenFiscal === "601" || formData.empresaData.regimenFiscal === "627")) {
       const domicilioFiscal = (formData.empresaData.domicilioFiscal || "").toLowerCase();
       const hasGuanajuato = domicilioFiscal.includes("gto") || domicilioFiscal.includes("guanajuato");
       const cpMatch = domicilioFiscal.match(/\b(36|37|38)\d{4}\b/);
@@ -1449,11 +1450,11 @@ const AdminCotizaciones = () => {
       try {
         const fasesInteres = "COTIZACION_PROPUESTA_PRACTICA,NEGOCIACION_REVISION,CERRADO_GANADO";
         const [
-          empresasPorFaseResp, 
-          cotizacionesResp,    
-          usersResp,           
-          emisoresResp,        
-          cuentasResp          
+          empresasPorFaseResp,
+          cotizacionesResp,
+          usersResp,
+          emisoresResp,
+          cuentasResp
         ] = await Promise.all([
           fetchWithToken(`${API_BASE_URL}/empresas/por-fases-trato?fases=${fasesInteres}`),
           fetchWithToken(`${API_BASE_URL}/cotizaciones`),
@@ -1475,7 +1476,7 @@ const AdminCotizaciones = () => {
         const emisores = Array.isArray(emisoresData) ? emisoresData : emisoresData.data || [];
         const cuentasPorCobrar = Array.isArray(cuentasData) ? cuentasData : cuentasData.data || [];
 
-        setClientes(listaClientes); 
+        setClientes(listaClientes);
         setCotizaciones(cotizaciones);
 
         if (cotizaciones.length > 0) {

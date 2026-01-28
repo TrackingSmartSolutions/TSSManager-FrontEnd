@@ -39,6 +39,28 @@
   --correo-plantillas-font-size-xxl: 1.8rem;
 }
 
+.config-nav-item {
+  padding: 0.75rem 1rem; 
+  font-size: 0.9rem;     
+  font-weight: 500;
+  color: #666666;        
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+  white-space: nowrap;  
+}
+
+.config-nav-item:hover {
+  color: #037ce0; 
+  background-color: rgba(3, 124, 224, 0.05);
+}
+
+.config-nav-item.active {
+  color: #037ce0; 
+  border-bottom-color: #037ce0; 
+  background-color: rgba(3, 124, 224, 0.05);
+}
+
 /* Configuration Header and Navigation */
 .correo-plantillas-config-header {
   background-color: var(--correo-plantillas-panel-background);
