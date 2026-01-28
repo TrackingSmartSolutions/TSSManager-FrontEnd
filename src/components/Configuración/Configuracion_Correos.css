@@ -119,8 +119,11 @@
 
 .correos-table-container {
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: calc(100vh - 300px);
   border: 1px solid var(--correos-border-color);
   border-radius: var(--correos-border-radius-sm);
+  background-color: white;
 }
 
 .correos-table {
@@ -130,6 +133,9 @@
 }
 
 .correos-table th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   background-color: #f8f9fa;
   padding: var(--correos-spacing-md);
   text-align: left;
@@ -138,6 +144,7 @@
   color: var(--correos-text-color);
   border-bottom: 1px solid var(--correos-border-color);
   border-right: 1px solid var(--correos-border-color);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .correos-table th:last-child {
