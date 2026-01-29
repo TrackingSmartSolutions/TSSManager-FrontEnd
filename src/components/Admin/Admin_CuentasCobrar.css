@@ -1124,7 +1124,7 @@
 }
 
 .cuentascobrar-date-picker {
-  padding: 8px 70px 8px 12px; 
+  padding: 8px 70px 8px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
@@ -1207,20 +1207,109 @@
   width: 100%;
 }
 
+.detalle-header-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 0.85rem;
+}
+
+.detalle-folio-text {
+  color: var(--cotizaciones-secondary-color);
+  font-weight: bold;
+}
+
+.detalle-seccion-titulo {
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+  color: var(--cuentascobrar-text-color);
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.detalle-conceptos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detalle-concepto-card {
+  padding: 12px;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  transition: background-color 0.2s;
+}
+
+.detalle-concepto-card:hover {
+  background-color: #fcfcfc;
+}
+
+.detalle-concepto-main {
+  flex: 1;
+}
+
+.detalle-concepto-badge {
+  font-weight: 600;
+  color: var(--cotizaciones-secondary-color);
+  margin-right: 8px;
+}
+
+.detalle-concepto-separador {
+  margin: 0 8px;
+  color: #ccc;
+}
+
+.detalle-concepto-importe {
+  font-weight: bold;
+  color: var(--cuentascobrar-text-color);
+  margin-left: 15px;
+  white-space: nowrap;
+}
+
+.detalle-footer-total {
+  text-align: right;
+  margin-top: 25px;
+  padding-top: 15px;
+  border-top: 2px solid var(--cuentascobrar-primary-color);
+  display: flex;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.detalle-total-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.detalle-total-monto {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--cuentascobrar-primary-color);
+}
+
 @media (max-width: 768px) {
   .cuentascobrar-date-picker-wrapper {
     width: 100%;
     min-width: auto;
   }
-  
+
   .cuentascobrar-date-picker {
     min-width: auto;
   }
-  
+
   .cuentascobrar-date-filter {
     width: 100%;
   }
-  
+
   .cuentascobrar-date-picker-container {
     width: 100%;
   }

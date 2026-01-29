@@ -236,16 +236,14 @@ const NuevoConceptoModal = ({ isOpen, onClose, onSave, concepto }) => {
   useEffect(() => {
     if (isOpen) {
       if (concepto) {
-        // Si hay un concepto (modo edición), prellenar el formulario
         setFormData({
-          cantidad: concepto.cantidad.toString(),
-          unidad: concepto.unidad,
-          concepto: concepto.concepto,
-          precioUnitario: concepto.precioUnitario.toString(),
-          descuento: concepto.descuento.toString(),
+          cantidad: concepto.cantidad?.toString() || "1",
+          unidad: concepto.unidad || "Servicios",
+          concepto: concepto.concepto || "",
+          precioUnitario: concepto.precioUnitario?.toString() || "0",
+          descuento: concepto.descuento?.toString() || "0",
         });
       } else {
-        // Si es nuevo concepto, reiniciar valores
         setFormData({
           cantidad: "",
           unidad: "Servicios",
@@ -2063,4 +2061,5 @@ export default AdminCotizaciones;
 export { CotizacionModal };
 export { CrearCuentasModal };
 export { SubirArchivoModal };
+export { NuevoConceptoModal };
 export { CompartirCotizacionModal }; 

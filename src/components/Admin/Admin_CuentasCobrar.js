@@ -11,6 +11,7 @@ import detailsIcon from "../../assets/icons/lupa.png"
 import checkIcon from "../../assets/icons/check.png"
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
+import { NuevoConceptoModal } from '../Admin/Admin_Cotizaciones';
 import { API_BASE_URL } from "../Config/Config";
 
 const fetchWithToken = async (url, options = {}) => {
@@ -198,6 +199,21 @@ const numeroALetras = (numero) => {
 
   return resultado.charAt(0).toUpperCase() + resultado.slice(1)
 }
+
+const getEstatusClass = (estatus) => {
+  switch (estatus) {
+    case "PAGADO":
+      return "cuentascobrar-estatus-pagado";
+    case "EN_PROCESO":
+      return "cuentascobrar-estatus-en-proceso";
+    case "VENCIDA":
+      return "cuentascobrar-estatus-vencida";
+    case "PENDIENTE":
+    default:
+      return "cuentascobrar-estatus-pendiente";
+  }
+};
+
 
 // Modal para Agregar Comprobante de Pago
 const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
@@ -938,162 +954,171 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
 const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta }) => {
   const [formData, setFormData] = useState({
     fechaPago: "",
-    cantidadCobrar: "",
+    cantidadCobrar: 0,
     conceptos: [],
   });
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [showConceptoModal, setShowConceptoModal] = useState(false);
+  const [editingIndex, setEditingIndex] = useState(null);
 
   useEffect(() => {
     if (isOpen && cuenta) {
       setFormData({
         fechaPago: cuenta.fechaPago || "",
-        cantidadCobrar: cuenta.cantidadCobrar || "",
-        conceptos: Array.isArray(cuenta.conceptos)
-          ? cuenta.conceptos
-          : (cuenta.conceptos ? cuenta.conceptos.split(", ") : []),
+        conceptos: Array.isArray(cuenta.conceptos) ? cuenta.conceptos : [],
+        cantidadCobrar: cuenta.cantidadCobrar || 0,
       });
-      setErrors({});
     }
   }, [isOpen, cuenta]);
 
-  const handleAddConcepto = () => {
-    setFormData(prev => ({
-      ...prev,
-      conceptos: [...prev.conceptos, ""]
-    }));
-  };
-
   const handleRemoveConcepto = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      conceptos: prev.conceptos.filter((_, i) => i !== index)
-    }));
+    const filtrados = formData.conceptos.filter((_, i) => i !== index);
+    const nuevoTotal = filtrados.reduce((sum, c) => sum + (parseFloat(c.importeTotal) || 0), 0);
+    setFormData({
+      ...formData,
+      conceptos: filtrados,
+      cantidadCobrar: nuevoTotal
+    });
   };
 
-  const handleConceptoChange = (index, value) => {
-    setFormData(prev => ({
-      ...prev,
-      conceptos: prev.conceptos.map((concepto, i) =>
-        i === index ? value : concepto
-      )
-    }));
+  const handleSaveConcepto = (conceptoData) => {
+    const nuevosConceptos = [...formData.conceptos];
+    if (editingIndex !== null) {
+      nuevosConceptos[editingIndex] = conceptoData;
+    } else {
+      nuevosConceptos.push(conceptoData);
+    }
+
+    const nuevoTotal = nuevosConceptos.reduce((sum, c) => sum + (parseFloat(c.importeTotal) || 0), 0);
+
+    setFormData({
+      ...formData,
+      conceptos: nuevosConceptos,
+      cantidadCobrar: nuevoTotal
+    });
+    setShowConceptoModal(false);
+    setEditingIndex(null);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    // Validación de conceptos
-    const conceptosValidos = formData.conceptos.filter(concepto => concepto.trim() !== "");
-    if (conceptosValidos.length === 0) {
-      setErrors(prev => ({ ...prev, conceptos: "Debe tener al menos un concepto válido" }));
+    if (formData.conceptos.length === 0) {
+      Swal.fire("Error", "Debe tener al menos un concepto", "error");
       return;
     }
-
-    // Limpiar errores si la validación pasa
-    setErrors({});
-    setIsLoading(true);
-
-    try {
-      const updatedCuenta = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}`, {
-        method: "PUT",
-        body: JSON.stringify({
-          fechaPago: formData.fechaPago,
-          cantidadCobrar: parseFloat(formData.cantidadCobrar),
-          conceptos: conceptosValidos, // Enviar solo conceptos válidos (sin espacios vacíos)
-        }),
-        headers: { "Content-Type": "application/json" },
-      });
-
-      onSave(updatedCuenta);
-      onClose();
-      Swal.fire({
-        icon: "success",
-        title: "Éxito",
-        text: "Cuenta por cobrar actualizada correctamente",
-      });
-    } catch (error) {
-      Swal.fire({ icon: "error", title: "Error", text: error.message });
-    } finally {
-      setIsLoading(false);
-    }
+    onSave(formData);
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Editar Cuenta por Cobrar" size="md">
-      <form onSubmit={handleSubmit} className="cuentascobrar-form">
-        <div className="cuentascobrar-form-group">
-          <label htmlFor="fechaPago">Fecha de Pago <span className="required"> *</span></label>
-          <input
-            type="date"
-            id="fechaPago"
-            value={formData.fechaPago}
-            onChange={(e) => setFormData(prev => ({ ...prev, fechaPago: e.target.value }))}
-            className="cuentascobrar-form-control"
-          />
-        </div>
+    <>
+      <Modal isOpen={isOpen} onClose={onClose} title="Editar Conceptos de Cuenta" size="lg">
+        <form onSubmit={handleSubmit} className="cuentascobrar-form">
+          <div className="cuentascobrar-form-group">
+            <label>Fecha de Vencimiento</label>
+            <input
+              type="date"
+              value={formData.fechaPago}
+              onChange={(e) => setFormData({ ...formData, fechaPago: e.target.value })}
+              className="cuentascobrar-form-control"
+            />
+          </div>
 
-        <div className="cuentascobrar-form-group">
-          <label htmlFor="cantidadCobrar">Cantidad a Cobrar <span className="required"> *</span></label>
-          <input
-            type="number"
-            step="0.01"
-            id="cantidadCobrar"
-            value={formData.cantidadCobrar}
-            onChange={(e) => setFormData(prev => ({ ...prev, cantidadCobrar: e.target.value }))}
-            className="cuentascobrar-form-control"
-          />
-        </div>
+          <div className="cuentascobrar-form-group">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label>Conceptos Facturables</label>
+              <button
+                type="button"
+                onClick={() => { setEditingIndex(null); setShowConceptoModal(true); }}
+                className="cotizaciones-btn cotizaciones-btn-primary"
+                style={{ minWidth: 'auto', padding: '5px 15px', borderRadius: '4px' }}
+              >
+                + Agregar Concepto
+              </button>
+            </div>
 
-        <div className="cuentascobrar-form-group">
-          <label>Conceptos <span className="required"> *</span></label>
-          <div className="cuentascobrar-conceptos-container">
-            {formData.conceptos.map((concepto, index) => (
-              <div key={index} className="cuentascobrar-concepto-item">
-                <input
-                  type="text"
-                  value={concepto}
-                  onChange={(e) => handleConceptoChange(index, e.target.value)}
-                  placeholder={`Concepto ${index + 1}`}
-                  className="cuentascobrar-form-control"
-                />
-                {formData.conceptos.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveConcepto(index)}
-                    className="cuentascobrar-btn-remove-concepto"
-                    title="Eliminar concepto"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            ))}
+            <div className="cotizaciones-conceptos-list" style={{ marginTop: '10px', border: 'none' }}>
+              {formData.conceptos.map((c, index) => (
+                <div key={index} className="cotizaciones-concepto-item" style={{ marginBottom: '10px', borderRadius: '8px', border: '1px solid #e0e0e0' }}>
+                  <div className="cotizaciones-concepto-info">
+                    <div className="cotizaciones-concepto-row">
+                      <span className="cotizaciones-concepto-label">Cantidad:</span>
+                      <span>{c.cantidad}</span>
+                    </div>
+                    <div className="cotizaciones-concepto-row">
+                      <span className="cotizaciones-concepto-label">Unidad:</span>
+                      <span>{c.unidad}</span>
+                    </div>
+                    <div className="cotizaciones-concepto-row">
+                      <span className="cotizaciones-concepto-label">Concepto:</span>
+                      <span className="cotizaciones-concepto-text" title={c.concepto}>{c.concepto}</span>
+                    </div>
+                    <div className="cotizaciones-concepto-row">
+                      <span className="cotizaciones-concepto-label">Precio:</span>
+                      <span>${parseFloat(c.precioUnitario || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="cotizaciones-concepto-row">
+                      <span className="cotizaciones-concepto-label">Descuento:</span>
+                      <span>{c.descuento || 0}%</span>
+                    </div>
+                    <div className="cotizaciones-concepto-row">
+                      <span className="cotizaciones-concepto-label">Total:</span>
+                      <span className="cotizaciones-concepto-total">${parseFloat(c.importeTotal || 0).toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <div className="cotizaciones-concepto-actions">
+                    <button type="button" onClick={() => { setEditingIndex(index); setShowConceptoModal(true); }} className="cotizaciones-action-btn cotizaciones-edit-btn">
+                      <img src={editIcon} alt="Editar" className="cotizaciones-action-icon" />
+                    </button>
+                    <button type="button" onClick={() => handleRemoveConcepto(index)} className="cotizaciones-action-btn cotizaciones-delete-btn">
+                      <img src={deleteIcon} alt="Eliminar" className="cotizaciones-action-icon" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="cuentascobrar-form-group">
+            <label>Total de la cuenta: <strong>${parseFloat(formData.cantidadCobrar).toFixed(2)}</strong></label>
+          </div>
+
+          <div className="cotizaciones-form-actions">
             <button
               type="button"
-              onClick={handleAddConcepto}
-              className="cuentascobrar-btn-add-concepto"
+              onClick={onClose}
+              className="cotizaciones-btn cotizaciones-btn-cancel"
             >
-              + Agregar Concepto
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="cotizaciones-btn cotizaciones-btn-primary"
+            >
+              Guardar Cambios
             </button>
           </div>
-        </div>
+        </form>
+      </Modal>
 
-        <div className="cuentascobrar-form-actions">
-          <button type="button" onClick={onClose} className="cuentascobrar-btn cuentascobrar-btn-cancel">
-            Cancelar
-          </button>
-          <button type="submit" className="cuentascobrar-btn cuentascobrar-btn-primary" disabled={isLoading}>
-            {isLoading ? "Guardando..." : "Guardar Cambios"}
-          </button>
-        </div>
-      </form>
-    </Modal>
+      {showConceptoModal && (
+        <NuevoConceptoModal
+          isOpen={showConceptoModal}
+          onClose={() => {
+            setShowConceptoModal(false);
+            setEditingIndex(null);
+          }}
+          onSave={handleSaveConcepto}
+          concepto={editingIndex !== null ? formData.conceptos[editingIndex] : null}
+        />
+      )}
+    </>
   );
 };
 
 // Modal para Ver Detalles de Cuenta Por Cobrar
-const DetallesCuentaModal = ({ isOpen, onClose, cuenta, cotizacion, tratoNombre }) => {
+const DetallesCuentaModal = ({ isOpen, onClose, cuenta, tratoNombre }) => {
+  if (!cuenta) return null;
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("es-MX", {
       style: "currency",
@@ -1101,63 +1126,45 @@ const DetallesCuentaModal = ({ isOpen, onClose, cuenta, cotizacion, tratoNombre 
     }).format(amount);
   };
 
-  if (!cuenta || !cotizacion) return null;
-
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Detalles de la Cuenta por Cobrar" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Detalles de la Cuenta por Cobrar" size="lg">
       <div className="cuentascobrar-detalles-container">
-        <div className="cuentascobrar-detalle-section">
-          <h4 className="cuentascobrar-detalle-titulo">Cliente</h4>
-          <p className="cuentascobrar-detalle-valor">{cuenta.clienteNombre || cuenta.cliente?.razonSocial}</p>
-        </div>
 
-        {tratoNombre && (
-          <div className="cuentascobrar-detalle-section">
-            <h4 className="cuentascobrar-detalle-titulo">Trato Vinculado</h4>
-            <p className="cuentascobrar-detalle-valor">{tratoNombre}</p>
+        <div className="detalle-header-grid">
+          <div><strong>Folio:</strong> <span className="detalle-folio-text">{cuenta.folio}</span></div>
+          <div><strong>Cliente:</strong> {cuenta.clienteNombre}</div>
+          <div>
+            <strong>Estatus:</strong>
+            <span className={`cuentascobrar-estatus-badge ${getEstatusClass(cuenta.estatus)}`}>
+              {cuenta.estatus}
+            </span>
           </div>
-        )}
-
-        <div className="cuentascobrar-detalle-section">
-          <h4 className="cuentascobrar-detalle-titulo">Cotización Vinculada</h4>
-          <p className="cuentascobrar-detalle-valor">ID: {cotizacion.id}</p>
+          <div><strong>Esquema:</strong> {cuenta.esquema}</div>
         </div>
 
-        <div className="cuentascobrar-detalle-section">
-          <h4 className="cuentascobrar-detalle-titulo">Conceptos de esta Cuenta</h4>
-          <div className="cuentascobrar-conceptos-lista">
-            {cuenta.conceptos && cuenta.conceptos.length > 0 ? (
-              cuenta.conceptos.map((concepto, index) => (
-                <div key={index} className="cuentascobrar-concepto-item-detalle">
-                  <span className="cuentascobrar-concepto-nombre">{concepto}</span>
-                </div>
-              ))
-            ) : (
-              <p>No hay conceptos disponibles</p>
-            )}
-          </div>
-        </div>
+        <h4 className="detalle-seccion-titulo">Conceptos de esta cuenta</h4>
 
-        <div className="cuentascobrar-detalle-section cuentascobrar-resumen-financiero">
-          <h4 className="cuentascobrar-detalle-titulo">Información Financiera</h4>
-          <div className="cuentascobrar-resumen-items">
-            <div className="cuentascobrar-resumen-item cuentascobrar-resumen-total">
-              <span className="cuentascobrar-resumen-label">Monto a Cobrar:</span>
-              <span className="cuentascobrar-resumen-valor">{formatCurrency(cuenta.cantidadCobrar)}</span>
+        <div className="detalle-conceptos-lista">
+          {cuenta.conceptos && cuenta.conceptos.map((c, index) => (
+            <div key={index} className="detalle-concepto-card">
+              <div className="detalle-concepto-main">
+                <span className="detalle-concepto-badge">{c.cantidad} {c.unidad}</span>
+                <span className="detalle-concepto-separador">|</span>
+                {/* CORRECCIÓN: Usar c.concepto que es el nombre del campo en el objeto */}
+                <span>{c.concepto}</span>
+              </div>
+              <div className="detalle-concepto-importe">
+                {formatCurrency(c.importeTotal)}
+              </div>
             </div>
-            {cuenta.montoPagado > 0 && (
-              <>
-                <div className="cuentascobrar-resumen-item">
-                  <span className="cuentascobrar-resumen-label">Monto Pagado:</span>
-                  <span className="cuentascobrar-resumen-valor">{formatCurrency(cuenta.montoPagado)}</span>
-                </div>
-                <div className="cuentascobrar-resumen-item">
-                  <span className="cuentascobrar-resumen-label">Saldo Pendiente:</span>
-                  <span className="cuentascobrar-resumen-valor">{formatCurrency(cuenta.saldoPendiente)}</span>
-                </div>
-              </>
-            )}
-          </div>
+          ))}
+        </div>
+
+        <div className="detalle-footer-total">
+          <span className="detalle-total-label">Total a Cobrar:</span>
+          <span className="detalle-total-monto">
+            {formatCurrency(cuenta.cantidadCobrar)}
+          </span>
         </div>
       </div>
     </Modal>
@@ -1526,20 +1533,6 @@ const AdminCuentasCobrar = () => {
     }
   };
 
-  const getEstatusClass = (estatus) => {
-    switch (estatus) {
-      case "PAGADO":
-        return "cuentascobrar-estatus-pagado";
-      case "EN_PROCESO":
-        return "cuentascobrar-estatus-en-proceso";
-      case "VENCIDA":
-        return "cuentascobrar-estatus-vencida";
-      case "PENDIENTE":
-      default:
-        return "cuentascobrar-estatus-pendiente";
-    }
-  };
-
   const cuentasFiltradas = cuentasPorCobrar.filter((cuenta) => {
     if (filtroFolio) {
       return cuenta.folio === filtroFolio;
@@ -1762,9 +1755,15 @@ const AdminCuentasCobrar = () => {
                               </div>
                             </td>
                             <td className="cuentascobrar-concepto-cell">
-                              {cuenta.conceptos.length > 1
-                                ? `${cuenta.conceptos.length} conceptos`
-                                : cuenta.conceptos[0]?.substring(0, 50) + "..."}
+                              {cuenta.conceptos && cuenta.conceptos.length > 0 ? (
+                                cuenta.conceptos.length > 1
+                                  ? `${cuenta.conceptos.length} conceptos`
+                                  : cuenta.conceptos[0].concepto.length > 50
+                                    ? cuenta.conceptos[0].concepto.substring(0, 50) + "..."
+                                    : cuenta.conceptos[0].concepto
+                              ) : (
+                                "Sin conceptos"
+                              )}
                             </td>
                             <td>
                               <div className="cuentascobrar-actions">
@@ -1913,11 +1912,34 @@ const AdminCuentasCobrar = () => {
           <EditarCuentaModal
             isOpen={modals.editarCuenta.isOpen}
             onClose={() => closeModal("editarCuenta")}
-            onSave={(updatedCuenta) => {
-              setCuentasPorCobrar(prev =>
-                prev.map(c => c.id === updatedCuenta.id ? updatedCuenta : c)
-              );
-              closeModal("editarCuenta");
+            onSave={async (updatedData) => {
+              try {
+                const payload = {
+                  ...updatedData,
+                  cantidadCobrar: parseFloat(updatedData.cantidadCobrar),
+                  conceptos: updatedData.conceptos.map(c => ({
+                    ...c,
+                    cantidad: parseInt(c.cantidad),
+                    precioUnitario: parseFloat(c.precioUnitario),
+                    importeTotal: parseFloat(c.importeTotal),
+                    descuento: parseFloat(c.descuento || 0)
+                  }))
+                };
+
+                const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${modals.editarCuenta.cuenta.id}`, {
+                  method: "PUT",
+                  body: JSON.stringify(payload),
+                });
+
+                setCuentasPorCobrar(prev =>
+                  prev.map(c => c.id === modals.editarCuenta.cuenta.id ? response : c)
+                );
+
+                closeModal("editarCuenta");
+                Swal.fire("Éxito", "Cuenta y conceptos actualizados", "success");
+              } catch (error) {
+                Swal.fire("Error", error.message, "error");
+              }
             }}
             cuenta={modals.editarCuenta.cuenta}
           />
