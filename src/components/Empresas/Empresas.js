@@ -320,6 +320,17 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
       }
     }
 
+    const tieneAlMenosUno =
+      formData.correos.some(c => c.trim() !== "") ||
+      formData.telefonos.some(t => t.trim() !== "") ||
+      formData.celular.trim() !== "";
+
+    if (!tieneAlMenosUno) {
+      // Puedes marcar el error en el primer campo de cada uno para dar feedback visual
+      if (!newErrors.correos[0]) newErrors.correos[0] = "Ingresa al menos un correo o un teléfono";
+      if (!newErrors.telefonos[0]) newErrors.telefonos[0] = "Ingresa al menos un correo o un teléfono";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -826,26 +837,31 @@ const ContactoModal = ({
     }
 
     // Validación Correos
-    newErrors.correos = formData.correos.map((correo) => {
+    newErrors.correos = formData.correos.map((correo, index) => {
+      // Si el campo está vacío
       if (!correo || !correo.trim()) {
-        return "Este campo es obligatorio";
+        // Solo marcamos error si es el segundo campo en adelante
+        if (index > 0) return "Este campo es obligatorio si fue agregado";
+        return "";
       }
+      // Si tiene contenido, validamos el formato
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
-        return "Este campo debe ser un correo válido (ej. usuario@dominio.com)";
+        return "Este campo debe ser un correo válido";
       }
       return "";
     });
 
     // Validación Teléfonos: 10 dígitos
-    newErrors.telefonos = formData.telefonos.map((telefono) => {
+    newErrors.telefonos = formData.telefonos.map((telefono, index) => {
+      // Si el campo está vacío
       if (!telefono || !telefono.trim()) {
-        return "Este campo es obligatorio";
+        // Error solo si el usuario agregó un input extra mediante el botón "+"
+        if (index > 0) return "Este campo es obligatorio si fue agregado";
+        return "";
       }
+      // Si tiene contenido, validamos los 10 dígitos
       if (!/^\d{10}$/.test(telefono)) {
-        if (/[a-zA-Z]/.test(telefono)) {
-          return "El número no puede contener letras.";
-        }
-        return "Este campo debe tener exactamente 10 dígitos.";
+        return "Debe tener exactamente 10 dígitos.";
       }
       return "";
     });
