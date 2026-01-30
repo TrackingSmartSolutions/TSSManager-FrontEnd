@@ -827,7 +827,10 @@ const ContactoModal = ({
 
     // Validación Correos
     newErrors.correos = formData.correos.map((correo) => {
-      if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+      if (!correo || !correo.trim()) {
+        return "Este campo es obligatorio";
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
         return "Este campo debe ser un correo válido (ej. usuario@dominio.com)";
       }
       return "";
@@ -835,13 +838,14 @@ const ContactoModal = ({
 
     // Validación Teléfonos: 10 dígitos
     newErrors.telefonos = formData.telefonos.map((telefono) => {
-      if (telefono) {
-        if (!/^\d{10}$/.test(telefono)) {
-          if (/[a-zA-Z]/.test(telefono)) {
-            return "El número no puede contener letras.";
-          }
-          return "Este campo debe tener exactamente 10 dígitos.";
+      if (!telefono || !telefono.trim()) {
+        return "Este campo es obligatorio";
+      }
+      if (!/^\d{10}$/.test(telefono)) {
+        if (/[a-zA-Z]/.test(telefono)) {
+          return "El número no puede contener letras.";
         }
+        return "Este campo debe tener exactamente 10 dígitos.";
       }
       return "";
     });
