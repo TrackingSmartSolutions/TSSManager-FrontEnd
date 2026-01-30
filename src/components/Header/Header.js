@@ -303,27 +303,28 @@ const Header = ({ logoUrl }) => {
       });
 
       if (response.ok) {
-        const data = await response.json();
-
-        const dismissedFromStorage = localStorage.getItem('actividadesDismissed');
-        const dismissedSet = dismissedFromStorage ? new Set(JSON.parse(dismissedFromStorage)) : new Set();
-
-        const actividadesDelBackend = data.filter(act => !dismissedSet.has(act.id));
+        const actividadesServidor = await response.json();
 
         setActividadesProximas(prev => {
-          const idsActuales = new Set(prev.map(a => a.id));
-          const nuevasReales = actividadesDelBackend.filter(act => !idsActuales.has(act.id));
-          if (nuevasReales.length === 0) return prev;
-          try {
-            const audio = new Audio(actividadProxSound);
-            audio.volume = 0.8;
-            audio.play().catch(e => console.error("Error audio:", e));
-          } catch (e) { console.error("Error audio:", e); }
-          const nuevaLista = [...prev, ...nuevasReales];
+          const idsServidor = new Set(actividadesServidor.map(a => a.id));
+          const activasAun = prev.filter(act => idsServidor.has(act.id));
 
-          localStorage.setItem("actividadesPendientesPopup", JSON.stringify(nuevaLista));
+          const idsActuales = new Set(activasAun.map(a => a.id));
+          const nuevas = actividadesServidor.filter(act => !idsActuales.has(act.id));
 
-          return nuevaLista;
+          if (nuevas.length > 0) {
+            try {
+              const audio = new Audio(actividadProxSound);
+              audio.volume = 0.8;
+              audio.play().catch(e => console.error("Error audio:", e));
+            } catch (e) { }
+          }
+
+          const listaFinal = [...activasAun, ...nuevas];
+
+          localStorage.setItem("actividadesPendientesPopup", JSON.stringify(listaFinal));
+
+          return listaFinal;
         });
       }
     } catch (error) {
@@ -438,12 +439,18 @@ const Header = ({ logoUrl }) => {
 
     inicializar();
 
-    const intervalo = setInterval(() => {
+    const intervaloNotif = setInterval(() => {
       obtenerContadorNoLeidas();
-      obtenerActividadesProximas();
     }, 30000);
 
-    return () => clearInterval(intervalo);
+    const intervaloActividades = setInterval(() => {
+      obtenerActividadesProximas();
+    }, 5000);
+
+    return () => {
+      clearInterval(intervaloNotif);
+      clearInterval(intervaloActividades);
+    };
   }, []);
 
   // Limpiar actividades dismissed al inicio del día
@@ -711,14 +718,14 @@ const Header = ({ logoUrl }) => {
       if (match && match[1]) {
         folio = match[1].trim();
       }
-      
+
       if (notificacion.tipoNotificacion === 'CUENTA_COBRAR') {
         navigate("/admin_cuentas_cobrar", { state: { filtroFolio: folio } });
       } else {
         navigate("/admin_cuentas_pagar", { state: { filtroFolio: folio } });
       }
-    } 
-    
+    }
+
     else if (['TRATO_GANADO', 'ESCALAMIENTO'].includes(notificacion.tipoNotificacion)) {
       const idMatch = notificacion.mensaje.match(/\(ID:\s*(\d+)\)/);
 
@@ -837,8 +844,8 @@ const Header = ({ logoUrl }) => {
                       <div
                         key={notificacion.id}
                         className={`ts-header-notification-item ${notificacion.estatus === 'NO_LEIDA' ? 'unread' : ''}`}
-                        onClick={() => handleNotificationClickNavigation(notificacion)} 
-                        style={{ cursor: 'pointer' }} 
+                        onClick={() => handleNotificationClickNavigation(notificacion)}
+                        style={{ cursor: 'pointer' }}
                       >
                         <div className="ts-header-notification-content">
                           <div className="ts-header-notification-title">

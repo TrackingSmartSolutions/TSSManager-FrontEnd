@@ -22,7 +22,7 @@ const RecordatorioPopup = ({ actividad, onClose, onDismiss }) => {
     const handleVerTrato = () => {
         if (actividad.tratoId) {
             navigate(`/detallestrato/${actividad.tratoId}`);
-            handleClose(); 
+            handleClose();
         }
     };
 
@@ -102,7 +102,7 @@ const RecordatorioPopup = ({ actividad, onClose, onDismiss }) => {
                 )}
 
                 {actividad.tratoId && (
-                    <button 
+                    <button
                         onClick={handleVerTrato}
                         className="recordatorio-btn-accion"
                         style={{
@@ -113,7 +113,7 @@ const RecordatorioPopup = ({ actividad, onClose, onDismiss }) => {
                             gap: '8px',
                             width: '100%',
                             padding: '8px',
-                            backgroundColor: '#3b82f6', 
+                            backgroundColor: '#3b82f6',
                             color: 'white',
                             border: 'none',
                             borderRadius: '6px',
