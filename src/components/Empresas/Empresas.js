@@ -320,17 +320,6 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
       }
     }
 
-    const tieneAlMenosUno =
-      formData.correos.some(c => c.trim() !== "") ||
-      formData.telefonos.some(t => t.trim() !== "") ||
-      formData.celular.trim() !== "";
-
-    if (!tieneAlMenosUno) {
-      // Puedes marcar el error en el primer campo de cada uno para dar feedback visual
-      if (!newErrors.correos[0]) newErrors.correos[0] = "Ingresa al menos un correo o un teléfono";
-      if (!newErrors.telefonos[0]) newErrors.telefonos[0] = "Ingresa al menos un correo o un teléfono";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -539,7 +528,10 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
                     <div
                       key={sector.id}
                       className="autocomplete-option"
-                      onClick={() => handleSectorSelect(sector)}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleSectorSelect(sector);
+                      }}
                     >
                       {sector.nombreSector}
                     </div>

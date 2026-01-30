@@ -169,7 +169,7 @@ const MapModal = ({ isOpen, onClose, onLocationSelect, initialAddress }) => {
     useEffect(() => {
         if (map && isOpen) {
             const timer = setTimeout(() => {
-                map.invalidateSize(); 
+                map.invalidateSize();
             }, 300);
 
             return () => clearTimeout(timer);
@@ -213,6 +213,7 @@ const MapModal = ({ isOpen, onClose, onLocationSelect, initialAddress }) => {
     const handleLocationSelect = (latlng) => {
         const pos = [latlng.lat, latlng.lng];
         setSelectedPosition(pos);
+        setAddress("📍 Buscando nombre de la calle...");
         reverseGeocode(latlng.lat, latlng.lng);
     };
 
