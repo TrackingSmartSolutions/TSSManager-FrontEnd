@@ -495,12 +495,17 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
     if (formData.cotizacion && cotizaciones) {
       const cotizacionSeleccionada = cotizaciones.find((c) => c.id === parseInt(formData.cotizacion));
       if (cotizacionSeleccionada) {
+        const empresa = cotizacionSeleccionada.empresaData;
+        const regimenRequiereRetencion = ["601", "627"].includes(empresa.regimenFiscal);
+
         setFormData((prev) => ({
           ...prev,
-          subtotal: cotizacionSeleccionada.subtotal !== undefined ? String(cotizacionSeleccionada.subtotal) : "",
-          iva: cotizacionSeleccionada.iva !== undefined ? String(cotizacionSeleccionada.iva) : "",
-          total: cotizacionSeleccionada.total !== undefined ? String(cotizacionSeleccionada.total) : "",
-          importeLetra: cotizacionSeleccionada.importeLetra || "",
+          subtotal: String(cotizacionSeleccionada.subtotal),
+          iva: String(cotizacionSeleccionada.iva),
+          total: regimenRequiereRetencion
+            ? String(cotizacionSeleccionada.total)
+            : String(Number(cotizacionSeleccionada.subtotal) * 1.16),
+          importeLetra: cotizacionSeleccionada.importeLetra,
         }));
 
         const empresaData = cotizacionSeleccionada.empresaData;
