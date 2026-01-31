@@ -1132,6 +1132,7 @@ const DetallesCuentaModal = ({ isOpen, onClose, cuenta, tratoNombre }) => {
 
         <div className="detalle-header-grid">
           <div><strong>Folio:</strong> <span className="detalle-folio-text">{cuenta.folio}</span></div>
+          <div><strong>ID Cotización:</strong> {cuenta.cotizacionId || "N/A"}</div>
           <div><strong>Cliente:</strong> {cuenta.clienteNombre}</div>
           <div>
             <strong>Estatus:</strong>
