@@ -1011,7 +1011,7 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, tipo, item }) =
 };
 
 // Modal para Editar Conceptos
-const ConceptosModal = ({ isOpen, onClose, solicitud, onSave, onPreview }) => {
+/*const ConceptosModal = ({ isOpen, onClose, solicitud, onSave, onPreview }) => {
   const [conceptosEditables, setConceptosEditables] = useState("");
   const [conceptosOriginales, setConceptosOriginales] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -1132,6 +1132,7 @@ const ConceptosModal = ({ isOpen, onClose, solicitud, onSave, onPreview }) => {
     </Modal>
   );
 };
+*/
 
 const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
   <div className="facturacion-date-picker-wrapper">
@@ -1189,7 +1190,6 @@ const AdminFacturacion = () => {
     emisor: { isOpen: false, emisor: null },
     solicitud: { isOpen: false, solicitud: null },
     timbrar: { isOpen: false, solicitud: null },
-    conceptos: { isOpen: false, solicitud: null },
     confirmarEliminacion: { isOpen: false, tipo: "", item: null, onConfirm: null },
   });
 
@@ -1468,6 +1468,35 @@ const AdminFacturacion = () => {
         timer: 2000,
         showConfirmButton: false,
       });
+    }
+  };
+
+  const handleVisualizarDirecto = async (solicitud) => {
+    setIsLoading(true);
+    try {
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/solicitudes-factura-nota/solicitudes/${solicitud.id}/download-pdf`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/pdf" },
+        }
+      );
+
+      if (!response.ok) throw new Error(`Error al generar el PDF`);
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const filename = `${solicitud.identificador}_${new Date(solicitud.fechaEmision).toISOString().split('T')[0]}.pdf`;
+
+      handleOpenPreview(url, filename);
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: `No se pudo generar la vista previa: ${error.message}`,
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -1790,8 +1819,8 @@ const AdminFacturacion = () => {
                                   </button>
                                   <button
                                     className="facturacion-action-btn facturacion-download-btn"
-                                    onClick={() => openModal("conceptos", { solicitud })}
-                                    title="Editar conceptos y descargar PDF"
+                                    onClick={() => handleVisualizarDirecto(solicitud)}
+                                    title="Visualizar PDF"
                                   >
                                     <img src={downloadIcon || "/placeholder.svg"} alt="Editar conceptos" className="facturacion-action-icon" />
                                   </button>
@@ -1896,13 +1925,6 @@ const AdminFacturacion = () => {
             onConfirm={modals.confirmarEliminacion.onConfirm}
             tipo={modals.confirmarEliminacion.tipo}
             item={modals.confirmarEliminacion.item}
-          />
-          <ConceptosModal
-            isOpen={modals.conceptos.isOpen}
-            onClose={() => closeModal("conceptos")}
-            onSave={() => { }}
-            solicitud={modals.conceptos.solicitud}
-            onPreview={handleOpenPreview}
           />
           <PdfPreviewModal
             isOpen={pdfPreview.isOpen}

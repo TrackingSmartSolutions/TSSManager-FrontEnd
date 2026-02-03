@@ -1245,7 +1245,7 @@ const AdminCuentasCobrar = () => {
 
         const [clientesData, cuentasData, emisoresData, categoriasIngresoData] = await Promise.all([
           fetchWithToken(`${API_BASE_URL}/empresas?estatus=CLIENTE`),
-          fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar${params}`), // Usamos el filtro
+          fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar${params}`),
           fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/emisores`),
           fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/categorias-ingreso`),
         ]);
@@ -1276,6 +1276,7 @@ const AdminCuentasCobrar = () => {
     }
   }, [location]);
 
+  /* 
   useEffect(() => {
     const actualizarEstatus = () => {
       const hoy = new Date();
@@ -1287,7 +1288,7 @@ const AdminCuentasCobrar = () => {
           const diasDiferencia = Math.floor((hoy - fechaPago) / (1000 * 60 * 60 * 24));
 
           let nuevoEstatus = "PENDIENTE";
-          if (diasDiferencia > 15) {
+          if (diasDiferencia > 15) { 
             nuevoEstatus = "VENCIDA";
           }
 
@@ -1300,6 +1301,7 @@ const AdminCuentasCobrar = () => {
     const interval = setInterval(actualizarEstatus, 24 * 60 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
+*/
 
   const openModal = async (modalType, data = {}) => {
     if (modalType === "crearSolicitud" && data.cuenta) {
