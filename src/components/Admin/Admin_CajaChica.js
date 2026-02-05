@@ -304,6 +304,9 @@ const AdminCajaChica = () => {
       case "caja-chica":
         navigate("/admin_caja_chica")
         break
+      case "comisiones":
+        navigate("/admin_comisiones");
+        break;
       default:
         break
     }
@@ -707,6 +710,9 @@ const AdminCajaChica = () => {
                   onClick={() => handleMenuNavigation("caja-chica")}
                 >
                   Caja chica
+                </div>
+                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("comisiones")}>
+                  Comisiones
                 </div>
               </div>
             </section>

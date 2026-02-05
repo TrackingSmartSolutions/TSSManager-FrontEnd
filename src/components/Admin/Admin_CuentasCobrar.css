@@ -1296,6 +1296,23 @@
   color: var(--cuentascobrar-primary-color);
 }
 
+.cuentascobrar-info-compact {
+  padding: 8px 15px;
+  margin-bottom: 0;
+  background-color: #f0f4ff;
+  border: 1px solid #dbeafe;
+}
+
+.cuentascobrar-form-row {
+  display: flex;
+  gap: 15px;
+  width: 100%;
+}
+
+.cuentascobrar-form-control:disabled {
+  color: #495057;
+}
+
 @media (max-width: 768px) {
   .cuentascobrar-date-picker-wrapper {
     width: 100%;

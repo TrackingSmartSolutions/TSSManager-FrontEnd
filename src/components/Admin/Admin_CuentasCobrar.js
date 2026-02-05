@@ -214,7 +214,6 @@ const getEstatusClass = (estatus) => {
   }
 };
 
-
 // Modal para Agregar Comprobante de Pago
 const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
   const [formData, setFormData] = useState({
@@ -330,22 +329,28 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
           }
         });
 
-        const updatedCuenta = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/marcar-pagada`, {
+        const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/marcar-pagada`, {
           method: "POST",
           body: formDataToSend,
         });
 
         Swal.close();
-        onSave(updatedCuenta, formData.montoPago);
+
+        const responseData = {
+          cuenta: response,
+          mostrarModalComision: response.mostrarModalComision || false
+        };
+
+        onSave(responseData, formData.montoPago, cuenta.id);
         onClose();
 
-        if (updatedCuenta.comprobantePagoUrl === "ERROR_UPLOAD") {
+        if (response.comprobantePagoUrl === "ERROR_UPLOAD") {
           Swal.fire({
             icon: "warning",
             title: "Parcialmente completado",
             text: "La cuenta se marcó como pagada, pero hubo un error al subir el comprobante. Puede intentar subirlo nuevamente más tarde."
           });
-        } else {
+        } else if (!response.mostrarModalComision) {
           Swal.fire({
             icon: "success",
             title: "Éxito",
@@ -1201,6 +1206,294 @@ const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
   </div>
 );
 
+const CrearComisionDesdeCuentaModal = ({ isOpen, onClose, onSave, cuentaId, montoPagado }) => {
+  const [formData, setFormData] = useState({
+    vendedorCuentaId: "",
+    vendedorNuevoNombre: "",
+    porcentajeVenta: "",
+    porcentajeProyecto: "",
+    notas: ""
+  });
+  const [errors, setErrors] = useState({});
+  const [cuentasComisiones, setCuentasComisiones] = useState([]);
+  const [isCreatingNewVendedor, setIsCreatingNewVendedor] = useState(false);
+  const [montoVentaCalculado, setMontoVentaCalculado] = useState(0);
+  const [montoProyectoCalculado, setMontoProyectoCalculado] = useState(0);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchCuentasComisiones().then((cuentas) => {
+        if (cuentas && Array.isArray(cuentas)) {
+          const cuentaDagoberto = cuentas.find(c => c.nombre.includes("Dagoberto"));
+
+          setFormData({
+            vendedorCuentaId: "",
+            vendedorNuevoNombre: "",
+            porcentajeVenta: "",
+            proyectoCuentaId: cuentaDagoberto ? cuentaDagoberto.id : "",
+            porcentajeProyecto: "",
+            notas: ""
+          });
+        }
+      });
+      setIsCreatingNewVendedor(false);
+      setErrors({});
+    }
+  }, [isOpen]);
+
+  const fetchCuentasComisiones = async () => {
+    try {
+      const data = await fetchWithToken(`${API_BASE_URL}/comisiones/cuentas-comisiones`);
+      setCuentasComisiones(data);
+      return data;
+    } catch (error) {
+      console.error("Error al cargar cuentas de comisiones:", error);
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    if (formData.porcentajeVenta && montoPagado) {
+      const monto = (parseFloat(montoPagado) * parseFloat(formData.porcentajeVenta)) / 100;
+      setMontoVentaCalculado(monto);
+    } else {
+      setMontoVentaCalculado(0);
+    }
+  }, [formData.porcentajeVenta, montoPagado]);
+
+  useEffect(() => {
+    if (formData.porcentajeProyecto && montoPagado) {
+      const monto = (parseFloat(montoPagado) * parseFloat(formData.porcentajeProyecto)) / 100;
+      setMontoProyectoCalculado(monto);
+    } else {
+      setMontoProyectoCalculado(0);
+    }
+  }, [formData.porcentajeProyecto, montoPagado]);
+
+  const handleInputChange = (field, value) => {
+    if (field === "porcentajeVenta" || field === "porcentajeProyecto") {
+      if (parseFloat(value) > 100) {
+        return;
+      }
+    }
+
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!isCreatingNewVendedor && !formData.vendedorCuentaId) {
+      newErrors.vendedorCuentaId = "Seleccione vendedor";
+    }
+
+    if (isCreatingNewVendedor && !formData.vendedorNuevoNombre.trim()) {
+      newErrors.vendedorNuevoNombre = "Ingrese nombre";
+    }
+
+    if (!formData.porcentajeVenta || parseFloat(formData.porcentajeVenta) < 0 || parseFloat(formData.porcentajeVenta) > 100) {
+      newErrors.porcentajeVenta = "Inválido";
+    }
+
+    if (!formData.porcentajeProyecto || parseFloat(formData.porcentajeProyecto) < 0 || parseFloat(formData.porcentajeProyecto) > 100) {
+      newErrors.porcentajeProyecto = "Inválido";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (validateForm()) {
+      const dataToSend = {
+        vendedorCuentaId: isCreatingNewVendedor ? null : parseInt(formData.vendedorCuentaId),
+        vendedorNuevoNombre: isCreatingNewVendedor ? formData.vendedorNuevoNombre : null,
+        porcentajeVenta: parseFloat(formData.porcentajeVenta),
+        porcentajeProyecto: parseFloat(formData.porcentajeProyecto),
+        notas: formData.notas
+      };
+      if (!cuentaId) {
+        Swal.fire({ icon: "error", title: "Error", text: "No se identificó la cuenta" });
+        return;
+      }
+      onSave(dataToSend);
+    }
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Crear Comisión"
+      size="md"
+      closeOnOverlayClick={false}
+    >
+      <form onSubmit={handleSubmit} className="cuentascobrar-form" style={{ gap: '15px' }}>
+
+        <div className="cuentascobrar-info-section cuentascobrar-info-compact">
+          <div className="cuentascobrar-info-item" style={{ marginBottom: 0, alignItems: 'center' }}>
+            <label style={{ marginBottom: 0 }}>Monto Base (Pagado):</label>
+            <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#00133b' }}>
+              ${parseFloat(montoPagado).toFixed(2)}
+            </span>
+          </div>
+        </div>
+
+        <div className="cuentascobrar-form-group" style={{ gap: '5px' }}>
+          <label>
+            <input
+              type="checkbox"
+              checked={isCreatingNewVendedor}
+              onChange={(e) => {
+                setIsCreatingNewVendedor(e.target.checked);
+                setFormData(prev => ({ ...prev, vendedorCuentaId: "", vendedorNuevoNombre: "" }));
+              }}
+            />
+            {' '}Crear nuevo vendedor
+          </label>
+        </div>
+
+        {!isCreatingNewVendedor ? (
+          <div className="cuentascobrar-form-group">
+            <label htmlFor="vendedorCuentaId">Vendedor <span className="required">*</span></label>
+            <select
+              id="vendedorCuentaId"
+              value={formData.vendedorCuentaId}
+              onChange={(e) => handleInputChange("vendedorCuentaId", e.target.value)}
+              className={`cuentascobrar-form-control ${errors.vendedorCuentaId ? "error" : ""}`}
+            >
+              <option value="">Seleccione un vendedor</option>
+              {cuentasComisiones.map((cuenta) => (
+                <option key={cuenta.id} value={cuenta.id}>{cuenta.nombre}</option>
+              ))}
+            </select>
+            {errors.vendedorCuentaId && <span className="cuentascobrar-error-message">{errors.vendedorCuentaId}</span>}
+          </div>
+        ) : (
+          <div className="cuentascobrar-form-group">
+            <label htmlFor="vendedorNuevoNombre">Nombre del vendedor <span className="required">*</span></label>
+            <input
+              type="text"
+              id="vendedorNuevoNombre"
+              value={formData.vendedorNuevoNombre}
+              onChange={(e) => handleInputChange("vendedorNuevoNombre", e.target.value)}
+              className={`cuentascobrar-form-control ${errors.vendedorNuevoNombre ? "error" : ""}`}
+              placeholder="Ingrese el nombre"
+            />
+            {errors.vendedorNuevoNombre && <span className="cuentascobrar-error-message">{errors.vendedorNuevoNombre}</span>}
+          </div>
+        )}
+
+        <div className="cuentascobrar-form-row">
+          <div className="cuentascobrar-form-group" style={{ flex: 1 }}>
+            <label htmlFor="porcentajeVenta">Comisión Venta (%) <span className="required">*</span></label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type="number"
+                id="porcentajeVenta"
+                step="0.01"
+                min="0"
+                max="100"
+                value={formData.porcentajeVenta}
+                onChange={(e) => handleInputChange("porcentajeVenta", e.target.value)}
+                className={`cuentascobrar-form-control ${errors.porcentajeVenta ? "error" : ""}`}
+                placeholder="0"
+              />
+              <span style={{ position: 'absolute', right: '10px', top: '8px', color: '#999' }}>%</span>
+            </div>
+            {errors.porcentajeVenta && <span className="cuentascobrar-error-message">{errors.porcentajeVenta}</span>}
+          </div>
+
+          <div className="cuentascobrar-form-group" style={{ flex: 1 }}>
+            <label>Monto Calculado</label>
+            <div className="cuentascobrar-input-with-prefix">
+              <span className="cuentascobrar-prefix">$</span>
+              <input
+                type="text"
+                value={montoVentaCalculado.toFixed(2)}
+                className="cuentascobrar-form-control"
+                disabled
+                style={{ backgroundColor: '#e9ecef', fontWeight: 'bold' }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="cuentascobrar-form-group">
+          <label>Comisión de Proyecto (Automático)</label>
+          <input
+            type="text"
+            value="Dagoberto Emmanuel Nieto González"
+            disabled
+            className="cuentascobrar-form-control"
+            style={{ backgroundColor: '#f0f0f0', color: '#666', fontSize: '0.85rem' }}
+          />
+        </div>
+
+        <div className="cuentascobrar-form-row">
+          <div className="cuentascobrar-form-group" style={{ flex: 1 }}>
+            <label htmlFor="porcentajeProyecto">Comisión Proy. (%) <span className="required">*</span></label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type="number"
+                id="porcentajeProyecto"
+                step="0.01"
+                min="0"
+                max="100"
+                value={formData.porcentajeProyecto}
+                onChange={(e) => handleInputChange("porcentajeProyecto", e.target.value)}
+                className={`cuentascobrar-form-control ${errors.porcentajeProyecto ? "error" : ""}`}
+                placeholder="0"
+              />
+              <span style={{ position: 'absolute', right: '10px', top: '8px', color: '#999' }}>%</span>
+            </div>
+            {errors.porcentajeProyecto && <span className="cuentascobrar-error-message">{errors.porcentajeProyecto}</span>}
+          </div>
+
+          <div className="cuentascobrar-form-group" style={{ flex: 1 }}>
+            <label>Monto Calculado</label>
+            <div className="cuentascobrar-input-with-prefix">
+              <span className="cuentascobrar-prefix">$</span>
+              <input
+                type="text"
+                value={montoProyectoCalculado.toFixed(2)}
+                className="cuentascobrar-form-control"
+                disabled
+                style={{ backgroundColor: '#e9ecef', fontWeight: 'bold' }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="cuentascobrar-form-group">
+          <label htmlFor="notas">Notas</label>
+          <textarea
+            id="notas"
+            value={formData.notas}
+            onChange={(e) => handleInputChange("notas", e.target.value)}
+            className="cuentascobrar-form-control"
+            rows="2"
+            placeholder="Opcional"
+          ></textarea>
+        </div>
+
+        <div className="cuentascobrar-form-actions" style={{ marginTop: '10px' }}>
+          <button type="button" onClick={onClose} className="cuentascobrar-btn cuentascobrar-btn-cancel">
+            Cancelar
+          </button>
+          <button type="submit" className="cuentascobrar-btn cuentascobrar-btn-primary">
+            Crear Comisión
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
 // Componente Principal
 const AdminCuentasCobrar = () => {
   const navigate = useNavigate();
@@ -1228,6 +1521,11 @@ const AdminCuentasCobrar = () => {
     confirmarEliminacion: { isOpen: false, cuenta: null },
     crearSolicitud: { isOpen: false, cotizacion: null, cuenta: null },
     detalles: { isOpen: false, cuenta: null },
+  });
+  const [modalComision, setModalComision] = useState({
+    isOpen: false,
+    cuentaId: null,
+    montoPagado: 0,
   });
 
   const formatCurrency = (amount) => {
@@ -1359,6 +1657,9 @@ const AdminCuentasCobrar = () => {
       case "caja-chica":
         navigate("/admin_caja_chica");
         break;
+      case "comisiones":
+        navigate("/admin_comisiones");
+        break;
       default:
         break;
     }
@@ -1370,16 +1671,26 @@ const AdminCuentasCobrar = () => {
 
   const clientesUnicos = [...new Set(cuentasPorCobrar.map(c => c.clienteNombre || c.cliente?.razonSocial))].filter(Boolean).sort();
 
-  const handleMarcarPagada = async (updatedCuenta, montoPagado) => {
+  const handleMarcarPagada = async (responseData, montoPagado, cuentaId) => {
+    const updatedCuenta = responseData.cuenta;
+
     setCuentasPorCobrar((prev) =>
       prev.map((c) => (c.id === updatedCuenta.id ? { ...c, ...updatedCuenta } : c))
     );
 
-    Swal.fire({
-      icon: "success",
-      title: "Éxito",
-      text: "Cuenta marcada como pagada y transacción generada automáticamente por el sistema",
-    });
+    if (responseData.mostrarModalComision) {
+      setModalComision({
+        isOpen: true,
+        cuentaId: cuentaId,
+        montoPagado: montoPagado,
+      });
+    } else {
+      Swal.fire({
+        icon: "success",
+        title: "Éxito",
+        text: "Cuenta marcada como pagada y transacción generada automáticamente por el sistema",
+      });
+    }
   };
 
   const handleDeleteCuenta = async (cuenta) => {
@@ -1623,6 +1934,9 @@ const AdminCuentasCobrar = () => {
                 </div>
                 <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>
                   Caja chica
+                </div>
+                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("comisiones")}>
+                  Comisiones
                 </div>
               </div>
             </section>
@@ -1961,6 +2275,55 @@ const AdminCuentasCobrar = () => {
             cotizacion={modals.detalles.cotizacion}
             tratoNombre={modals.detalles.tratoNombre}
           />
+
+          {modalComision.isOpen && modalComision.cuentaId && (
+            <CrearComisionDesdeCuentaModal
+              isOpen={modalComision.isOpen}
+              onClose={async () => {
+                setModalComision({ isOpen: false, cuentaId: null, montoPagado: 0 });
+
+                const params = filtroEstatus !== "Todas" ? `?estatus=${filtroEstatus}` : "";
+                const cuentasActualizadas = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar${params}`);
+                setCuentasPorCobrar(cuentasActualizadas);
+
+                Swal.fire({
+                  icon: "success",
+                  title: "Éxito",
+                  text: "Cuenta marcada como pagada correctamente",
+                });
+              }}
+              onSave={async (comisionData) => {
+                try {
+                  console.log("Creando comisión para cuenta ID:", modalComision.cuentaId);
+
+                  await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${modalComision.cuentaId}/crear-comision`, {
+                    method: "POST",
+                    body: JSON.stringify(comisionData),
+                    headers: { "Content-Type": "application/json" },
+                  });
+
+                  setModalComision({ isOpen: false, cuentaId: null, montoPagado: 0 });
+                  const params = filtroEstatus !== "Todas" ? `?estatus=${filtroEstatus}` : "";
+                  const cuentasActualizadas = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar${params}`);
+                  setCuentasPorCobrar(cuentasActualizadas);
+
+                  Swal.fire({
+                    icon: "success",
+                    title: "Éxito",
+                    text: "Cuenta marcada como pagada y comisión creada correctamente",
+                  });
+                } catch (error) {
+                  Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "Error al crear la comisión: " + error.message,
+                  });
+                }
+              }}
+              cuentaId={modalComision.cuentaId}
+              montoPagado={modalComision.montoPagado}
+            />
+          )}
         </main>
       </div>
     </>

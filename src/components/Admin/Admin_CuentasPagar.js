@@ -72,8 +72,7 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
   const [errors, setErrors] = useState({});
 
   // Verificar si es una cuenta de créditos plataforma o licencias
-  const esCuentaCreditos = cuenta?.transaccion?.categoria?.descripcion?.toLowerCase().includes("créditos plataforma") ||
-    cuenta?.transaccion?.categoria?.descripcion?.toLowerCase().includes("licencias");
+  const esCuentaCreditos = cuenta?.transaccion?.categoria?.descripcion?.toLowerCase().includes("créditos plataforma");
 
   // Determinar si es una plataforma de licencias
   const esLicencia = cuenta?.transaccion?.cuenta?.nombre?.toLowerCase().includes("fulltrack") ||
@@ -593,9 +592,7 @@ const AdminCuentasPagar = () => {
     const fetchCuentasPagar = async () => {
       setIsLoading(true);
       try {
-        // Enviar el filtro al backend
-        const params = filtroEstatus !== "Todas" ? `?estatus=${filtroEstatus}` : "";
-        const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar${params}`);
+        const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar`);
         const data = await response.json();
         setCuentasPagar(data);
       } catch (error) {
@@ -609,7 +606,7 @@ const AdminCuentasPagar = () => {
       }
     };
     fetchCuentasPagar();
-  }, [filtroEstatus]);
+  }, []);
 
   useEffect(() => {
     if (location.state && location.state.filtroFolio) {
@@ -667,6 +664,9 @@ const AdminCuentasPagar = () => {
         break;
       case "caja-chica":
         navigate("/admin_caja_chica");
+        break;
+      case "comisiones":
+        navigate("/admin_comisiones");
         break;
       default:
         break;
@@ -1131,6 +1131,9 @@ const AdminCuentasPagar = () => {
                 </div>
                 <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>
                   Caja chica
+                </div>
+                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("comisiones")}>
+                  Comisiones
                 </div>
               </div>
             </section>

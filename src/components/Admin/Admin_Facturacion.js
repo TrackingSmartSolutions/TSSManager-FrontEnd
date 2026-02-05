@@ -61,7 +61,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayCl
             border: 'none', background: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#6c757d', padding: '0 5px'
           }}>✕</button>
         </div>
-        <div style={{ flex: 1, overflowY: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ overflowY: 'auto', maxHeight: '100%', padding: '0 12px' }}>
           {children}
         </div>
       </div>
@@ -1263,6 +1263,9 @@ const AdminFacturacion = () => {
       case "caja-chica":
         navigate("/admin_caja_chica");
         break;
+      case "comisiones":
+        navigate("/admin_comisiones");
+        break;
       default:
         break;
     }
@@ -1596,6 +1599,9 @@ const AdminFacturacion = () => {
                 <div className="facturacion-menu-item" onClick={() => handleMenuNavigation("cuentas-cobrar")}>Cuentas por Cobrar</div>
                 <div className="facturacion-menu-item" onClick={() => handleMenuNavigation("cuentas-pagar")}>Cuentas por Pagar</div>
                 <div className="facturacion-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>Caja chica</div>
+                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("comisiones")}>
+                  Comisiones
+                </div>
               </div>
             </section>
             <section className="facturacion-content-panel">

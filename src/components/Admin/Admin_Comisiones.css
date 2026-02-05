@@ -1,0 +1,1207 @@
+:root {
+    --comisiones-primary-color: #00133b;
+    --comisiones-secondary-color: #037ce0;
+    --comisiones-accent-color: #f27100;
+    --comisiones-background-color: #f0f4ff;
+    --comisiones-panel-background: #ffffff;
+    --comisiones-text-color: #333333;
+    --comisiones-text-light: #666666;
+    --comisiones-border-color: #e0e0e0;
+    --comisiones-success-color: #4caf50;
+    --comisiones-danger-color: #f44336;
+    --comisiones-warning-color: #ff9800;
+    --comisiones-info-color: #2196f3;
+    --comisiones-spacing-xs: 0.25rem;
+    --comisiones-spacing-sm: 0.5rem;
+    --comisiones-spacing-md: 0.75rem;
+    --comisiones-spacing-lg: 1rem;
+    --comisiones-spacing-xl: 1.5rem;
+    --comisiones-border-radius-sm: 4px;
+    --comisiones-border-radius-md: 8px;
+    --comisiones-border-radius-lg: 12px;
+    --comisiones-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    --comisiones-font-size-xs: 0.65rem;
+    --comisiones-font-size-sm: 0.8rem;
+    --comisiones-font-size-md: 0.9rem;
+    --comisiones-font-size-lg: 1.1rem;
+    --comisiones-font-size-xl: 1.3rem;
+}
+
+/* Layout Principal */
+.comisiones-main-content {
+    padding: var(--comisiones-spacing-lg) var(--comisiones-spacing-xl);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-height: calc(100vh - 140px);
+}
+
+.comisiones-container {
+    display: flex;
+    width: 100%;
+    gap: var(--comisiones-spacing-lg);
+    max-width: 100%;
+    align-items: flex-start;
+    min-height: calc(100vh - 160px);
+}
+
+/* Sidebar */
+.comisiones-sidebar {
+    flex: 0 0 280px;
+    min-width: 260px;
+    background-color: var(--comisiones-panel-background);
+    border-radius: var(--comisiones-border-radius-md);
+    box-shadow: var(--comisiones-box-shadow);
+    padding: var(--comisiones-spacing-lg);
+    height: fit-content;
+    max-height: calc(100vh - 160px);
+    overflow-y: auto;
+}
+
+.comisiones-sidebar-header {
+    margin-bottom: var(--comisiones-spacing-lg);
+    padding-bottom: var(--comisiones-spacing-md);
+    border-bottom: 1px solid var(--comisiones-border-color);
+}
+
+.comisiones-sidebar-title {
+    font-size: var(--comisiones-font-size-xl);
+    font-weight: 600;
+    color: var(--comisiones-primary-color);
+    margin: 0;
+}
+
+.comisiones-sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: var(--comisiones-spacing-xs);
+}
+
+.comisiones-menu-item {
+    padding: var(--comisiones-spacing-md);
+    cursor: pointer;
+    border-radius: var(--comisiones-border-radius-sm);
+    transition: all 0.3s ease;
+    font-size: var(--comisiones-font-size-sm);
+    color: var(--comisiones-text-color);
+    border: 1px solid transparent;
+}
+
+.comisiones-menu-item:hover {
+    background-color: rgba(3, 124, 224, 0.05);
+    border-color: var(--comisiones-border-color);
+}
+
+.comisiones-menu-item-active {
+    background-color: #cdd6ee;
+    color: var(--comisiones-primary-color);
+    font-weight: 500;
+    border-color: var(--comisiones-secondary-color);
+}
+
+/* Panel de Contenido Principal */
+.comisiones-content-panel {
+    flex: 1;
+    background-color: var(--comisiones-panel-background);
+    border-radius: var(--comisiones-border-radius-md);
+    box-shadow: var(--comisiones-box-shadow);
+    padding: var(--comisiones-spacing-lg);
+    min-height: calc(100vh - 160px);
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.comisiones-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--comisiones-spacing-xl);
+    flex-wrap: wrap;
+    gap: var(--comisiones-spacing-md);
+}
+
+.comisiones-header-info {
+    flex: 1;
+}
+
+.comisiones-page-title {
+    font-size: var(--comisiones-font-size-xl);
+    font-weight: 600;
+    color: var(--comisiones-primary-color);
+    margin: 0 0 var(--comisiones-spacing-xs) 0;
+}
+
+.comisiones-subtitle {
+    color: var(--comisiones-text-light);
+    font-size: var(--comisiones-font-size-sm);
+    margin: 0;
+}
+
+.comisiones-header-actions {
+    display: flex;
+    gap: var(--comisiones-spacing-sm);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Sección de Filtros */
+.comisiones-filters-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: var(--comisiones-spacing-xl);
+    flex-wrap: wrap;
+    gap: 15px;
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: var(--comisiones-border-radius-md);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.filters-left {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    flex-wrap: wrap;
+    flex: 2;
+    align-items: flex-end;
+}
+
+.filters-right {
+    display: flex;
+    gap: var(--comisiones-spacing-sm);
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.comisiones-filter-group,
+.comisiones-filtro-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.comisiones-filtro-grupo label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--comisiones-text-light);
+}
+
+/* Inputs y Selects */
+.comisiones-filter-select {
+    height: 38px;
+    padding: 0 10px;
+    border: 1px solid var(--comisiones-border-color);
+    border-radius: var(--comisiones-border-radius-sm);
+    background-color: #fff;
+    font-size: 0.85rem;
+    min-width: 160px;
+}
+
+/* Botones */
+.comisiones-btn {
+    padding: var(--comisiones-spacing-sm) var(--comisiones-spacing-lg);
+    border: none;
+    border-radius: var(--comisiones-border-radius-sm);
+    font-size: var(--comisiones-font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+    text-align: center;
+}
+
+.comisiones-btn-primary {
+    background-color: var(--comisiones-accent-color);
+    color: white;
+}
+
+.comisiones-btn-primary:hover {
+    background-color: #d86600;
+    transform: translateY(-1px);
+}
+
+.comisiones-btn-secondary {
+    background-color: var(--comisiones-accent-color);
+    color: white;
+}
+
+.comisiones-btn-secondary:hover {
+    background-color: #d86600;
+    transform: translateY(-1px);
+}
+
+.comisiones-btn-cancel {
+    background-color: #6c757d;
+    color: white;
+}
+
+.comisiones-btn-cancel:hover {
+    background-color: #5a6268;
+    transform: translateY(-1px);
+}
+
+.comisiones-btn-confirm {
+    background-color: #c73232;
+    color: white;
+}
+
+.comisiones-btn-confirm:hover {
+    background-color: #f96767;
+    transform: translateY(-1px);
+}
+
+.comisiones-btn-filtro {
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    padding: 0 15px;
+    border-radius: var(--comisiones-border-radius-sm);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.comisiones-btn-filtro:hover {
+    background-color: #0b5ed7;
+}
+
+.comisiones-btn-orden {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 36px;
+}
+
+.comisiones-btn-orden:hover {
+    background-color: #5a6268;
+}
+
+/* Resumen de Comisiones */
+.comisiones-resumen-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--comisiones-spacing-lg);
+    margin-bottom: var(--comisiones-spacing-xl);
+}
+
+.comisiones-resumen-card {
+    background-color: white;
+    padding: var(--comisiones-spacing-lg);
+    border-radius: var(--comisiones-border-radius-md);
+    box-shadow: var(--comisiones-box-shadow);
+    text-align: center;
+    border: 1px solid var(--comisiones-border-color);
+    transition: transform 0.3s ease;
+}
+
+.comisiones-resumen-card:hover {
+    transform: translateY(-2px);
+}
+
+.comisiones-resumen-titulo {
+    font-size: var(--comisiones-font-size-sm);
+    font-weight: 600;
+    margin: 0 0 var(--comisiones-spacing-sm) 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.comisiones-resumen-monto {
+    font-size: var(--comisiones-font-size-xl);
+    font-weight: 700;
+    margin: 0;
+}
+
+/* Colores Específicos Cards Resumen */
+.comisiones-venta {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    border-left: 4px solid var(--comisiones-success-color);
+}
+
+.comisiones-venta .comisiones-resumen-titulo {
+    color: #2e7d32;
+}
+
+.comisiones-venta .comisiones-resumen-monto {
+    color: var(--comisiones-success-color);
+}
+
+.comisiones-proyecto {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-left: 4px solid var(--comisiones-info-color);
+}
+
+.comisiones-proyecto .comisiones-resumen-titulo {
+    color: #1565c0;
+}
+
+.comisiones-proyecto .comisiones-resumen-monto {
+    color: var(--comisiones-info-color);
+}
+
+.comisiones-saldo {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    border-left: 4px solid var(--comisiones-warning-color);
+}
+
+.comisiones-saldo .comisiones-resumen-titulo {
+    color: #e65100;
+}
+
+.comisiones-saldo .comisiones-resumen-monto {
+    color: var(--comisiones-warning-color);
+}
+
+/* Tabla */
+.comisiones-table-card {
+    background-color: white;
+    padding: var(--comisiones-spacing-lg);
+    border-radius: var(--comisiones-border-radius-md);
+    box-shadow: var(--comisiones-box-shadow);
+    border: 1px solid var(--comisiones-border-color);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.comisiones-table-title {
+    font-size: var(--comisiones-font-size-md);
+    margin: 0 0 var(--comisiones-spacing-md) 0;
+    color: var(--comisiones-text-color);
+    font-weight: 600;
+}
+
+.comisiones-table-container {
+    overflow-x: auto;
+    overflow-y: auto;
+    border: 1px solid var(--comisiones-border-color);
+    border-radius: var(--comisiones-border-radius-sm);
+    max-height: 500px;
+}
+
+.comisiones-table-header-fixed {
+    position: sticky;
+    top: 0;
+    background-color: #cdd6ee;
+    z-index: 10;
+}
+
+.comisiones-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    min-width: 1400px;
+}
+
+.comisiones-table th,
+.comisiones-table td {
+    padding: var(--comisiones-spacing-sm) var(--comisiones-spacing-md);
+    text-align: left;
+    border-bottom: 1px solid var(--comisiones-border-color);
+    font-size: var(--comisiones-font-size-sm);
+}
+
+.comisiones-table th {
+    background-color: #cdd6ee;
+    font-weight: 600;
+    color: var(--comisiones-primary-color);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.comisiones-table tbody tr:hover {
+    background-color: rgba(3, 124, 224, 0.05);
+}
+
+.comisiones-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.comisiones-no-data {
+    text-align: center;
+    color: var(--comisiones-text-light);
+    font-style: italic;
+    padding: var(--comisiones-spacing-xl) !important;
+}
+
+/* Badges de Status */
+.comisiones-status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.comisiones-status-badge.pagado {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #4caf50;
+}
+
+.comisiones-status-badge.pendiente {
+    background-color: rgba(255, 152, 0, 0.1);
+    color: #ff9800;
+}
+
+/* Botones de acción */
+.comisiones-action-btn {
+    background: none;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.comisiones-delete-btn:hover {
+    background-color: rgba(244, 67, 54, 0.1);
+    border-color: #f44336;
+}
+
+.comisiones-action-icon {
+    width: 16px;
+    height: 16px;
+    filter: brightness(0) saturate(100%) invert(27%) sepia(98%) saturate(7462%) hue-rotate(3deg) brightness(103%) contrast(97%);
+}
+
+/* Modales */
+.comisiones-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: var(--comisiones-spacing-lg);
+}
+
+.comisiones-modal-content {
+    background-color: white;
+    border-radius: var(--comisiones-border-radius-lg);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-height: 90vh;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.comisiones-modal-sm {
+    max-width: 400px;
+}
+
+.comisiones-modal-md {
+    max-width: 500px;
+}
+
+.comisiones-modal-lg {
+    max-width: 700px;
+}
+
+.comisiones-modal-xl {
+    max-width: 900px;
+}
+
+.comisiones-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--comisiones-spacing-lg) 0 var(--comisiones-spacing-lg) 0;
+    border-bottom: 1px solid var(--comisiones-border-color);
+    background-color: white;
+    border-radius: var(--comisiones-border-radius-lg) var(--comisiones-border-radius-lg) 0 0;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    margin: 0;
+}
+
+.comisiones-split-row {
+    display: flex;
+    gap: var(--comisiones-spacing-lg);
+}
+
+.comisiones-split-row .comisiones-form-group {
+    flex: 1;
+}
+
+.comisiones-modal-title {
+    font-size: clamp(1.05rem, 1.5vw + 0.8rem, 1.2rem);
+    font-weight: 600;
+    color: var(--comisiones-text-color);
+    margin: 0;
+    padding-left: var(--comisiones-spacing-lg);
+}
+
+.comisiones-modal-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--comisiones-text-light);
+    cursor: pointer;
+    padding: var(--comisiones-spacing-xs);
+    border-radius: var(--comisiones-border-radius-sm);
+    transition: color 0.3s, background-color 0.3s;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: var(--comisiones-spacing-lg);
+}
+
+.comisiones-modal-close:hover {
+    color: var(--comisiones-text-color);
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.comisiones-modal-body {
+    padding: var(--comisiones-spacing-lg);
+    background-color: white;
+    border-radius: 0 0 var(--comisiones-border-radius-lg) var(--comisiones-border-radius-lg);
+    overflow-y: auto;
+    flex: 1;
+}
+
+.comisiones-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--comisiones-spacing-lg);
+}
+
+.comisiones-form-row {
+    display: flex;
+    gap: var(--comisiones-spacing-lg);
+}
+
+.comisiones-form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.comisiones-form-group label {
+    font-size: var(--comisiones-font-size-sm);
+    font-weight: 500;
+    color: var(--comisiones-text-color);
+    margin-bottom: var(--comisiones-spacing-xs);
+    display: block;
+}
+
+.comisiones-form-control {
+    width: 100%;
+    padding: var(--comisiones-spacing-sm) var(--comisiones-spacing-md);
+    border: 1px solid var(--comisiones-border-color);
+    border-radius: var(--comisiones-border-radius-sm);
+    font-size: var(--comisiones-font-size-sm);
+    background-color: white;
+    color: var(--comisiones-text-color);
+    transition: border-color 0.3s, box-shadow 0.3s;
+    box-sizing: border-box;
+}
+
+.comisiones-form-control:focus {
+    outline: none;
+    border-color: var(--comisiones-secondary-color);
+    box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
+.comisiones-error-message {
+    color: var(--comisiones-danger-color);
+    font-size: var(--comisiones-font-size-xs);
+}
+
+.comisiones-help-text {
+    color: var(--comisiones-text-light);
+    font-size: var(--comisiones-font-size-xs);
+    margin-top: var(--comisiones-spacing-xs);
+}
+
+.comisiones-form-actions {
+    display: flex;
+    gap: var(--comisiones-spacing-md);
+    justify-content: flex-end;
+    padding-top: var(--comisiones-spacing-lg);
+    border-top: 1px solid var(--comisiones-border-color);
+    margin-top: var(--comisiones-spacing-lg);
+}
+
+.comisiones-modal-form-actions {
+    display: flex;
+    gap: var(--comisiones-spacing-md);
+    justify-content: center;
+    margin-top: var(--comisiones-spacing-lg);
+}
+
+.comisiones-confirmar-eliminacion {
+    text-align: center;
+}
+
+.comisiones-confirmation-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--comisiones-spacing-lg);
+}
+
+.comisiones-confirmation-message {
+    font-size: var(--comisiones-font-size-md);
+    color: var(--comisiones-text-color);
+    margin: 0;
+}
+
+.comisiones-detail-label {
+    display: block;
+    font-size: var(--comisiones-font-size-sm);
+    font-weight: 600;
+    color: var(--comisiones-text-color);
+    margin-bottom: var(--comisiones-spacing-xs);
+    margin-top: var(--comisiones-spacing-md);
+}
+
+.comisiones-detail-label:first-child {
+    margin-top: 0;
+}
+
+.comisiones-detail-value {
+    font-size: var(--comisiones-font-size-sm);
+    color: var(--comisiones-text-light);
+    word-break: break-word;
+    overflow-wrap: break-word;
+    text-transform: capitalize;
+}
+
+.comisiones-audit-section {
+    border-top: 1px solid var(--comisiones-border-color);
+    padding-top: var(--comisiones-spacing-lg);
+    margin-top: var(--comisiones-spacing-lg);
+}
+
+.comisiones-audit-title {
+    font-size: var(--comisiones-font-size-md);
+    font-weight: 600;
+    color: var(--comisiones-text-color);
+    margin-bottom: var(--comisiones-spacing-lg);
+}
+
+.comisiones-audit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--comisiones-spacing-xl);
+}
+
+.status-badge-large {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: var(--comisiones-border-radius-sm);
+    font-size: var(--comisiones-font-size-sm);
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-badge-large.bg-success {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #4caf50;
+}
+
+.status-badge-large.bg-danger {
+    background-color: rgba(244, 67, 54, 0.1);
+    color: #f44336;
+}
+
+.status-badge-large.bg-secondary {
+    background-color: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+}
+
+/* Date Picker */
+.comisiones-date-picker-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    min-width: 250px;
+}
+
+.comisiones-date-picker {
+    padding: 8px 70px 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    width: 100%;
+    background-color: white;
+    color: #333;
+    cursor: pointer;
+    box-sizing: border-box;
+    height: 38px;
+}
+
+.comisiones-date-picker:focus {
+    outline: none;
+    border-color: var(--comisiones-secondary-color);
+    box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
+.comisiones-date-picker-icons {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.comisiones-calendar-icon {
+    color: #666;
+    display: flex;
+    align-items: center;
+}
+
+.react-datepicker__close-icon {
+    right: 35px !important;
+    pointer-events: all;
+}
+
+.react-datepicker__close-icon::after {
+    background-color: #dc3545 !important;
+    font-size: 14px !important;
+    line-height: 16px !important;
+    width: 18px !important;
+    height: 18px !important;
+}
+
+.react-datepicker {
+    font-family: inherit;
+    border: 1px solid var(--comisiones-border-color);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+}
+
+.react-datepicker__header {
+    background-color: var(--comisiones-primary-color);
+    border-bottom: 1px solid var(--comisiones-border-color);
+}
+
+.react-datepicker__current-month,
+.react-datepicker__day-name {
+    color: white;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--in-selecting-range,
+.react-datepicker__day--in-range {
+    background-color: var(--comisiones-secondary-color);
+    color: white;
+}
+
+.react-datepicker__day--keyboard-selected {
+    background-color: var(--comisiones-accent-color);
+}
+
+.react-datepicker-popper {
+    z-index: 9999 !important;
+}
+
+.comisiones-edit-btn:hover {
+    background-color: rgba(33, 150, 243, 0.1);
+    border-color: #2196f3;
+}
+
+.comisiones-details-btn:hover {
+    background-color: rgba(255, 152, 0, 0.1);
+    border-color: #ff9800;
+}
+
+.comisiones-edit-btn .comisiones-action-icon,
+.comisiones-details-btn .comisiones-action-icon {
+    filter: brightness(0) saturate(100%) invert(47%) sepia(94%) saturate(445%) hue-rotate(144deg) brightness(95%) contrast(91%);
+}
+
+.comisiones-btn-reporte {
+    background-color: #dc3545;
+    color: white;
+}
+
+.comisiones-btn-reporte:hover {
+    background-color: #bb2d3b;
+    transform: translateY(-1px);
+}
+
+.comisiones-info-box {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 10px 15px;
+    margin: 15px 0;
+    font-size: 14px;
+}
+
+.comisiones-error-message {
+    color: #dc3545;
+    font-size: 12px;
+    display: block;
+    margin-top: 5px;
+}
+
+.comisiones-form-control.error {
+    border-color: #dc3545;
+}
+
+.comisiones-status-badge.pagado {
+    background-color: #28a745;
+    color: white;
+}
+
+.comisiones-status-badge.pendiente {
+    background-color: #dc3545;
+    color: white;
+}
+
+.comisiones-status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-badge-large {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    display: inline-block;
+    margin-top: 5px;
+}
+
+.bg-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.bg-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.bg-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.comisiones-col-nota {
+    min-width: 350px;
+    max-width: 500px;
+    white-space: normal;
+    word-wrap: break-word;
+    line-height: 1.5;
+}
+
+@media (max-width: 1200px) {
+    .comisiones-container {
+        gap: var(--comisiones-spacing-md);
+    }
+
+    .comisiones-sidebar {
+        flex: 0 0 260px;
+        min-width: 240px;
+    }
+
+    .comisiones-header-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media (max-width: 992px) {
+    .comisiones-main-content {
+        padding: var(--comisiones-spacing-md);
+    }
+
+    .comisiones-container {
+        flex-direction: column;
+        gap: var(--comisiones-spacing-lg);
+    }
+
+    .comisiones-sidebar {
+        flex: none;
+        width: 100%;
+        max-height: none;
+        height: auto;
+    }
+
+    .comisiones-sidebar-menu {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        gap: var(--comisiones-spacing-sm);
+        padding: var(--comisiones-spacing-sm) 0;
+    }
+
+    .comisiones-menu-item {
+        white-space: nowrap;
+        flex: 0 0 auto;
+        min-width: fit-content;
+    }
+
+    .comisiones-content-panel {
+        min-height: auto;
+        width: 100%;
+    }
+
+    .comisiones-table {
+        min-width: 1200px;
+    }
+
+    .comisiones-form-row {
+        flex-direction: column;
+        gap: var(--comisiones-spacing-sm);
+    }
+
+    .comisiones-filters-section {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filters-left,
+    .filters-right {
+        width: 100%;
+    }
+
+    .comisiones-filter-select {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .comisiones-filters-section {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+
+    .comisiones-filter-group {
+        width: 100%;
+    }
+
+    .comisiones-filter-select {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .comisiones-date-picker-wrapper {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .comisiones-date-picker {
+        min-width: auto;
+    }
+
+    .comisiones-btn-filtro,
+    .comisiones-btn-orden {
+        width: 100%;
+        margin-top: 5px;
+    }
+
+    .comisiones-main-content {
+        padding: var(--comisiones-spacing-sm);
+    }
+
+    .comisiones-sidebar {
+        padding: var(--comisiones-spacing-sm);
+    }
+
+    .comisiones-sidebar-header {
+        padding-bottom: var(--comisiones-spacing-sm);
+    }
+
+    .comisiones-sidebar-title {
+        font-size: var(--comisiones-font-size-lg);
+    }
+
+    .comisiones-menu-item {
+        padding: var(--comisiones-spacing-sm);
+        font-size: var(--comisiones-font-size-xs);
+    }
+
+    .comisiones-content-panel {
+        padding: var(--comisiones-spacing-sm);
+    }
+
+    .comisiones-header {
+        flex-direction: column;
+        gap: var(--comisiones-spacing-md);
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .comisiones-header-actions {
+        justify-content: center;
+    }
+
+    .comisiones-table-card {
+        padding: var(--comisiones-spacing-sm);
+    }
+
+    .comisiones-table {
+        min-width: 1000px;
+        font-size: var(--comisiones-font-size-xs);
+    }
+
+    .comisiones-table th,
+    .comisiones-table td {
+        padding: var(--comisiones-spacing-xs);
+    }
+}
+
+@media (max-width: 576px) {
+    .comisiones-main-content {
+        padding: var(--comisiones-spacing-xs);
+    }
+
+    .comisiones-sidebar-menu {
+        flex-direction: column;
+        overflow-x: visible;
+    }
+
+    .comisiones-menu-item {
+        width: 100%;
+        text-align: left;
+    }
+
+    .comisiones-table {
+        min-width: 800px;
+        font-size: 0.7rem;
+    }
+
+    .comisiones-table th,
+    .comisiones-table td {
+        padding: 4px 6px;
+    }
+
+    .comisiones-modal-overlay {
+        padding: var(--comisiones-spacing-xs);
+    }
+
+    .comisiones-modal-content {
+        max-width: 98vw;
+        margin: var(--comisiones-spacing-xs);
+    }
+}
+
+@media (max-width: 768px) {
+    .comisiones-resumen-grid {
+        grid-template-columns: 1fr;
+        gap: var(--comisiones-spacing-md);
+    }
+
+    .comisiones-resumen-card {
+        padding: var(--comisiones-spacing-md);
+    }
+
+    .comisiones-resumen-monto {
+        font-size: var(--comisiones-font-size-lg);
+    }
+}
+
+@media (max-width: 576px) {
+    .comisiones-resumen-grid {
+        gap: var(--comisiones-spacing-sm);
+    }
+
+    .comisiones-resumen-card {
+        padding: var(--comisiones-spacing-sm);
+    }
+
+    .comisiones-resumen-titulo {
+        font-size: var(--comisiones-font-size-xs);
+    }
+
+    .comisiones-resumen-monto {
+        font-size: var(--comisiones-font-size-md);
+    }
+}
+
+/* Animaciones */
+@keyframes comisiones-fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.comisiones-table tbody tr {
+    animation: comisiones-fadeIn 0.3s ease-out;
+}
+
+/* Loading */
+.comisiones-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    font-size: 16px;
+    color: #037ce0;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left-color: #9c16f7;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.required {
+    color: #f44336;
+    font-weight: bold;
+}
