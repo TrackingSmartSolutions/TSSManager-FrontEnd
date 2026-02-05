@@ -199,9 +199,9 @@ const ModalFormularioComision = ({ isOpen, onClose, onSave, initialData = null, 
                 cuentaPorCobrarId: initialData.cuentaPorCobrarId || "",
                 vendedorCuentaId: vendedorExiste ? initialData.vendedorCuentaId || "" : "",
                 vendedorNuevoNombre: "",
-                porcentajeVenta: initialData.porcentajeVenta || "",
+                porcentajeVenta: initialData.porcentajeVenta !== undefined && initialData.porcentajeVenta !== null ? initialData.porcentajeVenta : "",  // ✅ CORREGIDO
                 proyectoCuentaId: initialData.proyectoCuentaId || "",
-                porcentajeProyecto: initialData.porcentajeProyecto || "",
+                porcentajeProyecto: initialData.porcentajeProyecto !== undefined && initialData.porcentajeProyecto !== null ? initialData.porcentajeProyecto : "",  // ✅ CORREGIDO
                 notas: initialData.notas || ""
             });
 
