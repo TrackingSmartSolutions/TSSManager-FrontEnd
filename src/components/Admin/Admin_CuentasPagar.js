@@ -1000,17 +1000,17 @@ const AdminCuentasPagar = () => {
     if (!cuenta.fechaPago) return cuenta.estatus;
 
     const [year, month, day] = cuenta.fechaPago.split('-').map(Number);
+
     const fechaVencimiento = new Date(year, month - 1, day);
-    const unDiaDespues = new Date(fechaVencimiento);
-    unDiaDespues.setDate(unDiaDespues.getDate() + 1);
 
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
-    unDiaDespues.setHours(0, 0, 0, 0);
 
-    if (hoy > unDiaDespues && cuenta.estatus !== "Pagado") {
+    fechaVencimiento.setHours(0, 0, 0, 0);
+    if (hoy > fechaVencimiento && cuenta.estatus !== "Pagado") {
       return "Vencida";
     }
+
     return cuenta.estatus;
   };
 

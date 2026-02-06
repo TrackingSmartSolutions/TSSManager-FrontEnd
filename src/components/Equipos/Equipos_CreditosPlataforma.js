@@ -6,6 +6,7 @@ import { API_BASE_URL } from "../Config/Config"
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import { Line } from "react-chartjs-2"
+import Swal from 'sweetalert2'
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
 import {
@@ -325,47 +326,47 @@ const EquiposCreditosPlataforma = () => {
 
   // Generar reporte PDF
   const handleGenerarReporte = async () => {
-  const element = document.getElementById("creditos-reporte-content");
-  element.classList.add('generating-pdf');
+    const element = document.getElementById("creditos-reporte-content");
+    element.classList.add('generating-pdf');
 
-  await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-  const opt = {
-    margin: 0.5,
-    filename: `Informe_Creditos_Plataforma_${fechaInicio ? fechaInicio.toISOString().split('T')[0] : 'sin-fecha'}_${fechaFin ? fechaFin.toISOString().split('T')[0] : 'sin-fecha'}.pdf`,
-    image: { type: "jpeg", quality: 0.98 },
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: element.scrollWidth,
-      windowHeight: element.scrollHeight,
-      allowTaint: true
-    },
-    jsPDF: {
-      unit: "in",
-      format: "a4",
-      orientation: "portrait"
-    },
-    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-  };
+    const opt = {
+      margin: 0.5,
+      filename: `Informe_Creditos_Plataforma_${fechaInicio ? fechaInicio.toISOString().split('T')[0] : 'sin-fecha'}_${fechaFin ? fechaFin.toISOString().split('T')[0] : 'sin-fecha'}.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+        allowTaint: true
+      },
+      jsPDF: {
+        unit: "in",
+        format: "a4",
+        orientation: "portrait"
+      },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
 
-  try {
-    const blobUrl = await html2pdf().set(opt).from(element).output('bloburl');
+    try {
+      const blobUrl = await html2pdf().set(opt).from(element).output('bloburl');
 
-    setPdfPreview({
-      isOpen: true,
-      url: blobUrl,
-      filename: opt.filename
-    });
+      setPdfPreview({
+        isOpen: true,
+        url: blobUrl,
+        filename: opt.filename
+      });
 
-  } catch (error) {
-    console.error("Error generando PDF:", error);
-  } finally {
-    element.classList.remove('generating-pdf');
+    } catch (error) {
+      console.error("Error generando PDF:", error);
+    } finally {
+      element.classList.remove('generating-pdf');
+    }
   }
-}
 
   const handleDownloadFromPreview = () => {
     if (pdfPreview.url) {
@@ -375,6 +376,55 @@ const EquiposCreditosPlataforma = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    }
+  };
+
+  const handleGenerarReporteEquipos = async () => {
+    try {
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/notificaciones/reporte-equipos-expirar-pdf`,
+        { method: 'GET' }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+
+        if (errorText.includes("No hay equipos próximos a expirar")) {
+          Swal.fire({
+            icon: 'info',
+            title: 'Sin equipos próximos a expirar',
+            text: 'No hay equipos próximos a expirar para generar el reporte en este momento',
+            confirmButtonColor: '#3085d6'
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Ocurrió un error al generar el reporte de equipos',
+            confirmButtonColor: '#d33'
+          });
+        }
+        return;
+      }
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      setPdfPreview({
+        isOpen: true,
+        url: blobUrl,
+        filename: `Reporte_Equipos_Expirar_${new Date().toISOString().split('T')[0]}.pdf`
+      });
+
+    } catch (error) {
+      console.error("Error generando reporte de equipos:", error);
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Ocurrió un error al generar el reporte de equipos',
+        confirmButtonColor: '#d33'
+      });
     }
   };
 
@@ -450,6 +500,14 @@ const EquiposCreditosPlataforma = () => {
                         locale="es"
                       />
                     </div>
+                    <button
+                      className="creditosplataforma-btn creditosplataforma-btn-pdf"
+                      onClick={handleGenerarReporteEquipos}
+                      style={{ marginLeft: '10px' }}
+                    >
+                      Reporte de equipos a expirar
+                    </button>
+
                     <button className="creditosplataforma-btn creditosplataforma-btn-pdf" onClick={handleGenerarReporte}>
                       Visualizar reporte
                     </button>
