@@ -241,9 +241,11 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
             className={`inventario-form-control ${errors.modeloId ? "inventario-form-control-error" : ""}`}
           >
             <option value="">Seleccione un modelo</option>
-            {modelos.map((m) => (
-              <option key={m.id} value={m.id}>{m.nombre}</option>
-            ))}
+            {[...modelos]
+              .sort((a, b) => a.nombre.localeCompare(b.nombre))
+              .map((m) => (
+                <option key={m.id} value={m.id}>{m.nombre}</option>
+              ))}
           </select>
           {errors.modeloId && <span className="inventario-form-error">{errors.modeloId}</span>}
         </div>
