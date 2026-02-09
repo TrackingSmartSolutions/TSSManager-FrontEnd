@@ -2042,7 +2042,7 @@ const AdminCuentasCobrar = () => {
                         <th>Cliente</th>
                         <th>Estatus</th>
                         <th>Esquema</th>
-                        <th>Monto a Cobrar</th>
+                        <th>Monto neto</th>
                         <th>Concepto/s</th>
                         <th>Acciones</th>
                       </tr>
