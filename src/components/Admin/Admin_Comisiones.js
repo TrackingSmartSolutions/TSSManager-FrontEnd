@@ -367,7 +367,14 @@ const ModalFormularioComision = ({ isOpen, onClose, onSave, initialData = null, 
                         disabled={isEdit}
                     >
                         <option value="">Seleccione una empresa</option>
-                        {empresas.map(emp => <option key={emp.id} value={emp.id}>{emp.nombre}</option>)}
+                        {[...empresas]
+                            .sort((a, b) => a.nombre.localeCompare(b.nombre))
+                            .map(emp => (
+                                <option key={emp.id} value={emp.id}>
+                                    {emp.nombre}
+                                </option>
+                            ))
+                        }
                     </select>
                     {errors.empresaId && <span className="comisiones-error-message">{errors.empresaId}</span>}
                 </div>
