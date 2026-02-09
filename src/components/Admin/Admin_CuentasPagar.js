@@ -842,6 +842,9 @@ const AdminCuentasPagar = () => {
       }
 
       params.append('filtroEstatus', filtroEstatus);
+      if (filtroCuenta) {
+        params.append('filtroCuenta', filtroCuenta);
+      }
 
       const response = await fetchWithToken(
         `${API_BASE_URL}/cuentas-por-pagar/reporte/pdf?${params.toString()}`
@@ -926,6 +929,9 @@ const AdminCuentasPagar = () => {
       }
 
       params.append('filtroEstatus', filtroEstatus);
+      if (filtroCuenta) {
+        params.append('filtroCuenta', filtroCuenta);
+      }
 
       const response = await fetchWithToken(
         `${API_BASE_URL}/cuentas-por-pagar/reporte/pdf-resumido?${params.toString()}`
