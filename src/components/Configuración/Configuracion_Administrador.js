@@ -58,6 +58,7 @@ const ConfiguracionAdministrador = () => {
     { value: "equipos", label: "Equipos" },
     { value: "sims", label: "Sims" },
     { value: "historialSaldos", label: "Historial de saldos" },
+    { value: "auditoria", label: "Auditoría del Sistema" },
   ]
 
   const formatosExportacion = [
