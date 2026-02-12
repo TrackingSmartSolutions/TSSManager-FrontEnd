@@ -420,11 +420,11 @@ const ConfiguracionAdministrador = () => {
         descripcion: "El archivo CSV debe tener las siguientes columnas:",
       },
       empresas: {
-        campos: "nombre, estatus, domicilio_fisico, propietario_id, creado_por, fecha_creacion (opcional), sitio_web (opcional), sector (opcional), domicilio_fiscal (opcional), rfc (opcional), razon_social (opcional), regimen_fiscal (opcional), modificado_por (opcional)",
+        campos: "nombre, propietario_id (opcional), estatus, sitio_web, sector, domicilio_fisico, domicilio_fiscal, rfc, razon_social, regimen_fiscal",
         descripcion: "El archivo CSV debe tener las siguientes columnas:",
       },
       contactos: {
-        campos: "nombre, empresa_id, rol, celular, propietario_id, creado_por, fecha_creacion (opcional), modificado_por (opcional)",
+        campos: "nombre, empresa_id, rol, celular, propietario_id (opcional - usa usuario actual si vacio)",
         descripcion: "El archivo CSV debe tener las siguientes columnas:",
       },
       correoContactos: {
