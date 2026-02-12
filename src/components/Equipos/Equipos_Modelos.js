@@ -351,7 +351,12 @@ const ModeloCard = ({ modelo, onEdit, onDelete }) => {
       <div className="modelos-card-content">
         <h4 className="modelos-card-title">{modelo.nombre}</h4>
         <p className="modelos-card-uso">Uso: {modelo.uso}</p>
-        <p className="modelos-card-cantidad">{cantidadTexto}</p>
+        <div className="modelos-card-stats">
+          <p className="modelos-card-cantidad">{cantidadTexto}</p>
+          <span className="modelos-badge-disponibles">
+            Disponibles: {modelo.disponibles || 0}
+          </span>
+        </div>
       </div>
       <div className="modelos-card-actions">
         <button className="modelos-options-btn" onClick={() => setShowOptions(!showOptions)}>
@@ -373,13 +378,13 @@ const ModeloCard = ({ modelo, onEdit, onDelete }) => {
               className="modelos-option-item modelos-option-danger"
               onClick={() => {
                 if (modelo.cantidad > 0) {
-                    Swal.fire({
-                        icon: "warning",
-                        title: "No se puede eliminar",
-                        text: `Este modelo tiene ${modelo.cantidad} equipo(s) asociado(s). Debes eliminar o reasignar los equipos antes de borrar el modelo.`,
-                    });
-                    setShowOptions(false);
-                    return; 
+                  Swal.fire({
+                    icon: "warning",
+                    title: "No se puede eliminar",
+                    text: `Este modelo tiene ${modelo.cantidad} equipo(s) asociado(s). Debes eliminar o reasignar los equipos antes de borrar el modelo.`,
+                  });
+                  setShowOptions(false);
+                  return;
                 }
                 onDelete(modelo);
                 setShowOptions(false);
@@ -505,109 +510,109 @@ const EquiposModelos = () => {
 
   return (
     <>
-     <div className="page-with-header">
-      <Header />
-      {isLoading && (
-        <div className="modelos-loading">
-          <div className="spinner"></div>
-          <p>Cargando modelos de equipos...</p>
-        </div>
-      )}
-      <main className="modelos-main-content">
-        <div className="modelos-container">
-          <section className="modelos-sidebar">
-            <div className="modelos-sidebar-header">
-              <h3 className="modelos-sidebar-title">Equipos</h3>
-            </div>
-            <div className="modelos-sidebar-menu">
-              <div className="modelos-menu-item" onClick={() => handleMenuNavigation("estatus-plataforma")}>
-                Estatus plataforma
+      <div className="page-with-header">
+        <Header />
+        {isLoading && (
+          <div className="modelos-loading">
+            <div className="spinner"></div>
+            <p>Cargando modelos de equipos...</p>
+          </div>
+        )}
+        <main className="modelos-main-content">
+          <div className="modelos-container">
+            <section className="modelos-sidebar">
+              <div className="modelos-sidebar-header">
+                <h3 className="modelos-sidebar-title">Equipos</h3>
               </div>
-              <div
-                className="modelos-menu-item modelos-menu-item-active"
-                onClick={() => handleMenuNavigation("modelos")}
-              >
-                Modelos
+              <div className="modelos-sidebar-menu">
+                <div className="modelos-menu-item" onClick={() => handleMenuNavigation("estatus-plataforma")}>
+                  Estatus plataforma
+                </div>
+                <div
+                  className="modelos-menu-item modelos-menu-item-active"
+                  onClick={() => handleMenuNavigation("modelos")}
+                >
+                  Modelos
+                </div>
+                <div className="modelos-menu-item" onClick={() => handleMenuNavigation("proveedores")}>
+                  Proveedores
+                </div>
+                <div className="modelos-menu-item" onClick={() => handleMenuNavigation("inventario")}>
+                  Inventario de equipos
+                </div>
+                <div className="modelos-menu-item" onClick={() => handleMenuNavigation("sim")}>
+                  SIM
+                </div>
+                <div
+                  className="creditosplataforma-menu-item"
+                  onClick={() => handleMenuNavigation("creditos-plataforma")}
+                >
+                  Créditos Plataformas
+                </div>
               </div>
-              <div className="modelos-menu-item" onClick={() => handleMenuNavigation("proveedores")}>
-                Proveedores
-              </div>
-              <div className="modelos-menu-item" onClick={() => handleMenuNavigation("inventario")}>
-                Inventario de equipos
-              </div>
-              <div className="modelos-menu-item" onClick={() => handleMenuNavigation("sim")}>
-                SIM
-              </div>
-              <div
-                className="creditosplataforma-menu-item"
-                onClick={() => handleMenuNavigation("creditos-plataforma")}
-              >
-                Créditos Plataformas
-              </div>
-            </div>
-          </section>
+            </section>
 
-          <section className="modelos-content-panel">
-            <div className="modelos-header">
-              <div className="modelos-header-info">
-                <h3 className="modelos-page-title">Modelos de Equipos</h3>
-                <p className="modelos-subtitle">Gestión de modelos de equipos</p>
-              </div>
-              <div className="modelos-header-actions">
-                <input
-                  type="text"
-                  placeholder="Buscar por nombre de modelo..."
-                  value={filtroNombre}
-                  onChange={(e) => setFiltroNombre(e.target.value)}
-                  className="modelos-search-input"
-                />
-                <button className="modelos-btn modelos-btn-primary" onClick={() => openModal("form", { modelo: null })}>
-                  Agregar modelo
-                </button>
-              </div>
-            </div>
-
-            <div className="modelos-grid">
-              {modelosFiltrados.length > 0 ? (
-                modelosFiltrados.map((modelo) => (
-                  <ModeloCard
-                    key={modelo.id}
-                    modelo={modelo}
-                    onEdit={(modelo) => openModal("form", { modelo })}
-                    onDelete={(modelo) => openModal("confirmDelete", { modelo })}
+            <section className="modelos-content-panel">
+              <div className="modelos-header">
+                <div className="modelos-header-info">
+                  <h3 className="modelos-page-title">Modelos de Equipos</h3>
+                  <p className="modelos-subtitle">Gestión de modelos de equipos</p>
+                </div>
+                <div className="modelos-header-actions">
+                  <input
+                    type="text"
+                    placeholder="Buscar por nombre de modelo..."
+                    value={filtroNombre}
+                    onChange={(e) => setFiltroNombre(e.target.value)}
+                    className="modelos-search-input"
                   />
-                ))
-              ) : (
-                <div className="modelos-no-data">
-                  <div className="modelos-no-data-icon">📦</div>
-                  <h4>No hay modelos registrados</h4>
-                  <p>Comienza agregando tu primer modelo de equipo</p>
-                  <button
-                    className="modelos-btn modelos-btn-primary"
-                    onClick={() => openModal("form", { modelo: null })}
-                  >
+                  <button className="modelos-btn modelos-btn-primary" onClick={() => openModal("form", { modelo: null })}>
                     Agregar modelo
                   </button>
                 </div>
-              )}
-            </div>
-          </section>
-        </div>
+              </div>
 
-        <ModeloFormModal
-          isOpen={modals.form.isOpen}
-          onClose={() => closeModal("form")}
-          modelo={modals.form.modelo}
-          onSave={handleSaveModelo}
-        />
+              <div className="modelos-grid">
+                {modelosFiltrados.length > 0 ? (
+                  modelosFiltrados.map((modelo) => (
+                    <ModeloCard
+                      key={modelo.id}
+                      modelo={modelo}
+                      onEdit={(modelo) => openModal("form", { modelo })}
+                      onDelete={(modelo) => openModal("confirmDelete", { modelo })}
+                    />
+                  ))
+                ) : (
+                  <div className="modelos-no-data">
+                    <div className="modelos-no-data-icon">📦</div>
+                    <h4>No hay modelos registrados</h4>
+                    <p>Comienza agregando tu primer modelo de equipo</p>
+                    <button
+                      className="modelos-btn modelos-btn-primary"
+                      onClick={() => openModal("form", { modelo: null })}
+                    >
+                      Agregar modelo
+                    </button>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
 
-        <ConfirmarEliminacionModal
-          isOpen={modals.confirmDelete.isOpen}
-          onClose={() => closeModal("confirmDelete")}
-          modelo={modals.confirmDelete.modelo}
-          onConfirm={handleDeleteModelo}
-        />
-      </main>
+          <ModeloFormModal
+            isOpen={modals.form.isOpen}
+            onClose={() => closeModal("form")}
+            modelo={modals.form.modelo}
+            onSave={handleSaveModelo}
+          />
+
+          <ConfirmarEliminacionModal
+            isOpen={modals.confirmDelete.isOpen}
+            onClose={() => closeModal("confirmDelete")}
+            modelo={modals.confirmDelete.modelo}
+            onConfirm={handleDeleteModelo}
+          />
+        </main>
       </div>
     </>
   );

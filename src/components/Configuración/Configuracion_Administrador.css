@@ -153,10 +153,6 @@
   box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
 }
 
-.config-admin-date-input {
-  flex: 1;
-}
-
 /* Botones */
 .config-admin-btn {
   padding: var(--config-admin-spacing-sm) var(--config-admin-spacing-lg);
@@ -303,8 +299,7 @@
 .config-admin-info-icon img {
   width: 20px;
   height: 20px;
-  filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(200deg) brightness(104%)
-    contrast(97%);
+  filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(200deg) brightness(104%) contrast(97%);
 }
 
 .config-admin-info-content {
@@ -339,10 +334,15 @@
   margin-bottom: var(--config-admin-spacing-xs);
 }
 
-.config-admin-date-row {
-  display: flex;
-  gap: var(--config-admin-spacing-md);
+.config-admin-date-range-section .config-admin-date-picker-container {
   margin-bottom: var(--config-admin-spacing-xs);
+}
+
+.config-admin-help-text {
+  color: var(--config-admin-text-light);
+  font-size: var(--config-admin-font-size-xs);
+  display: block;
+  margin-top: var(--config-admin-spacing-xs);
 }
 
 .config-admin-help-text {
@@ -437,8 +437,7 @@
 }
 
 .config-admin-btn-action.config-admin-download img {
-  filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(200deg) brightness(104%)
-    contrast(97%);
+  filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(200deg) brightness(104%) contrast(97%);
 }
 
 .config-admin-btn-action.config-admin-delete {
@@ -454,7 +453,122 @@
   font-style: italic;
 }
 
-/* Responsive Design */
+/* Filtro de fechas - DatePicker */
+.config-admin-date-picker-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  min-width: 280px;
+}
+
+.config-admin-date-picker {
+  padding: var(--config-admin-spacing-sm) 70px var(--config-admin-spacing-sm) var(--config-admin-spacing-md);
+  border: 1px solid var(--config-admin-border-color);
+  border-radius: var(--config-admin-border-radius-sm);
+  font-size: var(--config-admin-font-size-sm);
+  width: 100%;
+  background-color: white;
+  color: var(--config-admin-text-color);
+  cursor: pointer;
+  box-sizing: border-box;
+  height: 38px;
+}
+
+.config-admin-date-picker:focus {
+  outline: none;
+  border-color: var(--config-admin-secondary-color);
+  box-shadow: 0 0 0 2px rgba(3, 124, 224, 0.2);
+}
+
+.config-admin-date-picker-icons {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.config-admin-calendar-icon {
+  color: #666;
+  display: flex;
+  align-items: center;
+}
+
+.config-admin-date-picker-container {
+  display: flex;
+  align-items: center;
+  min-width: 280px;
+  width: 100%;
+}
+
+.react-datepicker__close-icon {
+  right: 35px !important;
+  pointer-events: all;
+}
+
+.react-datepicker__close-icon::after {
+  background-color: #dc3545 !important;
+  font-size: 14px !important;
+  line-height: 16px !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
+.react-datepicker {
+  font-family: var(--config-admin-font-family);
+  border: 1px solid var(--config-admin-border-color);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+}
+
+.react-datepicker__header {
+  background-color: var(--config-admin-primary-color);
+  border-bottom: 1px solid var(--config-admin-border-color);
+}
+
+.react-datepicker__current-month,
+.react-datepicker__day-name {
+  color: white;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--in-selecting-range,
+.react-datepicker__day--in-range {
+  background-color: var(--config-admin-secondary-color);
+  color: white;
+}
+
+.react-datepicker__day--keyboard-selected {
+  background-color: var(--config-admin-accent-color);
+}
+
+.react-datepicker__day:hover {
+  background-color: rgba(3, 124, 224, 0.1);
+}
+
+@media (max-width: 768px) {
+  .config-admin-date-picker-wrapper {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .config-admin-date-picker {
+    min-width: auto;
+  }
+
+  .config-admin-date-picker-container {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
 @media (max-width: 992px) {
   .config-admin-config-nav {
     flex-wrap: wrap;
@@ -588,6 +702,7 @@
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

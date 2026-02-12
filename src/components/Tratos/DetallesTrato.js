@@ -4025,22 +4025,27 @@ const DetallesTrato = () => {
   })
 
   const openModal = async (modalType, data = {}) => {
+    const contactosPrecargados = data.contactos || [];
+
     setModals((prev) => ({
       ...prev,
-      [modalType]: { isOpen: true, loading: true, tratoId: params.id, ...data },
+      [modalType]: {
+        isOpen: true,
+        loading: contactosPrecargados.length === 0,
+        tratoId: params.id,
+        contactos: contactosPrecargados,
+        ...data
+      },
     }));
 
-    if (
-      [
-        'reprogramarLlamada',
-        'reprogramarReunion',
-        'reprogramarTarea',
-        'programarLlamada',
-        'programarReunion',
-        'programarTarea',
-        'completarActividad',
-      ].includes(modalType)
-    ) {
+    if (contactosPrecargados.length === 0 && [
+      'reprogramarLlamada',
+      'reprogramarReunion',
+      'reprogramarTarea',
+      'programarLlamada',
+      'programarReunion',
+      'programarTarea',
+    ].includes(modalType)) {
       try {
         const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${params.id}`);
         const trato = await tratoResponse.json();
@@ -4050,11 +4055,9 @@ const DetallesTrato = () => {
           const contactosResponse = await fetchWithToken(
             `${API_BASE_URL}/empresas/${trato.empresaId}/contactos`
           );
-          const contactosData = await contactosResponse.json();
-          contactos = contactosData || [];
+          contactos = await contactosResponse.json() || [];
         }
 
-        // Actualizar el modal con los datos cargados y loading false
         setModals((prev) => ({
           ...prev,
           [modalType]: {
@@ -4065,25 +4068,13 @@ const DetallesTrato = () => {
         }));
 
       } catch (error) {
-        console.error('Error fetching contactos for modal:', error);
-
+        console.error('Error fetching contactos:', error);
         setModals((prev) => ({
           ...prev,
-          [modalType]: {
-            ...prev[modalType],
-            contactos: [],
-            loading: false
-          },
+          [modalType]: { ...prev[modalType], contactos: [], loading: false },
         }));
-
-        Swal.fire({
-          icon: 'warning',
-          title: 'Advertencia',
-          text: 'No se pudieron cargar los contactos. Continúa sin contactos.',
-        });
       }
     } else {
-      // Para modales que no necesitan cargar datos, quitar loading inmediatamente
       setModals((prev) => ({
         ...prev,
         [modalType]: { ...prev[modalType], loading: false },

@@ -994,7 +994,6 @@ const AdminComisiones = () => {
 
     const handleGenerarReporte = async () => {
         try {
-            // Mostrar loading
             Swal.fire({
                 title: "Generando reporte...",
                 text: "Por favor espere mientras se genera el PDF",
@@ -1006,7 +1005,6 @@ const AdminComisiones = () => {
 
             const fechaActual = new Date().toLocaleDateString("es-MX")
 
-            // Crear PDF en VERTICAL
             const pdf = new jsPDF("p", "mm", "a4")
             const pageWidth = pdf.internal.pageSize.getWidth()
             const pageHeight = pdf.internal.pageSize.getHeight()
@@ -1014,7 +1012,6 @@ const AdminComisiones = () => {
 
             let currentY = margin
 
-            // Función para agregar nueva página si es necesario
             const checkPageBreak = (requiredHeight) => {
                 if (currentY + requiredHeight > pageHeight - margin) {
                     pdf.addPage()
@@ -1024,12 +1021,10 @@ const AdminComisiones = () => {
                 return false
             }
 
-            // Función auxiliar para dividir texto en múltiples líneas
             const splitTextToFit = (text, maxWidth) => {
                 return pdf.splitTextToSize(text, maxWidth)
             }
 
-            // Encabezado del reporte con diseño mejorado
             pdf.setFillColor(0, 19, 59)
             pdf.rect(0, 0, pageWidth, 25, "F")
 
@@ -1045,7 +1040,6 @@ const AdminComisiones = () => {
             currentY = 35
             pdf.setTextColor(0, 0, 0)
 
-            // Resumen financiero con diseño mejorado
             checkPageBreak(45)
             pdf.setFontSize(16)
             pdf.setFont("helvetica", "bold")
@@ -1094,7 +1088,6 @@ const AdminComisiones = () => {
 
             currentY += boxHeight + 20
 
-            // Preparar datos formateados
             const comisionesFormateadas = comisionesFiltradas.map((comision) => ({
                 fecha: comision.fechaPago,
                 empresa: comision.empresaNombre,
@@ -1106,18 +1099,7 @@ const AdminComisiones = () => {
                 saldoProyecto: comision.saldoPendienteProyecto,
             }))
 
-            // Función para dividir en chunks
-            const dividirComisionesEnChunks = (datos, filasPorPagina = 8) => {
-                const chunks = []
-                for (let i = 0; i < datos.length; i += filasPorPagina) {
-                    chunks.push(datos.slice(i, i + filasPorPagina))
-                }
-                return chunks
-            }
 
-            const chunksComisiones = dividirComisionesEnChunks(comisionesFormateadas)
-
-            // Función para crear tabla de comisiones en PDF - SIN SALIRSE
             const crearTablaComisiones = (datos, titulo, isLastTable = false) => {
                 if (!datos || datos.length === 0) {
                     checkPageBreak(30)
@@ -1141,14 +1123,12 @@ const AdminComisiones = () => {
                 currentY += 10
                 pdf.setTextColor(0, 0, 0)
 
-                // Configurar tabla - ANCHO TOTAL CONTROLADO
-                const tableWidth = pageWidth - 2 * margin // 180mm total
-                const headers = ["Fecha", "Empresa", "Vendedor", "E.V", "Proyecto", "E.P", "Monto Base", "Saldo P."]
-                const colWidths = [20, 28, 25, 17, 28, 17, 22.5, 22.5] // Total: 180mm exactos
+                const tableWidth = pageWidth - 2 * margin
+                const headers = ["Fecha", "Empresa", "Vendedor", "E.V", "Proyecto", "E.P", "Total Cobrado", "Saldo P."]
+                const colWidths = [20, 28, 25, 17, 28, 17, 22.5, 22.5]
                 const rowHeightBase = 6
                 const lineHeight = 4
 
-                // Headers con mejor diseño
                 checkPageBreak(rowHeightBase + 5)
                 pdf.setFillColor(0, 19, 59)
                 pdf.rect(margin, currentY, tableWidth, rowHeightBase, "F")
@@ -1164,12 +1144,10 @@ const AdminComisiones = () => {
                 })
                 currentY += rowHeightBase
 
-                // Datos con múltiples líneas
                 pdf.setFont("helvetica", "normal")
                 pdf.setTextColor(0, 0, 0)
 
                 datos.forEach((fila, index) => {
-                    // Calcular altura necesaria basada en texto más largo
                     const empresaLines = splitTextToFit(fila.empresa, colWidths[1] - 3)
                     const vendedorLines = splitTextToFit(fila.vendedor, colWidths[2] - 3)
                     const proyectoLines = splitTextToFit(fila.proyecto, colWidths[4] - 3)
@@ -1179,13 +1157,11 @@ const AdminComisiones = () => {
 
                     checkPageBreak(rowHeight)
 
-                    // Alternar color de fila
                     if (index % 2 === 0) {
                         pdf.setFillColor(248, 249, 250)
                         pdf.rect(margin, currentY, tableWidth, rowHeight, "F")
                     }
 
-                    // Línea separadora
                     pdf.setDrawColor(224, 224, 224)
                     pdf.setLineWidth(0.1)
                     pdf.line(margin, currentY + rowHeight, margin + tableWidth, currentY + rowHeight)
@@ -1199,20 +1175,17 @@ const AdminComisiones = () => {
                     pdf.text(fila.fecha, xPosition + colWidths[0] / 2, baseY, { align: "center" })
                     xPosition += colWidths[0]
 
-                    // Empresa - Multilínea
                     pdf.setFontSize(7)
                     empresaLines.forEach((line, i) => {
                         pdf.text(line, xPosition + 1.5, baseY + (i * lineHeight))
                     })
                     xPosition += colWidths[1]
 
-                    // Vendedor - Multilínea
                     vendedorLines.forEach((line, i) => {
                         pdf.text(line, xPosition + 1.5, baseY + (i * lineHeight))
                     })
                     xPosition += colWidths[2]
 
-                    // Estatus Vendedor - COMPLETO
                     pdf.setFontSize(6.5)
                     pdf.setFont("helvetica", "bold")
                     if (fila.estatusVendedor === "PAGADO") {
@@ -1225,14 +1198,12 @@ const AdminComisiones = () => {
                     pdf.setFont("helvetica", "normal")
                     xPosition += colWidths[3]
 
-                    // Proyecto - Multilínea
                     pdf.setFontSize(7)
                     proyectoLines.forEach((line, i) => {
                         pdf.text(line, xPosition + 1.5, baseY + (i * lineHeight))
                     })
                     xPosition += colWidths[4]
 
-                    // Estatus Proyecto - COMPLETO
                     pdf.setFontSize(6.5)
                     pdf.setFont("helvetica", "bold")
                     if (fila.estatusProyecto === "PAGADO") {
@@ -1245,7 +1216,6 @@ const AdminComisiones = () => {
                     pdf.setFont("helvetica", "normal")
                     xPosition += colWidths[5]
 
-                    // Monto Base - CON MARGEN INTERNO
                     pdf.setFontSize(7)
                     pdf.setFont("helvetica", "bold")
                     pdf.setTextColor(0, 19, 59)
@@ -1255,7 +1225,6 @@ const AdminComisiones = () => {
                     pdf.setFont("helvetica", "normal")
                     xPosition += colWidths[6]
 
-                    // Saldo Proyecto - CON MARGEN INTERNO
                     pdf.setFont("helvetica", "bold")
                     pdf.setTextColor(33, 150, 243)
                     const saldoText = formatCurrency(fila.saldoProyecto)
@@ -1271,17 +1240,7 @@ const AdminComisiones = () => {
                 }
             }
 
-            // Agregar tablas de comisiones
-            if (chunksComisiones.length > 0) {
-                chunksComisiones.forEach((chunk, index) => {
-                    const titulo =
-                        index === 0 ? "DETALLE DE COMISIONES" : `DETALLE DE COMISIONES (Continuación ${index + 1})`
-                    const isLast = index === chunksComisiones.length - 1
-                    crearTablaComisiones(chunk, titulo, isLast)
-                })
-            } else {
-                crearTablaComisiones([], "DETALLE DE COMISIONES", true)
-            }
+            crearTablaComisiones(comisionesFormateadas, "DETALLE DE COMISIONES", true);
 
             const fechaArchivo = new Date().toISOString().split("T")[0]
             const nombreArchivo = `Comisiones_${fechaArchivo}.pdf`

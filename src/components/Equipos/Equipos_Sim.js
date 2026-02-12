@@ -296,7 +296,7 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
 
   const availableEquipos = equipos.filter(
     (equipo) =>
-      (equipo.tipo === "DEMO" || equipo.tipo === "VENDIDO") &&
+      (equipo.tipo === "DEMO" || equipo.tipo === "VENDIDO" || equipo.tipo === "PERDIDO") &&
       !equipo.simReferenciada &&
       equipo.estatus !== "ALMACEN"
   );
@@ -713,7 +713,7 @@ const SimDetailsModal = ({ isOpen, onClose, sim = null, equipos }) => {
   );
 };
 
-const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate }) => { 
+const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate }) => {
   const [formData, setFormData] = useState({
     saldoActual: "",
     datos: "",
@@ -860,7 +860,7 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
         </div>
         <div className="sim-side-panel-content">
           <form onSubmit={handleSubmit} className="sim-saldos-form">
-            
+
             <div className="sim-side-panel-form-group">
               <label htmlFor="numero" className="sim-form-label">Número <span className="required"> *</span></label>
               <input type="text" id="numero" value={sim.numero} className="sim-side-panel-form-control" readOnly />
@@ -913,7 +913,7 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
                 name="fecha"
                 value={formData.fecha}
                 className="sim-side-panel-form-control"
-                readOnly 
+                readOnly
               />
             </div>
 
@@ -921,11 +921,11 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
               <button type="submit" className="sim-btn sim-btn-primary sim-btn-full-width">
                 {editingId ? "Actualizar" : "Guardar"}
               </button>
-              
+
               {editingId && (
-                <button 
-                  type="button" 
-                  onClick={handleCancelEdit} 
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
                   className="sim-btn sim-btn-cancel sim-btn-full-width"
                 >
                   Cancelar
@@ -944,30 +944,30 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
                     <th>Fecha</th>
                     {sim.tarifa === "POR_SEGUNDO" && <th>Saldo Actual</th>}
                     {(sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") && <th>Datos</th>}
-                    
-                    {userRole === "ADMINISTRADOR" && <th style={{width: '90px'}}>Acciones</th>}
+
+                    {userRole === "ADMINISTRADOR" && <th style={{ width: '90px' }}>Acciones</th>}
                   </tr>
                 </thead>
                 <tbody>
                   {historialSaldos.length > 0 ? (
                     historialSaldos.map((registro, index) => (
-                      <tr key={index} style={editingId === registro.id ? {backgroundColor: '#e6f7ff'} : {}}>
+                      <tr key={index} style={editingId === registro.id ? { backgroundColor: '#e6f7ff' } : {}}>
                         <td>{new Date(registro.fecha + "T00:00:00-06:00").toLocaleDateString("es-MX", { timeZone: "America/Mexico_City" })}</td>
                         {sim.tarifa === "POR_SEGUNDO" && <td>${registro.saldoActual ?? '0'}</td>}
                         {(sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") && <td>{registro.datos ?? '0'} MB</td>}
-                        
+
                         {userRole === "ADMINISTRADOR" && (
                           <td>
-                            <div className="sim-action-buttons" style={{justifyContent: 'center'}}>
-                              <button 
+                            <div className="sim-action-buttons" style={{ justifyContent: 'center' }}>
+                              <button
                                 type="button"
-                                className="sim-btn-action sim-edit" 
+                                className="sim-btn-action sim-edit"
                                 onClick={() => handleEdit(registro)}
                                 title="Editar"
                               >
                                 <img src={editIcon} alt="Editar" />
                               </button>
-                              <button 
+                              <button
                                 type="button"
                                 className="sim-btn-action sim-delete"
                                 onClick={() => handleDelete(registro.id)}
@@ -1502,20 +1502,20 @@ const EquiposSim = () => {
   const getSimsOrdenados = () => {
     const simsOrdenados = [...sims];
 
-    return simsOrdenados.sort((a, b) => {      
+    return simsOrdenados.sort((a, b) => {
       const fechaA = a.vigencia ? new Date(a.vigencia).getTime() : 0;
       const fechaB = b.vigencia ? new Date(b.vigencia).getTime() : 0;
 
       if (fechaA !== fechaB) {
         if (ordenFechaVigencia === 'asc') {
-          return fechaA - fechaB; 
+          return fechaA - fechaB;
         } else {
-          return fechaB - fechaA; 
+          return fechaB - fechaA;
         }
       }
       const numA = parseInt(a.numero || "0", 10);
       const numB = parseInt(b.numero || "0", 10);
-      return numA - numB; 
+      return numA - numB;
     });
   };
 

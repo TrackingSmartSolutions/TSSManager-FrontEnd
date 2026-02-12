@@ -317,6 +317,7 @@ const EquipoFormModal = ({ isOpen, onClose, equipo = null, onSave, modelos, equi
             <option value="ALMACEN">Almacen</option>
             <option value="DEMO">Demo</option>
             <option value="VENDIDO">Vendido</option>
+            <option value="PERDIDO">Perdido</option>
           </select>
           {errors.tipo && <span className="inventario-form-error">{errors.tipo}</span>}
         </div>
@@ -598,6 +599,7 @@ const EquiposInventario = () => {
     { value: "ALMACEN", label: "Almacen" },
     { value: "DEMO", label: "Demo" },
     { value: "VENDIDO", label: "Vendido" },
+    { value: "PERDIDO", label: "Perdido" },
   ];
 
   const clienteFilterOptions = [
@@ -682,7 +684,7 @@ const EquiposInventario = () => {
     const modeloMap = new Map(modelos.map(m => [m.id, m]));
 
     const counts = new Map();
-    const tipos = ["ALMACEN", "DEMO", "VENDIDO"];
+    const tipos = ["ALMACEN", "DEMO", "VENDIDO", "PERDIDO"];
 
     equipos.forEach(equipo => {
       const modelo = modeloMap.get(equipo.modeloId);
@@ -699,7 +701,11 @@ const EquiposInventario = () => {
     const datasets = tipos.map(tipo => ({
       label: tipo,
       data: usos.map(uso => counts.get(`${uso}-${tipo}`) || 0),
-      backgroundColor: tipo === "ALMACEN" ? "#2563eb" : tipo === "DEMO" ? "#f59e0b" : "#10b981",
+      backgroundColor:
+        tipo === "ALMACEN" ? "#2563eb" :
+          tipo === "DEMO" ? "#f59e0b" :
+            tipo === "VENDIDO" ? "#10b981" :
+              "#6b7280",
     })).filter(dataset => dataset.data.some(value => value > 0));
 
     setChartData({

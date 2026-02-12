@@ -5,6 +5,8 @@ import Header from "../Header/Header"
 import downloadIcon from "../../assets/icons/descarga.png"
 import alertIcon from "../../assets/icons/alerta.png"
 import uploadIcon from "../../assets/icons/subir.png"
+import DatePicker from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
 import { API_BASE_URL } from "../Config/Config";
 import Swal from "sweetalert2"
 
@@ -29,6 +31,35 @@ const fetchWithToken = async (url, options = {}, parseAsJson = true) => {
   return parseAsJson ? response.json() : response;
 };
 
+const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
+  <div className="config-admin-date-picker-wrapper">
+    <input
+      type="text"
+      value={value}
+      onClick={onClick}
+      placeholder={placeholder}
+      readOnly
+      className="config-admin-date-picker"
+    />
+    <div className="config-admin-date-picker-icons">
+      <svg
+        className="config-admin-calendar-icon"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+    </div>
+  </div>
+);
+
 const ConfiguracionAdministrador = () => {
   const [importData, setImportData] = useState({
     tiposDatos: "tratos",
@@ -38,9 +69,10 @@ const ConfiguracionAdministrador = () => {
   const [exportData, setExportData] = useState({
     tiposDatos: "tratos",
     formato: "csv",
-    fechaInicio: "",
-    fechaFin: "",
   })
+
+  const [rangoFechasExport, setRangoFechasExport] = useState([null, null]);
+  const [fechaInicioExport, fechaFinExport] = rangoFechasExport;
 
   const [exportHistory, setExportHistory] = useState([]);
   const [importHistory, setImportHistory] = useState([]);
@@ -240,8 +272,8 @@ const ConfiguracionAdministrador = () => {
           body: JSON.stringify({
             tipoDatos: exportData.tiposDatos,
             formatoExportacion: exportData.formato,
-            fechaInicio: exportData.fechaInicio,
-            fechaFin: exportData.fechaFin,
+            fechaInicio: fechaInicioExport ? fechaInicioExport.toISOString().split('T')[0] : "",
+            fechaFin: fechaFinExport ? fechaFinExport.toISOString().split('T')[0] : "",
             usuarioId: parseInt(localStorage.getItem("userId")),
           }),
         });
@@ -591,20 +623,19 @@ const ConfiguracionAdministrador = () => {
 
               <div className="config-admin-date-range-section">
                 <label>Rango de fechas (opcional)</label>
-                <div className="config-admin-date-row">
-                  <input
-                    type="date"
-                    value={exportData.fechaInicio}
-                    onChange={(e) => handleExportInputChange("fechaInicio", e.target.value)}
-                    className="config-admin-form-control config-admin-date-input"
-                    placeholder="dd/mm/aaaa"
-                  />
-                  <input
-                    type="date"
-                    value={exportData.fechaFin}
-                    onChange={(e) => handleExportInputChange("fechaFin", e.target.value)}
-                    className="config-admin-form-control config-admin-date-input"
-                    placeholder="dd/mm/aaaa"
+                <div className="config-admin-date-picker-container">
+                  <DatePicker
+                    selectsRange={true}
+                    startDate={fechaInicioExport}
+                    endDate={fechaFinExport}
+                    onChange={(update) => {
+                      setRangoFechasExport(update);
+                    }}
+                    isClearable={true}
+                    placeholderText="Seleccionar rango de fechas"
+                    dateFormat="dd/MM/yyyy"
+                    customInput={<CustomDatePickerInput />}
+                    locale="es"
                   />
                 </div>
                 <small className="config-admin-help-text">Deja en blanco para exportar todos los datos</small>
