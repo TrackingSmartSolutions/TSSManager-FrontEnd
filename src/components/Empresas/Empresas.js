@@ -2270,7 +2270,9 @@ const Empresas = () => {
                             <th>Teléfono</th>
                             <th>Correo electrónico</th>
                             <th>Rol</th>
-                            <th>Acciones</th>
+                            {(userRol === "ADMINISTRADOR" || userRol === "GESTOR") && (
+                              <th>Acciones</th>
+                            )}
                           </tr>
                         </thead>
                         <tbody>
@@ -2364,9 +2366,9 @@ const Empresas = () => {
                                     ? new Date(trato.fechaCierre).toLocaleDateString("es-MX")
                                     : "N/A"}
                                 </td>
-                                <td>
-                                  <div className="action-buttons">
-                                    {(userRol === "ADMINISTRADOR" || userRol === "GESTOR") && (
+                                {(userRol === "ADMINISTRADOR" || userRol === "GESTOR") && (
+                                  <td>
+                                    <div className="action-buttons">
                                       <button
                                         className="btn-action delete"
                                         onClick={(e) => handleDeleteTrato(trato.id, e)}
@@ -2374,14 +2376,17 @@ const Empresas = () => {
                                       >
                                         <img src={deleteIcon} alt="Eliminar" />
                                       </button>
-                                    )}
-                                  </div>
-                                </td>
+                                    </div>
+                                  </td>
+                                )}
                               </tr>
                             ))
                           ) : (
                             <tr>
-                              <td colSpan="6" className="no-data">
+                              <td
+                                colSpan={(userRol === "ADMINISTRADOR" || userRol === "GESTOR") ? 7 : 6}
+                                className="no-data"
+                              >
                                 No se encontraron tratos para esta empresa
                               </td>
                             </tr>
