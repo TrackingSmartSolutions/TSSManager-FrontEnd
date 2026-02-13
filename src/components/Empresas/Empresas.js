@@ -2270,9 +2270,7 @@ const Empresas = () => {
                             <th>Teléfono</th>
                             <th>Correo electrónico</th>
                             <th>Rol</th>
-                            {(userRol === "ADMINISTRADOR" || userRol === "GESTOR") && (
-                              <th>Acciones</th>
-                            )}
+                            <th>Acciones</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2345,7 +2343,9 @@ const Empresas = () => {
                             <th>Propietario</th>
                             <th>Fase</th>
                             <th>Fecha de Cierre</th>
-                            <th>Acciones</th>
+                            {(userRol === "ADMINISTRADOR" || userRol === "GESTOR") && (
+                              <th>Acciones</th>
+                            )}
                           </tr>
                         </thead>
                         <tbody>
