@@ -1393,9 +1393,10 @@ const EquiposSim = () => {
 
       const simWithEquipo = {
         ...simData,
+        recarga: simData.recarga,
         compañia: simData.tarifa === "M2M_GLOBAL_15" ? "M2M" : "Telcel",
         equipo: equipoMapeado,
-        ultimoSaldoRegistrado: saldoVisual
+        ultimoSaldoRegistrado: existingSim ? existingSim.ultimoSaldoRegistrado : "Sin registros"
       };
 
       if (isNew) {
@@ -1415,6 +1416,7 @@ const EquiposSim = () => {
 
       const simWithEquipo = {
         ...simData,
+        recarga: simData.recarga,
         compañia: simData.tarifa === "M2M_GLOBAL_15" ? "M2M" : "Telcel",
         equipo: equipoMapeado
       };
@@ -1433,6 +1435,7 @@ const EquiposSim = () => {
       title: "Éxito",
       text: simData.id ? "SIM actualizada correctamente" : "SIM agregada correctamente",
     });
+    fetchSims();
   };
 
   const handleDeleteSim = async () => {
