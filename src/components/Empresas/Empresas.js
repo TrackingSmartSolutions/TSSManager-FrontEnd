@@ -1416,6 +1416,7 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, contacto, isLas
 
 // Componente Principal
 const Empresas = () => {
+  const userRol = localStorage.getItem("userRol");
   const params = useParams();
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [contacts, setContacts] = useState([])
@@ -2365,13 +2366,15 @@ const Empresas = () => {
                                 </td>
                                 <td>
                                   <div className="action-buttons">
-                                    <button
-                                      className="btn-action delete"
-                                      onClick={(e) => handleDeleteTrato(trato.id, e)}
-                                      title="Eliminar trato"
-                                    >
-                                      <img src={deleteIcon} alt="Eliminar" />
-                                    </button>
+                                    {(userRol === "ADMINISTRADOR" || userRol === "GESTOR") && (
+                                      <button
+                                        className="btn-action delete"
+                                        onClick={(e) => handleDeleteTrato(trato.id, e)}
+                                        title="Eliminar trato"
+                                      >
+                                        <img src={deleteIcon} alt="Eliminar" />
+                                      </button>
+                                    )}
                                   </div>
                                 </td>
                               </tr>
