@@ -2170,6 +2170,10 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
       const updatedActividad = await response.json();
       onSave(updatedActividad, actividad.tipo);
 
+      window.dispatchEvent(new CustomEvent('actividadCompletada', {
+        detail: { id: actividad.id }
+      }));
+
       const tituloMensaje = esEdicion ? '¡Interacción editada!' : '¡Actividad completada!';
       const textoMensaje = esEdicion ?
         'Los cambios se han guardado exitosamente' :

@@ -306,11 +306,15 @@ const Header = ({ logoUrl }) => {
         const actividadesServidor = await response.json();
 
         setActividadesProximas(prev => {
-          const idsServidor = new Set(actividadesServidor.map(a => a.id));
-          const activasAun = prev.filter(act => idsServidor.has(act.id));
+
+          const activasAun = prev;
 
           const idsActuales = new Set(activasAun.map(a => a.id));
           const nuevas = actividadesServidor.filter(act => !idsActuales.has(act.id));
+
+          if (nuevas.length === 0) {
+            return prev;
+          }
 
           if (nuevas.length > 0) {
             try {
@@ -623,6 +627,26 @@ const Header = ({ logoUrl }) => {
       document.removeEventListener('click', unlockAudio);
       document.removeEventListener('keydown', unlockAudio);
       document.removeEventListener('touchstart', unlockAudio);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleActividadCompletada = (event) => {
+      const actividadIdCompletada = event.detail.id;
+
+      setActividadesProximas(prev => {
+        const actualizadas = prev.filter(act => act.id !== actividadIdCompletada);
+
+        localStorage.setItem("actividadesPendientesPopup", JSON.stringify(actualizadas));
+
+        return actualizadas;
+      });
+    };
+
+    window.addEventListener('actividadCompletada', handleActividadCompletada);
+
+    return () => {
+      window.removeEventListener('actividadCompletada', handleActividadCompletada);
     };
   }, []);
 

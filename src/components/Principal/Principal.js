@@ -1267,6 +1267,9 @@ const Principal = () => {
 
   const handleSaveCompletarActividad = async (updatedActividad, tipo) => {
     try {
+      window.dispatchEvent(new CustomEvent('actividadCompletada', {
+        detail: { id: updatedActividad.id }
+      }));
       setTareasPendientes((prev) =>
         prev.filter((task) => task.id !== updatedActividad.id)
       );
