@@ -307,6 +307,10 @@ const AdminBalance = () => {
 
       const data = await fetchWithToken(`${API_BASE_URL}/balance/resumen?${params.toString()}`);
 
+      if (filtros.añoSeleccionado === "Todos los años" && data.graficoMensual) {
+        data.graficoMensual.sort((a, b) => parseInt(a.mes) - parseInt(b.mes));
+      }
+
       setBalanceData({
         resumenContable: {
           totalIngresos: data.totalIngresos,
