@@ -938,11 +938,13 @@ const AdminBalance = () => {
                       className="adminbalance-table-select"
                     >
                       <option value="Todas">Todas</option>
-                      {categorias.map((cat) => (
-                        <option key={cat.id} value={cat.descripcion}>
-                          {cat.descripcion}
-                        </option>
-                      ))}
+                      {categorias
+                        .filter((cat) => !esCategoriaReposicion(cat.descripcion))
+                        .map((cat) => (
+                          <option key={cat.id} value={cat.descripcion}>
+                            {cat.descripcion}
+                          </option>
+                        ))}
                     </select>
                     <select
                       value={filtros.cuentaSeleccionada}
