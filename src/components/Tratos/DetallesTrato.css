@@ -2951,6 +2951,14 @@
   margin-top: 10px;
 }
 
+.detalles-trato-modal-overlay .btn-primary:disabled {
+  background-color: #e0e0e0;
+  color: #a0a0a0;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 /* Responsive para el modal de PDF */
 @media (max-width: 768px) {
   .pdf-preview-modal .modal-content {
@@ -2999,6 +3007,7 @@
 .detalles-trato-modal-overlay .btn-interest.active {
   animation: pulseActive 0.3s ease-out;
 }
+
 
 @keyframes pulseActive {
   0% {

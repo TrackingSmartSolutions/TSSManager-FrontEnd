@@ -4,6 +4,8 @@ import "./Configuracion_Plantillas.css";
 import Header from "../Header/Header";
 import deleteIcon from "../../assets/icons/eliminar.png";
 import uploadIcon from "../../assets/icons/subir.png";
+import editIcon from "../../assets/icons/editar.png";
+import detailsIcon from "../../assets/icons/lupa.png";
 import { API_BASE_URL } from "../Config/Config";
 import Swal from "sweetalert2";
 import EditorToolbar from '../EditorToolbar/EditorToolbar';
@@ -20,11 +22,206 @@ const fetchWithToken = async (url, options = {}) => {
   return response;
 };
 
+const ProcesosAutomaticosModal = ({ isOpen, onClose, plantillas }) => {
+  const [procesos, setProcesos] = useState([]);
+  const [vista, setVista] = useState("lista");
+  const [procesoSeleccionado, setProcesoSeleccionado] = useState(null);
+  const [form, setForm] = useState({ nombre: "", pasos: [{ plantillaId: "", dias: 0 }] });
+
+  useEffect(() => { if (isOpen) cargarProcesos(); }, [isOpen]);
+
+  const cargarProcesos = async () => {
+    const res = await fetchWithToken(`${API_BASE_URL}/procesos-automaticos`);
+    setProcesos(await res.json());
+  };
+
+  const agregarPaso = () => setForm(prev => ({ ...prev, pasos: [...prev.pasos, { plantillaId: "", dias: 0 }] }));
+
+  const eliminarPaso = (i) => setForm(prev => ({ ...prev, pasos: prev.pasos.filter((_, idx) => idx !== i) }));
+
+  const actualizarPaso = (i, campo, valor) => {
+    setForm(prev => {
+      const pasos = [...prev.pasos];
+      pasos[i] = { ...pasos[i], [campo]: valor };
+      return { ...prev, pasos };
+    });
+  };
+
+  const guardar = async () => {
+    if (!form.nombre.trim() || form.pasos.length === 0 || form.pasos.some(p => !p.plantillaId)) {
+      Swal.fire("Campos requeridos", "Completa nombre y todas las plantillas", "warning");
+      return;
+    }
+    const payload = {
+      nombre: form.nombre,
+      pasos: form.pasos.map((p, i) => ({ plantillaId: parseInt(p.plantillaId), dias: parseInt(p.dias), orden: i + 1 }))
+    };
+    const url = vista === "editar"
+      ? `${API_BASE_URL}/procesos-automaticos/${procesoSeleccionado.id}`
+      : `${API_BASE_URL}/procesos-automaticos`;
+    const method = vista === "editar" ? "PUT" : "POST";
+    await fetchWithToken(url, { method, body: JSON.stringify(payload) });
+    await cargarProcesos();
+    setVista("lista");
+    Swal.fire({ icon: "success", title: vista === "editar" ? "Proceso actualizado" : "Proceso creado", timer: 2000, showConfirmButton: false });
+  };
+
+  const eliminar = async (id) => {
+    const result = await Swal.fire({ title: "¿Eliminar proceso?", icon: "warning", showCancelButton: true, confirmButtonText: "Eliminar", confirmButtonColor: "#f44336" });
+    if (result.isConfirmed) {
+      await fetchWithToken(`${API_BASE_URL}/procesos-automaticos/${id}`, { method: "DELETE" });
+      await cargarProcesos();
+    }
+  };
+
+  const abrirEditar = (proceso) => {
+    setProcesoSeleccionado(proceso);
+    setForm({
+      nombre: proceso.nombre,
+      pasos: proceso.pasos.map(p => ({ plantillaId: p.plantillaId, dias: p.dias, id: p.id }))
+    });
+    setVista("editar");
+  };
+
+  const abrirDetalle = (proceso) => { setProcesoSeleccionado(proceso); setVista("detalle"); };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="correo-plantillas">
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-container" style={{ maxWidth: 600 }} onClick={e => e.stopPropagation()}>
+
+          {vista === "lista" && (
+            <>
+              <div className="modal-header">
+                <h2>Procesos automáticos</h2>
+                <button className="modal-close" onClick={onClose}>✕</button>
+              </div>
+              <div className="modal-body">
+                <button
+                  className="correo-plantillas-btn correo-plantillas-btn-primary"
+                  style={{ width: "auto", marginBottom: "16px" }}
+                  onClick={() => { setForm({ nombre: "", pasos: [{ plantillaId: "", dias: 0 }] }); setVista("crear"); }}
+                >
+                  Agregar proceso
+                </button>
+                <table style={{ width: "100%" }}>
+                  <thead>
+                    <tr>
+                      <th>No.</th>
+                      <th>Nombre</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {procesos.map((p, i) => (
+                      <tr key={p.id}>
+                        <td>{i + 1}</td>
+                        <td>{p.nombre}</td>
+                        <td>
+                          <div className="correo-plantillas-template-actions" style={{ marginLeft: 0, justifyContent: "flex-start" }}>
+                            <button className="correo-plantillas-btn-action correo-plantillas-details" onClick={() => abrirDetalle(p)} title="Ver detalles">
+                              <img src={detailsIcon} alt="Ver" />
+                            </button>
+                            <button className="correo-plantillas-btn-action correo-plantillas-edit" onClick={() => abrirEditar(p)} title="Editar">
+                              <img src={editIcon} alt="Editar" />
+                            </button>
+                            <button className="correo-plantillas-btn-action correo-plantillas-delete" onClick={() => eliminar(p.id)} title="Eliminar">
+                              <img src={deleteIcon} alt="Eliminar" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="modal-footer">
+                <button className="correo-plantillas-btn correo-plantillas-btn-secondary" onClick={onClose}>Cerrar</button>
+              </div>
+            </>
+          )}
+
+          {(vista === "crear" || vista === "editar") && (
+            <>
+              <div className="modal-header">
+                <h2>{vista === "crear" ? "Crear proceso" : "Editar proceso"}</h2>
+                <button className="modal-close" onClick={() => setVista("lista")}>✕</button>
+              </div>
+              <div className="modal-body">
+                <div className="correo-plantillas-form-group">
+                  <label>Nombre <span className="correo-plantillas-required">*</span></label>
+                  <input value={form.nombre} onChange={e => setForm(prev => ({ ...prev, nombre: e.target.value }))} className="correo-plantillas-form-control" />
+                </div>
+
+                <div className="correo-plantillas-form-group" style={{ marginTop: 16 }}>
+                  <label>Secuencia de correos <span className="correo-plantillas-required">*</span></label>
+                  {form.pasos.map((paso, i) => (
+                    <div key={i} className="array-input-group">
+                      <select value={paso.plantillaId} onChange={e => actualizarPaso(i, "plantillaId", e.target.value)} className="correo-plantillas-form-control">
+                        <option value="">Seleccionar plantilla</option>
+                        {plantillas.map(pl => <option key={pl.id} value={pl.id}>{pl.nombre}</option>)}
+                      </select>
+                      <input type="number" min="0" value={paso.dias} onChange={e => actualizarPaso(i, "dias", e.target.value)}
+                        style={{ width: 80 }} className="correo-plantillas-form-control" placeholder="Días" />
+                      <div className="array-actions">
+                        <button type="button" className="correo-plantillas-btn-array-action add" onClick={agregarPaso}>+</button>
+                        {form.pasos.length > 1 && (
+                          <button type="button" className="correo-plantillas-btn-array-action remove" onClick={() => eliminarPaso(i)}>✕</button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="correo-plantillas-btn correo-plantillas-btn-primary" onClick={guardar}>
+                  {vista === "editar" ? "Guardar" : "Agregar"}
+                </button>
+              </div>
+            </>
+          )}
+
+          {vista === "detalle" && procesoSeleccionado && (
+            <>
+              <div className="modal-header">
+                <h2>Detalle del proceso</h2>
+                <button className="modal-close" onClick={() => setVista("lista")}>✕</button>
+              </div>
+              <div className="modal-body">
+                <div className="correo-plantillas-form-group">
+                  <label>Nombre:</label>
+                  <input value={procesoSeleccionado.nombre} readOnly className="correo-plantillas-form-control" style={{ backgroundColor: "#f8f9fa" }} />
+                </div>
+                <div className="correo-plantillas-form-group" style={{ marginTop: 16 }}>
+                  <label>Secuencia de correos:</label>
+                  {procesoSeleccionado.pasos?.map((paso, i) => (
+                    <div key={i} className="array-input-group">
+                      <input value={paso.plantillaNombre} readOnly className="correo-plantillas-form-control" style={{ backgroundColor: "#f8f9fa" }} />
+                      <input value={paso.dias} readOnly style={{ width: 80, backgroundColor: "#f8f9fa" }} className="correo-plantillas-form-control" title="Días de espera" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="correo-plantillas-btn correo-plantillas-btn-secondary" onClick={() => setVista("lista")}>Volver</button>
+              </div>
+            </>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ConfiguracionPlantillas = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [templates, setTemplates] = useState([]);
   const [isLoading, setIsLoading] = useState(true)
+  const [showProcesosModal, setShowProcesosModal] = useState(false);
   const [formData, setFormData] = useState({
     nombre: "",
     asunto: "",
@@ -443,7 +640,7 @@ const ConfiguracionPlantillas = () => {
             >
               Sectores y plataformas
             </div>
-            <div 
+            <div
               className="correo-plantillas-nav-item"
               onClick={() => navigate("/configuracion_correos")}
             >
@@ -455,6 +652,9 @@ const ConfiguracionPlantillas = () => {
           <div className="correo-plantillas-container">
             <section className="correo-plantillas-templates-panel">
               <div className="correo-plantillas-panel-header">
+                <button className="correo-plantillas-btn correo-plantillas-btn-add" onClick={() => setShowProcesosModal(true)}>
+                  Proceso automático
+                </button>
                 <button
                   className="correo-plantillas-btn correo-plantillas-btn-add"
                   onClick={handleNewTemplate}
@@ -690,6 +890,11 @@ const ConfiguracionPlantillas = () => {
             </section>
           </div>
         </main>
+        <ProcesosAutomaticosModal
+          isOpen={showProcesosModal}
+          onClose={() => setShowProcesosModal(false)}
+          plantillas={templates}
+        />
       </div>
     </>
   );

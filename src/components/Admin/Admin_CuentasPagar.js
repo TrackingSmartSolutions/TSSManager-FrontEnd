@@ -1020,7 +1020,7 @@ const AdminCuentasPagar = () => {
     return cuenta.estatus;
   };
 
-  const cuentasUnicas = [...new Set(cuentasPagar.map(c => c.cuenta?.nombre))].filter(Boolean).sort();
+  const cuentasUnicas = [...new Set(cuentasPagar.map(c => c.cuenta?.nombre))].filter(Boolean).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
   const cuentasFiltradas = cuentasPagar.filter((cuenta) => {
     if (filtroFolio) {
       return cuenta.folio === filtroFolio;
@@ -1302,7 +1302,7 @@ const AdminCuentasPagar = () => {
                               <td>{cuenta.sim?.numero || "-"}</td>
                               <td>
                                 <div className="cuentaspagar-actions">
-                                  {cuenta.estatus !== "Pagado" && (
+                                  {cuenta.estatus !== "Pagado" && !cuenta.sim && (
                                     <button
                                       className="cuentaspagar-action-btn cuentaspagar-edit-btn"
                                       onClick={() => openModal("editarCuenta", { cuenta })}

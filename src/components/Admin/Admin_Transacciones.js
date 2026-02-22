@@ -311,7 +311,7 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
             >
               <option value="">Ninguna seleccionada</option>
               {categoriasFiltradas
-                .sort((a, b) => a.descripcion.localeCompare(b.descripcion))
+                .sort((a, b) => a.descripcion.localeCompare(b.descripcion, 'es', { sensitivity: 'base' }))
                 .map((cat) => (
                   <option key={cat.id} value={cat.descripcion}>
                     {cat.descripcion}
@@ -589,9 +589,9 @@ const GestionarCategoriasModal = ({ isOpen, onClose, categorias, onSaveCategoria
                 <tbody>
                   {[...categorias]
                     .sort((a, b) => {
-                      const tipoCompare = a.tipo.localeCompare(b.tipo);
+                      const tipoCompare = a.tipo.localeCompare(b.tipo, 'es', { sensitivity: 'base' });
                       if (tipoCompare !== 0) return tipoCompare;
-                      return a.descripcion.localeCompare(b.descripcion);
+                      return a.descripcion.localeCompare(b.descripcion, 'es', { sensitivity: 'base' });
                     })
                     .map((categoria) => (
                       <tr key={categoria.id}>
@@ -774,7 +774,7 @@ const GestionarCuentasModal = ({ isOpen, onClose, cuentas, categorias, onSaveCue
                     .sort((a, b) => {
                       const categoriaCompare = a.categoria.descripcion.localeCompare(b.categoria.descripcion);
                       if (categoriaCompare !== 0) return categoriaCompare;
-                      return a.nombre.localeCompare(b.nombre);
+                      return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
                     })
                     .map((cuenta) => (
                       <tr key={cuenta.id}>

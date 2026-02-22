@@ -441,7 +441,7 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
   const [tratosDisponibles, setTratosDisponibles] = useState([]);
   const [loadingTratos, setLoadingTratos] = useState(false);
 
-  const isEditing = !!cotizacion;
+  const isEditing = !!(cotizacion?.id);
 
   const cargarTratosDisponibles = async (empresaId) => {
     if (!empresaId) {

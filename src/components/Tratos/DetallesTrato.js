@@ -1313,6 +1313,9 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
       );
       const updatedActividad = await response.json();
       onSave(updatedActividad);
+
+      window.dispatchEvent(new CustomEvent('actividadCompletada', { detail: { id: actividad.id } }));
+
       Swal.fire({
         title: "¡Llamada reprogramada!",
         text: "La llamada se ha reprogramado exitosamente",
@@ -1790,6 +1793,8 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
             icon: "success",
           });
 
+          window.dispatchEvent(new CustomEvent('actividadCompletada', { detail: { id: actividad?.id } }));
+
           onSave(actividadActualizada);
           setMostrarConfirmacion(false);
           setActividadActualizada(null);
@@ -2036,37 +2041,11 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
 
   useEffect(() => {
     if (isOpen && actividad) {
-      setFormData({
-        respuesta: actividad.respuesta || '',
-        interes: actividad.interes || '',
-        informacion: actividad.informacion || '',
-        siguienteAccion: actividad.siguienteAccion || '',
-        notas: actividad.notas || '',
-        medio: actividad.medio || '',
-      });
-      setErrors({});
-    } else if (isOpen && !actividad) {
-      setFormData({
-        respuesta: '',
-        interes: '',
-        informacion: '',
-        siguienteAccion: '',
-        notas: '',
-        medio: '',
-      });
-      setErrors({});
-    }
-  }, [isOpen, actividad, esEdicion]);
-
-  useEffect(() => {
-    if (isOpen && actividad) {
       let medioInicial = actividad.medio || '';
 
       if (actividad.tipo?.toUpperCase() === 'LLAMADA') {
         medioInicial = 'TELEFONO';
-      }
-
-      if (actividad.tipo?.toUpperCase() === 'TAREA' && actividad.subtipoTarea) {
+      } else if (actividad.tipo?.toUpperCase() === 'TAREA' && actividad.subtipoTarea) {
         const subtipoUpper = actividad.subtipoTarea.toUpperCase();
         if (subtipoUpper === 'CORREO') {
           medioInicial = 'CORREO';
@@ -2086,6 +2065,7 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
         medio: medioInicial,
       });
       setErrors({});
+
     } else if (isOpen && !actividad) {
       setFormData({
         respuesta: '',
@@ -3957,6 +3937,61 @@ const ConfirmacionEnvioModal = ({ isOpen, onClose, onConfirm, tratoId, actividad
   );
 };
 
+const SeleccionarProcesoModal = ({ isOpen, onClose, onConfirm }) => {
+  const [procesos, setProcesos] = useState([]);
+  const [procesoId, setProcesoId] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchWithToken(`${API_BASE_URL}/procesos-automaticos`)
+        .then(r => r.json()).then(setProcesos);
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="detalles-trato-modal-overlay" onClick={onClose}>
+      <div className="modal-content modal-sm" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2 className="modal-title">Seleccionar proceso de seguimiento</h2>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">
+          <div className="modal-form-group">
+            <label>Proceso automático:</label>
+            <div className="modal-select-wrapper">
+              <select
+                value={procesoId}
+                onChange={e => setProcesoId(e.target.value)}
+                className="modal-form-control"
+              >
+                <option value="">Seleccionar proceso</option>
+                {procesos.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+              </select>
+              <svg className="deploy-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#666666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div className="modal-form-actions">
+          <button className="btn btn-secondary" onClick={onClose}>
+            Cancelar
+          </button>
+          <button
+            className="btn btn-primary"
+            disabled={!procesoId}
+            onClick={() => onConfirm(parseInt(procesoId))}
+          >
+            Activar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const DetallesTrato = () => {
   const params = useParams()
   const navigate = useNavigate()
@@ -3998,6 +4033,7 @@ const DetallesTrato = () => {
   const [cotizaciones, setCotizaciones] = useState([]);
   const [cotizacionesVinculadas, setCotizacionesVinculadas] = useState(new Set());
   const [showCotizacionesSection, setShowCotizacionesSection] = useState(false);
+  const [showSeleccionarProceso, setShowSeleccionarProceso] = useState(false);
   const [pdfPreview, setPdfPreview] = useState({
     isOpen: false,
     url: null,
@@ -4132,11 +4168,11 @@ const DetallesTrato = () => {
   };
 
   // Función para activar/desactivar correos de seguimiento
-  const toggleCorreosSeguimiento = async (tratoId, activar) => {
+  const toggleCorreosSeguimiento = async (tratoId, activar, procesoId) => {
     if (activar) {
       if (!trato.contacto?.correos || trato.contacto.correos.length === 0 ||
         !trato.contacto.correos.some(c => c.correo && c.correo.trim() !== '')) {
-        // Revertir el estado del checkbox
+
         setCorreosSeguimientoActivo(false);
 
         Swal.fire({
@@ -4149,15 +4185,19 @@ const DetallesTrato = () => {
         return;
       }
     }
+
     setCargandoCorreos(true);
+
     try {
-      const endpoint = activar ? 'activar' : 'desactivar';
-      const response = await fetchWithToken(`${API_BASE_URL}/correos-seguimiento/${endpoint}/${tratoId}`, {
-        method: 'POST'
-      });
+      const endpoint = activar ? `activar/${tratoId}?procesoId=${procesoId}` : `desactivar/${tratoId}`;
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/correos-seguimiento/${endpoint}`,
+        { method: 'POST' }
+      );
 
       const mensaje = await response.text();
       setCorreosSeguimientoActivo(activar);
+
       Swal.fire({
         icon: 'success',
         title: activar ? 'Correos de seguimiento activados' : 'Correos de seguimiento desactivados',
@@ -4168,7 +4208,6 @@ const DetallesTrato = () => {
 
     } catch (error) {
       setCorreosSeguimientoActivo(!activar);
-
       Swal.fire({
         icon: 'error',
         title: 'Error',
@@ -4182,7 +4221,11 @@ const DetallesTrato = () => {
   // Función para manejar el cambio del checkbox
   const handleCorreosSeguimientoChange = (e) => {
     const isChecked = e.target.checked;
-    toggleCorreosSeguimiento(trato.id, isChecked);
+    if (isChecked) {
+      setShowSeleccionarProceso(true); // Abre modal de selección
+    } else {
+      toggleCorreosSeguimiento(trato.id, false, null);
+    }
   };
 
   // Callback para actualizar estado de emails en tiempo real
@@ -5245,19 +5288,38 @@ const DetallesTrato = () => {
     }
   };
 
-  const executeDownload = async (cotizacionId, incluirArchivos) => {
+  const fetchCotizacionBlob = async (cotizacionId, incluirArchivos, showLoading = false) => {
+    if (showLoading) {
+      Swal.fire({
+        title: 'Preparando archivo...',
+        text: 'Generando PDF',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+    }
+
     try {
       const response = await fetchWithToken(
         `${API_BASE_URL}/cotizaciones/${cotizacionId}/download-pdf?incluirArchivos=${incluirArchivos}`,
-        {
-          method: 'GET',
-          headers: { 'Accept': 'application/pdf' }
-        }
+        { method: 'GET', headers: { 'Accept': 'application/pdf' } }
       );
 
-      if (!response.ok) throw new Error('Error downloading PDF');
+      if (!response.ok) throw new Error('Error al descargar el PDF');
 
       const blob = await response.blob();
+      if (blob.size === 0) throw new Error('El PDF generado está vacío');
+
+      if (showLoading) Swal.close();
+      return blob;
+    } catch (error) {
+      if (showLoading) Swal.close();
+      throw error;
+    }
+  };
+
+  const executeDownload = async (cotizacionId, incluirArchivos) => {
+    try {
+      const blob = await fetchCotizacionBlob(cotizacionId, incluirArchivos, true);
 
       const url = window.URL.createObjectURL(blob);
       const filename = `COTIZACION_${cotizacionId}_${new Date().toLocaleDateString('es-MX').replace(/\//g, '-')}.pdf`;
@@ -5273,6 +5335,37 @@ const DetallesTrato = () => {
         icon: 'error',
         title: 'Error',
         text: 'No se pudo generar la vista previa: ' + error.message,
+      });
+    }
+  };
+
+  const forceDirectDownload = async (cotizacionId, incluirArchivos = false) => {
+    try {
+      const blob = await fetchCotizacionBlob(cotizacionId, incluirArchivos, true);
+
+      const filename = `COTIZACION_${cotizacionId}_${new Date().toLocaleDateString('es-MX').replace(/\//g, '-')}.pdf`;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      Swal.fire({
+        icon: "success",
+        title: "Descargado",
+        text: "El PDF se ha descargado exitosamente para adjuntarlo en WhatsApp.",
+        timer: 2000,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      console.error("Error en descarga directa:", error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo descargar el PDF: ' + error.message
       });
     }
   };
@@ -5388,41 +5481,49 @@ const DetallesTrato = () => {
         document.getElementById('btn-share-whatsapp').addEventListener('click', async () => {
           Swal.close();
 
-          // Si incluye archivos, primero descargar para el usuario
-          if (incluirArchivos) {
-            executeDownload(cotizacion.id, true);
-          }
+          await forceDirectDownload(cotizacion.id, incluirArchivos);
 
           const contacto = trato.contacto;
           let numero = contacto?.whatsapp || contacto?.celular;
-
           if (!numero && contacto?.telefonos?.length > 0) {
             numero = contacto.telefonos[0].telefono;
           }
-
           if (!numero) {
             Swal.fire('Atención', 'El contacto no tiene número celular registrado', 'warning');
             return;
           }
-
           const cleanNumber = numero.replace(/\D/g, '');
-          const mensaje = `Hola ${contacto.nombre || ''}, te comparto la cotización #${cotizacion.id} del trato ${trato.nombre}.`;
+          const mensaje = `Hola ${contacto.nombre || ''}, te comparto la cotización #${cotizacion.id} del trato ${trato.nombre}. Acabo de descargar el PDF automáticamente para que lo adjuntes fácilmente.`;
 
           window.open(`https://wa.me/52${cleanNumber}?text=${encodeURIComponent(mensaje)}`, '_blank');
+
           marcarComoEnviada();
         });
 
         document.getElementById('btn-share-email').addEventListener('click', async () => {
           Swal.close();
 
-          const file = await obtenerArchivoPDF(incluirArchivos);
+          try {
+            const blob = await fetchCotizacionBlob(cotizacion.id, incluirArchivos, true);
 
-          if (file) {
+            const limpiarNombreArchivo = (texto) => texto.replace(/[^a-z0-9]/gi, '_').replace(/_{2,}/g, '_').toLowerCase();
+            const nombreSeguro = limpiarNombreArchivo(trato.nombre || 'trato');
+            const fileName = `cotizacion_${cotizacion.id}_${nombreSeguro}.pdf`;
+
+            const file = new File([blob], fileName, {
+              type: 'application/pdf',
+              lastModified: new Date().getTime()
+            });
+
             openModal('crearCorreo', {
               archivoPrecargado: file,
               asuntoPrecargado: `Cotización #${cotizacion.id} - ${trato.nombre}`
             });
             marcarComoEnviada();
+
+          } catch (error) {
+            console.error(error);
+            Swal.fire('Error', 'No se pudo generar el archivo PDF para adjuntar', 'error');
           }
         });
       }
@@ -6545,6 +6646,14 @@ const DetallesTrato = () => {
           onClose={handleClosePreview}
           pdfUrl={pdfPreview.url}
           onDownload={handleDownloadFromPreview}
+        />
+        <SeleccionarProcesoModal
+          isOpen={showSeleccionarProceso}
+          onClose={() => { setShowSeleccionarProceso(false); setCorreosSeguimientoActivo(false); }}
+          onConfirm={(procesoId) => {
+            setShowSeleccionarProceso(false);
+            toggleCorreosSeguimiento(trato.id, true, procesoId);
+          }}
         />
       </div>
     </>

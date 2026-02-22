@@ -1360,8 +1360,8 @@ const DetallesContactoModal = ({ isOpen, onClose, contacto }) => {
               <span>{formatDate(contacto.fechaModificacion)}</span>
             </div>
             <div className="detalle-item">
-              <label>Última Actividad:</label>
-              <span>{formatDate(contacto.fechaUltimaActividad)}</span>
+              <label>Modificado Por:</label>
+              <span>{contacto.modificadoPor || "N/A"}</span>
             </div>
           </div>
         </div>

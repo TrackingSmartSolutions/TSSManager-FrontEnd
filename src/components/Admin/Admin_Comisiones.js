@@ -21,6 +21,7 @@ const fetchWithToken = async (url, options = {}) => {
         headers.append("Content-Type", "application/json");
     }
     const response = await fetch(url, {
+        cache: "no-store",
         ...options,
         headers,
     });
@@ -368,7 +369,7 @@ const ModalFormularioComision = ({ isOpen, onClose, onSave, initialData = null, 
                     >
                         <option value="">Seleccione una empresa</option>
                         {[...empresas]
-                            .sort((a, b) => a.nombre.localeCompare(b.nombre))
+                            .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }))
                             .map(emp => (
                                 <option key={emp.id} value={emp.id}>
                                     {emp.nombre}
@@ -1267,8 +1268,8 @@ const AdminComisiones = () => {
     const totalComisionesVentaPendiente = comisionesFiltradas.reduce((sum, c) => sum + (c.saldoPendienteVenta || 0), 0);
     const totalComisionesProyectoPendiente = comisionesFiltradas.reduce((sum, c) => sum + (c.saldoPendienteProyecto || 0), 0);
 
-    const empresasUnicas = ["", ...new Set(comisiones.map(c => c.empresaNombre))];
-    const vendedoresUnicos = ["", ...new Set(comisiones.map(c => c.vendedorNombre))];
+    const empresasUnicas = ["", ...[...new Set(comisiones.map(c => c.empresaNombre))].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }))];
+    const vendedoresUnicos = ["", ...[...new Set(comisiones.map(c => c.vendedorNombre))].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }))];
 
     return (
         <>

@@ -115,11 +115,14 @@ const ConfiguracionAdministrador = () => {
   const handleFileUpload = (event) => {
     const file = event.target.files[0]
     if (file) {
-      if (file.type !== "text/csv" && !file.name.endsWith(".csv")) {
+      const isCSV = file.type === "text/csv" || file.name.endsWith(".csv");
+      const isXLSX = file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || file.name.endsWith(".xlsx");
+
+      if (!isCSV && !isXLSX) {
         Swal.fire({
           icon: "error",
           title: "Formato incorrecto",
-          text: "Solo se permiten archivos CSV.",
+          text: "Solo se permiten archivos CSV o XLSX.",
         })
         return
       }
@@ -171,62 +174,77 @@ const ConfiguracionAdministrador = () => {
 
   const handleImportData = async () => {
     if (!importData.archivo) {
-      Swal.fire({
-        icon: "warning",
-        title: "Archivo requerido",
-        text: "Por favor seleccione un archivo CSV para importar.",
-      });
+      Swal.fire({ icon: "warning", title: "Archivo requerido", text: "Por favor seleccione un archivo CSV o XLSX para importar." });
       return;
     }
+
+    const result = await Swal.fire({
+      title: "¿Importar datos?",
+      text: `¿Está seguro de que desea importar los datos desde "${importData.archivo.name}"?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Importar",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (!result.isConfirmed) return;
+
+    Swal.fire({
+      title: "Importando datos...",
+      text: "Por favor espere mientras se procesan los datos.",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
     try {
-      const result = await Swal.fire({
-        title: "¿Importar datos?",
-        text: `¿Está seguro de que desea importar los datos desde el archivo "${importData.archivo.name}"?`,
-        icon: "question",
-        showCancelButton: true,
-        confirmButtonText: "Importar",
-        cancelButtonText: "Cancelar",
+      const formData = new FormData();
+      formData.append("archivo", importData.archivo);
+      formData.append("tipoDatos", importData.tiposDatos);
+      formData.append("usuarioId", localStorage.getItem("userId"));
+
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE_URL}/administrador-datos/importar-datos`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
       });
-      if (result.isConfirmed) {
-        const formData = new FormData();
-        formData.append("archivo", importData.archivo);
-        formData.append("tipoDatos", importData.tiposDatos);
-        formData.append("usuarioId", localStorage.getItem("userId"));
 
-        Swal.fire({
-          title: "Importando datos...",
-          text: "Por favor espere mientras se procesan los datos.",
-          allowOutsideClick: false,
-          didOpen: () => {
-            Swal.showLoading();
-          },
-        });
-
-        const response = await fetchWithToken(`${API_BASE_URL}/administrador-datos/importar-datos`, {
-          method: "POST",
-          body: formData,
-        });
-        const resultData = await response;
-
-        Swal.fire({
-          icon: resultData.exito ? "success" : "error",
-          title: resultData.exito ? "Datos importados" : "Error",
-          text: resultData.mensaje || "Ocurrió un error al importar los datos.",
-        });
-        if (resultData.exito) {
-          setImportData({
-            tiposDatos: "tratos",
-            archivo: null,
-          });
-          fetchImportHistory();
-        }
+      if (!response.ok) {
+        const status = response.status;
+        let mensaje = "Error desconocido al importar.";
+        if (status === 401) mensaje = "No autorizado. Por favor inicia sesión nuevamente.";
+        else if (status === 403) mensaje = "No tienes permisos para importar datos.";
+        else if (status === 413) mensaje = "El archivo es demasiado grande para el servidor.";
+        else if (status === 415) mensaje = "Formato de archivo no soportado por el servidor.";
+        else if (status >= 500) mensaje = `Error interno del servidor (${status}). Contacta al administrador.`;
+        Swal.fire({ icon: "error", title: `Error ${status}`, text: mensaje });
+        return;
       }
+
+      const resultData = await response.json();
+
+      if (resultData.exito) {
+        let htmlDetalle = `<p>${resultData.mensaje}</p>`;
+        if (resultData.registrosFallidos > 0 && resultData.errores) {
+          htmlDetalle += `<details><summary style="cursor:pointer;color:#e74c3c">Ver errores (${resultData.registrosFallidos} filas)</summary><pre style="text-align:left;font-size:12px;max-height:200px;overflow:auto;background:#f8f8f8;padding:8px">${resultData.errores}</pre></details>`;
+        }
+        Swal.fire({ icon: "success", title: "Importación completada", html: htmlDetalle });
+        setImportData({ tiposDatos: "tratos", archivo: null });
+        fetchImportHistory();
+      } else {
+        let htmlError = `<p>${resultData.mensaje || "No se pudo importar ningún registro."}</p>`;
+        if (resultData.errores) {
+          htmlError += `<details><summary style="cursor:pointer;color:#e74c3c">Ver detalle de errores</summary><pre style="text-align:left;font-size:12px;max-height:200px;overflow:auto;background:#f8f8f8;padding:8px">${resultData.errores}</pre></details>`;
+        }
+        Swal.fire({ icon: "error", title: "Error en importación", html: htmlError });
+      }
+
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Ocurrió un error al importar los datos: " + error.message,
-      });
+      let mensaje = "Error de conexión. Verifica que el servidor esté disponible.";
+      if (error.name === "TypeError" && error.message.includes("fetch")) {
+        mensaje = "No se pudo conectar al servidor. Verifica tu conexión o que el backend esté corriendo.";
+      }
+      Swal.fire({ icon: "error", title: "Error de conexión", text: mensaje });
     }
   };
 
@@ -416,8 +434,8 @@ const ConfiguracionAdministrador = () => {
   const getDataTypeInfo = (tipo) => {
     const infoMap = {
       tratos: {
-        campos: "nombre, empresa_id, contacto_id, propietario_id (opcional), numero_unidades, ingresos_esperados, descripcion, fecha_cierre, no_trato, probabilidad, fase",
-        descripcion: "El archivo CSV debe tener las siguientes columnas:",
+        campos: "nombre, empresa_id, contacto_id, propietario_id (opcional), numero_unidades, ingresos_esperados, descripcion, fecha_cierre, no_trato, probabilidad, fase (valores: CLASIFICACION | PRIMER_CONTACTO | ENVIO_DE_INFORMACION | REUNION | COTIZACION_PROPUESTA_PRACTICA | NEGOCIACION_REVISION | CERRADO_GANADO | RESPUESTA_POR_CORREO | INTERES_FUTURO | CERRADO_PERDIDO | SEGUIMIENTO)",
+        descripcion: "El archivo XLSX/CSV debe tener las siguientes columnas:",
       },
       empresas: {
         campos: "nombre, propietario_id (opcional), estatus, sitio_web, sector, domicilio_fisico, domicilio_fiscal, rfc, razon_social, regimen_fiscal",
@@ -556,7 +574,7 @@ const ConfiguracionAdministrador = () => {
                   </div>
                   <p>Arrastra y suelta un archivo CSV aquí</p>
                   <p className="config-admin-file-formats">o haz clic para seleccionar un archivo</p>
-                  <input type="file" accept=".csv" onChange={handleFileUpload} className="config-admin-file-input" />
+                  <input type="file" accept=".csv,.xlsx" onChange={handleFileUpload} className="config-admin-file-input" />
                   {importData.archivo && (
                     <div className="config-admin-selected-file">
                       <span>📄 {importData.archivo.name}</span>

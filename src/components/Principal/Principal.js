@@ -198,6 +198,7 @@ const ReprogramarLlamadaModal = ({ isOpen, onClose, onSave, actividad }) => {
       );
       const updatedActividad = await response.json();
       onSave(updatedActividad);
+      window.dispatchEvent(new CustomEvent('actividadCompletada', { detail: { id: actividad.id } }));
       Swal.fire({
         title: "¡Llamada reprogramada!",
         text: "La llamada se ha reprogramado exitosamente",
@@ -620,6 +621,7 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
             icon: "success",
           });
 
+          window.dispatchEvent(new CustomEvent('actividadCompletada', { detail: { id: actividad?.id } }));
           onSave(actividadActualizada);
           setMostrarConfirmacion(false);
           setActividadActualizada(null);
@@ -1517,6 +1519,49 @@ const Principal = () => {
     elements: { arc: { borderWidth: 0 } },
   };
 
+  const abrirModalCompletar = async (task) => {
+    // Abrir el modal de inmediato con lo que tenemos
+    setModals((prev) => ({
+      ...prev,
+      completarActividad: {
+        isOpen: true,
+        loading: true,
+        actividad: task,
+        tratoId: task.tratoId,
+      },
+    }));
+
+    try {
+      // Obtener los datos completos de la actividad desde el backend
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/tratos/${task.tratoId}/actividades/${task.id}`
+      );
+      const actividadCompleta = await response.json();
+
+      setModals((prev) => ({
+        ...prev,
+        completarActividad: {
+          ...prev.completarActividad,
+          loading: false,
+          actividad: {
+            ...task,
+            ...actividadCompleta, // sobreescribe con datos completos, incluyendo notas
+          },
+        },
+      }));
+    } catch (error) {
+      console.error("Error al cargar actividad completa:", error);
+      // Si falla, igual abrimos con lo que tenemos
+      setModals((prev) => ({
+        ...prev,
+        completarActividad: {
+          ...prev.completarActividad,
+          loading: false,
+        },
+      }));
+    }
+  };
+
 
   return (
     <>
@@ -1563,7 +1608,7 @@ const Principal = () => {
                       <div className="task-actions">
                         <button
                           className="btn btn-primary"
-                          onClick={() => openModal("completarActividad", { actividad: task })}
+                          onClick={() => abrirModalCompletar(task)}
                         >
                           Completar
                         </button>

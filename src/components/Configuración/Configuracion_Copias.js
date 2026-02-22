@@ -36,70 +36,71 @@ const ConfiguracionCopias = () => {
   const [backupHistory, setBackupHistory] = useState([])
   const usuarioId = localStorage.getItem("userId");
 
- const cargarDatosIniciales = async () => {
-  setIsLoading(true)
-  try {
-    const fetchConfiguracion = async () => {
-      const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/configuracion/${usuarioId}`);
-      const data = await response.json();
-      setBackupSettings({
-        datosRespaldar: data.datosRespaldar || [],
-        frecuencia: data.frecuencia || "SEMANAL",
-        horaRespaldo: data.horaRespaldo || "02:00",
-      });
-      setGoogleDriveSettings({
-        email: data.googleDriveEmail || "",
-        vinculada: data.googleDriveVinculada || false,
-      });
-    };
+  const cargarDatosIniciales = async () => {
+    setIsLoading(true)
+    try {
+      const fetchConfiguracion = async () => {
+        const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/configuracion/${usuarioId}`);
+        const data = await response.json();
+        setBackupSettings({
+          datosRespaldar: data.datosRespaldar || [],
+          frecuencia: data.frecuencia || "SEMANAL",
+          horaRespaldo: data.horaRespaldo || "02:00",
+        });
+        setGoogleDriveSettings({
+          email: data.googleDriveEmail || "",
+          vinculada: data.googleDriveVinculada || false,
+        });
+      };
 
-    const fetchHistorial = async () => {
-      const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/usuario/${usuarioId}`);
-      const data = await response.json();
-      setBackupHistory(data.map(copia => ({
-        id: copia.id,
-        tipoDatos: copia.tipoDatos,
-        fechaCreacion: copia.fechaCreacion,
-        fechaEliminacion: copia.fechaEliminacion,
-        estado: copia.estado.toLowerCase(),
-        tamaño: copia.tamañoArchivo,
-        frecuencia: copia.frecuencia,
-      })));
-    };
+      const fetchHistorial = async () => {
+        const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/usuario/${usuarioId}`);
+        const data = await response.json();
+        setBackupHistory(data.map(copia => ({
+          id: copia.id,
+          tipoDatos: copia.tipoDatos,
+          numeroCopia: formatDateShort(copia.fechaCreacion),
+          fechaCreacion: copia.fechaCreacion,
+          fechaEliminacion: copia.fechaEliminacion,
+          estado: copia.estado.toLowerCase(),
+          tamaño: copia.tamañoArchivo,
+          frecuencia: copia.frecuencia,
+        })));
+      };
 
-    const fetchEstadisticas = async () => {
-      const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/estadisticas/${usuarioId}`);
-      const data = await response.json();
-      setEstadisticas({
-        copiasActivas: data.copiasActivas || 0,
-        copiasEstesMes: data.copiasEstesMes || 0,
-        espacioUtilizado: data.espacioUtilizado || "0 B",
-        ultimaCopia: data.ultimaCopia ? formatDate(data.ultimaCopia) : "N/A",
+      const fetchEstadisticas = async () => {
+        const response = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/estadisticas/${usuarioId}`);
+        const data = await response.json();
+        setEstadisticas({
+          copiasActivas: data.copiasActivas || 0,
+          copiasEstesMes: data.copiasEstesMes || 0,
+          espacioUtilizado: data.espacioUtilizado || "0 B",
+          ultimaCopia: data.ultimaCopia ? formatDate(data.ultimaCopia) : "N/A",
+        });
+      };
+
+      if (usuarioId) {
+        await Promise.all([
+          fetchConfiguracion(),
+          fetchHistorial(),
+          fetchEstadisticas()
+        ]);
+      }
+    } catch (error) {
+      console.error("Error al cargar datos iniciales:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudieron cargar los datos del módulo.",
       });
-    };
-
-    if (usuarioId) {
-      await Promise.all([
-        fetchConfiguracion(),
-        fetchHistorial(),
-        fetchEstadisticas()
-      ]);
+    } finally {
+      setIsLoading(false)
     }
-  } catch (error) {
-    console.error("Error al cargar datos iniciales:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "No se pudieron cargar los datos del módulo.",
-    });
-  } finally {
-    setIsLoading(false)
   }
-}
 
-useEffect(() => {
-  cargarDatosIniciales()
-}, [usuarioId]);
+  useEffect(() => {
+    cargarDatosIniciales()
+  }, [usuarioId]);
 
   const navigate = useNavigate()
 
@@ -210,6 +211,7 @@ useEffect(() => {
         });
         const data = await response.json();
         // Refrescar historial
+        await new Promise(resolve => setTimeout(resolve, 500));
         const historyResponse = await fetchWithToken(`${API_BASE_URL}/copias-seguridad/usuario/${usuarioId}`);
         const newHistory = await historyResponse.json();
         setBackupHistory(newHistory.map(copia => ({
@@ -438,255 +440,275 @@ useEffect(() => {
 
   return (
     <>
-     <div className="page-with-header">
-      <Header />
-      {isLoading && (
-        <div className="config-copias-loading">
-          <div className="spinner"></div>
-          <p>Cargando configuración...</p>
-        </div>
-      )}
-      {/* Configuracion de navegación */}
-      <div className="config-copias-config-header">
-        <h2 className="config-copias-config-title">Configuración</h2>
-        <nav className="config-copias-config-nav">
-          <div className="config-copias-nav-item" onClick={() => navigate("/configuracion_plantillas")}>
-            Plantillas de correo
+      <div className="page-with-header">
+        <Header />
+        {isLoading && (
+          <div className="config-copias-loading">
+            <div className="spinner"></div>
+            <p>Cargando configuración...</p>
           </div>
-          <div className="config-copias-nav-item" onClick={() => navigate("/configuracion_admin_datos")}>
-            Administrador de datos
-          </div>
-          <div className="config-copias-nav-item" onClick={() => navigate("/configuracion_empresa")}>
-            Configuración de la empresa
-          </div>
-          <div className="config-copias-nav-item" onClick={() => navigate("/configuracion_almacenamiento")}>
-            Almacenamiento
-          </div>
-          <div className="config-copias-nav-item config-copias-nav-item-active">Copias de Seguridad</div>
-          <div className="config-copias-nav-item" onClick={() => navigate("/configuracion_usuarios")}>
-            Usuarios y roles
-          </div>
-          <div
-            className="config-copias-nav-item"
-            onClick={() => navigate("/configuracion_gestion_sectores_plataformas")}
-          >
-            Sectores y plataformas
-          </div>
-          <div 
-    className="config-copias-nav-item"
-    onClick={() => navigate("/configuracion_correos")}
->
-    Historial de Correos
-</div>
-        </nav>
-      </div>
-
-      <main className="config-copias-main-content">
-        <div className="config-copias-container">
-          <section className="config-copias-section">
-            <h3 className="config-copias-section-title">Copia de seguridad</h3>
-
-            {/* Box de informacion */}
-            <div className="config-copias-info-box">
-              <div className="config-copias-info-icon">
-                <img src={alertIcon || "/placeholder.svg"} alt="Información" />
-              </div>
-              <div className="config-copias-info-content">
-                <strong>Información</strong>
-                <p>
-                  El sistema guarda automáticamente una copia de seguridad de los registros y están disponibles para
-                  descargar o restaurar durante 3 meses.
-                </p>
-              </div>
+        )}
+        {/* Configuracion de navegación */}
+        <div className="config-copias-config-header">
+          <h2 className="config-copias-config-title">Configuración</h2>
+          <nav className="config-copias-config-nav">
+            <div className="config-copias-nav-item" onClick={() => navigate("/configuracion_plantillas")}>
+              Plantillas de correo
             </div>
+            <div className="config-copias-nav-item" onClick={() => navigate("/configuracion_admin_datos")}>
+              Administrador de datos
+            </div>
+            <div className="config-copias-nav-item" onClick={() => navigate("/configuracion_empresa")}>
+              Configuración de la empresa
+            </div>
+            <div className="config-copias-nav-item" onClick={() => navigate("/configuracion_almacenamiento")}>
+              Almacenamiento
+            </div>
+            <div className="config-copias-nav-item config-copias-nav-item-active">Copias de Seguridad</div>
+            <div className="config-copias-nav-item" onClick={() => navigate("/configuracion_usuarios")}>
+              Usuarios y roles
+            </div>
+            <div
+              className="config-copias-nav-item"
+              onClick={() => navigate("/configuracion_gestion_sectores_plataformas")}
+            >
+              Sectores y plataformas
+            </div>
+            <div
+              className="config-copias-nav-item"
+              onClick={() => navigate("/configuracion_correos")}
+            >
+              Historial de Correos
+            </div>
+          </nav>
+        </div>
 
-            <div className="config-copias-form-row">
-              {/* Configuracion respaldo */}
-              <div className="config-copias-left-column">
-                <div className="config-copias-form-group">
-                  <label>Datos a respaldar</label>
-                  <div className="config-copias-checkbox-group">
-                    {datosRespaldoOptions.map((option) => (
-                      <div key={option.value} className="config-copias-checkbox-item">
-                        <input
-                          type="checkbox"
-                          id={`datos-${option.value}`}
-                          value={option.value}
-                          checked={backupSettings.datosRespaldar.includes(option.value)}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            const isChecked = e.target.checked;
-                            const newSelection = isChecked
-                              ? [...backupSettings.datosRespaldar, value]
-                              : backupSettings.datosRespaldar.filter(item => item !== value);
-                            handleSettingChange("datosRespaldar", newSelection);
-                          }}
-                          className="config-copias-checkbox"
-                        />
-                        <label htmlFor={`datos-${option.value}`} className="config-copias-checkbox-label">
-                          {option.label}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="config-copias-form-group">
-                  <label htmlFor="frecuencia-respaldo">Frecuencia de respaldo</label>
-                  <select
-                    id="frecuencia-respaldo"
-                    value={backupSettings.frecuencia}
-                    onChange={(e) => handleSettingChange("frecuencia", e.target.value)}
-                    className="config-copias-form-control"
-                  >
-                    {frecuenciaOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+        <main className="config-copias-main-content">
+          <div className="config-copias-container">
+            <section className="config-copias-section">
+              <h3 className="config-copias-section-title">Copia de seguridad</h3>
 
-                <div className="config-copias-form-group">
-                  <label htmlFor="hora-respaldo">Hora de respaldo</label>
-                  <input
-                    type="time"
-                    id="hora-respaldo"
-                    value={backupSettings.horaRespaldo}
-                    onChange={(e) => handleSettingChange("horaRespaldo", e.target.value)}
-                    className="config-copias-form-control"
-                  />
+              {/* Box de informacion */}
+              <div className="config-copias-info-box">
+                <div className="config-copias-info-icon">
+                  <img src={alertIcon || "/placeholder.svg"} alt="Información" />
                 </div>
-
-                <div className="config-copias-form-group">
-                  <button
-                    className="config-copias-btn config-copias-btn-primary"
-                    onClick={handleSaveSettings}
-                  >
-                    Guardar Configuración
-                  </button>
+                <div className="config-copias-info-content">
+                  <strong>Información</strong>
+                  <p>
+                    El sistema guarda automáticamente una copia de seguridad de los registros y están disponibles para
+                    descargar o restaurar durante 3 meses.
+                  </p>
                 </div>
               </div>
 
-              {/* Google Drive Ajustes */}
-              <div className="config-copias-right-column">
-                <div className="config-copias-google-drive-section">
-                  <label>Cuenta de Google Drive</label>
-                  <div className="config-copias-drive-input-group">
-                    <input
-                      type="email"
-                      value={googleDriveSettings.email}
-                      onChange={(e) => handleGoogleDriveChange("email", e.target.value)}
+              <div className="config-copias-form-row">
+                {/* Configuracion respaldo */}
+                <div className="config-copias-left-column">
+                  <div className="config-copias-form-group">
+                    <label>Datos a respaldar</label>
+                    <div className="config-copias-checkbox-group">
+                      {datosRespaldoOptions.map((option) => (
+                        <div key={option.value} className="config-copias-checkbox-item">
+                          <input
+                            type="checkbox"
+                            id={`datos-${option.value}`}
+                            value={option.value}
+                            checked={backupSettings.datosRespaldar.includes(option.value)}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              const isChecked = e.target.checked;
+                              const newSelection = isChecked
+                                ? [...backupSettings.datosRespaldar, value]
+                                : backupSettings.datosRespaldar.filter(item => item !== value);
+                              handleSettingChange("datosRespaldar", newSelection);
+                            }}
+                            className="config-copias-checkbox"
+                          />
+                          <label htmlFor={`datos-${option.value}`} className="config-copias-checkbox-label">
+                            {option.label}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="config-copias-form-group">
+                    <label htmlFor="frecuencia-respaldo">Frecuencia de respaldo</label>
+                    <select
+                      id="frecuencia-respaldo"
+                      value={backupSettings.frecuencia}
+                      onChange={(e) => handleSettingChange("frecuencia", e.target.value)}
                       className="config-copias-form-control"
-                      placeholder="correo@ejemplo.com"
-                      disabled={googleDriveSettings.vinculada}
-                    />
-                    <button
-                      className={`config-copias-btn ${googleDriveSettings.vinculada ? "config-copias-btn-secondary" : "config-copias-btn-primary"}`}
-                      onClick={handleLinkGoogleDrive}
                     >
-                      {googleDriveSettings.vinculada ? "Desvincular" : "Vincular"}
+                      {frecuenciaOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="config-copias-form-group">
+                    <label htmlFor="hora-respaldo">Hora de respaldo</label>
+                    <input
+                      type="time"
+                      id="hora-respaldo"
+                      value={backupSettings.horaRespaldo}
+                      onChange={(e) => handleSettingChange("horaRespaldo", e.target.value)}
+                      className="config-copias-form-control"
+                    />
+                  </div>
+
+                  <div className="config-copias-form-group">
+                    <button
+                      className="config-copias-btn config-copias-btn-primary"
+                      onClick={handleSaveSettings}
+                    >
+                      Guardar Configuración
                     </button>
                   </div>
+                </div>
 
-                  {googleDriveSettings.vinculada && (
-                    <div className="config-copias-drive-status">
-                      <div className="config-copias-status-icon">
-                        <img src={checkIcon || "/placeholder.svg"} alt="Vinculada" />
-                      </div>
-                      <div className="config-copias-status-content">
-                        <strong>Cuenta vinculada</strong>
-                        <p>Las copias se guardarán automáticamente a Google Drive</p>
-                      </div>
+                {/* Google Drive Ajustes */}
+                <div className="config-copias-right-column">
+                  <div className="config-copias-google-drive-section">
+                    <label>Cuenta de Google Drive</label>
+                    <div className="config-copias-drive-input-group">
+                      <input
+                        type="email"
+                        value={googleDriveSettings.email}
+                        onChange={(e) => handleGoogleDriveChange("email", e.target.value)}
+                        className="config-copias-form-control"
+                        placeholder="correo@ejemplo.com"
+                        disabled={googleDriveSettings.vinculada}
+                      />
+                      <button
+                        className={`config-copias-btn ${googleDriveSettings.vinculada ? "config-copias-btn-secondary" : "config-copias-btn-primary"}`}
+                        onClick={handleLinkGoogleDrive}
+                      >
+                        {googleDriveSettings.vinculada ? "Desvincular" : "Vincular"}
+                      </button>
                     </div>
-                  )}
+
+                    {googleDriveSettings.vinculada && (
+                      <div className="config-copias-drive-status">
+                        <div className="config-copias-status-icon">
+                          <img src={checkIcon || "/placeholder.svg"} alt="Vinculada" />
+                        </div>
+                        <div className="config-copias-status-content">
+                          <strong>Cuenta vinculada</strong>
+                          <p>Las copias se guardarán automáticamente a Google Drive</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="config-copias-statistics-section">
-              <h3 className="config-copias-section-title">Estadísticas de Copias de Seguridad</h3>
-              <div className="config-copias-info-box">
-                <div className="config-copias-info-content">
-                  <p><strong>Copias Activas:</strong> {estadisticas.copiasActivas}</p>
-                  <p><strong>Copias Este Mes:</strong> {estadisticas.copiasEstesMes}</p>
-                  <p><strong>Espacio Utilizado:</strong> {estadisticas.espacioUtilizado}</p>
-                  <p><strong>Última Copia:</strong> {estadisticas.ultimaCopia}</p>
+              <div className="config-copias-statistics-section">
+                <h3 className="config-copias-section-title">Estadísticas de Copias de Seguridad</h3>
+                <div className="config-copias-info-box">
+                  <div className="config-copias-info-content">
+                    <p><strong>Copias Activas:</strong> {estadisticas.copiasActivas}</p>
+                    <p><strong>Copias Este Mes:</strong> {estadisticas.copiasEstesMes}</p>
+                    <p><strong>Espacio Utilizado:</strong> {estadisticas.espacioUtilizado}</p>
+                    <p><strong>Última Copia:</strong> {estadisticas.ultimaCopia}</p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Tabla de historial de respaldos */}
-            <div className="config-copias-history-section">
-              <div className="config-copias-history-header">
-                <h4>Historial de copias de seguridad</h4>
-                <button className="config-copias-btn config-copias-btn-instant" onClick={handleGenerateInstantBackup}>
-                  <img src={downloadIcon || "/placeholder.svg"} alt="Generar" className="config-copias-btn-icon" />
-                  Generar copia instantánea
-                </button>
-              </div>
+              {/* Tabla de historial de respaldos */}
+              <div className="config-copias-history-section">
+                <div className="config-copias-history-header">
+                  <h4>Historial de copias de seguridad</h4>
+                  <button className="config-copias-btn config-copias-btn-instant" onClick={handleGenerateInstantBackup}>
+                    <img src={downloadIcon || "/placeholder.svg"} alt="Generar" className="config-copias-btn-icon" />
+                    Generar copia instantánea
+                  </button>
+                </div>
 
-              <div className="config-copias-table-container">
-                <table className="config-copias-table">
-                  <thead>
-                    <tr>
-                      <th>Tipo de Datos</th>
-                      <th>Fecha de Creación</th>
-                      <th>Fecha de Eliminación</th>
-                      <th>Tamaño</th>
-                      <th>Frecuencia</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {backupHistory.map((backup) => (
-                      <tr key={backup.id}>
-                        <td>{backup.tipoDatos}</td>
-                        <td>{formatDateShort(backup.fechaCreacion)}</td>
-                        <td>{formatDateShort(backup.fechaEliminacion)}</td>
-                        <td>{backup.tamaño}</td>
-                        <td>{backup.frecuencia}</td>
-                        <td>
-                          <div className="config-copias-action-buttons">
-                            <button
-                              className="config-copias-action-btn config-copias-csv-btn"
-                              onClick={() => handleDownloadBackup(backup, "csv")}
-                              title="Descargar CSV"
-                            >
-                              CSV
-                            </button>
-                            <button
-                              className="config-copias-action-btn config-copias-pdf-btn"
-                              onClick={() => handleDownloadBackup(backup, "pdf")}
-                              title="Descargar PDF"
-                            >
-                              PDF
-                            </button>
-                            <button
-                              className="config-copias-action-btn config-copias-restore-btn"
-                              onClick={() => handleRestoreBackup(backup)}
-                              title="Restaurar"
-                            >
-                              Restaurar
-                            </button>
-                            <button
-                              className="config-copias-action-btn config-copias-delete-btn"
-                              onClick={() => handleDeleteBackup(backup.id)}
-                              title="Eliminar"
-                            >
-                              Eliminar
-                            </button>
-                          </div>
-                        </td>
+                <div className="config-copias-table-container">
+                  <table className="config-copias-table">
+                    <thead>
+                      <tr>
+                        <th>Tipo de Datos</th>
+                        <th>Fecha de Creación</th>
+                        <th>Fecha de Eliminación</th>
+                        <th>Tamaño</th>
+                        <th>Frecuencia</th>
+                        <th>Acciones</th>
                       </tr>
+                    </thead>
+                    <tbody>
+                      {backupHistory.map((backup) => (
+                        <tr key={backup.id}>
+                          <td>{backup.tipoDatos}</td>
+                          <td>{formatDateShort(backup.fechaCreacion)}</td>
+                          <td>{formatDateShort(backup.fechaEliminacion)}</td>
+                          <td>{backup.tamaño}</td>
+                          <td>{backup.frecuencia}</td>
+                          <td>
+                            <div className="config-copias-action-buttons">
+                              <button
+                                className="config-copias-action-btn config-copias-csv-btn"
+                                onClick={() => handleDownloadBackup(backup, "csv")}
+                                title="Descargar CSV"
+                              >
+                                CSV
+                              </button>
+                              <button
+                                className="config-copias-action-btn config-copias-pdf-btn"
+                                onClick={() => handleDownloadBackup(backup, "pdf")}
+                                title="Descargar PDF"
+                              >
+                                PDF
+                              </button>
+                              <button
+                                className="config-copias-action-btn config-copias-restore-btn"
+                                onClick={() => handleRestoreBackup(backup)}
+                                title="Restaurar"
+                              >
+                                Restaurar
+                              </button>
+                              <button
+                                className="config-copias-action-btn config-copias-delete-btn"
+                                onClick={() => handleDeleteBackup(backup.id)}
+                                title="Eliminar"
+                              >
+                                Eliminar
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
 
-                    ))}
-                  </tbody>
-                </table>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div style={{
+                  marginTop: "16px",
+                  padding: "12px 16px",
+                  backgroundColor: "#fff3cd",
+                  border: "1px solid #ffc107",
+                  borderRadius: "6px",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "10px"
+                }}>
+                  <span style={{ fontSize: "18px" }}>⚠️</span>
+                  <div>
+                    <strong>Advertencia al restaurar:</strong>
+                    <p style={{ margin: "4px 0 0 0", fontSize: "14px" }}>
+                      Al restaurar una copia de seguridad, se eliminarán y reemplazarán todos los datos actuales del tipo seleccionado,
+                      incluyendo registros relacionados como comisiones, cotizaciones, cuentas por cobrar, solicitudes de factura y tratos asociados.
+                      Esta acción es irreversible. Se recomienda generar una copia de seguridad actualizada antes de restaurar.
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
-          </section>
-        </div>
-      </main>
+            </section>
+          </div>
+        </main>
       </div>
     </>
   )

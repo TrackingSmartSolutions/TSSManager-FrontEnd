@@ -258,6 +258,7 @@ const NuevoTratoModal = ({ isOpen, onClose, onSave, empresaPreseleccionada }) =>
               value={formData.nombreEmpresa}
               onChange={(e) => handleInputChange("nombreEmpresa", e.target.value)}
               className={`modal-form-control ${errors.nombreEmpresa ? "error" : ""}`}
+              disabled={!!empresaPreseleccionada}
             >
               <option value="">Ninguna seleccionada</option>
               {empresas.map((empresa) => (

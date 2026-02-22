@@ -1669,7 +1669,7 @@ const AdminCuentasCobrar = () => {
     setRangoFechas([null, null]);
   };
 
-  const clientesUnicos = [...new Set(cuentasPorCobrar.map(c => c.clienteNombre || c.cliente?.razonSocial))].filter(Boolean).sort();
+  const clientesUnicos = [...new Set(cuentasPorCobrar.map(c => c.clienteNombre || c.cliente?.razonSocial))].filter(Boolean).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
 
   const handleMarcarPagada = async (responseData, montoPagado, cuentaId) => {
     const updatedCuenta = responseData.cuenta;
