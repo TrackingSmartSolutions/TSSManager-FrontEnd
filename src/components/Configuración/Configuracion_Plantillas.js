@@ -161,7 +161,7 @@ const ProcesosAutomaticosModal = ({ isOpen, onClose, plantillas }) => {
                     <div key={i} className="array-input-group">
                       <select value={paso.plantillaId} onChange={e => actualizarPaso(i, "plantillaId", e.target.value)} className="correo-plantillas-form-control">
                         <option value="">Seleccionar plantilla</option>
-                        {plantillas.map(pl => <option key={pl.id} value={pl.id}>{pl.nombre}</option>)}
+                        {[...plantillas].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' })).map(pl => <option key={pl.id} value={pl.id}>{pl.nombre}</option>)}
                       </select>
                       <input type="number" min="0" value={paso.dias} onChange={e => actualizarPaso(i, "dias", e.target.value)}
                         style={{ width: 80 }} className="correo-plantillas-form-control" placeholder="Días" />
@@ -420,27 +420,34 @@ const ConfiguracionPlantillas = () => {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetchWithToken(`${API_BASE_URL}/plantillas/${templateId}`, { method: "DELETE" });
-        if (response.status === 204) {
-          await fetchTemplates(); // Recarga la lista tras eliminar
-          if (selectedTemplate?.id === templateId) {
-            setSelectedTemplate(null);
-            setFormData({ nombre: "", asunto: "", contenido: "", adjuntos: [] });
-            setIsEditing(false);
-            setEditingId(null);
-          }
-          Swal.fire({
-            icon: "success",
-            title: "Plantilla eliminada",
-            text: "La plantilla se ha eliminado correctamente.",
-          });
-        }
-      } catch (error) {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: `Ocurrió un error al eliminar la plantilla: ${error.message}`,
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_BASE_URL}/plantillas/${templateId}`, {
+          method: "DELETE",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
+
+        if (response.status === 409) {
+          const data = await response.json();
+          Swal.fire({
+            icon: "warning",
+            title: "No se puede eliminar",
+            text: data.mensaje || "Esta plantilla está vinculada a un proceso automático. Desvincúlala primero antes de eliminarla.",
+          });
+          return;
+        }
+
+        if (!response.ok) throw new Error(`Error: ${response.status}`);
+
+        await fetchTemplates();
+        if (selectedTemplate?.id === templateId) {
+          setSelectedTemplate(null);
+          setFormData({ nombre: "", asunto: "", contenido: "", adjuntos: [] });
+          setIsEditing(false);
+          setEditingId(null);
+        }
+        Swal.fire({ icon: "success", title: "Plantilla eliminada", text: "La plantilla se ha eliminado correctamente." });
+      } catch (error) {
+        Swal.fire({ icon: "error", title: "Error", text: `Ocurrió un error al eliminar la plantilla: ${error.message}` });
       }
     }
   };
