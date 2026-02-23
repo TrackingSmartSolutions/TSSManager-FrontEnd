@@ -1715,9 +1715,27 @@ const AdminCuentasCobrar = () => {
     }
   };
 
-  const handleConfirmDelete = (cuentaId) => {
-    setCuentasPorCobrar((prev) => prev.filter((cuenta) => cuenta.id !== cuentaId));
-    closeModal("confirmarEliminacion");
+  const handleConfirmDelete = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
+
+      if (response.status === 204) {
+        onConfirm(cuenta.id);
+        onClose();
+        Swal.fire({ icon: "success", title: "Éxito", text: "Cuenta eliminada correctamente" });
+      } else if (response.status === 409) {
+        const data = await response.json();
+        onClose();
+        Swal.fire({ icon: "error", title: "No se puede eliminar", text: data.error });
+      } else {
+        throw new Error("Error inesperado");
+      }
+    } catch (error) {
+      Swal.fire({ icon: "error", title: "Error", text: error.message });
+    }
   };
 
   const handleCheckMarcarCompletada = async (cuenta) => {
