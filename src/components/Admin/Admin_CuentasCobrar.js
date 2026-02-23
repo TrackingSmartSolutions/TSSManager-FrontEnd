@@ -472,24 +472,25 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
 const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
   const handleConfirmDelete = async () => {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}`, {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}`, {
         method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
       });
+
       if (response.status === 204) {
         onConfirm(cuenta.id);
         onClose();
-        Swal.fire({
-          icon: "success",
-          title: "Éxito",
-          text: "Cuenta por cobrar eliminada correctamente",
-        });
+        Swal.fire({ icon: "success", title: "Éxito", text: "Cuenta eliminada correctamente" });
+      } else if (response.status === 409) {
+        const data = await response.json();
+        onClose();
+        Swal.fire({ icon: "error", title: "No se puede eliminar", text: data.error });
+      } else {
+        throw new Error("Error inesperado");
       }
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "No se puede eliminar la cuenta por cobrar porque está vinculada a una solicitud de factura/nota.",
-      });
+      Swal.fire({ icon: "error", title: "Error", text: error.message });
     }
   };
 
@@ -1715,29 +1716,6 @@ const AdminCuentasCobrar = () => {
     }
   };
 
-  const handleConfirmDelete = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}`, {
-        method: "DELETE",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
-      });
-
-      if (response.status === 204) {
-        onConfirm(cuenta.id);
-        onClose();
-        Swal.fire({ icon: "success", title: "Éxito", text: "Cuenta eliminada correctamente" });
-      } else if (response.status === 409) {
-        const data = await response.json();
-        onClose();
-        Swal.fire({ icon: "error", title: "No se puede eliminar", text: data.error });
-      } else {
-        throw new Error("Error inesperado");
-      }
-    } catch (error) {
-      Swal.fire({ icon: "error", title: "Error", text: error.message });
-    }
-  };
-
   const handleCheckMarcarCompletada = async (cuenta) => {
     try {
       const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/check-vinculada`);
@@ -2282,7 +2260,10 @@ const AdminCuentasCobrar = () => {
           <ConfirmarEliminacionModal
             isOpen={modals.confirmarEliminacion.isOpen}
             onClose={() => closeModal("confirmarEliminacion")}
-            onConfirm={handleConfirmDelete}
+            onConfirm={(cuentaId) => {
+              setCuentasPorCobrar((prev) => prev.filter((c) => c.id !== cuentaId));
+              closeModal("confirmarEliminacion");
+            }}
             cuenta={modals.confirmarEliminacion.cuenta}
           />
 
