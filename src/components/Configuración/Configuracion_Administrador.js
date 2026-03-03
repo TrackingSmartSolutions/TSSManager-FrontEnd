@@ -660,13 +660,12 @@ const ConfiguracionAdministrador = () => {
                     locale="es"
                     disabled={tiposSinFiltroFecha.includes(exportData.tiposDatos)}
                   />
-                  <small className="config-admin-help-text">
-                    {tiposSinFiltroFecha.includes(exportData.tiposDatos)
-                      ? "Este tipo de dato no tiene fecha de creación, se exportarán todos los registros"
-                      : "Deja en blanco para exportar todos los datos"}
-                  </small>
                 </div>
-                <small className="config-admin-help-text">Deja en blanco para exportar todos los datos</small>
+                <small className="config-admin-help-text">
+                  {tiposSinFiltroFecha.includes(exportData.tiposDatos)
+                    ? "Este tipo de dato no tiene fecha de creación, se exportarán todos los registros"
+                    : "Deja en blanco para exportar todos los datos"}
+                </small>
               </div>
 
               <div className="config-admin-form-actions">
