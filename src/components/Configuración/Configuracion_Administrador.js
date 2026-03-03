@@ -77,6 +77,8 @@ const ConfiguracionAdministrador = () => {
   const [exportHistory, setExportHistory] = useState([]);
   const [importHistory, setImportHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true)
+  const tiposSinFiltroFecha = ["correoContactos", "modelos", "proveedores", "equipos", "sims"];
+
 
   const navigate = useNavigate()
 
@@ -646,15 +648,23 @@ const ConfiguracionAdministrador = () => {
                     selectsRange={true}
                     startDate={fechaInicioExport}
                     endDate={fechaFinExport}
-                    onChange={(update) => {
-                      setRangoFechasExport(update);
-                    }}
+                    onChange={(update) => setRangoFechasExport(update)}
                     isClearable={true}
-                    placeholderText="Seleccionar rango de fechas"
+                    placeholderText={
+                      tiposSinFiltroFecha.includes(exportData.tiposDatos)
+                        ? "Este tipo no soporta filtro de fechas"
+                        : "Seleccionar rango de fechas"
+                    }
                     dateFormat="dd/MM/yyyy"
                     customInput={<CustomDatePickerInput />}
                     locale="es"
+                    disabled={tiposSinFiltroFecha.includes(exportData.tiposDatos)}
                   />
+                  <small className="config-admin-help-text">
+                    {tiposSinFiltroFecha.includes(exportData.tiposDatos)
+                      ? "Este tipo de dato no tiene fecha de creación, se exportarán todos los registros"
+                      : "Deja en blanco para exportar todos los datos"}
+                  </small>
                 </div>
                 <small className="config-admin-help-text">Deja en blanco para exportar todos los datos</small>
               </div>
