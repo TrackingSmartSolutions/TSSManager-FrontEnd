@@ -29,7 +29,6 @@ const fetchWithToken = async (url, options = {}) => {
     ...options,
     headers,
   })
-
   return response
 }
 

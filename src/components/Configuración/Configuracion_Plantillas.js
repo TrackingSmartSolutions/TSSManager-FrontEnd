@@ -67,10 +67,40 @@ const ProcesosAutomaticosModal = ({ isOpen, onClose, plantillas }) => {
   };
 
   const eliminar = async (id) => {
-    const result = await Swal.fire({ title: "¿Eliminar proceso?", icon: "warning", showCancelButton: true, confirmButtonText: "Eliminar", confirmButtonColor: "#f44336" });
+    const result = await Swal.fire({
+      title: "¿Eliminar proceso?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Eliminar",
+      confirmButtonColor: "#f44336"
+    });
+
     if (result.isConfirmed) {
-      await fetchWithToken(`${API_BASE_URL}/procesos-automaticos/${id}`, { method: "DELETE" });
-      await cargarProcesos();
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_BASE_URL}/procesos-automaticos/${id}`, {
+          method: "DELETE",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+
+        if (response.status === 409) {
+          const data = await response.json();
+          Swal.fire({
+            icon: "warning",
+            title: "Proceso en uso",
+            html: data.mensaje,
+            confirmButtonText: "Entendido"
+          });
+          return;
+        }
+
+        if (!response.ok) throw new Error("Error al eliminar");
+
+        await cargarProcesos();
+        Swal.fire({ icon: "success", title: "Proceso eliminado", timer: 2000, showConfirmButton: false });
+      } catch (error) {
+        Swal.fire("Error", "Ocurrió un error al intentar eliminar el proceso", "error");
+      }
     }
   };
 
