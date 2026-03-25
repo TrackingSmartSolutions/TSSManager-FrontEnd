@@ -672,8 +672,10 @@
 
 .cuentascobrar-concepto-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .cuentascobrar-concepto-item input {

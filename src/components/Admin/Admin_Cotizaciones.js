@@ -167,7 +167,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayCl
           }}>✕</button>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
           {children}
         </div>
       </div>
