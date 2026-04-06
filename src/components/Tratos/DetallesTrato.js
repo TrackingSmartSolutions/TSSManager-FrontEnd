@@ -57,6 +57,15 @@ const fetchTrato = async (id) => {
   }
 };
 
+const formatearTelefono = (numero) => {
+  if (!numero) return numero;
+  const digits = numero.replace(/\D/g, '');
+  if (digits.length === 10) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+  return numero;
+};
+
 // Modal Base para DetallesTrato
 const DetallesTratoModal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
   useEffect(() => {
@@ -5762,7 +5771,7 @@ const DetallesTrato = () => {
                           >
                             <img src={phoneIcon || "/placeholder.svg"} alt="Teléfono" className="contacto-icon" />
                           </button>
-                          <span>{tel.telefono}</span>
+                          <span>{formatearTelefono(tel.telefono)}</span>
                         </div>
                       ))
                     ) : (
@@ -5781,7 +5790,7 @@ const DetallesTrato = () => {
                         >
                           <img src={whatsappIcon || "/placeholder.svg"} alt="WhatsApp" className="contacto-icon" />
                         </button>
-                        <span>{trato.contacto.whatsapp}</span>
+                        <span>{formatearTelefono(trato.contacto.whatsapp)}</span>
                       </div>
                     )}
 
