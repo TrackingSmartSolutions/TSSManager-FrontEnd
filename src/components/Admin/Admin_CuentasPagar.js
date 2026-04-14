@@ -702,7 +702,8 @@ const AdminCuentasPagar = () => {
 
         if (esCompletamentePagada && esUltimaCuenta && noEsUnica) {
           if (esSim) {
-            await handleRegenerar(true, cuentaRecienActualizada);
+            const montoParaRegenerar = cuentaRecienActualizada.sim?.recarga || cuentaRecienActualizada.monto;
+            await handleRegenerar(true, cuentaRecienActualizada, montoParaRegenerar);
           } else {
             openModal("regenerar", { cuenta: cuentaRecienActualizada });
           }
