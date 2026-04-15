@@ -37,18 +37,8 @@ const fetchWithToken = async (url, options = {}) => {
     headers["Content-Type"] = "application/json";
   }
 
-  // LOG: Ver qué estamos enviando exactamente a nivel de fetch
-  console.log(`[fetchWithToken] Llamando a: ${url}`);
-  console.log(`[fetchWithToken] Método:`, options.method || 'GET');
-  console.log(`[fetchWithToken] Cabeceras:`, headers);
-
   const response = await fetch(url, { ...options, headers });
-
-  if (!response.ok) {
-    // LOG: Si falla, ver el estado exacto antes de lanzar el error
-    console.error(`[fetchWithToken] Error en la solicitud: ${response.status} - ${response.statusText}`);
-    throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`);
-  }
+  if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`);
   return response;
 };
 
@@ -3231,17 +3221,7 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
       const formDataToSend = new FormData();
       const destinatario = formData.para.trim() || "Sin destinatario";
 
-      // LOG: Verificamos los datos antes de enviarlos
-      console.log("=== INICIANDO ENVÍO DE CORREO ===");
-      console.log("Destinatario:", destinatario);
-      console.log("Trato ID:", tratoId);
-      console.log("Token actual:", localStorage.getItem("token") ? "Sí existe un token" : "NO HAY TOKEN");
-
       if (plantillaSeleccionada) {
-        // LOG: Indicamos que vamos por la ruta de plantilla
-        console.log("Usando plantilla ID:", plantillaSeleccionada.id);
-        console.log("URL de petición:", `${API_BASE_URL}/correos/plantilla`);
-
         formDataToSend.append("destinatario", destinatario);
         formDataToSend.append("plantillaId", plantillaSeleccionada.id);
         formDataToSend.append("tratoId", tratoId);
@@ -3256,25 +3236,12 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
           }
         }
 
-        // LOG: Ver el contenido exacto del FormData (es un poco complicado, se hace así:)
-        console.log("Contenido del FormData (Plantilla):");
-        for (let pair of formDataToSend.entries()) {
-          console.log(pair[0] + ', ' + pair[1]);
-        }
-
         const response = await fetchWithToken(`${API_BASE_URL}/correos/plantilla`, {
           method: "POST",
           body: formDataToSend,
         });
 
-        // LOG: Ver la respuesta cruda del servidor
-        console.log("Respuesta del servidor (Status):", response.status);
-
         const emailRecord = await response.json();
-
-        // LOG: Ver qué devolvió el backend convertido a JSON
-        console.log("Respuesta JSON del backend:", emailRecord);
-
         if (emailRecord.exito) {
           Swal.fire({
             title: "¡Correo enviado!",
@@ -3289,10 +3256,6 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
           throw new Error("Fallo al enviar el correo");
         }
       } else {
-        // LOG: Indicamos que vamos por la ruta de correo normal
-        console.log("Enviando correo SIN plantilla");
-        console.log("URL de petición:", `${API_BASE_URL}/correos`);
-
         formDataToSend.append("destinatario", destinatario);
         formDataToSend.append("asunto", formData.asunto);
         formDataToSend.append("cuerpo", formData.mensaje);
@@ -3309,14 +3272,7 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
           body: formDataToSend,
         });
 
-        // LOG: Ver la respuesta cruda del servidor
-        console.log("Respuesta del servidor (Status):", response.status);
-
         const emailRecord = await response.json();
-
-        // LOG: Ver qué devolvió el backend convertido a JSON
-        console.log("Respuesta JSON del backend:", emailRecord);
-
         if (emailRecord.exito) {
           Swal.fire({
             title: "¡Correo enviado!",
@@ -3332,11 +3288,7 @@ const CrearCorreoModal = ({ isOpen, onClose, onSave, tratoId, openModal, closeMo
         }
       }
     } catch (error) {
-      // LOG: Ver exactamente por qué falló en el catch
-      console.error("=== ERROR CAPTURADO EN EL CATCH ===");
-      console.error("Mensaje de error:", error.message);
-      console.error("Error completo:", error);
-
+      console.error("Error al enviar correo:", error);
       setError(error.message || "No se pudo enviar el correo");
       Swal.fire({
         icon: "error",
