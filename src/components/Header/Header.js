@@ -306,15 +306,10 @@ const Header = ({ logoUrl }) => {
         const actividadesServidor = await response.json();
 
         setActividadesProximas(prev => {
+          const activasValidas = actividadesServidor.filter(act => !actividadesDismissed.has(act.id));
 
-          const activasAun = prev;
-
-          const idsActuales = new Set(activasAun.map(a => a.id));
-          const nuevas = actividadesServidor.filter(act => !idsActuales.has(act.id));
-
-          if (nuevas.length === 0) {
-            return prev;
-          }
+          const idsActuales = new Set(prev.map(a => a.id));
+          const nuevas = activasValidas.filter(act => !idsActuales.has(act.id));
 
           if (nuevas.length > 0) {
             try {
@@ -324,11 +319,8 @@ const Header = ({ logoUrl }) => {
             } catch (e) { }
           }
 
-          const listaFinal = [...activasAun, ...nuevas];
-
-          localStorage.setItem("actividadesPendientesPopup", JSON.stringify(listaFinal));
-
-          return listaFinal;
+          localStorage.setItem("actividadesPendientesPopup", JSON.stringify(activasValidas));
+          return activasValidas;
         });
       }
     } catch (error) {
@@ -723,6 +715,14 @@ const Header = ({ logoUrl }) => {
   }
 
   const handleCloseActividad = (actividadId) => {
+    // La agregamos a dismissed para que el intervalo de 5s la ignore
+    const currentDismissed = new Set(actividadesDismissed);
+    currentDismissed.add(actividadId);
+
+    setActividadesDismissed(currentDismissed);
+    localStorage.setItem('actividadesDismissed', JSON.stringify([...currentDismissed]));
+
+    // La quitamos de la vista actual
     setActividadesProximas(prev => {
       const filtradas = prev.filter(act => act.id !== actividadId);
       localStorage.setItem("actividadesPendientesPopup", JSON.stringify(filtradas));
