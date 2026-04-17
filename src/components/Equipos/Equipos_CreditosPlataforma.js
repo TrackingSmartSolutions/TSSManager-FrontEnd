@@ -191,8 +191,12 @@ const EquiposCreditosPlataforma = () => {
         return `${año}-${mes}-${dia}`;
       };
 
-      const fechaInicioStr = formatearFecha(fechaInicio);
-      const fechaFinStr = formatearFecha(fechaFin);
+      const fechaInicioStr = fechaInicio
+        ? formatearFecha(fechaInicio)
+        : '2000-01-01';
+      const fechaFinStr = fechaFin
+        ? formatearFecha(fechaFin)
+        : formatearFecha(new Date());
 
       const response = await fetchWithToken(
         `${API_BASE_URL}/creditos-plataforma/dashboard?fechaInicio=${fechaInicioStr}&fechaFin=${fechaFinStr}&plataforma=${filtroPlataforma}`
