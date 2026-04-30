@@ -820,6 +820,16 @@ const EquiposInventario = () => {
 
   const handleActivateEquipo = (equipoId) => {
     const equipo = equipos.find((e) => e.id === equipoId);
+
+    if (equipo && !equipo.plataforma) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se puede activar un equipo sin plataforma."
+      });
+      return;
+    }
+
     if (equipo) openModal("creditos", { tipo: "activar", equipo });
   };
 
@@ -1008,8 +1018,28 @@ const EquiposInventario = () => {
                                   <img src={detailsIcon || "/placeholder.svg"} alt="Detalles" />
                                 </button>
                                 {userRole === "ADMINISTRADOR" && equipo.estatus === "INACTIVO" && (
-                                  <button className="inventario-btn inventario-btn-activate" onClick={() => handleActivateEquipo(equipo.id)} title="Activar">
-                                    <img src={activateIcon || "/placeholder.svg"} alt="Activar" className="inventario-action-icon" /> Activar
+                                  <button
+                                    className={`inventario-btn ${equipo.plataforma ? 'inventario-btn-activate' : 'inventario-btn-disabled'}`}
+                                    onClick={() => {
+                                      if (equipo.plataforma) {
+                                        handleActivateEquipo(equipo.id);
+                                      } else {
+                                        Swal.fire({
+                                          icon: "warning",
+                                          title: "Acción no permitida",
+                                          text: "El equipo aún no está vinculado a ninguna plataforma. Edita el equipo para asignarle una antes de activarlo.",
+                                          confirmButtonColor: "#3085d6"
+                                        });
+                                      }
+                                    }}
+                                    title="Activar"
+                                  >
+                                    <img
+                                      src={activateIcon || "/placeholder.svg"}
+                                      alt="Activar"
+                                      className="inventario-action-icon"
+                                      style={!equipo.plataforma ? { filter: 'grayscale(100%)', opacity: 0.7 } : {}}
+                                    /> Activar
                                   </button>
                                 )}
                                 {userRole === "ADMINISTRADOR" && (needsRenewal(equipo) || isExpired(equipo) || equipo.estatus === "EXPIRADO") && (
