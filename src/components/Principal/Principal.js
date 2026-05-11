@@ -614,7 +614,6 @@ const ReprogramarReunionModal = ({ isOpen, onClose, onSave, actividad }) => {
           onClose();
         }}
         onConfirm={() => {
-          // Mostrar Sweet Alert aquí
           Swal.fire({
             title: "¡Reunión reprogramada!",
             text: "La reunión se ha reprogramado exitosamente",
@@ -1170,9 +1169,16 @@ const Principal = () => {
       const data = await response.json();
 
       const datosOrdenados = data.sort((a, b) => {
+        const esTareaA = a.tipo === "TAREA";
+        const esTareaB = b.tipo === "TAREA";
+
+        if (esTareaA && !esTareaB) return -1;
+        if (!esTareaA && esTareaB) return 1;
+
         if (!a.horaInicio && !b.horaInicio) return 0;
-        if (!a.horaInicio) return 1;
-        if (!b.horaInicio) return -1;
+        if (!a.horaInicio) return esTareaA ? -1 : 1;
+        if (!b.horaInicio) return esTareaB ? -1 : 1;
+
         return a.horaInicio.toString().substring(0, 5).localeCompare(
           b.horaInicio.toString().substring(0, 5)
         );

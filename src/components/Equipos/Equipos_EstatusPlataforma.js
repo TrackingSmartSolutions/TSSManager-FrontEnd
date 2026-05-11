@@ -362,8 +362,8 @@ const CheckEquiposSidePanel = ({
         text: `Se ha guardado el checklist de ${equiposConStatus.length} equipos.`,
       });
 
-      localStorage.removeItem("checklist_temp_data"); 
-      setEquiposStatus({}); 
+      localStorage.removeItem("checklist_temp_data");
+      setEquiposStatus({});
       const currentTime = Date.now();
       setLastCheckTime(currentTime);
       fetchData();
