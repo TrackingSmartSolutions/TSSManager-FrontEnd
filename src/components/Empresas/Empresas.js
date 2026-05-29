@@ -749,6 +749,7 @@ const ContactoModal = ({
     "SECRETARIO",
     "GERENTE",
     "DIRECTOR",
+    "COMPRAS",
   ];
 
   useEffect(() => {
@@ -1468,6 +1469,7 @@ const Empresas = () => {
     "SECRETARIO",
     "GERENTE",
     "DIRECTOR",
+    "COMPRAS",
   ]
 
   const getStatusText = (status) => statusMap[status] || status

@@ -164,10 +164,9 @@ const processEquiposPorMotivo = (equiposOffline) => {
 
   return Object.entries(motivoCount)
     .map(([motivo, cantidad]) => ({ motivo, cantidad }))
-    .sort((a, b) => b.cantidad - a.cantidad); // Ordenar por cantidad descendente
+    .sort((a, b) => b.cantidad - a.cantidad);
 };
 
-// Panel Lateral Deslizante para Check Equipos
 const CheckEquiposSidePanel = ({
   isOpen,
   onClose,
@@ -204,40 +203,26 @@ const CheckEquiposSidePanel = ({
   const nextCheckTime = lastCheckTime ? lastCheckTime + (6 * 60 * 60 * 1000) : null;
   const countdown = useCountdown(nextCheckTime);
 
-  // Función para formatear el tiempo restante
   const formatCountdown = (countdown) => {
     if (!countdown) return '';
-
     const { hours, minutes, seconds } = countdown;
-
-    if (hours > 0) {
-      return `${hours}h ${minutes}m ${seconds}s`;
-    } else if (minutes > 0) {
-      return `${minutes}m ${seconds}s`;
-    } else {
-      return `${seconds}s`;
-    }
+    if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+    else if (minutes > 0) return `${minutes}m ${seconds}s`;
+    else return `${seconds}s`;
   };
 
-  // Función para refrescar equipos
   const refreshEquipos = useCallback(async () => {
     try {
       const response = await fetchWithToken(`${API_BASE_URL}/equipos/dashboard-estatus`);
       const data = await response.json();
-      // Actualizar solo si el panel está abierto
-      if (isOpen) {
-        setRefreshTrigger(prev => prev + 1);
-      }
+      if (isOpen) setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error('Error refreshing equipos:', error);
     }
   }, [isOpen]);
 
-  // Escuchar cambios cuando se abre el panel
   useEffect(() => {
-    if (isOpen) {
-      refreshEquipos();
-    }
+    if (isOpen) refreshEquipos();
   }, [isOpen, refreshEquipos]);
 
   useEffect(() => {
@@ -250,10 +235,7 @@ const CheckEquiposSidePanel = ({
         const newStatus = { ...prevStatus };
         equipos.forEach((equipo) => {
           if (!newStatus[equipo.id]) {
-            newStatus[equipo.id] = {
-              status: null,
-              motivo: "",
-            };
+            newStatus[equipo.id] = { status: null, motivo: "" };
           }
         });
         return newStatus;
@@ -263,25 +245,16 @@ const CheckEquiposSidePanel = ({
 
   useEffect(() => {
     if (countdown === null && lastCheckTime && isOpen) {
-      // El countdown terminó, refrescar el estado
-      setTimeout(() => {
-        refreshEquipos();
-      }, 1000);
+      setTimeout(() => { refreshEquipos(); }, 1000);
     }
   }, [countdown, lastCheckTime, isOpen, refreshEquipos]);
 
   const filteredEquipos = equipos
-    .filter(
-      (equipo) => {
-        if (selectedPlatform === "Todos") {
-          return true;
-        }
-        if (selectedPlatform === "Sin plataforma") {
-          return !equipo.plataforma?.nombrePlataforma || equipo.plataforma?.nombrePlataforma.trim() === "";
-        }
-        return equipo.plataforma?.nombrePlataforma === selectedPlatform;
-      }
-    )
+    .filter((equipo) => {
+      if (selectedPlatform === "Todos") return true;
+      if (selectedPlatform === "Sin plataforma") return !equipo.plataforma?.nombrePlataforma || equipo.plataforma?.nombrePlataforma.trim() === "";
+      return equipo.plataforma?.nombrePlataforma === selectedPlatform;
+    })
     .sort((a, b) => {
       const nombreA = a.nombre ? a.nombre.toLowerCase() : "";
       const nombreB = b.nombre ? b.nombre.toLowerCase() : "";
@@ -299,11 +272,7 @@ const CheckEquiposSidePanel = ({
         motivo: newStatus ? "" : equiposStatus[equipoId]?.motivo || "",
         onConfirm: (selectedMotivo) => {
           if (newStatus === false && !selectedMotivo.trim()) {
-            Swal.fire({
-              icon: "warning",
-              title: "Advertencia",
-              text: "Debe seleccionar un motivo para equipos no reportando.",
-            });
+            Swal.fire({ icon: "warning", title: "Advertencia", text: "Debe seleccionar un motivo para equipos no reportando." });
             return;
           }
           setEquiposStatus(prev => ({
@@ -316,52 +285,86 @@ const CheckEquiposSidePanel = ({
     }));
   };
 
+  const handleAutoCompletarApis = async () => {
+    try {
+      Swal.fire({
+        title: 'Consultando plataformas...',
+        text: 'Obteniendo estatus en vivo de Tracksolid y WhatsGPS...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+      });
+
+      const response = await fetchWithToken(`${API_BASE_URL}/equipos/consultar-apis-gps`);
+      const dataApis = await response.json();
+
+      setEquiposStatus(prevStatus => {
+        const newStatus = { ...prevStatus };
+        let actualizados = 0;
+
+        equipos.forEach((equipo) => {
+          const imeiLimpio = equipo.imei ? String(equipo.imei).trim() : null;
+
+          if (imeiLimpio && dataApis[imeiLimpio]) {
+            const apiInfo = dataApis[imeiLimpio];
+            const isOnline = apiInfo.status === "ONLINE";
+
+            newStatus[equipo.id] = {
+              status: isOnline,
+              motivo: isOnline ? "" : (apiInfo.motivo || "Sin reporte en plataforma")
+            };
+            actualizados++;
+          } else {
+            console.warn(`El IMEI ${imeiLimpio} del equipo ${equipo.nombre} no se encontró en las plataformas GPS.`);
+          }
+        });
+
+        Swal.fire({
+          icon: "success",
+          title: "¡Autocompletado exitoso!",
+          text: `Se verificó el estatus de ${actualizados} equipos. Revisa la tabla y haz clic en Guardar Checklist.`,
+        });
+
+        return newStatus;
+      });
+
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error de conexión",
+        text: "Hubo un problema comunicándose con las plataformas: " + error.message,
+      });
+    }
+  };
+
   const handleSaveChecklist = async () => {
     const equiposConStatus = Object.entries(equiposStatus)
       .filter(([_, data]) => data.status !== null)
       .map(([equipoId, data]) => ({
         equipoId: Number.parseInt(equipoId),
+        // Aquí es donde mandas "REPORTANDO" O "NO_REPORTANDO" al POST /api/equipos/estatus
         status: data.status ? "REPORTANDO" : "NO_REPORTANDO",
         motivo: data.motivo || null,
       }));
 
-
     if (equiposConStatus.length === 0) {
-      Swal.fire({
-        icon: "warning",
-        title: "Advertencia",
-        text: "Debes asignar un estatus a al menos un equipo antes de guardar.",
-      });
+      Swal.fire({ icon: "warning", title: "Advertencia", text: "Debes asignar un estatus a al menos un equipo antes de guardar." });
       return;
     }
 
-    const equiposSinMotivo = equiposConStatus.filter(e =>
-      e.status === "NO_REPORTANDO" && (!e.motivo || e.motivo.trim() === "")
-    );
-
+    const equiposSinMotivo = equiposConStatus.filter(e => e.status === "NO_REPORTANDO" && (!e.motivo || e.motivo.trim() === ""));
     if (equiposSinMotivo.length > 0) {
-      Swal.fire({
-        icon: "warning",
-        title: "Advertencia",
-        text: "Todos los equipos marcados como 'NO_REPORTANDO' deben tener un motivo.",
-      });
+      Swal.fire({ icon: "warning", title: "Advertencia", text: "Todos los equipos marcados como 'NO_REPORTANDO' deben tener un motivo." });
       return;
     }
 
     setIsSaving(true);
-
     try {
       await fetchWithToken(`${API_BASE_URL}/equipos/estatus`, {
         method: "POST",
         body: JSON.stringify(equiposConStatus),
       });
 
-      Swal.fire({
-        icon: "success",
-        title: "Éxito",
-        text: `Se ha guardado el checklist de ${equiposConStatus.length} equipos.`,
-      });
-
+      Swal.fire({ icon: "success", title: "Éxito", text: `Se ha guardado el checklist de ${equiposConStatus.length} equipos.` });
       localStorage.removeItem("checklist_temp_data");
       setEquiposStatus({});
       const currentTime = Date.now();
@@ -370,19 +373,13 @@ const CheckEquiposSidePanel = ({
       closeModal("checkEquipos");
     } catch (error) {
       console.error("Error al guardar checklist:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.message || "Error al guardar el checklist",
-      });
+      Swal.fire({ icon: "error", title: "Error", text: error.message || "Error al guardar el checklist" });
     } finally {
       setIsSaving(false);
     }
   };
 
   const canCheck = !lastCheckTime || countdown === null;
-
-  // Verificar si TODOS los equipos tienen un estatus asignado
   const allEquiposHaveStatus = equipos.length > 0 &&
     equipos.every(equipo => equiposStatus[equipo.id]?.status !== null && equiposStatus[equipo.id]?.status !== undefined);
 
@@ -394,20 +391,11 @@ const CheckEquiposSidePanel = ({
         <div className="estatusplataforma-side-panel-header">
           <h2 className="estatusplataforma-side-panel-title">Selecciona la plataforma</h2>
           {countdown && (
-            <div style={{
-              fontSize: '12px',
-              color: '#6b7280',
-              marginTop: '4px',
-              textAlign: 'center'
-            }}>
-              Próximo check disponible en: <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>
-                {formatCountdown(countdown)}
-              </span>
+            <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', textAlign: 'center' }}>
+              Próximo check disponible en: <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>{formatCountdown(countdown)}</span>
             </div>
           )}
-          <button className="estatusplataforma-side-panel-close" onClick={onClose}>
-            ✕
-          </button>
+          <button className="estatusplataforma-side-panel-close" onClick={onClose}>✕</button>
         </div>
 
         <div className="estatusplataforma-side-panel-content">
@@ -429,8 +417,30 @@ const CheckEquiposSidePanel = ({
             </div>
 
             <div className="estatusplataforma-side-panel-form-group">
-              <div className="estatusplataforma-progress-info">
+              <div className="estatusplataforma-progress-info" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span>Progreso total: {Object.values(equiposStatus).filter(s => s.status !== null).length} / {equipos.length} equipos</span>
+
+                <button
+                  type="button"
+                  onClick={handleAutoCompletarApis}
+                  disabled={!canCheck}
+                  style={{
+                    backgroundColor: canCheck ? '#3b82f6' : '#9ca3af',
+                    color: 'white',
+                    border: 'none',
+                    padding: '6px 12px',
+                    borderRadius: '4px',
+                    cursor: canCheck ? 'pointer' : 'not-allowed',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  Autocompletar con GPS
+                </button>
+
               </div>
             </div>
           </div>
@@ -448,7 +458,9 @@ const CheckEquiposSidePanel = ({
                 {canCheck ? (
                   filteredEquipos.length > 0 ? (
                     filteredEquipos.map((equipo) => (
-                      <tr key={equipo.id}>
+                      <tr key={equipo.id} style={{
+                        backgroundColor: equiposStatus[equipo.id]?.status !== null ? '#f0fdf4' : 'transparent'
+                      }}>
                         <td>
                           <div className="estatusplataforma-equipo-info">
                             <div className="estatusplataforma-equipo-nombre">{equipo.codigo}</div>
@@ -557,7 +569,8 @@ const ConfirmarCambioEstatusModal = ({
     "Apagado",
     "En reparación",
     "Falla del equipo",
-    "Sin Plataforma"
+    "Sin Plataforma",
+    "Sin reporte en plataforma"
   ];
 
   const handleConfirm = () => {

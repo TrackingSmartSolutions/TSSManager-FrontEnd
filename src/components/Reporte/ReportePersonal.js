@@ -647,7 +647,7 @@ const ReportePersonal = () => {
         doc.text(currentDate, pageWidth - margin - doc.getTextWidth(currentDate), 32);
 
         // Período
-        const period = `${formatDate(dateRange.startDate)} - ${formatDate(dateRange.endDate)}`;
+        const period = `${formatDate(startDate)} - ${formatDate(endDate)}`;
         doc.text(period, margin, 38);
 
         doc.setFontSize(9);
@@ -867,7 +867,9 @@ const ReportePersonal = () => {
       }
 
       const userInfo = `${(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR") && selectedUser ? selectedUser : `${currentUser.nombre} ${currentUser.apellidos}`}`;
-      const fileName = `Reporte_${userInfo.replace(/\s+/g, '_')}_${dateRange.startDate || getTodayDate()}_${dateRange.endDate || getTodayDate()}.pdf`;
+      const startStr = startDate ? startDate.toISOString().split('T')[0] : getTodayDate();
+      const endStr = endDate ? endDate.toISOString().split('T')[0] : getTodayDate();
+      const fileName = `Reporte_${userInfo.replace(/\s+/g, '_')}_${startStr}_${endStr}.pdf`;
       const blobUrl = doc.output('bloburl');
 
       setPdfPreview({
@@ -935,10 +937,10 @@ const ReportePersonal = () => {
                 <p className="reporte-subtitle">
                   {(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR") && selectedUser
                     ? `${selectedUser} - ${startDate && endDate
-                      ? `${formatDate(startDate.toISOString().split('T')[0])} a ${formatDate(endDate.toISOString().split('T')[0])}`
+                      ? `${formatDate(startDate)} a ${formatDate(endDate)}`
                       : formatDate()}`
                     : `${currentUser.nombre} ${currentUser.apellidos} - ${startDate && endDate
-                      ? `${formatDate(startDate.toISOString().split('T')[0])} a ${formatDate(endDate.toISOString().split('T')[0])}`
+                      ? `${formatDate(startDate)} a ${formatDate(endDate)}`
                       : formatDate()}`
                   }
                 </p>

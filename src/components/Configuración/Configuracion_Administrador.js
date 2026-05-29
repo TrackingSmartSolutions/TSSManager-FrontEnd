@@ -77,7 +77,7 @@ const ConfiguracionAdministrador = () => {
   const [exportHistory, setExportHistory] = useState([]);
   const [importHistory, setImportHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true)
-  const tiposSinFiltroFecha = ["correoContactos", "modelos", "proveedores", "equipos", "sims"];
+  const tiposSinFiltroFecha = ["correoContactos", "modelos", "proveedores", "equipos", "sims", "telefonoContactos"];
 
 
   const navigate = useNavigate()
@@ -93,6 +93,7 @@ const ConfiguracionAdministrador = () => {
     { value: "sims", label: "Sims" },
     { value: "historialSaldos", label: "Historial de saldos" },
     { value: "auditoria", label: "Auditoría del Sistema" },
+    { value: "telefonoContactos", label: "Teléfonos de los contactos" },
   ]
 
   const formatosExportacion = [

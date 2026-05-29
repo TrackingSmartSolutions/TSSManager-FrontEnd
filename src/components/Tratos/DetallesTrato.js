@@ -2132,7 +2132,9 @@ const CompletarActividadModal = ({ isOpen, onClose, onSave, actividad, tratoId, 
         horaInicio: actividad.horaInicio || null,
         duracion: actividad.duracion || null,
         modalidad: actividad.modalidad || null,
-        medio: formData.medio || null,
+        medio: actividad?.tipo?.toUpperCase() === 'REUNION'
+          ? undefined
+          : (formData.medio || null),
         enlaceReunion: actividad.enlaceReunion || null,
         subtipoTarea: actividad.subtipoTarea || null,
         estatus: esEdicion ? actividad.estatus : 'CERRADA',
@@ -2453,7 +2455,7 @@ const AgregarInteraccionModal = ({ isOpen, onClose, onSave, tratoId, onCreateAct
             respuesta: formData.respuesta.toUpperCase(),
             interes: formData.interes.toUpperCase(),
             informacion: formData.informacion.toUpperCase(),
-            medio: formData.medio || (formData.tipo === 'REUNION' ? 'PRESENCIAL' : null),
+            medio: formData.medio || null,
           }),
         }
       );
@@ -2501,7 +2503,9 @@ const AgregarInteraccionModal = ({ isOpen, onClose, onSave, tratoId, onCreateAct
       case 'REUNION':
         return [
           { value: 'PRESENCIAL', label: 'Presencial' },
-          { value: 'VIRTUAL', label: 'Virtual' }
+          { value: 'MEET', label: 'Google Meet' },
+          { value: 'ZOOM', label: 'Zoom' },
+          { value: 'TEAMS', label: 'Microsoft Teams' }
         ];
       default:
         return [];
@@ -4404,9 +4408,15 @@ const DetallesTrato = () => {
           hora: updatedActividad.horaCompletado || new Date().toLocaleTimeString(),
           responsable: users.find((u) => u.id === updatedActividad.asignadoAId)?.nombreReal || 'Sin asignado',
           tipo: updatedActividad.tipo,
-          medio: !updatedActividad.medio && updatedActividad.tipo.toUpperCase() === 'REUNION'
-            ? 'PRESENCIAL'
-            : updatedActividad.medio || null,
+          medio: (() => {
+            if (updatedActividad.medio) return updatedActividad.medio;
+            const actividadOriginal = modals.completarActividad.actividad;
+            if (updatedActividad.tipo?.toUpperCase() === 'REUNION') {
+              if (actividadOriginal?.modalidad === 'PRESENCIAL') return 'PRESENCIAL';
+              if (actividadOriginal?.medio) return actividadOriginal.medio;
+            }
+            return null;
+          })(),
           resultado: updatedActividad.respuesta === 'SI' ? 'POSITIVO' : updatedActividad.respuesta === 'NO' ? 'NEGATIVO' : 'Sin resultado',
           interes: updatedActividad.interes || 'Sin interés',
           informacion: updatedActividad.informacion || 'Sin información',
@@ -4718,7 +4728,11 @@ const DetallesTrato = () => {
             hora: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : "Sin hora",
             responsable: allUsers.find(u => u.id === interaccion.usuarioCompletadoId)?.nombreReal || "Sin asignado",
             tipo: interaccion.tipo,
-            medio: interaccion.medio || (interaccion.modalidad === "PRESENCIAL" ? "PRESENCIAL" : interaccion.medio),
+            medio: (() => {
+              if (interaccion.medio) return interaccion.medio;
+              if (interaccion.modalidad === 'PRESENCIAL') return 'PRESENCIAL';
+              return null;
+            })(),
             resultado: interaccion.respuesta ? (interaccion.respuesta === "SI" ? "POSITIVO" : "NEGATIVO") : "Sin resultado",
             interes: interaccion.interes || "Sin interés",
             informacion: interaccion.informacion || "Sin información",
@@ -5266,7 +5280,11 @@ const DetallesTrato = () => {
           hora: interaccion.fechaCompletado ? new Date(interaccion.fechaCompletado).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : "Sin hora",
           responsable: users.find(u => u.id === interaccion.usuarioCompletadoId)?.nombreReal || "Sin asignado",
           tipo: interaccion.tipo,
-          medio: interaccion.medio || (interaccion.modalidad === "PRESENCIAL" ? "PRESENCIAL" : interaccion.medio),
+          medio: (() => {
+            if (interaccion.medio) return interaccion.medio;
+            if (interaccion.modalidad === 'PRESENCIAL') return 'PRESENCIAL';
+            return null;
+          })(),
           resultado: interaccion.respuesta ? (interaccion.respuesta === "SI" ? "POSITIVO" : "NEGATIVO") : "Sin resultado",
           interes: interaccion.interes || "Sin interés",
           informacion: interaccion.informacion || "Sin información",
