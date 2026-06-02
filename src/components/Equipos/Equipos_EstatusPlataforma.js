@@ -263,6 +263,8 @@ const CheckEquiposSidePanel = ({
 
   const handleStatusChange = (equipoId, newStatus) => {
     const equipo = equipos.find(e => e.id === equipoId);
+    const isEditing = equiposStatus[equipoId]?.status === newStatus;
+
     setModals(prev => ({
       ...prev,
       confirmarCambio: {
@@ -270,13 +272,14 @@ const CheckEquiposSidePanel = ({
         equipoNombre: equipo.nombre,
         nuevoEstatus: newStatus ? "REPORTANDO" : "NO_REPORTANDO",
         motivo: newStatus ? "" : equiposStatus[equipoId]?.motivo || "",
+        isEditing: isEditing,
         onConfirm: (selectedMotivo) => {
           if (newStatus === false && !selectedMotivo.trim()) {
             Swal.fire({ icon: "warning", title: "Advertencia", text: "Debe seleccionar un motivo para equipos no reportando." });
             return;
           }
-          setEquiposStatus(prev => ({
-            ...prev,
+          setEquiposStatus(prevStatus => ({
+            ...prevStatus,
             [equipoId]: { status: newStatus, motivo: selectedMotivo || "" },
           }));
           closeModal("confirmarCambio");
@@ -307,10 +310,12 @@ const CheckEquiposSidePanel = ({
           if (imeiLimpio && dataApis[imeiLimpio]) {
             const apiInfo = dataApis[imeiLimpio];
             const isOnline = apiInfo.status === "ONLINE";
+            const isRetrasado = apiInfo.retrasado === "true";
 
             newStatus[equipo.id] = {
               status: isOnline,
-              motivo: isOnline ? "" : (apiInfo.motivo || "Sin reporte en plataforma")
+              motivo: isOnline ? "" : (apiInfo.motivo || "Sin reporte en plataforma"),
+              retrasado: isRetrasado
             };
             actualizados++;
           } else {
@@ -459,7 +464,15 @@ const CheckEquiposSidePanel = ({
                   filteredEquipos.length > 0 ? (
                     filteredEquipos.map((equipo) => (
                       <tr key={equipo.id} style={{
-                        backgroundColor: equiposStatus[equipo.id]?.status !== null ? '#f0fdf4' : 'transparent'
+                        backgroundColor:
+                          equiposStatus[equipo.id]?.status === true
+                            ? (equiposStatus[equipo.id]?.retrasado ? '#fef08a' : '#f0fdf4')
+
+                            : (equiposStatus[equipo.id]?.status === false
+                              ? (equiposStatus[equipo.id]?.motivo === "Sin reporte en plataforma" ? '#fef08a' : '#fef2f2')
+
+                              : 'transparent'),
+                        transition: 'background-color 0.3s'
                       }}>
                         <td>
                           <div className="estatusplataforma-equipo-info">
@@ -468,24 +481,32 @@ const CheckEquiposSidePanel = ({
                           </div>
                         </td>
                         <td className="estatusplataforma-status-cell">
-                          <div className="estatusplataforma-status-radio-container">
+                          <div
+                            className="estatusplataforma-status-radio-container"
+                            onClick={() => handleStatusChange(equipo.id, true)}
+                            style={{ cursor: 'pointer' }}
+                          >
                             <input
                               type="radio"
                               name={`status-${equipo.id}`}
                               checked={equiposStatus[equipo.id]?.status === true}
-                              onChange={() => handleStatusChange(equipo.id, true)}
+                              readOnly
                               className="estatusplataforma-status-radio estatusplataforma-status-radio-green"
                             />
                             <span className="estatusplataforma-status-checkmark estatusplataforma-green">✓</span>
                           </div>
                         </td>
                         <td className="estatusplataforma-status-cell">
-                          <div className="estatusplataforma-status-radio-container">
+                          <div
+                            className="estatusplataforma-status-radio-container"
+                            onClick={() => handleStatusChange(equipo.id, false)}
+                            style={{ cursor: 'pointer' }}
+                          >
                             <input
                               type="radio"
                               name={`status-${equipo.id}`}
                               checked={equiposStatus[equipo.id]?.status === false}
-                              onChange={() => handleStatusChange(equipo.id, false)}
+                              readOnly
                               className="estatusplataforma-status-radio estatusplataforma-status-radio-red"
                             />
                             <span className="estatusplataforma-status-checkmark estatusplataforma-red">✗</span>
@@ -558,6 +579,7 @@ const ConfirmarCambioEstatusModal = ({
   nuevoEstatus,
   motivo,
   onMotivoChange,
+  isEditing,
 }) => {
   const motivosOptions = [
     "Batería interna baja",
@@ -582,7 +604,9 @@ const ConfirmarCambioEstatusModal = ({
       <div className="estatusplataforma-confirmar-eliminacion">
         <div className="estatusplataforma-confirmation-content">
           <p className="estatusplataforma-confirmation-message">
-            ¿Seguro que quieres cambiar el estatus de reporte de {equipoNombre} a {nuevoEstatus}?
+            {isEditing && nuevoEstatus === "NO_REPORTANDO"
+              ? `Editar el motivo de fallo precargado para el equipo ${equipoNombre}:`
+              : `¿Seguro que quieres cambiar el estatus de reporte de ${equipoNombre} a ${nuevoEstatus}?`}
           </p>
 
           {nuevoEstatus === "NO_REPORTANDO" && (
@@ -662,6 +686,7 @@ const EquiposEstatusPlataforma = () => {
       equipoNombre: "",
       nuevoEstatus: "",
       motivo: "",
+      isEditing: false,
       onConfirm: null,
     },
   });
@@ -1461,6 +1486,7 @@ const EquiposEstatusPlataforma = () => {
             equipoNombre={modals.confirmarCambio.equipoNombre}
             nuevoEstatus={modals.confirmarCambio.nuevoEstatus}
             motivo={modals.confirmarCambio.motivo}
+            isEditing={modals.confirmarCambio.isEditing}
             onMotivoChange={(motivo) =>
               setModals((prev) => ({
                 ...prev,
