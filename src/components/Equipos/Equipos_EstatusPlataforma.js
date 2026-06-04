@@ -592,7 +592,8 @@ const ConfirmarCambioEstatusModal = ({
     "En reparación",
     "Falla del equipo",
     "Sin Plataforma",
-    "Sin reporte en plataforma"
+    "Sin reporte en plataforma",
+    "En modo ahorro de energía"
   ];
 
   const handleConfirm = () => {
