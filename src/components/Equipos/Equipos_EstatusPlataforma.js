@@ -21,7 +21,7 @@ const fetchWithToken = async (url, options = {}) => {
   try {
     const response = await fetch(url, { ...options, headers });
     if (!response.ok) {
-      const errorText = await response.text(); // Obtener el cuerpo del error
+      const errorText = await response.text();
       console.error(`Error en la solicitud: ${response.status} - ${response.statusText} - ${errorText}`);
       throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText} - ${errorText}`);
     }
