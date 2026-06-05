@@ -387,6 +387,9 @@ const CheckEquiposSidePanel = ({
   const canCheck = !lastCheckTime || countdown === null;
   const allEquiposHaveStatus = equipos.length > 0 &&
     equipos.every(equipo => equiposStatus[equipo.id]?.status !== null && equiposStatus[equipo.id]?.status !== undefined);
+  const hasPendingMotives = equipos.some(
+    (equipo) => equiposStatus[equipo.id]?.status === false && equiposStatus[equipo.id]?.motivo === "Sin reporte en plataforma"
+  );
 
   return (
     <>
@@ -549,10 +552,10 @@ const CheckEquiposSidePanel = ({
             type="button"
             onClick={handleSaveChecklist}
             className="estatusplataforma-btn estatusplataforma-btn-primary estatusplataforma-btn-full-width"
-            disabled={!canCheck || filteredEquipos.length === 0 || isSaving || !allEquiposHaveStatus}
+            disabled={!canCheck || filteredEquipos.length === 0 || isSaving || !allEquiposHaveStatus || hasPendingMotives}
             style={{
-              opacity: (!canCheck || filteredEquipos.length === 0 || isSaving || !allEquiposHaveStatus) ? 0.5 : 1,
-              cursor: (!canCheck || filteredEquipos.length === 0 || isSaving || !allEquiposHaveStatus) ? 'not-allowed' : 'pointer'
+              opacity: (!canCheck || filteredEquipos.length === 0 || isSaving || !allEquiposHaveStatus || hasPendingMotives) ? 0.5 : 1,
+              cursor: (!canCheck || filteredEquipos.length === 0 || isSaving || !allEquiposHaveStatus || hasPendingMotives) ? 'not-allowed' : 'pointer'
             }}
           >
             {isSaving
@@ -561,7 +564,9 @@ const CheckEquiposSidePanel = ({
                 ? `Disponible en ${formatCountdown(countdown)}`
                 : !allEquiposHaveStatus
                   ? `Selecciona todos los equipos (${equipos.filter(e => equiposStatus[e.id]?.status !== null).length}/${equipos.length})`
-                  : "Guardar checklist"
+                  : hasPendingMotives
+                    ? "Corrige el motivo de los equipos en amarillo"
+                    : "Guardar checklist"
             }
           </button>
         </div>
