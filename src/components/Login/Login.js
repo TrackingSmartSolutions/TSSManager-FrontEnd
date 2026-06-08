@@ -12,6 +12,8 @@ const Login = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [usernameInput, setUsernameInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
   const navigate = useNavigate();
 
   // Activa animación inicial tras un breve retraso
@@ -25,8 +27,8 @@ const Login = () => {
   // Maneja el envío del formulario de login
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const username = e.target.username.value;
-    const password = e.target.password.value;
+    const username = usernameInput;
+    const password = passwordInput;
 
     if (!username || !password) {
       Swal.fire({
@@ -223,6 +225,8 @@ const Login = () => {
                   name="username"
                   autoComplete="username"
                   className="form-control-login"
+                  value={usernameInput}
+                  onChange={(e) => setUsernameInput(e.target.value)}
                 />
               </div>
               <div className="form-group-login">
@@ -233,6 +237,8 @@ const Login = () => {
                   name="password"
                   autoComplete="current-password"
                   className="form-control-login"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
                 />
                 <div className="toggle-password">
                   <input
