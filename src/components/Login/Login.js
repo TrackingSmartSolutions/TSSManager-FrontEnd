@@ -21,6 +21,18 @@ const Login = () => {
     const timer = setTimeout(() => {
       setIsLoaded(true);
     }, 100);
+
+    if (window.PasswordCredential && navigator.credentials) {
+      navigator.credentials.get({ password: true, unmediated: true })
+        .then((cred) => {
+          if (cred && cred.type === 'password') {
+            setUsernameInput(cred.id);
+            setPasswordInput(cred.password);
+          }
+        })
+        .catch((err) => console.log("El autocompletado silencioso falló:", err));
+    }
+
     return () => clearTimeout(timer);
   }, []);
 
