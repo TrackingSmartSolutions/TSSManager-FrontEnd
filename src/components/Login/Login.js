@@ -60,7 +60,7 @@ const Login = () => {
       localStorage.setItem('userId', userId);
 
       if (window.PasswordCredential && navigator.credentials) {
-        const credencial = new PasswordCredential({
+        const credencial = new window.PasswordCredential({
           id: username,
           password: password,
           name: name
