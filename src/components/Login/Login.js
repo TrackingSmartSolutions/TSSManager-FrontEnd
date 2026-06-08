@@ -27,17 +27,17 @@ const Login = () => {
     const username = e.target.username.value;
     const password = e.target.password.value;
 
-     if (!username || !password) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Campos incompletos',
-      text: 'Por favor ingresa tu usuario y contraseña',
-      confirmButtonText: 'Aceptar',
-      confirmButtonColor: '#f27474',
-    });
-    return;
-  }
-  
+    if (!username || !password) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Campos incompletos',
+        text: 'Por favor ingresa tu usuario y contraseña',
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#f27474',
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -82,97 +82,97 @@ const Login = () => {
     }
   };
 
- // Función para solicitar cambio de contraseña
-const manejarSolicitudCambioContrasena = async (e) => {
-  e.preventDefault();
+  // Función para solicitar cambio de contraseña
+  const manejarSolicitudCambioContrasena = async (e) => {
+    e.preventDefault();
 
-  const { value: correo } = await Swal.fire({
-    title: 'Recuperar contraseña',
-    text: 'Ingresa tu correo electrónico para solicitar un cambio de contraseña',
-    input: 'email',
-    inputPlaceholder: 'tu@email.com',
-    showCancelButton: true,
-    confirmButtonText: 'Enviar solicitud',
-    cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#3085d6',
-    inputValidator: (value) => {
-      if (!value) {
-        return 'Debes ingresar tu correo electrónico';
+    const { value: correo } = await Swal.fire({
+      title: 'Recuperar contraseña',
+      text: 'Ingresa tu correo electrónico para solicitar un cambio de contraseña',
+      input: 'email',
+      inputPlaceholder: 'tu@email.com',
+      showCancelButton: true,
+      confirmButtonText: 'Enviar solicitud',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#3085d6',
+      inputValidator: (value) => {
+        if (!value) {
+          return 'Debes ingresar tu correo electrónico';
+        }
       }
-    }
-  });
+    });
 
-  if (correo) {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/auth/solicitar-cambio-contrasena`, {
-        correo: correo
-      });
-
-      // Si la respuesta es exitosa
-      if (response.data.success) {
-        await Swal.fire({
-          icon: 'success',
-          title: '¡Solicitud enviada!',
-          text: 'Los administradores han sido notificados de tu solicitud',
-          timer: 2000,
-          showConfirmButton: false,
+    if (correo) {
+      try {
+        const response = await axios.post(`${API_BASE_URL}/auth/solicitar-cambio-contrasena`, {
+          correo: correo
         });
-      }
-    } catch (error) {
-      // Manejar diferentes tipos de errores
-      if (error.response) {
-        const { status, data } = error.response;
-        
-        if (status === 404) {
-          // Correo no encontrado
+
+        // Si la respuesta es exitosa
+        if (response.data.success) {
           await Swal.fire({
-            icon: 'warning',
-            title: 'Correo no encontrado',
-            text: 'El correo electrónico ingresado no está registrado en el sistema',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#f27474',
+            icon: 'success',
+            title: '¡Solicitud enviada!',
+            text: 'Los administradores han sido notificados de tu solicitud',
+            timer: 2000,
+            showConfirmButton: false,
           });
-        } else if (status === 400) {
-          // Error de validación
-          await Swal.fire({
-            icon: 'error',
-            title: 'Error de validación',
-            text: data.message || 'Datos inválidos',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#3085d6',
-          });
-        } else if (status === 500) {
-          // Error del servidor
-          await Swal.fire({
-            icon: 'error',
-            title: 'Error del servidor',
-            text: 'Ocurrió un error interno. Inténtalo más tarde.',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#3085d6',
-          });
+        }
+      } catch (error) {
+        // Manejar diferentes tipos de errores
+        if (error.response) {
+          const { status, data } = error.response;
+
+          if (status === 404) {
+            // Correo no encontrado
+            await Swal.fire({
+              icon: 'warning',
+              title: 'Correo no encontrado',
+              text: 'El correo electrónico ingresado no está registrado en el sistema',
+              confirmButtonText: 'Aceptar',
+              confirmButtonColor: '#f27474',
+            });
+          } else if (status === 400) {
+            // Error de validación
+            await Swal.fire({
+              icon: 'error',
+              title: 'Error de validación',
+              text: data.message || 'Datos inválidos',
+              confirmButtonText: 'Aceptar',
+              confirmButtonColor: '#3085d6',
+            });
+          } else if (status === 500) {
+            // Error del servidor
+            await Swal.fire({
+              icon: 'error',
+              title: 'Error del servidor',
+              text: 'Ocurrió un error interno. Inténtalo más tarde.',
+              confirmButtonText: 'Aceptar',
+              confirmButtonColor: '#3085d6',
+            });
+          } else {
+            // Otros errores
+            await Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: data.message || 'No se pudo enviar la solicitud',
+              confirmButtonText: 'Aceptar',
+              confirmButtonColor: '#3085d6',
+            });
+          }
         } else {
-          // Otros errores
+          // Error de red u otros errores
           await Swal.fire({
             icon: 'error',
-            title: 'Error',
-            text: data.message || 'No se pudo enviar la solicitud',
+            title: 'Error de conexión',
+            text: 'No se pudo conectar con el servidor. Verifica tu conexión a internet.',
             confirmButtonText: 'Aceptar',
             confirmButtonColor: '#3085d6',
           });
         }
-      } else {
-        // Error de red u otros errores
-        await Swal.fire({
-          icon: 'error',
-          title: 'Error de conexión',
-          text: 'No se pudo conectar con el servidor. Verifica tu conexión a internet.',
-          confirmButtonText: 'Aceptar',
-          confirmButtonColor: '#3085d6',
-        });
       }
     }
-  }
-};
+  };
 
   // Alterna visibilidad de la contraseña
   const togglePasswordVisibility = () => {
@@ -203,13 +203,21 @@ const manejarSolicitudCambioContrasena = async (e) => {
           <form className="login-form" onSubmit={handleSubmit}>
             <div className="form-group-login">
               <label htmlFor="username">Usuario</label>
-              <input type="text" id="username" className="form-control-login" />
+              <input
+                type="text"
+                id="username"
+                name="username"
+                autoComplete="username"
+                className="form-control-login"
+              />
             </div>
             <div className="form-group-login">
               <label htmlFor="password">Contraseña</label>
               <input
                 type={showPassword ? 'text' : 'password'}
                 id="password"
+                name="password"
+                autoComplete="current-password"
                 className="form-control-login"
               />
               <div className="toggle-password">
