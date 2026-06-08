@@ -200,7 +200,7 @@ const Login = () => {
               <img src={companyLogo} alt="Logo de la empresa" className="company-logo" />
             </div>
           </div>
-          <form className="login-form" onSubmit={handleSubmit}>
+          <form className="login-form" onSubmit={handleSubmit} action="#">
             <div className="form-group-login">
               <label htmlFor="username">Usuario</label>
               <input
