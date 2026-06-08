@@ -59,7 +59,17 @@ const Login = () => {
       const userId = userResponse.data.id;
       localStorage.setItem('userId', userId);
 
-      setLoginSuccess(true);
+      if (window.PasswordCredential && navigator.credentials) {
+        const credencial = new PasswordCredential({
+          id: username,
+          password: password,
+          name: name
+        });
+
+        navigator.credentials.store(credencial)
+          .then(() => console.log("Se invocó el gestor de contraseñas del navegador"))
+          .catch((err) => console.log("El navegador bloqueó el guardado", err));
+      }
 
       await Swal.fire({
         icon: 'success',
