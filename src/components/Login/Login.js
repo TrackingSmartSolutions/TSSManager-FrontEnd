@@ -11,6 +11,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
   const navigate = useNavigate();
 
   // Activa animación inicial tras un breve retraso
@@ -57,6 +58,8 @@ const Login = () => {
       });
       const userId = userResponse.data.id;
       localStorage.setItem('userId', userId);
+
+      setLoginSuccess(true);
 
       await Swal.fire({
         icon: 'success',
@@ -200,42 +203,44 @@ const Login = () => {
               <img src={companyLogo} alt="Logo de la empresa" className="company-logo" />
             </div>
           </div>
-          <form className="login-form" onSubmit={handleSubmit} action="#">
-            <div className="form-group-login">
-              <label htmlFor="username">Usuario</label>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                autoComplete="username"
-                className="form-control-login"
-              />
-            </div>
-            <div className="form-group-login">
-              <label htmlFor="password">Contraseña</label>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                name="password"
-                autoComplete="current-password"
-                className="form-control-login"
-              />
-              <div className="toggle-password">
+          {!loginSuccess && (
+            <form className="login-form" onSubmit={handleSubmit} action="#">
+              <div className="form-group-login">
+                <label htmlFor="username">Usuario</label>
                 <input
-                  type="checkbox"
-                  id="show-password"
-                  onChange={togglePasswordVisibility}
+                  type="text"
+                  id="username"
+                  name="username"
+                  autoComplete="username"
+                  className="form-control-login"
                 />
-                <label htmlFor="show-password"></label>
               </div>
-            </div>
-            <button type="submit" className="login-btn" disabled={isLoading}>
-              {isLoading ? 'Cargando...' : 'Iniciar sesión'}
-            </button>
-            <div className="forgot-password">
-              <a href="#" onClick={manejarSolicitudCambioContrasena}>¿Olvidaste tu contraseña?</a>
-            </div>
-          </form>
+              <div className="form-group-login">
+                <label htmlFor="password">Contraseña</label>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  name="password"
+                  autoComplete="current-password"
+                  className="form-control-login"
+                />
+                <div className="toggle-password">
+                  <input
+                    type="checkbox"
+                    id="show-password"
+                    onChange={togglePasswordVisibility}
+                  />
+                  <label htmlFor="show-password"></label>
+                </div>
+              </div>
+              <button type="submit" className="login-btn" disabled={isLoading}>
+                {isLoading ? 'Cargando...' : 'Iniciar sesión'}
+              </button>
+              <div className="forgot-password">
+                <a href="#" onClick={manejarSolicitudCambioContrasena}>¿Olvidaste tu contraseña?</a>
+              </div>
+            </form>
+          )}
         </div>
         <div className="marker marker-1"></div>
         <div className="marker marker-2"></div>
