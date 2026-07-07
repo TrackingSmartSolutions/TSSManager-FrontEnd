@@ -1,53 +1,70 @@
-import { useState, useEffect } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
-import "./Admin_CuentasPagar.css"
-import Header from "../Header/Header"
-import Swal from "sweetalert2"
-import deleteIcon from "../../assets/icons/eliminar.png"
-import editIcon from "../../assets/icons/editar.png"
-import checkIcon from "../../assets/icons/check.png"
-import DatePicker from "react-datepicker"
-import "react-datepicker/dist/react-datepicker.css"
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import "./Admin_CuentasPagar.css";
+import Header from "../Header/Header";
+import Swal from "sweetalert2";
+import deleteIcon from "../../assets/icons/eliminar.png";
+import editIcon from "../../assets/icons/editar.png";
+import checkIcon from "../../assets/icons/check.png";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { API_BASE_URL } from "../Config/Config";
 
 const fetchWithToken = async (url, options = {}) => {
-  const token = localStorage.getItem("token")
+  const token = localStorage.getItem("token");
   const headers = {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
-  }
-  const response = await fetch(url, { ...options, headers })
-  if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`)
-  return response
-}
+  };
+  const response = await fetch(url, { ...options, headers });
+  if (!response.ok)
+    throw new Error(
+      `Error en la solicitud: ${response.status} - ${response.statusText}`,
+    );
+  return response;
+};
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
+const Modal = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = "md",
+  canClose = true,
+  closeOnOverlayClick = true,
+}) => {
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden"
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "unset"
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.body.style.overflow = "unset"
-    }
-  }, [isOpen])
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   const sizeClasses = {
     sm: "cuentaspagar-modal-sm",
     md: "cuentaspagar-modal-md",
     lg: "cuentaspagar-modal-lg",
     xl: "cuentaspagar-modal-xl",
-  }
+  };
 
   return (
-    <div className="cuentaspagar-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
-      <div className={`cuentaspagar-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
+    <div
+      className="cuentaspagar-modal-overlay"
+      onClick={closeOnOverlayClick ? onClose : () => {}}
+    >
+      <div
+        className={`cuentaspagar-modal-content ${sizeClasses[size]}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="cuentaspagar-modal-header">
           <h2 className="cuentaspagar-modal-title">{title}</h2>
           {canClose && (
@@ -59,8 +76,8 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true,
         <div className="cuentaspagar-modal-body">{children}</div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 // Modal para Marcar como Pagada
 const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
@@ -72,10 +89,13 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
   const [errors, setErrors] = useState({});
 
   // Verificar si es una cuenta de créditos plataforma o licencias
-  const esCuentaCreditos = cuenta?.transaccion?.categoria?.descripcion?.toLowerCase().includes("créditos plataforma");
+  const esCuentaCreditos = cuenta?.transaccion?.categoria?.descripcion
+    ?.toLowerCase()
+    .includes("créditos plataforma");
 
   // Determinar si es una plataforma de licencias
-  const esLicencia = cuenta?.transaccion?.cuenta?.nombre?.toLowerCase().includes("fulltrack") ||
+  const esLicencia =
+    cuenta?.transaccion?.cuenta?.nombre?.toLowerCase().includes("fulltrack") ||
     cuenta?.transaccion?.cuenta?.nombre?.toLowerCase().includes("f/basic") ||
     cuenta?.transaccion?.cuenta?.nombre?.toLowerCase().includes("fbasic");
 
@@ -116,7 +136,8 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
     if (esCuentaCreditos) {
       const cantidadCreditos = parseFloat(formData.cantidadCreditos);
       if (!formData.cantidadCreditos || cantidadCreditos <= 0) {
-        newErrors.cantidadCreditos = "La cantidad de créditos debe ser mayor a 0";
+        newErrors.cantidadCreditos =
+          "La cantidad de créditos debe ser mayor a 0";
       }
     }
 
@@ -131,7 +152,9 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
         ...cuenta,
         montoPago: parseFloat(formData.montoPago),
         formaPago: formData.formaPago,
-        cantidadCreditos: esCuentaCreditos ? parseFloat(formData.cantidadCreditos) : null,
+        cantidadCreditos: esCuentaCreditos
+          ? parseFloat(formData.cantidadCreditos)
+          : null,
         fechaPago: cuenta.fechaPago,
       };
       await onSave(cuentaActualizada);
@@ -139,10 +162,16 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
     }
   };
 
-  const saldoPendiente = cuenta ? (cuenta.saldoPendiente || cuenta.monto) : 0;
+  const saldoPendiente = cuenta ? cuenta.saldoPendiente || cuenta.monto : 0;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Registrar Pago" size="md" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Registrar Pago"
+      size="md"
+      closeOnOverlayClick={false}
+    >
       <form onSubmit={handleSubmit} className="cuentaspagar-form">
         {/* Mostrar información de la cuenta */}
         <div className="cuentaspagar-info-section">
@@ -173,7 +202,9 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
         </div>
 
         <div className="cuentaspagar-form-group">
-          <label htmlFor="montoPago">Monto a Pagar <span className="required"> *</span></label>
+          <label htmlFor="montoPago">
+            Monto a Pagar <span className="required"> *</span>
+          </label>
           <div className="cuentaspagar-input-with-prefix">
             <span className="cuentaspagar-prefix">$</span>
             <input
@@ -186,13 +217,19 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
               className={`cuentaspagar-form-control ${errors.montoPago ? "error" : ""}`}
             />
           </div>
-          {errors.montoPago && <span className="cuentaspagar-error-message">{errors.montoPago}</span>}
+          {errors.montoPago && (
+            <span className="cuentaspagar-error-message">
+              {errors.montoPago}
+            </span>
+          )}
         </div>
 
         {esCuentaCreditos && (
           <div className="cuentaspagar-form-group">
             <label htmlFor="cantidadCreditos">
-              {esLicencia ? "Cantidad de Licencias Compradas" : "Cantidad de Créditos Comprados"}
+              {esLicencia
+                ? "Cantidad de Licencias Compradas"
+                : "Cantidad de Créditos Comprados"}
               <span className="required"> *</span>
             </label>
             <input
@@ -201,22 +238,29 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
               step="1"
               min="1"
               value={formData.cantidadCreditos}
-              onChange={(e) => handleInputChange("cantidadCreditos", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("cantidadCreditos", e.target.value)
+              }
               className={`cuentaspagar-form-control ${errors.cantidadCreditos ? "error" : ""}`}
               placeholder={esLicencia ? "Ej: 10 licencias" : "Ej: 100 créditos"}
             />
-            {errors.cantidadCreditos && <span className="cuentaspagar-error-message">{errors.cantidadCreditos}</span>}
+            {errors.cantidadCreditos && (
+              <span className="cuentaspagar-error-message">
+                {errors.cantidadCreditos}
+              </span>
+            )}
             <small className="cuentaspagar-help-text">
               {esLicencia
                 ? "Especifica cuántas licencias se compraron con este pago"
-                : "Especifica cuántos créditos se compraron con este pago"
-              }
+                : "Especifica cuántos créditos se compraron con este pago"}
             </small>
           </div>
         )}
 
         <div className="cuentaspagar-form-group">
-          <label htmlFor="formaPago">Forma de Pago <span className="required"> *</span></label>
+          <label htmlFor="formaPago">
+            Forma de Pago <span className="required"> *</span>
+          </label>
           <select
             id="formaPago"
             value={formData.formaPago}
@@ -230,14 +274,25 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
               </option>
             ))}
           </select>
-          {errors.formaPago && <span className="cuentaspagar-error-message">{errors.formaPago}</span>}
+          {errors.formaPago && (
+            <span className="cuentaspagar-error-message">
+              {errors.formaPago}
+            </span>
+          )}
         </div>
 
         <div className="cuentaspagar-form-actions">
-          <button type="button" onClick={onClose} className="cuentaspagar-btn cuentaspagar-btn-cancel">
+          <button
+            type="button"
+            onClick={onClose}
+            className="cuentaspagar-btn cuentaspagar-btn-cancel"
+          >
             Cancelar
           </button>
-          <button type="submit" className="cuentaspagar-btn cuentaspagar-btn-primary">
+          <button
+            type="submit"
+            className="cuentaspagar-btn cuentaspagar-btn-primary"
+          >
             Registrar Pago
           </button>
         </div>
@@ -279,11 +334,13 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.fechaPago) newErrors.fechaPago = "La fecha de pago es obligatoria";
+    if (!formData.fechaPago)
+      newErrors.fechaPago = "La fecha de pago es obligatoria";
     if (!formData.monto || Number.parseFloat(formData.monto) <= 0) {
       newErrors.monto = "El monto debe ser mayor a 0";
     }
-    if (!formData.formaPago) newErrors.formaPago = "La forma de pago es obligatoria";
+    if (!formData.formaPago)
+      newErrors.formaPago = "La forma de pago es obligatoria";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -295,15 +352,18 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
       setIsLoading(true);
 
       try {
-        const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/${cuenta.id}`, {
-          method: "PUT",
-          body: JSON.stringify({
-            fechaPago: formData.fechaPago,
-            monto: Number.parseFloat(formData.monto),
-            formaPago: formData.formaPago,
-            nota: formData.nota,
-          }),
-        });
+        const response = await fetchWithToken(
+          `${API_BASE_URL}/cuentas-por-pagar/${cuenta.id}`,
+          {
+            method: "PUT",
+            body: JSON.stringify({
+              fechaPago: formData.fechaPago,
+              monto: Number.parseFloat(formData.monto),
+              formaPago: formData.formaPago,
+              nota: formData.nota,
+            }),
+          },
+        );
 
         if (response.ok) {
           const updatedCuenta = await response.json();
@@ -319,7 +379,7 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
         Swal.fire({
           icon: "error",
           title: "Error",
-          text: error.message
+          text: error.message,
         });
       } finally {
         setIsLoading(false);
@@ -328,10 +388,18 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Editar Cuenta por Pagar" size="md" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Editar Cuenta por Pagar"
+      size="md"
+      closeOnOverlayClick={false}
+    >
       <form onSubmit={handleSubmit} className="cuentaspagar-form">
         <div className="cuentaspagar-form-group">
-          <label htmlFor="fechaPago">Fecha de Pago <span className="required"> *</span></label>
+          <label htmlFor="fechaPago">
+            Fecha de Pago <span className="required"> *</span>
+          </label>
           <input
             type="date"
             id="fechaPago"
@@ -339,11 +407,17 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
             onChange={(e) => handleInputChange("fechaPago", e.target.value)}
             className={`cuentaspagar-form-control ${errors.fechaPago ? "error" : ""}`}
           />
-          {errors.fechaPago && <span className="cuentaspagar-error-message">{errors.fechaPago}</span>}
+          {errors.fechaPago && (
+            <span className="cuentaspagar-error-message">
+              {errors.fechaPago}
+            </span>
+          )}
         </div>
 
         <div className="cuentaspagar-form-group">
-          <label htmlFor="monto">Monto <span className="required"> *</span></label>
+          <label htmlFor="monto">
+            Monto <span className="required"> *</span>
+          </label>
           <div className="cuentaspagar-input-with-prefix">
             <span className="cuentaspagar-prefix">$</span>
             <input
@@ -355,11 +429,15 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
               className={`cuentaspagar-form-control ${errors.monto ? "error" : ""}`}
             />
           </div>
-          {errors.monto && <span className="cuentaspagar-error-message">{errors.monto}</span>}
+          {errors.monto && (
+            <span className="cuentaspagar-error-message">{errors.monto}</span>
+          )}
         </div>
 
         <div className="cuentaspagar-form-group">
-          <label htmlFor="formaPago">Forma de Pago <span className="required"> *</span></label>
+          <label htmlFor="formaPago">
+            Forma de Pago <span className="required"> *</span>
+          </label>
           <select
             id="formaPago"
             value={formData.formaPago}
@@ -373,7 +451,11 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
               </option>
             ))}
           </select>
-          {errors.formaPago && <span className="cuentaspagar-error-message">{errors.formaPago}</span>}
+          {errors.formaPago && (
+            <span className="cuentaspagar-error-message">
+              {errors.formaPago}
+            </span>
+          )}
         </div>
 
         <div className="cuentaspagar-form-group">
@@ -389,10 +471,18 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
         </div>
 
         <div className="cuentaspagar-form-actions">
-          <button type="button" onClick={onClose} className="cuentaspagar-btn cuentaspagar-btn-cancel">
+          <button
+            type="button"
+            onClick={onClose}
+            className="cuentaspagar-btn cuentaspagar-btn-cancel"
+          >
             Cancelar
           </button>
-          <button type="submit" className="cuentaspagar-btn cuentaspagar-btn-primary" disabled={isLoading}>
+          <button
+            type="submit"
+            className="cuentaspagar-btn cuentaspagar-btn-primary"
+            disabled={isLoading}
+          >
             {isLoading ? "Guardando..." : "Guardar Cambios"}
           </button>
         </div>
@@ -404,25 +494,40 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
 // Modal de Confirmación de Eliminación
 const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Confirmar eliminación"
+      size="sm"
+      closeOnOverlayClick={false}
+    >
       <div className="cuentaspagar-confirmar-eliminacion">
         <div className="cuentaspagar-confirmation-content">
           <p className="cuentaspagar-confirmation-message">
-            ¿Seguro que quieres eliminar esta cuenta por pagar de forma permanente?
+            ¿Seguro que quieres eliminar esta cuenta por pagar de forma
+            permanente?
           </p>
           <div className="cuentaspagar-modal-form-actions">
-            <button type="button" onClick={onClose} className="cuentaspagar-btn cuentaspagar-btn-cancel">
+            <button
+              type="button"
+              onClick={onClose}
+              className="cuentaspagar-btn cuentaspagar-btn-cancel"
+            >
               Cancelar
             </button>
-            <button type="button" onClick={onConfirm} className="cuentaspagar-btn cuentaspagar-btn-confirm">
+            <button
+              type="button"
+              onClick={onConfirm}
+              className="cuentaspagar-btn cuentaspagar-btn-confirm"
+            >
               Confirmar
             </button>
           </div>
         </div>
       </div>
     </Modal>
-  )
-}
+  );
+};
 
 // Modal de Confirmación de Regeneración
 const RegenerarModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
@@ -439,7 +544,7 @@ const RegenerarModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
   const handleMontoChange = (value) => {
     setNuevoMonto(value);
     if (errors.monto) {
-      setErrors(prev => ({ ...prev, monto: "" }));
+      setErrors((prev) => ({ ...prev, monto: "" }));
     }
   };
 
@@ -459,15 +564,26 @@ const RegenerarModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Generar nueva/s cuenta por pagar" size="md" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Generar nueva/s cuenta por pagar"
+      size="md"
+      closeOnOverlayClick={false}
+    >
       <div className="cuentaspagar-confirmar-regeneracion">
         <div className="cuentaspagar-confirmation-content">
           <p className="cuentaspagar-confirmation-message">
             ¿Quiere volver a generar las cuentas por pagar para esta cuenta?
           </p>
 
-          <div className="cuentaspagar-form-group" style={{ marginTop: "20px" }}>
-            <label htmlFor="nuevoMonto">Monto para las nuevas cuentas <span className="required"> *</span></label>
+          <div
+            className="cuentaspagar-form-group"
+            style={{ marginTop: "20px" }}
+          >
+            <label htmlFor="nuevoMonto">
+              Monto para las nuevas cuentas <span className="required"> *</span>
+            </label>
             <div className="cuentaspagar-input-with-prefix">
               <span className="cuentaspagar-prefix">$</span>
               <input
@@ -479,14 +595,27 @@ const RegenerarModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
                 className={`cuentaspagar-form-control ${errors.monto ? "error" : ""}`}
               />
             </div>
-            {errors.monto && <span className="cuentaspagar-error-message">{errors.monto}</span>}
+            {errors.monto && (
+              <span className="cuentaspagar-error-message">{errors.monto}</span>
+            )}
           </div>
 
-          <div className="cuentaspagar-modal-form-actions" style={{ marginTop: "20px" }}>
-            <button type="button" onClick={() => onConfirm(false)} className="cuentaspagar-btn cuentaspagar-btn-cancel">
+          <div
+            className="cuentaspagar-modal-form-actions"
+            style={{ marginTop: "20px" }}
+          >
+            <button
+              type="button"
+              onClick={() => onConfirm(false)}
+              className="cuentaspagar-btn cuentaspagar-btn-cancel"
+            >
               Cancelar
             </button>
-            <button type="button" onClick={handleConfirm} className="cuentaspagar-btn cuentaspagar-btn-confirm">
+            <button
+              type="button"
+              onClick={handleConfirm}
+              className="cuentaspagar-btn cuentaspagar-btn-confirm"
+            >
               Confirmar
             </button>
           </div>
@@ -501,27 +630,55 @@ const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload, filename }) => {
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Vista previa" size="xl" closeOnOverlayClick={false}>
-      <div className="cuentaspagar-preview-content" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Vista previa"
+      size="xl"
+      closeOnOverlayClick={false}
+    >
+      <div
+        className="cuentaspagar-preview-content"
+        style={{ display: "flex", flexDirection: "column", height: "100%" }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: "15px",
+          }}
+        >
           <button
             type="button"
             onClick={onDownload}
             className="cuentaspagar-btn"
-            style={{ backgroundColor: '#dc3545', color: 'white', display: 'flex', alignItems: 'center', gap: '5px' }}
+            style={{
+              backgroundColor: "#dc3545",
+              color: "white",
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+            }}
           >
             Descargar PDF
           </button>
         </div>
 
-        <div style={{ flex: 1, border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden', minHeight: '600px' }}>
+        <div
+          style={{
+            flex: 1,
+            border: "1px solid #ddd",
+            borderRadius: "4px",
+            overflow: "hidden",
+            minHeight: "600px",
+          }}
+        >
           <iframe
             src={`${pdfUrl}#view=FitH&navpanes=0&toolbar=0`}
             title="Vista Previa del Reporte"
             width="100%"
             height="100%"
-            style={{ border: 'none', height: '75vh' }}
+            style={{ border: "none", height: "75vh" }}
           />
         </div>
       </div>
@@ -562,12 +719,12 @@ const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
 const AdminCuentasPagar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const userRol = localStorage.getItem("userRol")
+  const userRol = localStorage.getItem("userRol");
   const [cuentasPagar, setCuentasPagar] = useState([]);
   const [filtroFolio, setFiltroFolio] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [filtroEstatus, setFiltroEstatus] = useState("Pendiente");
-  const [ordenFecha, setOrdenFecha] = useState('asc');
+  const [ordenFecha, setOrdenFecha] = useState("asc");
   const [modals, setModals] = useState({
     marcarPagada: { isOpen: false, cuenta: null },
     editarCuenta: { isOpen: false, cuenta: null },
@@ -580,19 +737,21 @@ const AdminCuentasPagar = () => {
   const [pdfPreview, setPdfPreview] = useState({
     isOpen: false,
     url: null,
-    filename: ""
+    filename: "",
   });
   const [pdfPreviewResumido, setPdfPreviewResumido] = useState({
     isOpen: false,
     url: null,
-    filename: ""
+    filename: "",
   });
 
   useEffect(() => {
     const fetchCuentasPagar = async () => {
       setIsLoading(true);
       try {
-        const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar`);
+        const response = await fetchWithToken(
+          `${API_BASE_URL}/cuentas-por-pagar`,
+        );
         const data = await response.json();
         setCuentasPagar(data);
       } catch (error) {
@@ -622,10 +781,10 @@ const AdminCuentasPagar = () => {
     "03": "Transferencia electrónica de fondos",
     "04": "Tarjeta de crédito",
     "07": "Con Saldo Acumulado",
-    "28": "Tarjeta de débito",
-    "30": "Aplicación de anticipos",
-    "99": "Por definir",
-    "02": "Tarjeta Spin"
+    28: "Tarjeta de débito",
+    30: "Aplicación de anticipos",
+    99: "Por definir",
+    "02": "Tarjeta Spin",
   };
 
   const openModal = (modalType, data = {}) => {
@@ -675,35 +834,49 @@ const AdminCuentasPagar = () => {
 
   const handleMarcarPagada = async (cuentaActualizada) => {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/marcar-como-pagada`, {
-        method: "POST",
-        body: JSON.stringify({
-          id: cuentaActualizada.id,
-          montoPago: cuentaActualizada.montoPago,
-          monto: cuentaActualizada.monto,
-          formaPago: cuentaActualizada.formaPago,
-          usuarioId: 1,
-          cantidadCreditos: cuentaActualizada.cantidadCreditos,
-        }),
-      });
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/cuentas-por-pagar/marcar-como-pagada`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            id: cuentaActualizada.id,
+            montoPago: cuentaActualizada.montoPago,
+            monto: cuentaActualizada.monto,
+            formaPago: cuentaActualizada.formaPago,
+            usuarioId: 1,
+            cantidadCreditos: cuentaActualizada.cantidadCreditos,
+          }),
+        },
+      );
 
       if (response.status === 204) {
-        const cuentaActualizadaResponse = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar`);
+        const cuentaActualizadaResponse = await fetchWithToken(
+          `${API_BASE_URL}/cuentas-por-pagar`,
+        );
         const cuentasActualizadas = await cuentaActualizadaResponse.json();
         setCuentasPagar(cuentasActualizadas);
 
-        const cuentaRecienActualizada = cuentasActualizadas.find(c => c.id === cuentaActualizada.id);
+        const cuentaRecienActualizada = cuentasActualizadas.find(
+          (c) => c.id === cuentaActualizada.id,
+        );
 
-        const esCompletamentePagada = cuentaRecienActualizada?.estatus === "Pagado";
-        const esUltimaCuenta = cuentaRecienActualizada?.numeroPago === cuentaRecienActualizada?.totalPagos;
-        const noEsUnica = cuentaRecienActualizada?.transaccion?.esquema !== "UNICA";
+        const esCompletamentePagada =
+          cuentaRecienActualizada?.estatus === "Pagado";
+        const esUltimaCuenta =
+          cuentaRecienActualizada?.numeroPago ===
+          cuentaRecienActualizada?.totalPagos;
+        const noEsUnica =
+          cuentaRecienActualizada?.transaccion?.esquema !== "UNICA";
 
         const esSim = cuentaRecienActualizada?.sim;
 
         if (esCompletamentePagada && esUltimaCuenta && noEsUnica) {
           if (esSim) {
-            const montoParaRegenerar = cuentaRecienActualizada.sim?.recarga || cuentaRecienActualizada.monto;
-            await handleRegenerar(true, cuentaRecienActualizada, montoParaRegenerar);
+            Swal.fire({
+              icon: "success",
+              title: "Éxito",
+              text: "Cuenta marcada como pagada y nueva cuenta por pagar generada automáticamente",
+            });
           } else {
             openModal("regenerar", { cuenta: cuentaRecienActualizada });
           }
@@ -711,7 +884,9 @@ const AdminCuentasPagar = () => {
           Swal.fire({
             icon: "success",
             title: "Éxito",
-            text: esCompletamentePagada ? "Cuenta marcada como pagada" : "Pago parcial registrado correctamente",
+            text: esCompletamentePagada
+              ? "Cuenta marcada como pagada"
+              : "Pago parcial registrado correctamente",
           });
         }
       }
@@ -732,9 +907,12 @@ const AdminCuentasPagar = () => {
   const handleConfirmDelete = async () => {
     const cuentaId = modals.confirmarEliminacion.cuenta?.id;
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/${cuentaId}?usuarioId=1`, {
-        method: "DELETE",
-      });
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/cuentas-por-pagar/${cuentaId}?usuarioId=1`,
+        {
+          method: "DELETE",
+        },
+      );
       if (response.status === 204) {
         setCuentasPagar((prev) => prev.filter((c) => c.id !== cuentaId));
         closeModal("confirmarEliminacion");
@@ -758,18 +936,23 @@ const AdminCuentasPagar = () => {
 
     if (confirmar) {
       try {
-        const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/regenerar`, {
-          method: "POST",
-          body: JSON.stringify({
-            transaccionId: cuenta.transaccion.id,
-            fechaUltimoPago: cuenta.fechaPago,
-            nuevoMonto: nuevoMonto,
-            formaPago: cuenta.formaPago
-          }),
-        });
+        const response = await fetchWithToken(
+          `${API_BASE_URL}/cuentas-por-pagar/regenerar`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              transaccionId: cuenta.transaccion.id,
+              fechaUltimoPago: cuenta.fechaPago,
+              nuevoMonto: nuevoMonto,
+              formaPago: cuenta.formaPago,
+            }),
+          },
+        );
 
         if (response.ok) {
-          const cuentasResponse = await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar`);
+          const cuentasResponse = await fetchWithToken(
+            `${API_BASE_URL}/cuentas-por-pagar`,
+          );
           const updatedCuentas = await cuentasResponse.json();
           setCuentasPagar(updatedCuentas);
 
@@ -799,7 +982,7 @@ const AdminCuentasPagar = () => {
 
   const handleEditarCuenta = (updatedCuenta) => {
     setCuentasPagar((prev) =>
-      prev.map((c) => (c.id === updatedCuenta.id ? updatedCuenta : c))
+      prev.map((c) => (c.id === updatedCuenta.id ? updatedCuenta : c)),
     );
     closeModal("editarCuenta");
   };
@@ -825,30 +1008,30 @@ const AdminCuentasPagar = () => {
       if (fechaInicio && fechaFin) {
         const formatFecha = (date) => {
           const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
           return `${year}-${month}-${day}`;
         };
 
-        params.append('fechaInicio', formatFecha(fechaInicio));
-        params.append('fechaFin', formatFecha(fechaFin));
+        params.append("fechaInicio", formatFecha(fechaInicio));
+        params.append("fechaFin", formatFecha(fechaFin));
       } else {
         const fechaInicio = new Date();
         fechaInicio.setFullYear(fechaInicio.getFullYear() - 1);
         const fechaFin = new Date();
         fechaFin.setFullYear(fechaFin.getFullYear() + 1);
 
-        params.append('fechaInicio', fechaInicio.toISOString().split('T')[0]);
-        params.append('fechaFin', fechaFin.toISOString().split('T')[0]);
+        params.append("fechaInicio", fechaInicio.toISOString().split("T")[0]);
+        params.append("fechaFin", fechaFin.toISOString().split("T")[0]);
       }
 
-      params.append('filtroEstatus', filtroEstatus);
+      params.append("filtroEstatus", filtroEstatus);
       if (filtroCuenta) {
-        params.append('filtroCuenta', filtroCuenta);
+        params.append("filtroCuenta", filtroCuenta);
       }
 
       const response = await fetchWithToken(
-        `${API_BASE_URL}/cuentas-por-pagar/reporte/pdf?${params.toString()}`
+        `${API_BASE_URL}/cuentas-por-pagar/reporte/pdf?${params.toString()}`,
       );
 
       if (response.ok) {
@@ -857,16 +1040,16 @@ const AdminCuentasPagar = () => {
         const url = window.URL.createObjectURL(blob);
 
         const now = new Date();
-        const timestamp = now.toISOString().split('T')[0];
-        const estatusSuffix = filtroEstatus !== 'Todas' ? `_${filtroEstatus}` : '';
+        const timestamp = now.toISOString().split("T")[0];
+        const estatusSuffix =
+          filtroEstatus !== "Todas" ? `_${filtroEstatus}` : "";
         const filename = `reporte_cuentas_por_pagar_${timestamp}${estatusSuffix}.pdf`;
 
         setPdfPreview({
           isOpen: true,
           url: url,
-          filename: filename
+          filename: filename,
         });
-
       }
     } catch (error) {
       console.error("Error al generar reporte:", error);
@@ -880,7 +1063,7 @@ const AdminCuentasPagar = () => {
 
   const handleDownloadFromPreview = () => {
     if (pdfPreview.url) {
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = pdfPreview.url;
       link.download = pdfPreview.filename;
       document.body.appendChild(link);
@@ -892,9 +1075,8 @@ const AdminCuentasPagar = () => {
         title: "Éxito",
         text: "Reporte descargado correctamente",
         timer: 2000,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
-
     }
   };
 
@@ -912,30 +1094,30 @@ const AdminCuentasPagar = () => {
       if (fechaInicio && fechaFin) {
         const formatFecha = (date) => {
           const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
           return `${year}-${month}-${day}`;
         };
 
-        params.append('fechaInicio', formatFecha(fechaInicio));
-        params.append('fechaFin', formatFecha(fechaFin));
+        params.append("fechaInicio", formatFecha(fechaInicio));
+        params.append("fechaFin", formatFecha(fechaFin));
       } else {
         const fechaInicio = new Date();
         fechaInicio.setFullYear(fechaInicio.getFullYear() - 1);
         const fechaFin = new Date();
         fechaFin.setFullYear(fechaFin.getFullYear() + 1);
 
-        params.append('fechaInicio', fechaInicio.toISOString().split('T')[0]);
-        params.append('fechaFin', fechaFin.toISOString().split('T')[0]);
+        params.append("fechaInicio", fechaInicio.toISOString().split("T")[0]);
+        params.append("fechaFin", fechaFin.toISOString().split("T")[0]);
       }
 
-      params.append('filtroEstatus', filtroEstatus);
+      params.append("filtroEstatus", filtroEstatus);
       if (filtroCuenta) {
-        params.append('filtroCuenta', filtroCuenta);
+        params.append("filtroCuenta", filtroCuenta);
       }
 
       const response = await fetchWithToken(
-        `${API_BASE_URL}/cuentas-por-pagar/reporte/pdf-resumido?${params.toString()}`
+        `${API_BASE_URL}/cuentas-por-pagar/reporte/pdf-resumido?${params.toString()}`,
       );
 
       if (response.ok) {
@@ -943,14 +1125,15 @@ const AdminCuentasPagar = () => {
         const url = window.URL.createObjectURL(blob);
 
         const now = new Date();
-        const timestamp = now.toISOString().split('T')[0];
-        const estatusSuffix = filtroEstatus !== 'Todas' ? `_${filtroEstatus}` : '';
+        const timestamp = now.toISOString().split("T")[0];
+        const estatusSuffix =
+          filtroEstatus !== "Todas" ? `_${filtroEstatus}` : "";
         const filename = `reporte_resumido_cuentas_por_pagar_${timestamp}${estatusSuffix}.pdf`;
 
         setPdfPreviewResumido({
           isOpen: true,
           url: url,
-          filename: filename
+          filename: filename,
         });
       }
     } catch (error) {
@@ -965,7 +1148,7 @@ const AdminCuentasPagar = () => {
 
   const handleDownloadFromPreviewResumido = () => {
     if (pdfPreviewResumido.url) {
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = pdfPreviewResumido.url;
       link.download = pdfPreviewResumido.filename;
       document.body.appendChild(link);
@@ -977,7 +1160,7 @@ const AdminCuentasPagar = () => {
         title: "Éxito",
         text: "Reporte resumido descargado correctamente",
         timer: 2000,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
     }
   };
@@ -1006,7 +1189,7 @@ const AdminCuentasPagar = () => {
     if (cuenta.estatus === "Vencida") return "Vencida";
     if (!cuenta.fechaPago) return cuenta.estatus;
 
-    const [year, month, day] = cuenta.fechaPago.split('-').map(Number);
+    const [year, month, day] = cuenta.fechaPago.split("-").map(Number);
 
     const fechaVencimiento = new Date(year, month - 1, day);
 
@@ -1021,31 +1204,47 @@ const AdminCuentasPagar = () => {
     return cuenta.estatus;
   };
 
-  const cuentasUnicas = [...new Set(cuentasPagar.map(c => c.cuenta?.nombre))].filter(Boolean).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+  const cuentasUnicas = [...new Set(cuentasPagar.map((c) => c.cuenta?.nombre))]
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
   const cuentasFiltradas = cuentasPagar.filter((cuenta) => {
     if (filtroFolio) {
       return cuenta.folio === filtroFolio;
     }
     const estatusReal = getEstatusReal(cuenta);
-    const pasaFiltroEstatus = filtroEstatus === "Todas" || estatusReal === filtroEstatus;
-    const pasaFiltroCuenta = filtroCuenta === "" || cuenta.cuenta?.nombre === filtroCuenta;
+    const pasaFiltroEstatus =
+      filtroEstatus === "Todas" || estatusReal === filtroEstatus;
+    const pasaFiltroCuenta =
+      filtroCuenta === "" || cuenta.cuenta?.nombre === filtroCuenta;
 
     let pasaFiltroFechas = true;
     if (fechaInicio || fechaFin) {
-      const [year, month, day] = cuenta.fechaPago.split('-').map(Number);
+      const [year, month, day] = cuenta.fechaPago.split("-").map(Number);
       const fechaCuenta = new Date(year, month - 1, day);
 
       let inicio = fechaInicio ? new Date(fechaInicio) : null;
       let fin = fechaFin ? new Date(fechaFin) : null;
 
       if (inicio) {
-        inicio = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
+        inicio = new Date(
+          inicio.getFullYear(),
+          inicio.getMonth(),
+          inicio.getDate(),
+        );
       }
       if (fin) {
-        fin = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59, 59);
+        fin = new Date(
+          fin.getFullYear(),
+          fin.getMonth(),
+          fin.getDate(),
+          23,
+          59,
+          59,
+        );
       }
 
-      pasaFiltroFechas = (!inicio || fechaCuenta >= inicio) && (!fin || fechaCuenta <= fin);
+      pasaFiltroFechas =
+        (!inicio || fechaCuenta >= inicio) && (!fin || fechaCuenta <= fin);
     }
 
     return pasaFiltroEstatus && pasaFiltroFechas && pasaFiltroCuenta;
@@ -1057,7 +1256,7 @@ const AdminCuentasPagar = () => {
     const fechaB = new Date(b.fechaPago);
 
     let comparacionFecha;
-    if (ordenFecha === 'asc') {
+    if (ordenFecha === "asc") {
       comparacionFecha = fechaA - fechaB;
     } else {
       comparacionFecha = fechaB - fechaA;
@@ -1070,23 +1269,23 @@ const AdminCuentasPagar = () => {
     const nombreA = a.cuenta.nombre.toLowerCase();
     const nombreB = b.cuenta.nombre.toLowerCase();
 
-    return nombreA.localeCompare(nombreB, 'es', { sensitivity: 'base' });
+    return nombreA.localeCompare(nombreB, "es", { sensitivity: "base" });
   });
 
   const toggleOrdenFecha = () => {
-    setOrdenFecha(prevOrden => prevOrden === 'asc' ? 'desc' : 'asc');
+    setOrdenFecha((prevOrden) => (prevOrden === "asc" ? "desc" : "asc"));
   };
 
   const getDiasRenovacion = (esquema) => {
     const diasPorEsquema = {
-      "UNICA": 0,
-      "SEMANAL": 7,
-      "QUINCENAL": 14,
-      "MENSUAL": 30,
-      "BIMESTRAL": 60,
-      "TRIMESTRAL": 90,
-      "SEMESTRAL": 180,
-      "ANUAL": 365
+      UNICA: 0,
+      SEMANAL: 7,
+      QUINCENAL: 14,
+      MENSUAL: 30,
+      BIMESTRAL: 60,
+      TRIMESTRAL: 90,
+      SEMESTRAL: 180,
+      ANUAL: 365,
     };
 
     return diasPorEsquema[esquema] || 0;
@@ -1114,20 +1313,35 @@ const AdminCuentasPagar = () => {
               </div>
               <div className="cuentaspagar-sidebar-menu">
                 {userRol === "ADMINISTRADOR" && (
-                  <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("balance")}>
+                  <div
+                    className="cuentaspagar-menu-item"
+                    onClick={() => handleMenuNavigation("balance")}
+                  >
                     Balance
                   </div>
                 )}
-                <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
+                <div
+                  className="cuentaspagar-menu-item"
+                  onClick={() => handleMenuNavigation("transacciones")}
+                >
                   Transacciones
                 </div>
-                <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("cotizaciones")}>
+                <div
+                  className="cuentaspagar-menu-item"
+                  onClick={() => handleMenuNavigation("cotizaciones")}
+                >
                   Cotizaciones
                 </div>
-                <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("facturacion")}>
+                <div
+                  className="cuentaspagar-menu-item"
+                  onClick={() => handleMenuNavigation("facturacion")}
+                >
                   Facturas/Notas
                 </div>
-                <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("cuentas-cobrar")}>
+                <div
+                  className="cuentaspagar-menu-item"
+                  onClick={() => handleMenuNavigation("cuentas-cobrar")}
+                >
                   Cuentas por Cobrar
                 </div>
                 <div
@@ -1136,10 +1350,16 @@ const AdminCuentasPagar = () => {
                 >
                   Cuentas por Pagar
                 </div>
-                <div className="cuentaspagar-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>
+                <div
+                  className="cuentaspagar-menu-item"
+                  onClick={() => handleMenuNavigation("caja-chica")}
+                >
                   Caja chica
                 </div>
-                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("comisiones")}>
+                <div
+                  className="transacciones-menu-item"
+                  onClick={() => handleMenuNavigation("comisiones")}
+                >
                   Comisiones
                 </div>
               </div>
@@ -1149,7 +1369,9 @@ const AdminCuentasPagar = () => {
               <div className="cuentaspagar-header">
                 <div className="cuentaspagar-header-info">
                   <h3 className="cuentaspagar-page-title">Cuentas por Pagar</h3>
-                  <p className="cuentaspagar-subtitle">Gestión de pagos pendientes</p>
+                  <p className="cuentaspagar-subtitle">
+                    Gestión de pagos pendientes
+                  </p>
                 </div>
                 <div className="cuentaspagar-btn-reporte-container">
                   <button
@@ -1161,7 +1383,7 @@ const AdminCuentasPagar = () => {
                   <button
                     className="cuentaspagar-btn-reporte"
                     onClick={handleGenerarReporteResumido}
-                    style={{ marginLeft: '10px' }}
+                    style={{ marginLeft: "10px" }}
                   >
                     Visualizar Reporte Resumido
                   </button>
@@ -1170,28 +1392,35 @@ const AdminCuentasPagar = () => {
 
               <div className="cuentaspagar-table-card">
                 <div className="cuentaspagar-table-header">
-                  <h4 className="cuentaspagar-table-title">Cuentas por pagar</h4>
+                  <h4 className="cuentaspagar-table-title">
+                    Cuentas por pagar
+                  </h4>
                   <div className="cuentaspagar-filters-container">
                     {filtroFolio && (
                       <div className="cuentaspagar-filter-container">
-                        <div style={{ height: '21px' }}></div>
+                        <div style={{ height: "21px" }}></div>
                         <button
                           className="cuentaspagar-btn cuentaspagar-btn-cancel"
-                          onClick={() => { setFiltroFolio(""); setFiltroEstatus("Pendiente"); }}
-                          style={{ backgroundColor: '#6c757d', color: 'white' }}
+                          onClick={() => {
+                            setFiltroFolio("");
+                            setFiltroEstatus("Pendiente");
+                          }}
+                          style={{ backgroundColor: "#6c757d", color: "white" }}
                         >
                           Ver lista completa (Filtro: {filtroFolio}) ✕
                         </button>
                       </div>
                     )}
                     <div className="cuentaspagar-filter-container">
-                      <div style={{ height: '21px' }}></div>
+                      <div style={{ height: "21px" }}></div>
                       <button
                         className="cuentaspagar-btn-orden"
                         onClick={toggleOrdenFecha}
-                        title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'}`}
+                        title={`Cambiar a orden ${ordenFecha === "asc" ? "descendente" : "ascendente"}`}
                       >
-                        {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
+                        {ordenFecha === "asc"
+                          ? "📅 ↑ Antiguas primero"
+                          : "📅 ↓ Recientes primero"}
                       </button>
                     </div>
 
@@ -1213,7 +1442,9 @@ const AdminCuentasPagar = () => {
                     </div>
 
                     <div className="cuentaspagar-filter-container">
-                      <label htmlFor="filtroEstatus">Filtrar por estatus:</label>
+                      <label htmlFor="filtroEstatus">
+                        Filtrar por estatus:
+                      </label>
                       <select
                         id="filtroEstatus"
                         value={filtroEstatus}
@@ -1275,7 +1506,12 @@ const AdminCuentasPagar = () => {
                             <tr key={cuenta.id}>
                               <td>
                                 {cuenta.folio}
-                                {cuenta.sim && <span className="cuentaspagar-sim-id"> -{cuenta.sim.id}</span>}
+                                {cuenta.sim && (
+                                  <span className="cuentaspagar-sim-id">
+                                    {" "}
+                                    -{cuenta.sim.id}
+                                  </span>
+                                )}
                               </td>
                               <td>{cuenta.fechaPago}</td>
                               <td>{cuenta.cuenta.nombre}</td>
@@ -1284,18 +1520,31 @@ const AdminCuentasPagar = () => {
                                   <div>{formatCurrency(cuenta.monto)}</div>
                                   {cuenta.montoPagado > 0 && (
                                     <div className="cuentaspagar-monto-detalle">
-                                      <small>Pagado: {formatCurrency(cuenta.montoPagado)}</small>
-                                      <small>Pendiente: {formatCurrency(cuenta.saldoPendiente)}</small>
+                                      <small>
+                                        Pagado:{" "}
+                                        {formatCurrency(cuenta.montoPagado)}
+                                      </small>
+                                      <small>
+                                        Pendiente:{" "}
+                                        {formatCurrency(cuenta.saldoPendiente)}
+                                      </small>
                                     </div>
                                   )}
                                 </div>
                               </td>
                               <td>{formasPago[cuenta.formaPago]}</td>
-                              <td>{cuenta.transaccion?.categoria?.descripcion || "-"}</td>
-                              <td>{getDiasRenovacion(cuenta.transaccion?.esquema)}</td>
+                              <td>
+                                {cuenta.transaccion?.categoria?.descripcion ||
+                                  "-"}
+                              </td>
+                              <td>
+                                {getDiasRenovacion(cuenta.transaccion?.esquema)}
+                              </td>
                               <td>
                                 {/* 2. Usamos el estatus calculado para la clase (color) y el texto */}
-                                <span className={`cuentaspagar-estatus-badge ${getEstatusClass(estatusParaMostrar)}`}>
+                                <span
+                                  className={`cuentaspagar-estatus-badge ${getEstatusClass(estatusParaMostrar)}`}
+                                >
                                   {estatusParaMostrar}
                                 </span>
                               </td>
@@ -1303,33 +1552,53 @@ const AdminCuentasPagar = () => {
                               <td>{cuenta.sim?.numero || "-"}</td>
                               <td>
                                 <div className="cuentaspagar-actions">
-                                  {cuenta.estatus !== "Pagado" && !cuenta.sim && (
-                                    <button
-                                      className="cuentaspagar-action-btn cuentaspagar-edit-btn"
-                                      onClick={() => openModal("editarCuenta", { cuenta })}
-                                      title="Editar cuenta"
-                                    >
-                                      <img src={editIcon} alt="Editar" className="cuentaspagar-action-icon" />
-                                    </button>
-                                  )}
+                                  {cuenta.estatus !== "Pagado" &&
+                                    !cuenta.sim && (
+                                      <button
+                                        className="cuentaspagar-action-btn cuentaspagar-edit-btn"
+                                        onClick={() =>
+                                          openModal("editarCuenta", { cuenta })
+                                        }
+                                        title="Editar cuenta"
+                                      >
+                                        <img
+                                          src={editIcon}
+                                          alt="Editar"
+                                          className="cuentaspagar-action-icon"
+                                        />
+                                      </button>
+                                    )}
                                   {cuenta.estatus !== "Pagado" && (
                                     <button
                                       className="cuentaspagar-action-btn cuentaspagar-check-btn"
-                                      onClick={() => openModal("marcarPagada", { cuenta })}
+                                      onClick={() =>
+                                        openModal("marcarPagada", { cuenta })
+                                      }
                                       title="Marcar como pagada"
                                     >
-                                      <img src={checkIcon || "/placeholder.svg"} alt="Marcar como pagada" className="cuentaspagar-action-icon" />
+                                      <img
+                                        src={checkIcon || "/placeholder.svg"}
+                                        alt="Marcar como pagada"
+                                        className="cuentaspagar-action-icon"
+                                      />
                                     </button>
                                   )}
-                                  {cuenta.estatus !== "Pagado" && !cuenta.sim && (
-                                    <button
-                                      className="cuentaspagar-action-btn cuentaspagar-delete-btn"
-                                      onClick={() => handleDeleteCuenta(cuenta)}
-                                      title="Eliminar"
-                                    >
-                                      <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" className="cuentaspagar-action-icon" />
-                                    </button>
-                                  )}
+                                  {cuenta.estatus !== "Pagado" &&
+                                    !cuenta.sim && (
+                                      <button
+                                        className="cuentaspagar-action-btn cuentaspagar-delete-btn"
+                                        onClick={() =>
+                                          handleDeleteCuenta(cuenta)
+                                        }
+                                        title="Eliminar"
+                                      >
+                                        <img
+                                          src={deleteIcon || "/placeholder.svg"}
+                                          alt="Eliminar"
+                                          className="cuentaspagar-action-icon"
+                                        />
+                                      </button>
+                                    )}
                                 </div>
                               </td>
                             </tr>
@@ -1339,7 +1608,11 @@ const AdminCuentasPagar = () => {
                         <tr>
                           <td colSpan="11" className="cuentaspagar-no-data">
                             {(() => {
-                              if (filtroEstatus === "Todas" && !fechaInicio && !fechaFin) {
+                              if (
+                                filtroEstatus === "Todas" &&
+                                !fechaInicio &&
+                                !fechaFin
+                              ) {
                                 return "No hay cuentas por pagar registradas";
                               }
                               let mensaje = "No hay cuentas por pagar";
@@ -1348,7 +1621,9 @@ const AdminCuentasPagar = () => {
                               }
                               if (fechaInicio && fechaFin) {
                                 const formatFecha = (date) => {
-                                  return new Date(date).toLocaleDateString("es-MX");
+                                  return new Date(date).toLocaleDateString(
+                                    "es-MX",
+                                  );
                                 };
                                 mensaje += ` entre ${formatFecha(fechaInicio)} y ${formatFecha(fechaFin)}`;
                               }
