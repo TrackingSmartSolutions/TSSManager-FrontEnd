@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"
-import "./Configuracion_Administrador.css"
-import Header from "../Header/Header"
-import downloadIcon from "../../assets/icons/descarga.png"
-import alertIcon from "../../assets/icons/alerta.png"
-import uploadIcon from "../../assets/icons/subir.png"
-import DatePicker from "react-datepicker"
-import "react-datepicker/dist/react-datepicker.css"
+import { useNavigate } from "react-router-dom";
+import "./Configuracion_Administrador.css";
+import Header from "../Header/Header";
+import downloadIcon from "../../assets/icons/descarga.png";
+import alertIcon from "../../assets/icons/alerta.png";
+import uploadIcon from "../../assets/icons/subir.png";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { API_BASE_URL } from "../Config/Config";
-import Swal from "sweetalert2"
+import Swal from "sweetalert2";
 
 const fetchWithToken = async (url, options = {}, parseAsJson = true) => {
   const token = localStorage.getItem("token");
@@ -26,7 +26,9 @@ const fetchWithToken = async (url, options = {}, parseAsJson = true) => {
   const response = await fetch(url, { ...options, headers });
 
   if (!response.ok) {
-    throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`);
+    throw new Error(
+      `Error en la solicitud: ${response.status} - ${response.statusText}`,
+    );
   }
   return parseAsJson ? response.json() : response;
 };
@@ -64,23 +66,31 @@ const ConfiguracionAdministrador = () => {
   const [importData, setImportData] = useState({
     tiposDatos: "tratos",
     archivo: null,
-  })
+  });
 
   const [exportData, setExportData] = useState({
     tiposDatos: "tratos",
     formato: "csv",
-  })
+  });
 
   const [rangoFechasExport, setRangoFechasExport] = useState([null, null]);
   const [fechaInicioExport, fechaFinExport] = rangoFechasExport;
 
   const [exportHistory, setExportHistory] = useState([]);
   const [importHistory, setImportHistory] = useState([]);
-  const [isLoading, setIsLoading] = useState(true)
-  const tiposSinFiltroFecha = ["correoContactos", "modelos", "proveedores", "equipos", "sims", "telefonoContactos"];
+  const [isLoading, setIsLoading] = useState(true);
+  const tiposSinFiltroFecha = [
+    "correoContactos",
+    "modelos",
+    "proveedores",
+    "equipos",
+    "sims",
+    "telefonoContactos",
+    "cuentasPorCobrar",
+    "cuentasPorPagar",
+  ];
 
-
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const tiposDatosOptions = [
     { value: "tratos", label: "Tratos" },
@@ -94,61 +104,72 @@ const ConfiguracionAdministrador = () => {
     { value: "historialSaldos", label: "Historial de saldos" },
     { value: "auditoria", label: "Auditoría del Sistema" },
     { value: "telefonoContactos", label: "Teléfonos de los contactos" },
-  ]
+    { value: "cuentasPorCobrar", label: "Cuentas por Cobrar" },
+    { value: "cuentasPorPagar", label: "Cuentas por Pagar" },
+  ];
 
   const formatosExportacion = [
     { value: "csv", label: "CSV" },
     { value: "pdf", label: "PDF" },
-  ]
+  ];
 
   const handleImportInputChange = (field, value) => {
     setImportData((prev) => ({
       ...prev,
       [field]: value,
-    }))
-  }
+    }));
+  };
 
   const handleExportInputChange = (field, value) => {
     setExportData((prev) => ({
       ...prev,
       [field]: value,
-    }))
-  }
+    }));
+  };
 
   const handleFileUpload = (event) => {
-    const file = event.target.files[0]
+    const file = event.target.files[0];
     if (file) {
       const isCSV = file.type === "text/csv" || file.name.endsWith(".csv");
-      const isXLSX = file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || file.name.endsWith(".xlsx");
+      const isXLSX =
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+        file.name.endsWith(".xlsx");
 
       if (!isCSV && !isXLSX) {
         Swal.fire({
           icon: "error",
           title: "Formato incorrecto",
           text: "Solo se permiten archivos CSV o XLSX.",
-        })
-        return
+        });
+        return;
       }
       if (file.size > 10 * 1024 * 1024) {
         Swal.fire({
           icon: "error",
           title: "Archivo muy grande",
           text: "El archivo no debe exceder 10MB.",
-        })
-        return
+        });
+        return;
       }
       setImportData((prev) => ({
         ...prev,
         archivo: file,
-      }))
+      }));
     }
-  }
+  };
 
   const handleDownloadTemplate = async () => {
-    const tipoSeleccionado = tiposDatosOptions.find((tipo) => tipo.value === importData.tiposDatos);
+    const tipoSeleccionado = tiposDatosOptions.find(
+      (tipo) => tipo.value === importData.tiposDatos,
+    );
 
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/administrador-datos/descargar-plantilla/${importData.tiposDatos}`, {}, false);
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/administrador-datos/descargar-plantilla/${importData.tiposDatos}`,
+        {},
+        false,
+      );
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -177,7 +198,11 @@ const ConfiguracionAdministrador = () => {
 
   const handleImportData = async () => {
     if (!importData.archivo) {
-      Swal.fire({ icon: "warning", title: "Archivo requerido", text: "Por favor seleccione un archivo CSV o XLSX para importar." });
+      Swal.fire({
+        icon: "warning",
+        title: "Archivo requerido",
+        text: "Por favor seleccione un archivo CSV o XLSX para importar.",
+      });
       return;
     }
 
@@ -206,20 +231,28 @@ const ConfiguracionAdministrador = () => {
       formData.append("usuarioId", localStorage.getItem("userId"));
 
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE_URL}/administrador-datos/importar-datos`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/administrador-datos/importar-datos`,
+        {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: formData,
+        },
+      );
 
       if (!response.ok) {
         const status = response.status;
         let mensaje = "Error desconocido al importar.";
-        if (status === 401) mensaje = "No autorizado. Por favor inicia sesión nuevamente.";
-        else if (status === 403) mensaje = "No tienes permisos para importar datos.";
-        else if (status === 413) mensaje = "El archivo es demasiado grande para el servidor.";
-        else if (status === 415) mensaje = "Formato de archivo no soportado por el servidor.";
-        else if (status >= 500) mensaje = `Error interno del servidor (${status}). Contacta al administrador.`;
+        if (status === 401)
+          mensaje = "No autorizado. Por favor inicia sesión nuevamente.";
+        else if (status === 403)
+          mensaje = "No tienes permisos para importar datos.";
+        else if (status === 413)
+          mensaje = "El archivo es demasiado grande para el servidor.";
+        else if (status === 415)
+          mensaje = "Formato de archivo no soportado por el servidor.";
+        else if (status >= 500)
+          mensaje = `Error interno del servidor (${status}). Contacta al administrador.`;
         Swal.fire({ icon: "error", title: `Error ${status}`, text: mensaje });
         return;
       }
@@ -231,7 +264,11 @@ const ConfiguracionAdministrador = () => {
         if (resultData.registrosFallidos > 0 && resultData.errores) {
           htmlDetalle += `<details><summary style="cursor:pointer;color:#e74c3c">Ver errores (${resultData.registrosFallidos} filas)</summary><pre style="text-align:left;font-size:12px;max-height:200px;overflow:auto;background:#f8f8f8;padding:8px">${resultData.errores}</pre></details>`;
         }
-        Swal.fire({ icon: "success", title: "Importación completada", html: htmlDetalle });
+        Swal.fire({
+          icon: "success",
+          title: "Importación completada",
+          html: htmlDetalle,
+        });
         setImportData({ tiposDatos: "tratos", archivo: null });
         fetchImportHistory();
       } else {
@@ -239,13 +276,18 @@ const ConfiguracionAdministrador = () => {
         if (resultData.errores) {
           htmlError += `<details><summary style="cursor:pointer;color:#e74c3c">Ver detalle de errores</summary><pre style="text-align:left;font-size:12px;max-height:200px;overflow:auto;background:#f8f8f8;padding:8px">${resultData.errores}</pre></details>`;
         }
-        Swal.fire({ icon: "error", title: "Error en importación", html: htmlError });
+        Swal.fire({
+          icon: "error",
+          title: "Error en importación",
+          html: htmlError,
+        });
       }
-
     } catch (error) {
-      let mensaje = "Error de conexión. Verifica que el servidor esté disponible.";
+      let mensaje =
+        "Error de conexión. Verifica que el servidor esté disponible.";
       if (error.name === "TypeError" && error.message.includes("fetch")) {
-        mensaje = "No se pudo conectar al servidor. Verifica tu conexión o que el backend esté corriendo.";
+        mensaje =
+          "No se pudo conectar al servidor. Verifica tu conexión o que el backend esté corriendo.";
       }
       Swal.fire({ icon: "error", title: "Error de conexión", text: mensaje });
     }
@@ -253,17 +295,21 @@ const ConfiguracionAdministrador = () => {
 
   const fetchImportHistory = async () => {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/administrador-datos/historial-importaciones/${localStorage.getItem("userId")}`);
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/administrador-datos/historial-importaciones/${localStorage.getItem("userId")}`,
+      );
       const data = await response;
-      setImportHistory(data.map(item => ({
-        id: item.id,
-        tipoDatos: item.tipoDatos,
-        nombreArchivo: item.nombreArchivo,
-        fechaCreacion: item.fechaCreacion,
-        registrosExitosos: item.registrosExitosos,
-        registrosFallidos: item.registrosFallidos,
-        errores: item.errores
-      })));
+      setImportHistory(
+        data.map((item) => ({
+          id: item.id,
+          tipoDatos: item.tipoDatos,
+          nombreArchivo: item.nombreArchivo,
+          fechaCreacion: item.fechaCreacion,
+          registrosExitosos: item.registrosExitosos,
+          registrosFallidos: item.registrosFallidos,
+          errores: item.errores,
+        })),
+      );
     } catch (error) {
       console.error("Error fetching import history:", error);
     }
@@ -288,16 +334,23 @@ const ConfiguracionAdministrador = () => {
             Swal.showLoading();
           },
         });
-        const response = await fetchWithToken(`${API_BASE_URL}/administrador-datos/exportar-datos`, {
-          method: "POST",
-          body: JSON.stringify({
-            tipoDatos: exportData.tiposDatos,
-            formatoExportacion: exportData.formato,
-            fechaInicio: fechaInicioExport ? fechaInicioExport.toISOString().split('T')[0] : "",
-            fechaFin: fechaFinExport ? fechaFinExport.toISOString().split('T')[0] : "",
-            usuarioId: parseInt(localStorage.getItem("userId")),
-          }),
-        });
+        const response = await fetchWithToken(
+          `${API_BASE_URL}/administrador-datos/exportar-datos`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              tipoDatos: exportData.tiposDatos,
+              formatoExportacion: exportData.formato,
+              fechaInicio: fechaInicioExport
+                ? fechaInicioExport.toISOString().split("T")[0]
+                : "",
+              fechaFin: fechaFinExport
+                ? fechaFinExport.toISOString().split("T")[0]
+                : "",
+              usuarioId: parseInt(localStorage.getItem("userId")),
+            }),
+          },
+        );
         const resultData = await response;
 
         Swal.fire({
@@ -320,18 +373,22 @@ const ConfiguracionAdministrador = () => {
 
   const fetchExportHistory = async () => {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/administrador-datos/historial-exportaciones/${localStorage.getItem("userId")}`);
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/administrador-datos/historial-exportaciones/${localStorage.getItem("userId")}`,
+      );
       const data = await response;
-      setExportHistory(data.map(item => ({
-        id: item.id,
-        tipoDatos: item.tipoDatos,
-        formato: item.formatoExportacion,
-        nombre: item.nombreArchivo,
-        tamaño: item.tamañoArchivo,
-        fecha: item.fechaCreacion,
-        fechaInicio: item.fechaInicio,
-        fechaFin: item.fechaFin
-      })));
+      setExportHistory(
+        data.map((item) => ({
+          id: item.id,
+          tipoDatos: item.tipoDatos,
+          formato: item.formatoExportacion,
+          nombre: item.nombreArchivo,
+          tamaño: item.tamañoArchivo,
+          fecha: item.fechaCreacion,
+          fechaInicio: item.fechaInicio,
+          fechaFin: item.fechaFin,
+        })),
+      );
     } catch (error) {
       console.error("Error fetching export history:", error);
     }
@@ -342,7 +399,7 @@ const ConfiguracionAdministrador = () => {
       const response = await fetchWithToken(
         `${API_BASE_URL}/administrador-datos/descargar-exportacion/${exportItem.id}?usuarioId=${localStorage.getItem("userId")}`,
         {},
-        false
+        false,
       );
 
       // Verificar si la respuesta es exitosa
@@ -402,7 +459,7 @@ const ConfiguracionAdministrador = () => {
           {
             method: "DELETE",
           },
-          false
+          false,
         );
 
         setExportHistory((prev) => prev.filter((item) => item.id !== exportId));
@@ -423,29 +480,32 @@ const ConfiguracionAdministrador = () => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return "N/A"
-    const date = new Date(dateString)
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
     return date.toLocaleString("es-MX", {
       year: "numeric",
       month: "long",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    })
-  }
+    });
+  };
 
   const getDataTypeInfo = (tipo) => {
     const infoMap = {
       tratos: {
-        campos: "nombre, empresa_id, contacto_id, propietario_id (opcional), numero_unidades, ingresos_esperados, descripcion, fecha_cierre, no_trato, probabilidad, fase (valores: CLASIFICACION | PRIMER_CONTACTO | ENVIO_DE_INFORMACION | REUNION | COTIZACION_PROPUESTA_PRACTICA | NEGOCIACION_REVISION | CERRADO_GANADO | RESPUESTA_POR_CORREO | INTERES_FUTURO | CERRADO_PERDIDO | SEGUIMIENTO)",
+        campos:
+          "nombre, empresa_id, contacto_id, propietario_id (opcional), numero_unidades, ingresos_esperados, descripcion, fecha_cierre, no_trato, probabilidad, fase (valores: CLASIFICACION | PRIMER_CONTACTO | ENVIO_DE_INFORMACION | REUNION | COTIZACION_PROPUESTA_PRACTICA | NEGOCIACION_REVISION | CERRADO_GANADO | RESPUESTA_POR_CORREO | INTERES_FUTURO | CERRADO_PERDIDO | SEGUIMIENTO)",
         descripcion: "El archivo XLSX/CSV debe tener las siguientes columnas:",
       },
       empresas: {
-        campos: "nombre, propietario_id (opcional), estatus, sitio_web, sector, domicilio_fisico, domicilio_fiscal, rfc, razon_social, regimen_fiscal",
+        campos:
+          "nombre, propietario_id (opcional), estatus, sitio_web, sector, domicilio_fisico, domicilio_fiscal, rfc, razon_social, regimen_fiscal",
         descripcion: "El archivo CSV debe tener las siguientes columnas:",
       },
       contactos: {
-        campos: "nombre, empresa_id, rol, celular, propietario_id (opcional - usa usuario actual si vacio)",
+        campos:
+          "nombre, empresa_id, rol, celular, propietario_id (opcional - usa usuario actual si vacio)",
         descripcion: "El archivo CSV debe tener las siguientes columnas:",
       },
       correoContactos: {
@@ -461,39 +521,48 @@ const ConfiguracionAdministrador = () => {
         descripcion: "El archivo CSV debe tener las siguientes columnas:",
       },
       equipos: {
-        campos: "imei, nombre, modelo_id, cliente_id (opcional), cliente_default, proveedor_id, tipo, estatus, tipo_activacion (opcional), plataforma (opcional), fecha_activacion (opcional), fecha_expiracion (opcional)",
+        campos:
+          "imei, nombre, modelo_id, cliente_id (opcional), cliente_default, proveedor_id, tipo, estatus, tipo_activacion (opcional), plataforma (opcional), fecha_activacion (opcional), fecha_expiracion (opcional)",
         descripcion: "El archivo CSV debe tener las siguientes columnas:",
       },
       sims: {
-        campos: "numero, tarifa, vigencia (opcional), recarga (opcional), responsable, principal, grupo (opcional), contrasena, equipo_imei (opcional)",
+        campos:
+          "numero, tarifa, vigencia (opcional), recarga (opcional), responsable, principal, grupo (opcional), contrasena, equipo_imei (opcional)",
         descripcion: "El archivo CSV debe tener las siguientes columnas:",
       },
       historialSaldos: {
-        campos: "saldo_actual (opcional), datos (opcional), fecha (opcional - usa fecha actual si está vacío), sim_numero",
+        campos:
+          "saldo_actual (opcional), datos (opcional), fecha (opcional - usa fecha actual si está vacío), sim_numero",
         descripcion: "El archivo CSV debe tener las siguientes columnas:",
       },
-    }
-    return infoMap[tipo] || infoMap.tratos
-  }
+      cuentasPorCobrar: {
+        campos:
+          "folio, fecha_pago, cliente, cotizacion_id, cantidad_cobrar, monto_pagado, saldo_pendiente, estatus, esquema",
+        descripcion: "El archivo CSV debe tener las siguientes columnas:",
+      },
+      cuentasPorPagar: {
+        campos:
+          "folio, fecha_pago, cuenta_id, monto, monto_pagado, saldo_pendiente, forma_pago, estatus",
+        descripcion: "El archivo CSV debe tener las siguientes columnas:",
+      },
+    };
+    return infoMap[tipo] || infoMap.tratos;
+  };
 
   const cargarDatosIniciales = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      await Promise.all([
-        fetchExportHistory(),
-        fetchImportHistory()
-      ])
+      await Promise.all([fetchExportHistory(), fetchImportHistory()]);
     } catch (error) {
-      console.error('Error al cargar datos iniciales:', error)
+      console.error("Error al cargar datos iniciales:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    cargarDatosIniciales()
-  }, [])
-
+    cargarDatosIniciales();
+  }, []);
 
   return (
     <>
@@ -509,25 +578,44 @@ const ConfiguracionAdministrador = () => {
         <div className="config-admin-config-header">
           <h2 className="config-admin-config-title">Configuración</h2>
           <nav className="config-admin-config-nav">
-            <div className="config-admin-nav-item" onClick={() => navigate("/configuracion_plantillas")}>
+            <div
+              className="config-admin-nav-item"
+              onClick={() => navigate("/configuracion_plantillas")}
+            >
               Plantillas de correo
             </div>
-            <div className="config-admin-nav-item config-admin-nav-item-active">Administrador de datos</div>
-            <div className="config-admin-nav-item" onClick={() => navigate("/configuracion_empresa")}>
+            <div className="config-admin-nav-item config-admin-nav-item-active">
+              Administrador de datos
+            </div>
+            <div
+              className="config-admin-nav-item"
+              onClick={() => navigate("/configuracion_empresa")}
+            >
               Configuración de la empresa
             </div>
-            <div className="config-admin-nav-item" onClick={() => navigate("/configuracion_almacenamiento")}>
+            <div
+              className="config-admin-nav-item"
+              onClick={() => navigate("/configuracion_almacenamiento")}
+            >
               Almacenamiento
             </div>
-            <div className="config-admin-nav-item" onClick={() => navigate("/configuracion_copias_seguridad")}>
+            <div
+              className="config-admin-nav-item"
+              onClick={() => navigate("/configuracion_copias_seguridad")}
+            >
               Copias de Seguridad
             </div>
-            <div className="config-admin-nav-item" onClick={() => navigate("/configuracion_usuarios")}>
+            <div
+              className="config-admin-nav-item"
+              onClick={() => navigate("/configuracion_usuarios")}
+            >
               Usuarios y roles
             </div>
             <div
               className="config-admin-nav-item"
-              onClick={() => navigate("/configuracion_gestion_sectores_plataformas")}
+              onClick={() =>
+                navigate("/configuracion_gestion_sectores_plataformas")
+              }
             >
               Sectores y plataformas
             </div>
@@ -551,7 +639,9 @@ const ConfiguracionAdministrador = () => {
                 <select
                   id="import-tipos-datos"
                   value={importData.tiposDatos}
-                  onChange={(e) => handleImportInputChange("tiposDatos", e.target.value)}
+                  onChange={(e) =>
+                    handleImportInputChange("tiposDatos", e.target.value)
+                  }
                   className="config-admin-form-control"
                 >
                   {tiposDatosOptions.map((option) => (
@@ -564,8 +654,15 @@ const ConfiguracionAdministrador = () => {
 
               <div className="config-admin-template-section">
                 <label>Plantilla de importación</label>
-                <button className="config-admin-btn config-admin-btn-template" onClick={handleDownloadTemplate}>
-                  <img src={downloadIcon || "/placeholder.svg"} alt="Descargar" className="config-admin-btn-icon" />
+                <button
+                  className="config-admin-btn config-admin-btn-template"
+                  onClick={handleDownloadTemplate}
+                >
+                  <img
+                    src={downloadIcon || "/placeholder.svg"}
+                    alt="Descargar"
+                    className="config-admin-btn-icon"
+                  />
                   Descargar plantilla específica
                 </button>
               </div>
@@ -576,8 +673,15 @@ const ConfiguracionAdministrador = () => {
                     <img src={uploadIcon || "/placeholder.svg"} alt="Upload" />
                   </div>
                   <p>Arrastra y suelta un archivo CSV aquí</p>
-                  <p className="config-admin-file-formats">o haz clic para seleccionar un archivo</p>
-                  <input type="file" accept=".csv,.xlsx" onChange={handleFileUpload} className="config-admin-file-input" />
+                  <p className="config-admin-file-formats">
+                    o haz clic para seleccionar un archivo
+                  </p>
+                  <input
+                    type="file"
+                    accept=".csv,.xlsx"
+                    onChange={handleFileUpload}
+                    className="config-admin-file-input"
+                  />
                   {importData.archivo && (
                     <div className="config-admin-selected-file">
                       <span>📄 {importData.archivo.name}</span>
@@ -598,7 +702,10 @@ const ConfiguracionAdministrador = () => {
               </div>
 
               <div className="config-admin-form-actions">
-                <button className="config-admin-btn config-admin-btn-primary" onClick={handleImportData}>
+                <button
+                  className="config-admin-btn config-admin-btn-primary"
+                  onClick={handleImportData}
+                >
                   Importar datos
                 </button>
               </div>
@@ -614,7 +721,9 @@ const ConfiguracionAdministrador = () => {
                   <select
                     id="export-tipos-datos"
                     value={exportData.tiposDatos}
-                    onChange={(e) => handleExportInputChange("tiposDatos", e.target.value)}
+                    onChange={(e) =>
+                      handleExportInputChange("tiposDatos", e.target.value)
+                    }
                     className="config-admin-form-control"
                   >
                     {tiposDatosOptions.map((option) => (
@@ -630,7 +739,9 @@ const ConfiguracionAdministrador = () => {
                   <select
                     id="export-formato"
                     value={exportData.formato}
-                    onChange={(e) => handleExportInputChange("formato", e.target.value)}
+                    onChange={(e) =>
+                      handleExportInputChange("formato", e.target.value)
+                    }
                     className="config-admin-form-control"
                   >
                     {formatosExportacion.map((option) => (
@@ -659,7 +770,9 @@ const ConfiguracionAdministrador = () => {
                     dateFormat="dd/MM/yyyy"
                     customInput={<CustomDatePickerInput />}
                     locale="es"
-                    disabled={tiposSinFiltroFecha.includes(exportData.tiposDatos)}
+                    disabled={tiposSinFiltroFecha.includes(
+                      exportData.tiposDatos,
+                    )}
                   />
                   <small className="config-admin-help-text">
                     {tiposSinFiltroFecha.includes(exportData.tiposDatos)
@@ -670,7 +783,10 @@ const ConfiguracionAdministrador = () => {
               </div>
 
               <div className="config-admin-form-actions">
-                <button className="config-admin-btn config-admin-btn-primary" onClick={handleExportData}>
+                <button
+                  className="config-admin-btn config-admin-btn-primary"
+                  onClick={handleExportData}
+                >
                   Exportar datos
                 </button>
               </div>
@@ -678,20 +794,34 @@ const ConfiguracionAdministrador = () => {
 
             {/* Historial de Exportaciones */}
             <section className="config-admin-section">
-              <h3 className="config-admin-section-title">Historial de exportaciones</h3>
+              <h3 className="config-admin-section-title">
+                Historial de exportaciones
+              </h3>
               <div className="config-admin-export-history">
                 {exportHistory.length > 0 ? (
                   <div className="config-admin-history-list">
                     {exportHistory.map((exportItem) => (
-                      <div key={exportItem.id} className="config-admin-history-item">
+                      <div
+                        key={exportItem.id}
+                        className="config-admin-history-item"
+                      >
                         <div className="config-admin-history-info">
                           <h4>{exportItem.nombre}</h4>
                           <div className="config-admin-history-details">
                             <span className="config-admin-history-type">
-                              {tiposDatosOptions.find((t) => t.value === exportItem.tipoDatos)?.label} - {exportItem.formato.toUpperCase()}
+                              {
+                                tiposDatosOptions.find(
+                                  (t) => t.value === exportItem.tipoDatos,
+                                )?.label
+                              }{" "}
+                              - {exportItem.formato.toUpperCase()}
                             </span>
-                            <span className="config-admin-history-size">{exportItem.tamaño}</span>
-                            <span className="config-admin-history-date">{formatDate(exportItem.fecha)}</span>
+                            <span className="config-admin-history-size">
+                              {exportItem.tamaño}
+                            </span>
+                            <span className="config-admin-history-date">
+                              {formatDate(exportItem.fecha)}
+                            </span>
                           </div>
                         </div>
                         <div className="config-admin-history-actions">
@@ -700,7 +830,10 @@ const ConfiguracionAdministrador = () => {
                             onClick={() => handleDownloadExport(exportItem)}
                             title="Descargar"
                           >
-                            <img src={downloadIcon || "/placeholder.svg"} alt="Descargar" />
+                            <img
+                              src={downloadIcon || "/placeholder.svg"}
+                              alt="Descargar"
+                            />
                           </button>
                           <button
                             className="config-admin-btn-action config-admin-delete"
@@ -722,24 +855,40 @@ const ConfiguracionAdministrador = () => {
             </section>
 
             <section className="config-admin-section">
-              <h3 className="config-admin-section-title">Historial de importaciones</h3>
+              <h3 className="config-admin-section-title">
+                Historial de importaciones
+              </h3>
               <div className="config-admin-export-history">
                 {importHistory.length > 0 ? (
                   <div className="config-admin-history-list">
                     {importHistory.map((importItem) => (
-                      <div key={importItem.id} className="config-admin-history-item">
+                      <div
+                        key={importItem.id}
+                        className="config-admin-history-item"
+                      >
                         <div className="config-admin-history-info">
                           <h4>{importItem.nombreArchivo}</h4>
                           <div className="config-admin-history-details">
                             <span className="config-admin-history-type">
-                              {tiposDatosOptions.find((t) => t.value === importItem.tipoDatos)?.label}
+                              {
+                                tiposDatosOptions.find(
+                                  (t) => t.value === importItem.tipoDatos,
+                                )?.label
+                              }
                             </span>
-                            <span className="config-admin-history-date">{formatDate(importItem.fechaCreacion)}</span>
+                            <span className="config-admin-history-date">
+                              {formatDate(importItem.fechaCreacion)}
+                            </span>
                             <span className="config-admin-history-size">
-                              {importItem.registrosExitosos} exitosos / {importItem.registrosFallidos} fallidos
+                              {importItem.registrosExitosos} exitosos /{" "}
+                              {importItem.registrosFallidos} fallidos
                             </span>
                           </div>
-                          {importItem.errores && <p className="config-admin-history-errors">Errores: {importItem.errores}</p>}
+                          {importItem.errores && (
+                            <p className="config-admin-history-errors">
+                              Errores: {importItem.errores}
+                            </p>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -755,7 +904,7 @@ const ConfiguracionAdministrador = () => {
         </main>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default ConfiguracionAdministrador
+export default ConfiguracionAdministrador;
