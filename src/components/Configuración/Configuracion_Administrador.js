@@ -564,6 +564,44 @@ const ConfiguracionAdministrador = () => {
     cargarDatosIniciales();
   }, []);
 
+  const handleReporteValidacion = async () => {
+    try {
+      Swal.fire({
+        title: "Generando reporte...",
+        text: "Analizando SIMs, equipos y cuentas por pagar.",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+      });
+
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/administrador-datos/reporte-validacion-sims-cxp`,
+        {},
+        false,
+      );
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `validacion_sims_cxp_${new Date().toISOString().split("T")[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      Swal.fire({
+        icon: "success",
+        title: "Reporte generado",
+        text: "El archivo de validación se descargó correctamente.",
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: `No se pudo generar el reporte: ${error.message}`,
+      });
+    }
+  };
   return (
     <>
       <div className="page-with-header">
@@ -788,6 +826,33 @@ const ConfiguracionAdministrador = () => {
                   onClick={handleExportData}
                 >
                   Exportar datos
+                </button>
+              </div>
+            </section>
+
+            <section className="config-admin-section">
+              <h3 className="config-admin-section-title">
+                Validación de integridad (SIMs / Equipos / CxP)
+              </h3>
+              <p
+                className="config-admin-help-text"
+                style={{ marginBottom: "var(--config-admin-spacing-lg)" }}
+              >
+                Genera un reporte que cruza cada SIM de TSS con su equipo y sus
+                cuentas por pagar, verificando que el cliente asignado sea
+                correcto.
+              </p>
+              <div className="config-admin-form-actions">
+                <button
+                  className="config-admin-btn config-admin-btn-primary"
+                  onClick={handleReporteValidacion}
+                >
+                  <img
+                    src={downloadIcon || "/placeholder.svg"}
+                    alt="Descargar"
+                    className="config-admin-btn-icon"
+                  />
+                  Descargar reporte de validación
                 </button>
               </div>
             </section>
