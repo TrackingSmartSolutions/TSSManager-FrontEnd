@@ -1,63 +1,77 @@
-import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import { useParams } from 'react-router-dom';
-import "./Empresas.css"
-import "./MapModal.css"
-import Header from "../Header/Header"
-import editIcon from "../../assets/icons/editar.png"
-import deleteIcon from "../../assets/icons/eliminar.png"
-import detailsIcon from "../../assets/icons/lupa.png"
-import { NuevoTratoModal } from '../Tratos/Tratos';
-import { API_BASE_URL } from "../Config/Config"
-import MapModal from './MapModal';
-import Swal from "sweetalert2"
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import "./Empresas.css";
+import "./MapModal.css";
+import Header from "../Header/Header";
+import editIcon from "../../assets/icons/editar.png";
+import deleteIcon from "../../assets/icons/eliminar.png";
+import detailsIcon from "../../assets/icons/lupa.png";
+import { NuevoTratoModal } from "../Tratos/Tratos";
+import { API_BASE_URL } from "../Config/Config";
+import MapModal from "./MapModal";
+import Swal from "sweetalert2";
 import stringSimilarity from "string-similarity";
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 const fetchWithToken = async (url, options = {}) => {
-  const token = localStorage.getItem("token")
+  const token = localStorage.getItem("token");
 
   const headers = {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
-  }
+  };
 
   const response = await fetch(url, {
     ...options,
     headers,
-  })
-  return response
-}
+  });
+  return response;
+};
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
+const Modal = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = "md",
+  canClose = true,
+  closeOnOverlayClick = true,
+}) => {
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden"
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "unset"
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.body.style.overflow = "unset"
-    }
-  }, [isOpen])
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   const sizeClasses = {
     sm: "modal-sm",
     md: "modal-md",
     lg: "modal-lg",
     xl: "modal-xl",
-  }
+  };
 
   return (
-    <div className="modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
-      <div className={`modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
+    <div
+      className="modal-overlay"
+      onClick={closeOnOverlayClick ? onClose : () => {}}
+    >
+      <div
+        className={`modal-content ${sizeClasses[size]}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
           <h2 className="modal-title">{title}</h2>
           {canClose && (
@@ -69,11 +83,21 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true,
         <div className="modal-body">{children}</div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 // Modal de Empresa (Agregar/Editar)
-const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated, users, hasTratos, existingCompanies }) => {
+const EmpresaModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  empresa,
+  mode,
+  onCompanyCreated,
+  users,
+  hasTratos,
+  existingCompanies,
+}) => {
   const [formData, setFormData] = useState({
     nombre: "",
     estatus: "POR_CONTACTAR",
@@ -89,51 +113,87 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
     longitud: null,
   });
 
-  const [errors, setErrors] = useState({})
-  const [isLoading, setIsLoading] = useState(false)
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
   const [mapModal, setMapModal] = useState({ isOpen: false });
   const [isAddressEditable, setIsAddressEditable] = useState(false);
-  const [sectores, setSectores] = useState([])
+  const [sectores, setSectores] = useState([]);
   const [sectorSearch, setSectorSearch] = useState("");
   const [showSectorDropdown, setShowSectorDropdown] = useState(false);
   const [filteredSectores, setFilteredSectores] = useState([]);
 
   const fetchSectores = async () => {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/sectores`)
-      if (!response.ok) throw new Error("Error al cargar sectores")
-      const data = await response.json()
-      setSectores(data)
+      const response = await fetchWithToken(`${API_BASE_URL}/sectores`);
+      if (!response.ok) throw new Error("Error al cargar sectores");
+      const data = await response.json();
+      setSectores(data);
     } catch (error) {
-      console.error("Error al cargar sectores:", error)
+      console.error("Error al cargar sectores:", error);
     }
-  }
+  };
 
   const regimenFiscalOptions = [
-    { clave: "605", descripcion: "Sueldos y Salarios e Ingresos Asimilados a Salarios" },
+    {
+      clave: "605",
+      descripcion: "Sueldos y Salarios e Ingresos Asimilados a Salarios",
+    },
     { clave: "606", descripcion: "Arrendamiento" },
     { clave: "608", descripcion: "Demás ingresos" },
-    { clave: "611", descripcion: "Ingresos por Dividendos (socios y accionistas)" },
-    { clave: "612", descripcion: "Personas Físicas con Actividades Empresariales y Profesionales" },
+    {
+      clave: "611",
+      descripcion: "Ingresos por Dividendos (socios y accionistas)",
+    },
+    {
+      clave: "612",
+      descripcion:
+        "Personas Físicas con Actividades Empresariales y Profesionales",
+    },
     { clave: "614", descripcion: "Ingresos por intereses" },
-    { clave: "615", descripcion: "Régimen de los ingresos por obtención de premios" },
+    {
+      clave: "615",
+      descripcion: "Régimen de los ingresos por obtención de premios",
+    },
     { clave: "616", descripcion: "Sin obligaciones fiscales" },
     { clave: "621", descripcion: "Incorporación Fiscal" },
-    { clave: "622", descripcion: "Actividades Agrícolas, Ganaderas, Silvícolas y Pesqueras" },
-    { clave: "626", descripcion: "Régimen Simplificado de Confianza (Persona Fisica)" },
-    { clave: "627", descripcion: "Régimen Simplificado de Confianza (Persona Moral)" },
-    { clave: "629", descripcion: "De los Regímenes Fiscales Preferentes y de las Empresas Multinacionales" },
-    { clave: "630", descripcion: "Enajenación de acciones en bolsa de valores" },
+    {
+      clave: "622",
+      descripcion: "Actividades Agrícolas, Ganaderas, Silvícolas y Pesqueras",
+    },
+    {
+      clave: "626",
+      descripcion: "Régimen Simplificado de Confianza (Persona Fisica)",
+    },
+    {
+      clave: "627",
+      descripcion: "Régimen Simplificado de Confianza (Persona Moral)",
+    },
+    {
+      clave: "629",
+      descripcion:
+        "De los Regímenes Fiscales Preferentes y de las Empresas Multinacionales",
+    },
+    {
+      clave: "630",
+      descripcion: "Enajenación de acciones en bolsa de valores",
+    },
     { clave: "601", descripcion: "General de Ley Personas Morales" },
     { clave: "603", descripcion: "Personas Morales con Fines no Lucrativos" },
-    { clave: "607", descripcion: "Régimen de Enajenación o Adquisición de Bienes" },
+    {
+      clave: "607",
+      descripcion: "Régimen de Enajenación o Adquisición de Bienes",
+    },
     { clave: "609", descripcion: "Consolidación" },
-    { clave: "620", descripcion: "Sociedades Cooperativas de Producción que optan por Diferir sus Ingresos" },
+    {
+      clave: "620",
+      descripcion:
+        "Sociedades Cooperativas de Producción que optan por Diferir sus Ingresos",
+    },
     { clave: "623", descripcion: "Opcional para Grupos de Sociedades" },
     { clave: "624", descripcion: "Coordinados" },
     { clave: "628", descripcion: "Hidrocarburos" },
     { clave: "NO_APLICA", descripcion: "No aplica" },
-  ]
+  ];
 
   const estatusOptions = [
     { value: "POR_CONTACTAR", label: "Por Contactar" },
@@ -141,7 +201,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
     { value: "CONTACTAR_MAS_ADELANTE", label: "Contactar Más Adelante" },
     { value: "PERDIDO", label: "Perdido" },
     { value: "CLIENTE", label: "Cliente" },
-  ]
+  ];
 
   useEffect(() => {
     if (empresa && mode === "edit") {
@@ -159,7 +219,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
         latitud: empresa.latitud || null,
         longitud: empresa.longitud || null,
       });
-      const selectedSector = sectores.find(s => s.id === empresa.sectorId);
+      const selectedSector = sectores.find((s) => s.id === empresa.sectorId);
       setSectorSearch(selectedSector ? selectedSector.nombreSector : "");
       setIsAddressEditable(!!empresa.domicilioFisico);
     } else {
@@ -185,20 +245,19 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
   }, [empresa, mode, isOpen, sectores]);
 
   useEffect(() => {
-    fetchSectores()
-  }, [])
+    fetchSectores();
+  }, []);
 
   useEffect(() => {
     if (sectorSearch.trim() === "") {
       setFilteredSectores(sectores);
     } else {
-      const filtered = sectores.filter(sector =>
-        sector.nombreSector.toLowerCase().includes(sectorSearch.toLowerCase())
+      const filtered = sectores.filter((sector) =>
+        sector.nombreSector.toLowerCase().includes(sectorSearch.toLowerCase()),
       );
       setFilteredSectores(filtered);
     }
   }, [sectorSearch, sectores]);
-
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -238,22 +297,21 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
     if (!formData.nombre.trim()) {
       newErrors.nombre = "Este campo es obligatorio";
     } else if (mode === "add") {
-      const similarityThreshold = 0.80;
+      const similarityThreshold = 0.9;
       const existingNames = existingCompanies
         ? existingCompanies.map((c) => c.nombre?.toLowerCase() || "")
         : [];
       const newName = formData.nombre.toLowerCase();
 
-
       if (existingNames.length > 0) {
         const similarities = existingNames.map((name) =>
-          stringSimilarity.compareTwoStrings(newName, name)
+          stringSimilarity.compareTwoStrings(newName, name),
         );
         const maxSimilarity = Math.max(...similarities, 0);
 
-
         if (maxSimilarity >= similarityThreshold) {
-          newErrors.nombre = "Esta empresa parece ser un duplicado. Verifica el nombre.";
+          newErrors.nombre =
+            "Esta empresa parece ser un duplicado. Verifica el nombre.";
         }
       }
     }
@@ -261,29 +319,29 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
     // Validación Sitio Web: URL válida si se proporciona
     if (formData.sitioWeb) {
       try {
-        const urlToValidate = formData.sitioWeb.startsWith('http')
+        const urlToValidate = formData.sitioWeb.startsWith("http")
           ? formData.sitioWeb
           : `https://${formData.sitioWeb}`;
 
         const url = new URL(urlToValidate);
 
-        if (!['http:', 'https:'].includes(url.protocol)) {
-          throw new Error('Protocolo no válido');
+        if (!["http:", "https:"].includes(url.protocol)) {
+          throw new Error("Protocolo no válido");
         }
-
       } catch (error) {
-        newErrors.sitioWeb = "Este campo debe ser una URL válida (ej. https://ejemplo.com)";
+        newErrors.sitioWeb =
+          "Este campo debe ser una URL válida (ej. https://ejemplo.com)";
       }
     }
 
-    if (formData.latitud !== null && formData.latitud !== '') {
+    if (formData.latitud !== null && formData.latitud !== "") {
       const lat = parseFloat(formData.latitud);
       if (isNaN(lat) || lat < -90 || lat > 90) {
         newErrors.latitud = "La latitud debe estar entre -90 y 90 grados";
       }
     }
 
-    if (formData.longitud !== null && formData.longitud !== '') {
+    if (formData.longitud !== null && formData.longitud !== "") {
       const lng = parseFloat(formData.longitud);
       if (isNaN(lng) || lng < -180 || lng > 180) {
         newErrors.longitud = "La longitud debe estar entre -180 y 180 grados";
@@ -294,28 +352,37 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
     if (formData.estatus === "CLIENTE") {
       // Domicilio Fiscal
       if (!formData.domicilioFiscal?.trim()) {
-        newErrors.domicilioFiscal = "Este campo es obligatorio para estatus Cliente";
-      } else if (!/^[A-Za-z0-9\s,.\-ÁÉÍÓÚáéíóúÑñ]+$/.test(formData.domicilioFiscal.trim())) {
-        newErrors.domicilioFisico = "Este campo contiene caracteres no permitidos";
+        newErrors.domicilioFiscal =
+          "Este campo es obligatorio para estatus Cliente";
+      } else if (
+        !/^[A-Za-z0-9\s,.\-ÁÉÍÓÚáéíóúÑñ]+$/.test(
+          formData.domicilioFiscal.trim(),
+        )
+      ) {
+        newErrors.domicilioFisico =
+          "Este campo contiene caracteres no permitidos";
       }
 
       // RFC: Solo letras mayúsculas, números y &
       if (!formData.rfc?.trim()) {
         newErrors.rfc = "Este campo es obligatorio para estatus Cliente";
-        setFormData(prev => ({ ...prev, rfc: "XAXX010101000" }));
+        setFormData((prev) => ({ ...prev, rfc: "XAXX010101000" }));
       } else if (!/^[A-Z0-9&]+$/.test(formData.rfc.trim())) {
-        newErrors.rfc = "Este campo solo debe contener letras mayúsculas, números y &";
+        newErrors.rfc =
+          "Este campo solo debe contener letras mayúsculas, números y &";
       } else if (formData.rfc.trim().length > 13) {
         newErrors.rfc = "El RFC no puede tener más de 13 caracteres";
       }
 
       if (!formData.razonSocial?.trim()) {
-        newErrors.razonSocial = "Este campo es obligatorio para estatus Cliente";
+        newErrors.razonSocial =
+          "Este campo es obligatorio para estatus Cliente";
       }
 
       // Régimen Fiscal: Debe estar seleccionado
       if (!formData.regimenFiscal) {
-        newErrors.regimenFiscal = "Este campo es obligatorio para estatus Cliente";
+        newErrors.regimenFiscal =
+          "Este campo es obligatorio para estatus Cliente";
       }
     }
 
@@ -331,8 +398,9 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
     setMapModal({ isOpen: false });
   };
 
-  const showCoordinateFields = mode === "edit" || (formData.domicilioFisico && formData.domicilioFisico.trim());
-
+  const showCoordinateFields =
+    mode === "edit" ||
+    (formData.domicilioFisico && formData.domicilioFisico.trim());
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -343,23 +411,24 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
 
     if (mode === "edit") {
       const result = await Swal.fire({
-        title: '¿Estás seguro?',
+        title: "¿Estás seguro?",
         text: "Los cambios se guardarán.",
-        icon: 'warning',
+        icon: "warning",
         showCancelButton: true,
-        confirmButtonText: 'Sí, guardar',
-        cancelButtonText: 'Cancelar'
+        confirmButtonText: "Sí, guardar",
+        cancelButtonText: "Cancelar",
       });
 
       if (!result.isConfirmed) {
         return;
       }
     }
-    const formattedDomicilioFisico = formData.domicilioFisico && formData.domicilioFisico.trim()
-      ? (formData.domicilioFisico.endsWith(", México")
-        ? formData.domicilioFisico
-        : `${formData.domicilioFisico}, México`)
-      : null;
+    const formattedDomicilioFisico =
+      formData.domicilioFisico && formData.domicilioFisico.trim()
+        ? formData.domicilioFisico.endsWith(", México")
+          ? formData.domicilioFisico
+          : `${formData.domicilioFisico}, México`
+        : null;
 
     const empresaData = {
       nombre: formData.nombre,
@@ -376,7 +445,7 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
       ...(mode === "edit" && { propietarioId: formData.propietarioId || null }),
     };
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       let response;
       if (mode === "add") {
@@ -385,10 +454,13 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
           body: JSON.stringify(empresaData),
         });
       } else {
-        response = await fetchWithToken(`${API_BASE_URL}/empresas/${empresa.id}`, {
-          method: "PUT",
-          body: JSON.stringify(empresaData),
-        });
+        response = await fetchWithToken(
+          `${API_BASE_URL}/empresas/${empresa.id}`,
+          {
+            method: "PUT",
+            body: JSON.stringify(empresaData),
+          },
+        );
       }
 
       if (!response.ok) {
@@ -406,28 +478,34 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
       await Swal.fire({
         icon: "success",
         title: mode === "add" ? "¡Empresa creada!" : "¡Empresa actualizada!",
-        text: mode === "add"
-          ? `La empresa "${savedEmpresa.nombre}" ha sido creada exitosamente.`
-          : `La empresa "${savedEmpresa.nombre}" ha sido actualizada exitosamente.`,
-        confirmButtonText: 'OK'
+        text:
+          mode === "add"
+            ? `La empresa "${savedEmpresa.nombre}" ha sido creada exitosamente.`
+            : `La empresa "${savedEmpresa.nombre}" ha sido actualizada exitosamente.`,
+        confirmButtonText: "OK",
       });
 
-      setIsLoading(false)
+      setIsLoading(false);
     } catch (error) {
       Swal.fire({
         icon: "error",
         title: "Error",
         text: error.message,
       });
-      setIsLoading(false)
+      setIsLoading(false);
     }
   };
 
-
-  const isCliente = formData.estatus === "CLIENTE"
+  const isCliente = formData.estatus === "CLIENTE";
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={mode === "add" ? "Nueva Empresa" : "Editar Empresa"} size="lg" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={mode === "add" ? "Nueva Empresa" : "Editar Empresa"}
+      size="lg"
+      closeOnOverlayClick={false}
+    >
       <form onSubmit={handleSubmit} className="modal-form">
         {mode === "edit" && (
           <div className="modal-form-row">
@@ -438,7 +516,12 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
               <select
                 id="propietario"
                 value={formData.propietarioId || ""}
-                onChange={(e) => handleInputChange("propietarioId", e.target.value ? Number(e.target.value) : null)}
+                onChange={(e) =>
+                  handleInputChange(
+                    "propietarioId",
+                    e.target.value ? Number(e.target.value) : null,
+                  )
+                }
                 className="modal-form-control"
               >
                 <option value="">Seleccione un propietario</option>
@@ -465,7 +548,9 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
               className={`modal-form-control ${errors.nombre ? "error" : ""}`}
               placeholder="Nombre comercial de la empresa"
             />
-            {errors.nombre && <span className="error-message">{errors.nombre}</span>}
+            {errors.nombre && (
+              <span className="error-message">{errors.nombre}</span>
+            )}
           </div>
 
           <div className="modal-form-row">
@@ -487,7 +572,10 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
                 ))}
               </select>
               {mode === "edit" && hasTratos && (
-                <small className="help-text">El estatus no puede editarse porque la empresa tiene tratos asociados.</small>
+                <small className="help-text">
+                  El estatus no puede editarse porque la empresa tiene tratos
+                  asociados.
+                </small>
               )}
             </div>
           </div>
@@ -504,7 +592,9 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
               className={`modal-form-control ${errors.sitioWeb ? "error" : ""}`}
               placeholder="https://ejemplo.com"
             />
-            {errors.sitioWeb && <span className="error-message">{errors.sitioWeb}</span>}
+            {errors.sitioWeb && (
+              <span className="error-message">{errors.sitioWeb}</span>
+            )}
           </div>
 
           <div className="modal-form-group">
@@ -537,13 +627,15 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
                   ))}
                 </div>
               )}
-              {showSectorDropdown && sectorSearch.trim() !== "" && filteredSectores.length === 0 && (
-                <div className="autocomplete-dropdown">
-                  <div className="autocomplete-no-results">
-                    No se encontraron sectores
+              {showSectorDropdown &&
+                sectorSearch.trim() !== "" &&
+                filteredSectores.length === 0 && (
+                  <div className="autocomplete-dropdown">
+                    <div className="autocomplete-no-results">
+                      No se encontraron sectores
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
           </div>
         </div>
@@ -556,13 +648,19 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
                 type="text"
                 id="domicilioFisico"
                 value={formData.domicilioFisico}
-                onChange={(e) => handleInputChange("domicilioFisico", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("domicilioFisico", e.target.value)
+                }
                 className={`modal-form-control address-input ${errors.domicilioFisico ? "error" : ""}`}
-                placeholder={isAddressEditable ? "Ej: Elefante 175, Villa Magna, 37208 León de los Aldama, Guanajuato, México" : "Buscar dirección"}
+                placeholder={
+                  isAddressEditable
+                    ? "Ej: Elefante 175, Villa Magna, 37208 León de los Aldama, Guanajuato, México"
+                    : "Buscar dirección"
+                }
                 readOnly={!isAddressEditable}
                 style={{
-                  backgroundColor: isAddressEditable ? 'white' : '#f8f9fa',
-                  cursor: isAddressEditable ? 'text' : 'pointer'
+                  backgroundColor: isAddressEditable ? "white" : "#f8f9fa",
+                  cursor: isAddressEditable ? "text" : "pointer",
                 }}
                 onClick={() => {
                   if (!isAddressEditable) {
@@ -581,11 +679,12 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
             </div>
             <small className="help-text">
               {isAddressEditable
-                ? "Puedes editar la dirección o usar el botón \"Buscar en mapa\" para seleccionar una nueva ubicación."
-                : "Haz clic en el campo o en \"Buscar en mapa\" para seleccionar una dirección."
-              }
+                ? 'Puedes editar la dirección o usar el botón "Buscar en mapa" para seleccionar una nueva ubicación.'
+                : 'Haz clic en el campo o en "Buscar en mapa" para seleccionar una dirección.'}
             </small>
-            {errors.domicilioFisico && <span className="error-message">{errors.domicilioFisico}</span>}
+            {errors.domicilioFisico && (
+              <span className="error-message">{errors.domicilioFisico}</span>
+            )}
           </div>
         </div>
 
@@ -596,8 +695,13 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
               <input
                 type="number"
                 id="latitud"
-                value={formData.latitud || ''}
-                onChange={(e) => handleInputChange("latitud", e.target.value ? parseFloat(e.target.value) : null)}
+                value={formData.latitud || ""}
+                onChange={(e) =>
+                  handleInputChange(
+                    "latitud",
+                    e.target.value ? parseFloat(e.target.value) : null,
+                  )
+                }
                 className="modal-form-control"
                 placeholder="21.1269"
                 step="any"
@@ -608,8 +712,13 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
               <input
                 type="number"
                 id="longitud"
-                value={formData.longitud || ''}
-                onChange={(e) => handleInputChange("longitud", e.target.value ? parseFloat(e.target.value) : null)}
+                value={formData.longitud || ""}
+                onChange={(e) =>
+                  handleInputChange(
+                    "longitud",
+                    e.target.value ? parseFloat(e.target.value) : null,
+                  )
+                }
                 className="modal-form-control"
                 placeholder="-101.6968"
                 step="any"
@@ -629,11 +738,17 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
                   type="text"
                   id="domicilioFiscal"
                   value={formData.domicilioFiscal}
-                  onChange={(e) => handleInputChange("domicilioFiscal", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("domicilioFiscal", e.target.value)
+                  }
                   className={`modal-form-control ${errors.domicilioFiscal ? "error" : ""}`}
                   placeholder="Domicilio fiscal"
                 />
-                {errors.domicilioFiscal && <span className="error-message">{errors.domicilioFiscal}</span>}
+                {errors.domicilioFiscal && (
+                  <span className="error-message">
+                    {errors.domicilioFiscal}
+                  </span>
+                )}
               </div>
 
               <div className="modal-form-group">
@@ -644,12 +759,16 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
                   type="text"
                   id="rfc"
                   value={formData.rfc}
-                  onChange={(e) => handleInputChange("rfc", e.target.value.toUpperCase())}
+                  onChange={(e) =>
+                    handleInputChange("rfc", e.target.value.toUpperCase())
+                  }
                   className={`modal-form-control ${errors.rfc ? "error" : ""}`}
                   placeholder="RFC de la empresa"
                   maxLength={13}
                 />
-                {errors.rfc && <span className="error-message">{errors.rfc}</span>}
+                {errors.rfc && (
+                  <span className="error-message">{errors.rfc}</span>
+                )}
               </div>
             </div>
 
@@ -662,11 +781,15 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
                   type="text"
                   id="razonSocial"
                   value={formData.razonSocial}
-                  onChange={(e) => handleInputChange("razonSocial", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("razonSocial", e.target.value)
+                  }
                   className={`modal-form-control ${errors.razonSocial ? "error" : ""}`}
                   placeholder="Razón social"
                 />
-                {errors.razonSocial && <span className="error-message">{errors.razonSocial}</span>}
+                {errors.razonSocial && (
+                  <span className="error-message">{errors.razonSocial}</span>
+                )}
               </div>
 
               <div className="modal-form-group">
@@ -676,7 +799,9 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
                 <select
                   id="regimenFiscal"
                   value={formData.regimenFiscal}
-                  onChange={(e) => handleInputChange("regimenFiscal", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("regimenFiscal", e.target.value)
+                  }
                   className={`modal-form-control ${errors.regimenFiscal ? "error" : ""}`}
                 >
                   <option value="">Seleccione un régimen fiscal</option>
@@ -686,7 +811,9 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
                     </option>
                   ))}
                 </select>
-                {errors.regimenFiscal && <span className="error-message">{errors.regimenFiscal}</span>}
+                {errors.regimenFiscal && (
+                  <span className="error-message">{errors.regimenFiscal}</span>
+                )}
               </div>
             </div>
           </>
@@ -696,14 +823,24 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
           <button type="button" onClick={onClose} className="btn btn-secondary">
             Cancelar
           </button>
-          <button type="submit" className="btn btn-primary" disabled={isLoading}>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={isLoading}
+          >
             {isLoading ? (
               <>
-                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                <span
+                  className="spinner-border spinner-border-sm me-2"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
                 {mode === "add" ? "Creando..." : "Guardando..."}
               </>
+            ) : mode === "add" ? (
+              "Crear Empresa"
             ) : (
-              mode === "add" ? "Crear Empresa" : "Guardar"
+              "Guardar"
             )}
           </button>
         </div>
@@ -715,8 +852,8 @@ const EmpresaModal = ({ isOpen, onClose, onSave, empresa, mode, onCompanyCreated
         initialAddress={formData.domicilioFisico}
       />
     </Modal>
-  )
-}
+  );
+};
 
 // Modal de Contacto (Agregar/Editar)
 const ContactoModal = ({
@@ -754,8 +891,14 @@ const ContactoModal = ({
 
   useEffect(() => {
     if (contacto && mode === "edit") {
-      const correos = contacto.correos?.length > 0 ? contacto.correos.map((item) => item.correo || "") : [""];
-      const telefonos = contacto.telefonos?.length > 0 ? contacto.telefonos.map((item) => item.telefono || "") : [""];
+      const correos =
+        contacto.correos?.length > 0
+          ? contacto.correos.map((item) => item.correo || "")
+          : [""];
+      const telefonos =
+        contacto.telefonos?.length > 0
+          ? contacto.telefonos.map((item) => item.telefono || "")
+          : [""];
 
       setFormData({
         nombre: contacto.nombre || "",
@@ -824,7 +967,10 @@ const ContactoModal = ({
     const newErrors = {};
 
     // Validación Nombre: Solo letras (incluye Ñ/ñ y acentos), opcional
-    if (formData.nombre && !/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(formData.nombre.trim())) {
+    if (
+      formData.nombre &&
+      !/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(formData.nombre.trim())
+    ) {
       newErrors.nombre = "Este campo solo debe contener letras";
     }
 
@@ -890,12 +1036,12 @@ const ContactoModal = ({
     // Solo mostrar alerta de confirmación si estamos en modo "edit"
     if (mode === "edit") {
       const result = await Swal.fire({
-        title: '¿Estás seguro?',
+        title: "¿Estás seguro?",
         text: "Los cambios se guardarán.",
-        icon: 'warning',
+        icon: "warning",
         showCancelButton: true,
-        confirmButtonText: 'Sí, guardar',
-        cancelButtonText: 'Cancelar'
+        confirmButtonText: "Sí, guardar",
+        cancelButtonText: "Cancelar",
       });
 
       if (!result.isConfirmed) {
@@ -912,8 +1058,12 @@ const ContactoModal = ({
 
     const contactoData = {
       nombre: nombreFinal,
-      correos: formData.correos.filter((email) => email.trim()).map((email) => ({ correo: email })),
-      telefonos: formData.telefonos.filter((tel) => tel.trim()).map((tel) => ({ telefono: tel })),
+      correos: formData.correos
+        .filter((email) => email.trim())
+        .map((email) => ({ correo: email })),
+      telefonos: formData.telefonos
+        .filter((tel) => tel.trim())
+        .map((tel) => ({ telefono: tel })),
       celular: formData.celular || null,
       rol: formData.rol,
       modificadoPor: username,
@@ -922,15 +1072,21 @@ const ContactoModal = ({
     try {
       let response;
       if (mode === "add") {
-        response = await fetchWithToken(`${API_BASE_URL}/empresas/${empresaId}/contactos`, {
-          method: "POST",
-          body: JSON.stringify(contactoData),
-        });
+        response = await fetchWithToken(
+          `${API_BASE_URL}/empresas/${empresaId}/contactos`,
+          {
+            method: "POST",
+            body: JSON.stringify(contactoData),
+          },
+        );
       } else {
-        response = await fetchWithToken(`${API_BASE_URL}/empresas/contactos/${contacto.id}`, {
-          method: "PUT",
-          body: JSON.stringify(contactoData),
-        });
+        response = await fetchWithToken(
+          `${API_BASE_URL}/empresas/contactos/${contacto.id}`,
+          {
+            method: "PUT",
+            body: JSON.stringify(contactoData),
+          },
+        );
       }
 
       if (!response.ok) {
@@ -952,14 +1108,17 @@ const ContactoModal = ({
 
       await Swal.fire({
         icon: "success",
-        title: mode === "add" ? "¡Contacto agregado!" : "¡Contacto actualizado!",
-        text: mode === "add"
-          ? `El contacto "${savedContacto.nombre}" ha sido agregado exitosamente.`
-          : `El contacto "${savedContacto.nombre}" ha sido actualizado exitosamente.`,
-        confirmButtonText: 'OK'
+        title:
+          mode === "add" ? "¡Contacto agregado!" : "¡Contacto actualizado!",
+        text:
+          mode === "add"
+            ? `El contacto "${savedContacto.nombre}" ha sido agregado exitosamente.`
+            : `El contacto "${savedContacto.nombre}" ha sido actualizado exitosamente.`,
+        confirmButtonText: "OK",
       });
     } catch (error) {
-      const isDuplicate = error.message.includes("Ya existe un contacto") ||
+      const isDuplicate =
+        error.message.includes("Ya existe un contacto") ||
         error.message.includes("mismo Nombre");
 
       Swal.fire({
@@ -999,9 +1158,12 @@ const ContactoModal = ({
               placeholder="Nombre del contacto"
             />
             <small className="help-text">
-              Si se deja vacío, se generará automáticamente como "Contacto de {formData.rol}"
+              Si se deja vacío, se generará automáticamente como "Contacto de{" "}
+              {formData.rol}"
             </small>
-            {errors.nombre && <span className="error-message">{errors.nombre}</span>}
+            {errors.nombre && (
+              <span className="error-message">{errors.nombre}</span>
+            )}
           </div>
         </div>
 
@@ -1009,7 +1171,12 @@ const ContactoModal = ({
           <div className="modal-form-row">
             <div className="modal-form-group">
               <label>Empresa</label>
-              <input type="text" value={empresaNombre} className="modal-form-control readonly" readOnly />
+              <input
+                type="text"
+                value={empresaNombre}
+                className="modal-form-control readonly"
+                readOnly
+              />
             </div>
           </div>
         )}
@@ -1021,7 +1188,9 @@ const ContactoModal = ({
               <input
                 type="email"
                 value={correo}
-                onChange={(e) => handleArrayChange("correos", index, e.target.value)}
+                onChange={(e) =>
+                  handleArrayChange("correos", index, e.target.value)
+                }
                 className={`modal-form-control ${errors.correos?.[index] ? "error" : ""}`}
                 placeholder="correo@ejemplo.com"
               />
@@ -1031,7 +1200,7 @@ const ContactoModal = ({
                   onClick={() => addArrayItem("correos")}
                   className="btn-array-action add"
                   title="Agregar correo"
-                  disabled={formData.correos.some(c => !c || c.trim() === "")}
+                  disabled={formData.correos.some((c) => !c || c.trim() === "")}
                 >
                   +
                 </button>
@@ -1046,7 +1215,9 @@ const ContactoModal = ({
                   </button>
                 )}
               </div>
-              {errors.correos?.[index] && <span className="error-message">{errors.correos[index]}</span>}
+              {errors.correos?.[index] && (
+                <span className="error-message">{errors.correos[index]}</span>
+              )}
             </div>
           ))}
         </div>
@@ -1058,7 +1229,13 @@ const ContactoModal = ({
               <input
                 type="tel"
                 value={telefono}
-                onChange={(e) => handleArrayChange("telefonos", index, e.target.value.replace(/\D/g, ""))}
+                onChange={(e) =>
+                  handleArrayChange(
+                    "telefonos",
+                    index,
+                    e.target.value.replace(/\D/g, ""),
+                  )
+                }
                 className={`modal-form-control ${errors.telefonos?.[index] ? "error" : ""}`}
                 placeholder="4771234567"
                 maxLength="10"
@@ -1069,7 +1246,9 @@ const ContactoModal = ({
                   onClick={() => addArrayItem("telefonos")}
                   className="btn-array-action add"
                   title="Agregar teléfono"
-                  disabled={formData.telefonos.some(t => !t || t.trim() === "")}
+                  disabled={formData.telefonos.some(
+                    (t) => !t || t.trim() === "",
+                  )}
                 >
                   +
                 </button>
@@ -1084,7 +1263,9 @@ const ContactoModal = ({
                   </button>
                 )}
               </div>
-              {errors.telefonos?.[index] && <span className="error-message">{errors.telefonos[index]}</span>}
+              {errors.telefonos?.[index] && (
+                <span className="error-message">{errors.telefonos[index]}</span>
+              )}
             </div>
           ))}
         </div>
@@ -1096,12 +1277,16 @@ const ContactoModal = ({
               type="tel"
               id="celular"
               value={formData.celular}
-              onChange={(e) => handleInputChange("celular", e.target.value.replace(/\D/g, ""))}
+              onChange={(e) =>
+                handleInputChange("celular", e.target.value.replace(/\D/g, ""))
+              }
               className={`modal-form-control ${errors.celular ? "error" : ""}`}
               placeholder="4771234567"
               maxLength="10"
             />
-            {errors.celular && <span className="error-message">{errors.celular}</span>}
+            {errors.celular && (
+              <span className="error-message">{errors.celular}</span>
+            )}
           </div>
 
           <div className="modal-form-group">
@@ -1131,7 +1316,11 @@ const ContactoModal = ({
             </button>
           ) : (
             <>
-              <button type="button" onClick={onClose} className="btn btn-secondary">
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn btn-secondary"
+              >
                 Cancelar
               </button>
               <button type="submit" className="btn btn-primary">
@@ -1147,11 +1336,11 @@ const ContactoModal = ({
 
 // Modal de Detalles de Empresa
 const DetallesEmpresaModal = ({ isOpen, onClose, empresa, sectores }) => {
-  if (!empresa) return null
+  if (!empresa) return null;
 
   const formatDate = (dateString) => {
-    if (!dateString) return "N/A"
-    const date = new Date(dateString)
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
     return date.toLocaleString("es-MX", {
       year: "numeric",
       month: "long",
@@ -1159,8 +1348,8 @@ const DetallesEmpresaModal = ({ isOpen, onClose, empresa, sectores }) => {
       hour: "2-digit",
       minute: "2-digit",
       timeZoneName: "short",
-    })
-  }
+    });
+  };
 
   const statusMap = {
     POR_CONTACTAR: "Por Contactar",
@@ -1168,20 +1357,26 @@ const DetallesEmpresaModal = ({ isOpen, onClose, empresa, sectores }) => {
     CONTACTAR_MAS_ADELANTE: "Contactar Más Adelante",
     PERDIDO: "Perdido",
     CLIENTE: "Cliente",
-  }
+  };
 
-  const getStatusText = (status) => statusMap[status] || status
+  const getStatusText = (status) => statusMap[status] || status;
   const getSectorText = (sectorId, sectorNombre) => {
     if (sectorNombre) return sectorNombre;
     if (sectorId && sectores.length > 0) {
-      const sector = sectores.find(s => s.id === sectorId);
+      const sector = sectores.find((s) => s.id === sectorId);
       return sector ? sector.nombreSector : "N/A";
     }
     return "N/A";
-  }
+  };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Detalles Empresa" size="lg" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Detalles Empresa"
+      size="lg"
+      closeOnOverlayClick={false}
+    >
       <div className="detalles-content">
         <div className="detalles-grid">
           <div className="detalle-item">
@@ -1195,7 +1390,10 @@ const DetallesEmpresaModal = ({ isOpen, onClose, empresa, sectores }) => {
           <div className="detalle-item">
             <label>Estatus:</label>
             <div className="status-display">
-              <span className="status-indicator" style={{ backgroundColor: empresa.statusColor || "#87CEEB" }}></span>
+              <span
+                className="status-indicator"
+                style={{ backgroundColor: empresa.statusColor || "#87CEEB" }}
+              ></span>
               {getStatusText(empresa.estatus)}
             </div>
           </div>
@@ -1203,7 +1401,11 @@ const DetallesEmpresaModal = ({ isOpen, onClose, empresa, sectores }) => {
             <label>Sitio Web:</label>
             <span>
               {empresa.sitioWeb ? (
-                <a href={empresa.sitioWeb} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={empresa.sitioWeb}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   {empresa.sitioWeb}
                 </a>
               ) : (
@@ -1272,16 +1474,16 @@ const DetallesEmpresaModal = ({ isOpen, onClose, empresa, sectores }) => {
         </div>
       </div>
     </Modal>
-  )
-}
+  );
+};
 
 // Modal de Detalles de Contacto
 const DetallesContactoModal = ({ isOpen, onClose, contacto }) => {
-  if (!contacto) return null
+  if (!contacto) return null;
 
   const formatDate = (dateString) => {
-    if (!dateString) return "N/A"
-    const date = new Date(dateString)
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
     return date.toLocaleString("es-MX", {
       year: "numeric",
       month: "long",
@@ -1289,14 +1491,20 @@ const DetallesContactoModal = ({ isOpen, onClose, contacto }) => {
       hour: "2-digit",
       minute: "2-digit",
       timeZoneName: "short",
-    })
-  }
+    });
+  };
 
-  const correos = contacto.correos?.map((item) => item.correo) || []
-  const telefonos = contacto.telefonos?.map((item) => item.telefono) || []
+  const correos = contacto.correos?.map((item) => item.correo) || [];
+  const telefonos = contacto.telefonos?.map((item) => item.telefono) || [];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Detalles Contacto" size="md" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Detalles Contacto"
+      size="md"
+      closeOnOverlayClick={false}
+    >
       <div className="detalles-content">
         <div className="detalles-grid">
           <div className="detalle-item">
@@ -1345,7 +1553,11 @@ const DetallesContactoModal = ({ isOpen, onClose, contacto }) => {
           )}
           <div className="detalle-item">
             <label>Rol:</label>
-            <span>{contacto.rol ? contacto.rol.charAt(0) + contacto.rol.slice(1).toLowerCase() : "N/A"}</span>
+            <span>
+              {contacto.rol
+                ? contacto.rol.charAt(0) + contacto.rol.slice(1).toLowerCase()
+                : "N/A"}
+            </span>
           </div>
         </div>
         <div className="auditoria-section">
@@ -1372,38 +1584,65 @@ const DetallesContactoModal = ({ isOpen, onClose, contacto }) => {
         </div>
       </div>
     </Modal>
-  )
-}
+  );
+};
 
-// Modal de Confirmación de Eliminación 
-const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, contacto, isLastContact = false }) => {
+// Modal de Confirmación de Eliminación
+const ConfirmarEliminacionModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  contacto,
+  isLastContact = false,
+}) => {
   const handleConfirm = () => {
-    onConfirm()
-    onClose()
-  }
+    onConfirm();
+    onClose();
+  };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Confirmar eliminación"
+      size="sm"
+      closeOnOverlayClick={false}
+    >
       <div className="confirmar-eliminacion">
         {isLastContact ? (
           <div className="warning-content">
             <p className="warning-message">
-              No se puede eliminar el último contacto de la empresa. Debe haber al menos un contacto asociado.
+              No se puede eliminar el último contacto de la empresa. Debe haber
+              al menos un contacto asociado.
             </p>
             <div className="modal-form-actions">
-              <button type="button" onClick={onClose} className="btn btn-primary">
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn btn-primary"
+              >
                 Entendido
               </button>
             </div>
           </div>
         ) : (
           <div className="confirmation-content">
-            <p className="confirmation-message">¿Seguro que quieres eliminar el contacto de forma permanente?</p>
+            <p className="confirmation-message">
+              ¿Seguro que quieres eliminar el contacto de forma permanente?
+            </p>
             <div className="modal-form-actions">
-              <button type="button" onClick={onClose} className="btn btn-cancel">
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn btn-cancel"
+              >
                 Cancelar
               </button>
-              <button type="button" onClick={handleConfirm} className="btn btn-confirm">
+              <button
+                type="button"
+                onClick={handleConfirm}
+                className="btn btn-confirm"
+              >
                 Confirmar
               </button>
             </div>
@@ -1411,38 +1650,43 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, contacto, isLas
         )}
       </div>
     </Modal>
-  )
-}
+  );
+};
 
 // Componente Principal
 const Empresas = () => {
   const userRol = localStorage.getItem("userRol");
   const params = useParams();
-  const [selectedCompany, setSelectedCompany] = useState(null)
-  const [contacts, setContacts] = useState([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterStatus, setFilterStatus] = useState("")
-  const [contactSearch, setContactSearch] = useState("")
-  const [contactRole, setContactRole] = useState("")
-  const [users, setUsers] = useState([])
-  const [companies, setCompanies] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [dateRange, setDateRange] = useState([null, null])
-  const [companiesWithoutDeals, setCompaniesWithoutDeals] = useState(new Set())
-  const [startDate, endDate] = dateRange
-  const navigate = useNavigate()
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [contacts, setContacts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [contactSearch, setContactSearch] = useState("");
+  const [contactRole, setContactRole] = useState("");
+  const [users, setUsers] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [dateRange, setDateRange] = useState([null, null]);
+  const [companiesWithoutDeals, setCompaniesWithoutDeals] = useState(new Set());
+  const [startDate, endDate] = dateRange;
+  const navigate = useNavigate();
 
   const [modals, setModals] = useState({
     empresa: { isOpen: false, mode: "add", data: null },
-    contacto: { isOpen: false, mode: "add", data: null, isInitialContact: false },
+    contacto: {
+      isOpen: false,
+      mode: "add",
+      data: null,
+      isInitialContact: false,
+    },
     detallesEmpresa: { isOpen: false, data: null },
     detallesContacto: { isOpen: false, data: null },
     confirmarEliminacion: { isOpen: false, data: null, isLastContact: false },
     nuevoTrato: { isOpen: false, empresaPreseleccionada: null },
-  })
+  });
 
   const [tratos, setTratos] = useState([]);
-  const [sectores, setSectores] = useState([])
+  const [sectores, setSectores] = useState([]);
 
   const statusMap = {
     POR_CONTACTAR: "Por Contactar",
@@ -1450,7 +1694,7 @@ const Empresas = () => {
     CONTACTAR_MAS_ADELANTE: "Contactar Más Adelante",
     PERDIDO: "Perdido",
     CLIENTE: "Cliente",
-  }
+  };
 
   const estatusOptions = [
     { value: "POR_CONTACTAR", label: "Por Contactar" },
@@ -1458,7 +1702,7 @@ const Empresas = () => {
     { value: "CONTACTAR_MAS_ADELANTE", label: "Contactar Más Adelante" },
     { value: "PERDIDO", label: "Perdido" },
     { value: "CLIENTE", label: "Cliente" },
-  ]
+  ];
 
   const rolesOptions = [
     "RECEPCION",
@@ -1470,25 +1714,25 @@ const Empresas = () => {
     "GERENTE",
     "DIRECTOR",
     "COMPRAS",
-  ]
+  ];
 
-  const getStatusText = (status) => statusMap[status] || status
+  const getStatusText = (status) => statusMap[status] || status;
 
   const fetchUsers = async () => {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/auth/users`)
-      if (!response.ok) throw new Error("Error al cargar los usuarios")
-      const data = await response.json()
-      setUsers(data)
+      const response = await fetchWithToken(`${API_BASE_URL}/auth/users`);
+      if (!response.ok) throw new Error("Error al cargar los usuarios");
+      const data = await response.json();
+      setUsers(data);
     } catch (error) {
-      console.error("Error al cargar usuarios:", error)
+      console.error("Error al cargar usuarios:", error);
       Swal.fire({
         icon: "error",
         title: "Error",
         text: error.message,
-      })
+      });
     }
-  }
+  };
 
   const fetchAllCompanies = async () => {
     try {
@@ -1500,14 +1744,13 @@ const Empresas = () => {
         ...company,
         statusColor: getStatusColor(company.estatus),
         domicilioFisico: company.domicilioFisico
-          ? (company.domicilioFisico.endsWith(", México")
+          ? company.domicilioFisico.endsWith(", México")
             ? company.domicilioFisico
-            : `${company.domicilioFisico}, México`)
+            : `${company.domicilioFisico}, México`
           : null,
       }));
 
       setCompanies(companiesWithColors);
-
     } catch (error) {
       console.error("Error al cargar empresas:", error);
       Swal.fire({
@@ -1519,7 +1762,8 @@ const Empresas = () => {
   };
 
   const filteredCompanies = companies.filter((company) => {
-    const matchesName = !searchTerm ||
+    const matchesName =
+      !searchTerm ||
       company.nombre?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = !filterStatus || company.estatus === filterStatus;
 
@@ -1541,37 +1785,35 @@ const Empresas = () => {
 
   const fetchSectores = async () => {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/sectores`)
-      if (!response.ok) throw new Error("Error al cargar sectores")
-      const data = await response.json()
-      setSectores(data)
+      const response = await fetchWithToken(`${API_BASE_URL}/sectores`);
+      if (!response.ok) throw new Error("Error al cargar sectores");
+      const data = await response.json();
+      setSectores(data);
     } catch (error) {
-      console.error("Error al cargar sectores:", error)
+      console.error("Error al cargar sectores:", error);
     }
-  }
+  };
 
   const cargarDatosIniciales = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      await Promise.all([
-        fetchUsers(),
-        fetchAllCompanies(),
-        fetchSectores()
-      ])
+      await Promise.all([fetchUsers(), fetchAllCompanies(), fetchSectores()]);
     } catch (error) {
-      console.error('Error al cargar datos iniciales:', error)
+      console.error("Error al cargar datos iniciales:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    cargarDatosIniciales()
-  }, [])
+    cargarDatosIniciales();
+  }, []);
 
   useEffect(() => {
     if (params.empresaId && companies.length > 0) {
-      const empresaFromUrl = companies.find(company => company.id === parseInt(params.empresaId));
+      const empresaFromUrl = companies.find(
+        (company) => company.id === parseInt(params.empresaId),
+      );
       if (empresaFromUrl) {
         if (!selectedCompany || selectedCompany.id !== empresaFromUrl.id) {
           setContacts([]);
@@ -1580,11 +1822,11 @@ const Empresas = () => {
         }
       } else {
         Swal.fire({
-          icon: 'error',
-          title: 'Empresa no encontrada',
-          text: 'La empresa solicitada no existe o no tienes permisos para verla',
+          icon: "error",
+          title: "Empresa no encontrada",
+          text: "La empresa solicitada no existe o no tienes permisos para verla",
         });
-        navigate('/empresas', { replace: true });
+        navigate("/empresas", { replace: true });
       }
     }
   }, [params.empresaId, companies.length]);
@@ -1599,12 +1841,14 @@ const Empresas = () => {
       const empresaIdActual = selectedCompany.id;
 
       try {
-        const response = await fetchWithToken(`${API_BASE_URL}/empresas/${empresaIdActual}/contactos`);
+        const response = await fetchWithToken(
+          `${API_BASE_URL}/empresas/${empresaIdActual}/contactos`,
+        );
         if (!response.ok) throw new Error("Error al cargar los contactos");
         const contactsData = await response.json();
 
         // Verificar que aún estamos en la misma empresa
-        setContacts(prevContacts => {
+        setContacts((prevContacts) => {
           if (selectedCompany?.id === empresaIdActual) {
             const normalizedContacts = contactsData.map((contact) => ({
               ...contact,
@@ -1643,12 +1887,12 @@ const Empresas = () => {
 
       try {
         const response = await fetchWithToken(
-          `${API_BASE_URL}/tratos/filtrar?empresaId=${empresaIdActual}`
+          `${API_BASE_URL}/tratos/filtrar?empresaId=${empresaIdActual}`,
         );
         if (!response.ok) throw new Error("Error al cargar los tratos");
         const data = await response.json();
 
-        setTratos(prevTratos => {
+        setTratos((prevTratos) => {
           if (selectedCompany?.id === empresaIdActual) {
             return data;
           }
@@ -1677,12 +1921,13 @@ const Empresas = () => {
     }
   }, [companies.length]);
 
-
   const filteredContacts = contacts.filter((contact) => {
-    const matchesSearch = contact.nombre?.toLowerCase().includes(contactSearch.toLowerCase())
-    const matchesRole = !contactRole || contact.rol === contactRole
-    return matchesSearch && matchesRole
-  })
+    const matchesSearch = contact.nombre
+      ?.toLowerCase()
+      .includes(contactSearch.toLowerCase());
+    const matchesRole = !contactRole || contact.rol === contactRole;
+    return matchesSearch && matchesRole;
+  });
 
   const handleCompanySelect = (company) => {
     if (!selectedCompany || selectedCompany.id !== company.id) {
@@ -1701,36 +1946,39 @@ const Empresas = () => {
     e.stopPropagation();
 
     const result = await Swal.fire({
-      title: '¿Estás seguro?',
+      title: "¿Estás seguro?",
       text: "Esta acción eliminará el trato y todos sus datos asociados (actividades, notas, cotizaciones). Esta acción no se puede deshacer.",
-      icon: 'warning',
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
     });
 
     if (!result.isConfirmed) {
       return;
     }
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/tratos/${tratoId}`, {
-        method: "DELETE",
-      });
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/tratos/${tratoId}`,
+        {
+          method: "DELETE",
+        },
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Error al eliminar el trato");
       }
 
-      setTratos(prevTratos => prevTratos.filter(t => t.id !== tratoId));
+      setTratos((prevTratos) => prevTratos.filter((t) => t.id !== tratoId));
 
       await Swal.fire({
         icon: "success",
         title: "¡Trato eliminado!",
         text: "El trato y todos sus datos asociados han sido eliminados exitosamente.",
-        confirmButtonText: 'OK'
+        confirmButtonText: "OK",
       });
     } catch (error) {
       Swal.fire({
@@ -1749,7 +1997,7 @@ const Empresas = () => {
         mode,
         data,
         ...extra,
-        existingCompanies: companies || []
+        existingCompanies: companies || [],
       },
     }));
   };
@@ -1763,10 +2011,10 @@ const Empresas = () => {
         data: null,
         isInitialContact: false,
         isLastContact: false,
-        empresaPreseleccionada: null
+        empresaPreseleccionada: null,
       },
-    }))
-  }
+    }));
+  };
 
   const handleAddCompany = () => {
     openModal("empresa", "add", null, { existingCompanies: [...companies] });
@@ -1775,14 +2023,19 @@ const Empresas = () => {
   const handleEditCompany = async () => {
     if (selectedCompany) {
       try {
-        const response = await fetchWithToken(`${API_BASE_URL}/empresas/${selectedCompany.id}/has-tratos`);
+        const response = await fetchWithToken(
+          `${API_BASE_URL}/empresas/${selectedCompany.id}/has-tratos`,
+        );
         if (!response.ok) {
           const errorText = await response.text();
           console.error("Response error:", errorText);
           throw new Error("Error checking tratos");
         }
         const hasTratos = await response.json();
-        openModal("empresa", "edit", selectedCompany, { hasTratos, existingCompanies: companies });
+        openModal("empresa", "edit", selectedCompany, {
+          hasTratos,
+          existingCompanies: companies,
+        });
       } catch (error) {
         console.error("Error checking tratos:", error);
         Swal.fire({
@@ -1796,90 +2049,96 @@ const Empresas = () => {
 
   const handleCompanyDetails = () => {
     if (selectedCompany) {
-      openModal("detallesEmpresa", "view", selectedCompany)
+      openModal("detallesEmpresa", "view", selectedCompany);
     }
-  }
+  };
 
   const handleViewMap = () => {
     if (selectedCompany?.latitud && selectedCompany?.longitud) {
-      navigate("/mapa", { state: { companies, selectedCompany } })
+      navigate("/mapa", { state: { companies, selectedCompany } });
     } else {
       Swal.fire({
         icon: "warning",
         title: "Advertencia",
         text: "La empresa seleccionada no tiene coordenadas de ubicación registradas.",
-      })
+      });
     }
-  }
+  };
 
   const handleAddContact = () => {
     if (selectedCompany) {
-      openModal("contacto", "add", { empresaId: selectedCompany.id, empresaNombre: selectedCompany.nombre })
+      openModal("contacto", "add", {
+        empresaId: selectedCompany.id,
+        empresaNombre: selectedCompany.nombre,
+      });
     }
-  }
+  };
 
   const handleEditContact = (contactId) => {
-    const contact = contacts.find((c) => c.id === contactId)
+    const contact = contacts.find((c) => c.id === contactId);
     if (contact) {
       openModal("contacto", "edit", {
         ...contact,
         empresaId: selectedCompany.id,
         empresaNombre: selectedCompany.nombre,
-      })
+      });
     }
-  }
+  };
 
   const handleDeleteContact = (contactId) => {
-    const contact = contacts.find((c) => c.id === contactId)
-    const isLastContact = contacts.length === 1
+    const contact = contacts.find((c) => c.id === contactId);
+    const isLastContact = contacts.length === 1;
 
     if (contact) {
-      openModal("confirmarEliminacion", "delete", contact, { isLastContact })
+      openModal("confirmarEliminacion", "delete", contact, { isLastContact });
     }
-  }
+  };
 
   const handleContactDetails = (contactId) => {
-    const contact = contacts.find((c) => c.id === contactId)
+    const contact = contacts.find((c) => c.id === contactId);
     if (contact) {
-      openModal("detallesContacto", "view", contact)
+      openModal("detallesContacto", "view", contact);
     }
-  }
+  };
 
   const handleSaveEmpresa = async (empresaData) => {
     const formattedDomicilioFisico = empresaData.domicilioFisico
-      ? (empresaData.domicilioFisico.endsWith(", México")
+      ? empresaData.domicilioFisico.endsWith(", México")
         ? empresaData.domicilioFisico
-        : `${empresaData.domicilioFisico}, México`)
+        : `${empresaData.domicilioFisico}, México`
       : null;
 
     const updatedEmpresa = {
       ...empresaData,
       domicilioFisico: formattedDomicilioFisico,
       statusColor: getStatusColor(empresaData.estatus),
-      contacts: modals.empresa.mode === "edit" ? selectedCompany?.contacts || [] : [],
-    }
+      contacts:
+        modals.empresa.mode === "edit" ? selectedCompany?.contacts || [] : [],
+    };
 
     if (modals.empresa.mode === "add") {
-      closeModal("empresa")
+      closeModal("empresa");
     } else {
-      setCompanies((prev) => prev.map((company) =>
-        company.id === empresaData.id ? updatedEmpresa : company
-      ))
+      setCompanies((prev) =>
+        prev.map((company) =>
+          company.id === empresaData.id ? updatedEmpresa : company,
+        ),
+      );
 
-      setSelectedCompany(prev => ({
+      setSelectedCompany((prev) => ({
         ...updatedEmpresa,
-        contacts: prev?.contacts || []
-      }))
+        contacts: prev?.contacts || [],
+      }));
 
-      closeModal("empresa")
+      closeModal("empresa");
     }
-  }
+  };
 
   const handleCompanyCreated = (empresaData) => {
     const formattedDomicilioFisico = empresaData.domicilioFisico
-      ? (empresaData.domicilioFisico.endsWith(", México")
+      ? empresaData.domicilioFisico.endsWith(", México")
         ? empresaData.domicilioFisico
-        : `${empresaData.domicilioFisico}, México`)
+        : `${empresaData.domicilioFisico}, México`
       : null;
 
     const newCompany = {
@@ -1887,25 +2146,30 @@ const Empresas = () => {
       domicilioFisico: formattedDomicilioFisico,
       statusColor: getStatusColor(empresaData.estatus),
       contacts: [],
-    }
-    setCompanies((prev) => [...prev, newCompany])
-    setSelectedCompany(newCompany)
+    };
+    setCompanies((prev) => [...prev, newCompany]);
+    setSelectedCompany(newCompany);
 
     navigate(`/empresas/${newCompany.id}`, { replace: true });
 
-    closeModal("empresa")
+    closeModal("empresa");
     openModal(
       "contacto",
       "add",
       { empresaId: newCompany.id, empresaNombre: newCompany.nombre },
       { isInitialContact: true },
-    )
-  }
+    );
+  };
 
   const handleSaveContacto = async (contactoData) => {
-
-    const tieneCorreo = contactoData.correos && contactoData.correos.some(c => c.correo && c.correo.trim() !== "");
-    const tieneTelefono = contactoData.telefonos && contactoData.telefonos.some(t => t.telefono && t.telefono.trim() !== "");
+    const tieneCorreo =
+      contactoData.correos &&
+      contactoData.correos.some((c) => c.correo && c.correo.trim() !== "");
+    const tieneTelefono =
+      contactoData.telefonos &&
+      contactoData.telefonos.some(
+        (t) => t.telefono && t.telefono.trim() !== "",
+      );
 
     if (!tieneCorreo && !tieneTelefono) {
       Swal.fire({
@@ -1919,7 +2183,7 @@ const Empresas = () => {
       ...contactoData,
       correos: contactoData.correos || [],
       telefonos: contactoData.telefonos || [],
-    }
+    };
 
     const empresaId = selectedCompany.id;
     if (modals.contacto.mode === "add") {
@@ -1927,116 +2191,134 @@ const Empresas = () => {
         prev.map((company) =>
           company.id === empresaId
             ? {
-              ...company,
-              contacts: [...(company.contacts || []), normalizedContacto],
-              fechaUltimaActividad: new Date().toISOString(),
-            }
+                ...company,
+                contacts: [...(company.contacts || []), normalizedContacto],
+                fechaUltimaActividad: new Date().toISOString(),
+              }
             : company,
         ),
-      )
+      );
       setSelectedCompany((prev) => ({
         ...prev,
         contacts: [...(prev.contacts || []), normalizedContacto],
         fechaUltimaActividad: new Date().toISOString(),
-      }))
-      setContacts(prev => [...prev, normalizedContacto])
+      }));
+      setContacts((prev) => [...prev, normalizedContacto]);
     } else {
       setCompanies((prev) =>
         prev.map((company) =>
           company.id === empresaId
             ? {
-              ...company,
-              contacts: (company.contacts || []).map((contact) =>
-                contact.id === normalizedContacto.id ? normalizedContacto : contact,
-              ),
-              fechaUltimaActividad: new Date().toISOString(),
-            }
+                ...company,
+                contacts: (company.contacts || []).map((contact) =>
+                  contact.id === normalizedContacto.id
+                    ? normalizedContacto
+                    : contact,
+                ),
+                fechaUltimaActividad: new Date().toISOString(),
+              }
             : company,
         ),
-      )
+      );
       setSelectedCompany((prev) => ({
         ...prev,
         contacts: (prev.contacts || []).map((contact) =>
           contact.id === normalizedContacto.id ? normalizedContacto : contact,
         ),
         fechaUltimaActividad: new Date().toISOString(),
-      }))
-      setContacts(prev => prev.map(contact =>
-        contact.id === normalizedContacto.id ? normalizedContacto : contact
-      ))
+      }));
+      setContacts((prev) =>
+        prev.map((contact) =>
+          contact.id === normalizedContacto.id ? normalizedContacto : contact,
+        ),
+      );
     }
 
-    closeModal("contacto")
-  }
+    closeModal("contacto");
+  };
 
   const handleConfirmDeleteContact = async () => {
-    const contactId = modals.confirmarEliminacion.data?.id
+    const contactId = modals.confirmarEliminacion.data?.id;
 
-    if (!contactId) return
+    if (!contactId) return;
 
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/empresas/contactos/${contactId}`, {
-        method: "DELETE",
-      })
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/empresas/contactos/${contactId}`,
+        {
+          method: "DELETE",
+        },
+      );
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Error al eliminar el contacto")
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Error al eliminar el contacto");
       }
 
       setCompanies((prev) =>
         prev.map((company) =>
           company.id === selectedCompany.id
             ? {
-              ...company,
-              contacts: (company.contacts || []).filter((contact) => contact.id !== contactId),
-              fechaUltimaActividad: new Date().toISOString(),
-            }
+                ...company,
+                contacts: (company.contacts || []).filter(
+                  (contact) => contact.id !== contactId,
+                ),
+                fechaUltimaActividad: new Date().toISOString(),
+              }
             : company,
         ),
-      )
+      );
 
       setSelectedCompany((prev) => ({
         ...prev,
-        contacts: (prev.contacts || []).filter((contact) => contact.id !== contactId),
+        contacts: (prev.contacts || []).filter(
+          (contact) => contact.id !== contactId,
+        ),
         fechaUltimaActividad: new Date().toISOString(),
-      }))
+      }));
 
-      setContacts(prev => prev.filter(contact => contact.id !== contactId))
+      setContacts((prev) => prev.filter((contact) => contact.id !== contactId));
 
-      closeModal("confirmarEliminacion")
+      closeModal("confirmarEliminacion");
     } catch (error) {
       Swal.fire({
         icon: "error",
         title: "Error",
         text: error.message,
-      })
+      });
     }
-  }
+  };
 
   const handleCrearTratoDesdeEmpresa = () => {
     if (selectedCompany) {
-      openModal("nuevoTrato", "add", null, { empresaPreseleccionada: selectedCompany });
+      openModal("nuevoTrato", "add", null, {
+        empresaPreseleccionada: selectedCompany,
+      });
     }
-  }
+  };
 
   const handleSaveNuevoTrato = async (newTrato) => {
     try {
-      const contactoEncontrado = contacts.find(contacto => contacto.id === newTrato.contactoId);
+      const contactoEncontrado = contacts.find(
+        (contacto) => contacto.id === newTrato.contactoId,
+      );
 
-      setTratos(prev => [...prev, {
-        id: newTrato.id,
-        nombre: newTrato.nombre,
-        contacto: {
-          nombre: contactoEncontrado?.nombre || "N/A"
+      setTratos((prev) => [
+        ...prev,
+        {
+          id: newTrato.id,
+          nombre: newTrato.nombre,
+          contacto: {
+            nombre: contactoEncontrado?.nombre || "N/A",
+          },
+          propietarioNombre: newTrato.propietarioNombre,
+          fase: newTrato.fase,
+          fechaCierre: newTrato.fechaCierre,
+          noTrato: newTrato.noTrato,
         },
-        propietarioNombre: newTrato.propietarioNombre,
-        fase: newTrato.fase,
-        fechaCierre: newTrato.fechaCierre,
-        noTrato: newTrato.noTrato
-      }]);
+      ]);
 
-      setCompaniesWithoutDeals(prev => {
+      setCompaniesWithoutDeals((prev) => {
         const updated = new Set(prev);
         updated.delete(selectedCompany.id);
         return updated;
@@ -2066,21 +2348,23 @@ const Empresas = () => {
       CONTACTAR_MAS_ADELANTE: "#FF9800",
       PERDIDO: "#F44336",
       CLIENTE: "#4CAF50",
-    }
-    return statusColors[status] || "#87CEEB"
-  }
+    };
+    return statusColors[status] || "#87CEEB";
+  };
 
   const checkCompaniesWithoutDeals = async (companiesList) => {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/empresas/sin-tratos`)
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/empresas/sin-tratos`,
+      );
       if (response.ok) {
-        const empresasSinTratos = await response.json()
-        setCompaniesWithoutDeals(new Set(empresasSinTratos))
+        const empresasSinTratos = await response.json();
+        setCompaniesWithoutDeals(new Set(empresasSinTratos));
       }
     } catch (error) {
-      console.error('Error checking companies without deals:', error)
+      console.error("Error checking companies without deals:", error);
     }
-  }
+  };
 
   return (
     <>
@@ -2147,15 +2431,18 @@ const Empresas = () => {
                 {filteredCompanies.map((company) => (
                   <div
                     key={company.id}
-                    className={`company-item ${selectedCompany?.id === company.id ? "selected" : ""} ${companiesWithoutDeals.has(company.id) ? "no-deals" : ""
-                      }`}
+                    className={`company-item ${selectedCompany?.id === company.id ? "selected" : ""} ${
+                      companiesWithoutDeals.has(company.id) ? "no-deals" : ""
+                    }`}
                     onClick={() => handleCompanySelect(company)}
                   >
                     <div className="company-info">
                       <h3>{company.nombre || "N/A"}</h3>
                       <div
                         className="status-indicator"
-                        style={{ backgroundColor: company.statusColor || "#87CEEB" }}
+                        style={{
+                          backgroundColor: company.statusColor || "#87CEEB",
+                        }}
                       ></div>
                     </div>
                   </div>
@@ -2170,11 +2457,22 @@ const Empresas = () => {
                     <div className="form-header">
                       <h3>Datos de la Empresa</h3>
                       <div className="form-actions">
-                        <button className="btn btn-add" onClick={handleEditCompany}>
+                        <button
+                          className="btn btn-add"
+                          onClick={handleEditCompany}
+                        >
                           Editar empresa
                         </button>
-                        <button className="btn btn-details" onClick={handleCompanyDetails} title="Detalles empresa">
-                          <img src={detailsIcon || "/placeholder.svg"} alt="Detalles" className="btn-icon" />
+                        <button
+                          className="btn btn-details"
+                          onClick={handleCompanyDetails}
+                          title="Detalles empresa"
+                        >
+                          <img
+                            src={detailsIcon || "/placeholder.svg"}
+                            alt="Detalles"
+                            className="btn-icon"
+                          />
                           Detalles
                         </button>
                       </div>
@@ -2183,7 +2481,12 @@ const Empresas = () => {
                     <div className="form-row">
                       <div className="form-group">
                         <label>Nombre de la empresa</label>
-                        <input type="text" value={selectedCompany.nombre || "N/A"} className="form-control" readOnly />
+                        <input
+                          type="text"
+                          value={selectedCompany.nombre || "N/A"}
+                          className="form-control"
+                          readOnly
+                        />
                       </div>
                       <div className="form-group">
                         <label>Estatus</label>
@@ -2205,7 +2508,11 @@ const Empresas = () => {
                         readOnly
                         onClick={() => {
                           if (selectedCompany.sitioWeb) {
-                            window.open(selectedCompany.sitioWeb, "_blank", "noopener,noreferrer");
+                            window.open(
+                              selectedCompany.sitioWeb,
+                              "_blank",
+                              "noopener,noreferrer",
+                            );
                           }
                         }}
                       />
@@ -2215,11 +2522,17 @@ const Empresas = () => {
                         <label>Domicilio</label>
                         <input
                           type="text"
-                          value={selectedCompany.domicilioFisico || "Sin domicilio"}
+                          value={
+                            selectedCompany.domicilioFisico || "Sin domicilio"
+                          }
                           className="form-control"
                           readOnly
                         />
-                        <button className="btn btn-ver-en-el-mapa" onClick={handleViewMap} title="Ver en el mapa">
+                        <button
+                          className="btn btn-ver-en-el-mapa"
+                          onClick={handleViewMap}
+                          title="Ver en el mapa"
+                        >
                           Ver en el mapa
                         </button>
                       </div>
@@ -2228,7 +2541,10 @@ const Empresas = () => {
 
                   <div className="contacts-section">
                     <div className="contacts-header">
-                      <button className="btn btn-new-contact" onClick={handleAddContact}>
+                      <button
+                        className="btn btn-new-contact"
+                        onClick={handleAddContact}
+                      >
                         Nuevo contacto
                       </button>
 
@@ -2280,33 +2596,53 @@ const Empresas = () => {
                               <tr key={contact.id}>
                                 <td>{index + 1}</td>
                                 <td>{contact.nombre || "N/A"}</td>
-                                <td>{contact.telefonos?.[0]?.telefono || "N/A"}</td>
+                                <td>
+                                  {contact.telefonos?.[0]?.telefono || "N/A"}
+                                </td>
                                 <td>{contact.correos?.[0]?.correo || "N/A"}</td>
                                 <td>
-                                  {contact.rol ? contact.rol.charAt(0) + contact.rol.slice(1).toLowerCase() : "N/A"}
+                                  {contact.rol
+                                    ? contact.rol.charAt(0) +
+                                      contact.rol.slice(1).toLowerCase()
+                                    : "N/A"}
                                 </td>
                                 <td>
                                   <div className="action-buttons">
                                     <button
                                       className="btn-action edit"
-                                      onClick={() => handleEditContact(contact.id)}
+                                      onClick={() =>
+                                        handleEditContact(contact.id)
+                                      }
                                       title="Editar"
                                     >
-                                      <img src={editIcon || "/placeholder.svg"} alt="Editar" />
+                                      <img
+                                        src={editIcon || "/placeholder.svg"}
+                                        alt="Editar"
+                                      />
                                     </button>
                                     <button
                                       className="btn-action delete"
-                                      onClick={() => handleDeleteContact(contact.id)}
+                                      onClick={() =>
+                                        handleDeleteContact(contact.id)
+                                      }
                                       title="Eliminar"
                                     >
-                                      <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" />
+                                      <img
+                                        src={deleteIcon || "/placeholder.svg"}
+                                        alt="Eliminar"
+                                      />
                                     </button>
                                     <button
                                       className="btn-action details"
-                                      onClick={() => handleContactDetails(contact.id)}
+                                      onClick={() =>
+                                        handleContactDetails(contact.id)
+                                      }
                                       title="Detalles"
                                     >
-                                      <img src={detailsIcon || "/placeholder.svg"} alt="Detalles" />
+                                      <img
+                                        src={detailsIcon || "/placeholder.svg"}
+                                        alt="Detalles"
+                                      />
                                     </button>
                                   </div>
                                 </td>
@@ -2344,9 +2680,8 @@ const Empresas = () => {
                             <th>Propietario</th>
                             <th>Fase</th>
                             <th>Fecha de Cierre</th>
-                            {(userRol === "ADMINISTRADOR" || userRol === "GESTOR") && (
-                              <th>Acciones</th>
-                            )}
+                            {(userRol === "ADMINISTRADOR" ||
+                              userRol === "GESTOR") && <th>Acciones</th>}
                           </tr>
                         </thead>
                         <tbody>
@@ -2354,25 +2689,40 @@ const Empresas = () => {
                             tratos.map((trato, index) => (
                               <tr
                                 key={trato.id}
-                                style={{ cursor: 'pointer' }}
+                                style={{ cursor: "pointer" }}
                                 className="trato-row-clickable"
                               >
-                                <td onClick={() => handleTratoClick(trato.id)}>{trato.noTrato || index + 1}</td>
-                                <td onClick={() => handleTratoClick(trato.id)}>{trato.nombre || "N/A"}</td>
-                                <td onClick={() => handleTratoClick(trato.id)}>{trato.contacto?.nombre || "N/A"}</td>
-                                <td onClick={() => handleTratoClick(trato.id)}>{trato.propietarioNombre || "N/A"}</td>
-                                <td onClick={() => handleTratoClick(trato.id)}>{trato.fase || "N/A"}</td>
+                                <td onClick={() => handleTratoClick(trato.id)}>
+                                  {trato.noTrato || index + 1}
+                                </td>
+                                <td onClick={() => handleTratoClick(trato.id)}>
+                                  {trato.nombre || "N/A"}
+                                </td>
+                                <td onClick={() => handleTratoClick(trato.id)}>
+                                  {trato.contacto?.nombre || "N/A"}
+                                </td>
+                                <td onClick={() => handleTratoClick(trato.id)}>
+                                  {trato.propietarioNombre || "N/A"}
+                                </td>
+                                <td onClick={() => handleTratoClick(trato.id)}>
+                                  {trato.fase || "N/A"}
+                                </td>
                                 <td onClick={() => handleTratoClick(trato.id)}>
                                   {trato.fechaCierre
-                                    ? new Date(trato.fechaCierre).toLocaleDateString("es-MX")
+                                    ? new Date(
+                                        trato.fechaCierre,
+                                      ).toLocaleDateString("es-MX")
                                     : "N/A"}
                                 </td>
-                                {(userRol === "ADMINISTRADOR" || userRol === "GESTOR") && (
+                                {(userRol === "ADMINISTRADOR" ||
+                                  userRol === "GESTOR") && (
                                   <td>
                                     <div className="action-buttons">
                                       <button
                                         className="btn-action delete"
-                                        onClick={(e) => handleDeleteTrato(trato.id, e)}
+                                        onClick={(e) =>
+                                          handleDeleteTrato(trato.id, e)
+                                        }
                                         title="Eliminar trato"
                                       >
                                         <img src={deleteIcon} alt="Eliminar" />
@@ -2385,7 +2735,12 @@ const Empresas = () => {
                           ) : (
                             <tr>
                               <td
-                                colSpan={(userRol === "ADMINISTRADOR" || userRol === "GESTOR") ? 7 : 6}
+                                colSpan={
+                                  userRol === "ADMINISTRADOR" ||
+                                  userRol === "GESTOR"
+                                    ? 7
+                                    : 6
+                                }
                                 className="no-data"
                               >
                                 No se encontraron tratos para esta empresa
@@ -2459,7 +2814,7 @@ const Empresas = () => {
         </main>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default Empresas
+export default Empresas;
