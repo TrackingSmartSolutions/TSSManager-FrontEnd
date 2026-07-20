@@ -32,6 +32,19 @@ const fetchWithToken = async (url, options = {}) => {
   return response;
 };
 
+const parseErrorMessage = async (response, fallback) => {
+  const text = await response.text();
+  try {
+    const data = JSON.parse(text);
+    return data.message || data.error || fallback;
+  } catch {
+    return text || fallback;
+  }
+};
+
+const esDuplicado = (msg = "") =>
+  /ya existe|ya está registrado|repetid/i.test(msg);
+
 // Componente Modal Base
 const Modal = ({
   isOpen,
@@ -386,6 +399,30 @@ const EmpresaModal = ({
       }
     }
 
+    // Correos repetidos dentro del mismo contacto
+    const correosLimpios = formData.correos
+      .map((c) => c.trim().toLowerCase())
+      .filter(Boolean);
+    formData.correos.forEach((correo, index) => {
+      const val = correo.trim().toLowerCase();
+      if (!val) return;
+      if (correosLimpios.indexOf(val) !== index) {
+        newErrors.correos[index] =
+          "Este correo ya está repetido en el contacto";
+      }
+    });
+
+    // Teléfonos repetidos dentro del mismo contacto
+    const telsLimpios = formData.telefonos.map((t) => t.trim()).filter(Boolean);
+    formData.telefonos.forEach((tel, index) => {
+      const val = tel.trim();
+      if (!val) return;
+      if (telsLimpios.indexOf(val) !== index) {
+        newErrors.telefonos[index] =
+          "Este teléfono ya está repetido en el contacto";
+      }
+    });
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -464,8 +501,9 @@ const EmpresaModal = ({
       }
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Error al guardar la empresa");
+        throw new Error(
+          await parseErrorMessage(response, "Error al guardar la empresa"),
+        );
       }
 
       const savedEmpresa = await response.json();
@@ -487,10 +525,12 @@ const EmpresaModal = ({
 
       setIsLoading(false);
     } catch (error) {
+      const dup = esDuplicado(error.message);
       Swal.fire({
-        icon: "error",
-        title: "Error",
+        icon: dup ? "warning" : "error",
+        title: dup ? "Empresa duplicada" : "Error",
         text: error.message,
+        confirmButtonColor: dup ? "#FF9800" : "#d33",
       });
       setIsLoading(false);
     }
@@ -1117,9 +1157,7 @@ const ContactoModal = ({
         confirmButtonText: "OK",
       });
     } catch (error) {
-      const isDuplicate =
-        error.message.includes("Ya existe un contacto") ||
-        error.message.includes("mismo Nombre");
+      const isDuplicate = esDuplicado(error.message);
 
       Swal.fire({
         icon: isDuplicate ? "warning" : "error",
