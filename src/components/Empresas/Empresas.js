@@ -399,30 +399,6 @@ const EmpresaModal = ({
       }
     }
 
-    // Correos repetidos dentro del mismo contacto
-    const correosLimpios = formData.correos
-      .map((c) => c.trim().toLowerCase())
-      .filter(Boolean);
-    formData.correos.forEach((correo, index) => {
-      const val = correo.trim().toLowerCase();
-      if (!val) return;
-      if (correosLimpios.indexOf(val) !== index) {
-        newErrors.correos[index] =
-          "Este correo ya está repetido en el contacto";
-      }
-    });
-
-    // Teléfonos repetidos dentro del mismo contacto
-    const telsLimpios = formData.telefonos.map((t) => t.trim()).filter(Boolean);
-    formData.telefonos.forEach((tel, index) => {
-      const val = tel.trim();
-      if (!val) return;
-      if (telsLimpios.indexOf(val) !== index) {
-        newErrors.telefonos[index] =
-          "Este teléfono ya está repetido en el contacto";
-      }
-    });
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
