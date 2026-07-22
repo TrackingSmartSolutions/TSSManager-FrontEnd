@@ -1862,20 +1862,18 @@ const Empresas = () => {
         const contactsData = await response.json();
 
         // Verificar que aún estamos en la misma empresa
-        setContacts((prevContacts) => {
-          if (selectedCompany?.id === empresaIdActual) {
-            const normalizedContacts = contactsData.map((contact) => ({
+        if (!cancelado) {
+          setContacts(
+            contactsData.map((contact) => ({
               ...contact,
               correos: contact.correos || [],
               telefonos: contact.telefonos || [],
-            }));
-            return normalizedContacts;
-          }
-          return prevContacts;
-        });
+            })),
+          );
+        }
       } catch (error) {
         console.error("Error al cargar contactos:", error);
-        if (selectedCompany?.id === empresaIdActual) {
+        if (!cancelado) {
           setContacts([]);
         }
         Swal.fire({
@@ -1891,14 +1889,13 @@ const Empresas = () => {
   }, [selectedCompany?.id]);
 
   useEffect(() => {
+    let cancelado = false;
+    const empresaIdActual = selectedCompany?.id;
+
+    setTratos([]);
+    if (!empresaIdActual) return;
+
     const fetchTratos = async () => {
-      if (!selectedCompany?.id) {
-        setTratos([]);
-        return;
-      }
-
-      const empresaIdActual = selectedCompany.id;
-
       try {
         const response = await fetchWithToken(
           `${API_BASE_URL}/tratos/filtrar?empresaId=${empresaIdActual}`,
@@ -1906,27 +1903,20 @@ const Empresas = () => {
         if (!response.ok) throw new Error("Error al cargar los tratos");
         const data = await response.json();
 
-        setTratos((prevTratos) => {
-          if (selectedCompany?.id === empresaIdActual) {
-            return data;
-          }
-          return prevTratos;
-        });
+        if (!cancelado) setTratos(data);
       } catch (error) {
         console.error("Error al cargar tratos:", error);
-        if (selectedCompany?.id === empresaIdActual) {
+        if (!cancelado) {
           setTratos([]);
+          Swal.fire({ icon: "error", title: "Error", text: error.message });
         }
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: error.message,
-        });
       }
     };
 
-    setTratos([]);
     fetchTratos();
+    return () => {
+      cancelado = true;
+    };
   }, [selectedCompany?.id]);
 
   useEffect(() => {
@@ -2162,6 +2152,8 @@ const Empresas = () => {
       contacts: [],
     };
     setCompanies((prev) => [...prev, newCompany]);
+    setContacts([]);
+    setTratos([]);
     setSelectedCompany(newCompany);
 
     navigate(`/empresas/${newCompany.id}`, { replace: true });
