@@ -1846,14 +1846,13 @@ const Empresas = () => {
   }, [params.empresaId, companies.length]);
 
   useEffect(() => {
+    let cancelado = false;
+    const empresaIdActual = selectedCompany?.id;
+
+    setContacts([]);
+    if (!empresaIdActual) return;
+
     const fetchContacts = async () => {
-      if (!selectedCompany?.id) {
-        setContacts([]);
-        return;
-      }
-
-      const empresaIdActual = selectedCompany.id;
-
       try {
         const response = await fetchWithToken(
           `${API_BASE_URL}/empresas/${empresaIdActual}/contactos`,
@@ -1861,7 +1860,6 @@ const Empresas = () => {
         if (!response.ok) throw new Error("Error al cargar los contactos");
         const contactsData = await response.json();
 
-        // Verificar que aún estamos en la misma empresa
         if (!cancelado) {
           setContacts(
             contactsData.map((contact) => ({
@@ -1875,17 +1873,15 @@ const Empresas = () => {
         console.error("Error al cargar contactos:", error);
         if (!cancelado) {
           setContacts([]);
+          Swal.fire({ icon: "error", title: "Error", text: error.message });
         }
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: error.message,
-        });
       }
     };
 
-    setContacts([]);
     fetchContacts();
+    return () => {
+      cancelado = true;
+    };
   }, [selectedCompany?.id]);
 
   useEffect(() => {
