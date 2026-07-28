@@ -1,32 +1,34 @@
-import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import "./Admin_Cotizaciones.css"
-import Header from "../Header/Header"
-import Swal from "sweetalert2"
-import deleteIcon from "../../assets/icons/eliminar.png"
-import addIcon from "../../assets/icons/agregar.png"
-import editIcon from "../../assets/icons/editar.png"
-import downloadIcon from "../../assets/icons/descarga.png"
-import receivableIcon from "../../assets/icons/cuenta-cobrar.png"
-import DatePicker from "react-datepicker"
-import "react-datepicker/dist/react-datepicker.css"
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import "./Admin_Cotizaciones.css";
+import Header from "../Header/Header";
+import Swal from "sweetalert2";
+import deleteIcon from "../../assets/icons/eliminar.png";
+import addIcon from "../../assets/icons/agregar.png";
+import editIcon from "../../assets/icons/editar.png";
+import downloadIcon from "../../assets/icons/descarga.png";
+import receivableIcon from "../../assets/icons/cuenta-cobrar.png";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { API_BASE_URL } from "../Config/Config";
 
-
 const fetchWithToken = async (url, options = {}) => {
-  const token = localStorage.getItem("token")
-  const isFormData = options.body instanceof FormData
+  const token = localStorage.getItem("token");
+  const isFormData = options.body instanceof FormData;
 
   const headers = {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(!isFormData ? { "Content-Type": "application/json" } : {}),
     ...options.headers,
-  }
+  };
 
-  const response = await fetch(url, { ...options, headers })
-  if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`)
-  return response
-}
+  const response = await fetch(url, { ...options, headers });
+  if (!response.ok)
+    throw new Error(
+      `Error en la solicitud: ${response.status} - ${response.statusText}`,
+    );
+  return response;
+};
 
 // Función para convertir números a letras
 const numeroALetras = (numero) => {
@@ -51,9 +53,20 @@ const numeroALetras = (numero) => {
     "diecisiete",
     "dieciocho",
     "diecinueve",
-  ]
+  ];
 
-  const decenas = ["", "", "veinte", "treinta", "cuarenta", "cincuenta", "sesenta", "setenta", "ochenta", "noventa"]
+  const decenas = [
+    "",
+    "",
+    "veinte",
+    "treinta",
+    "cuarenta",
+    "cincuenta",
+    "sesenta",
+    "setenta",
+    "ochenta",
+    "noventa",
+  ];
 
   const centenas = [
     "",
@@ -66,108 +79,161 @@ const numeroALetras = (numero) => {
     "setecientos",
     "ochocientos",
     "novecientos",
-  ]
+  ];
 
-  if (numero === 0) return "cero pesos 00/100 M.N."
-  if (numero === 1) return "un peso 00/100 M.N."
+  if (numero === 0) return "cero pesos 00/100 M.N.";
+  if (numero === 1) return "un peso 00/100 M.N.";
 
-  let entero = Math.floor(numero)
-  const centavos = Math.round((numero - entero) * 100)
+  let entero = Math.floor(numero);
+  const centavos = Math.round((numero - entero) * 100);
 
   const convertirGrupo = (num) => {
-    if (num === 0) return ""
-    if (num < 20) return unidades[num]
+    if (num === 0) return "";
+    if (num < 20) return unidades[num];
     if (num < 100) {
-      const dec = Math.floor(num / 10)
-      const uni = num % 10
-      if (uni === 0) return decenas[dec]
-      if (dec === 2) return "veinti" + unidades[uni]
-      return decenas[dec] + (uni > 0 ? " y " + unidades[uni] : "")
+      const dec = Math.floor(num / 10);
+      const uni = num % 10;
+      if (uni === 0) return decenas[dec];
+      if (dec === 2) return "veinti" + unidades[uni];
+      return decenas[dec] + (uni > 0 ? " y " + unidades[uni] : "");
     }
 
-    const cen = Math.floor(num / 100)
-    const resto = num % 100
-    let resultado = ""
+    const cen = Math.floor(num / 100);
+    const resto = num % 100;
+    let resultado = "";
 
-    if (cen === 1 && resto === 0) resultado = "cien"
-    else resultado = centenas[cen]
+    if (cen === 1 && resto === 0) resultado = "cien";
+    else resultado = centenas[cen];
 
-    if (resto > 0) resultado += " " + convertirGrupo(resto)
-    return resultado
-  }
+    if (resto > 0) resultado += " " + convertirGrupo(resto);
+    return resultado;
+  };
 
-  let resultado = ""
+  let resultado = "";
 
   if (entero >= 1000000) {
-    const millones = Math.floor(entero / 1000000)
-    if (millones === 1) resultado += "un millón "
-    else resultado += convertirGrupo(millones) + " millones "
-    entero %= 1000000
+    const millones = Math.floor(entero / 1000000);
+    if (millones === 1) resultado += "un millón ";
+    else resultado += convertirGrupo(millones) + " millones ";
+    entero %= 1000000;
   }
 
   if (entero >= 1000) {
-    const miles = Math.floor(entero / 1000)
-    if (miles === 1) resultado += "mil "
-    else resultado += convertirGrupo(miles) + " mil "
-    entero %= 1000
+    const miles = Math.floor(entero / 1000);
+    if (miles === 1) resultado += "mil ";
+    else resultado += convertirGrupo(miles) + " mil ";
+    entero %= 1000;
   }
 
   if (entero > 0) {
-    resultado += convertirGrupo(entero)
+    resultado += convertirGrupo(entero);
   }
 
-  resultado = resultado.trim()
+  resultado = resultado.trim();
   if (Math.floor(numero) === 1) {
-    resultado += " peso"
+    resultado += " peso";
   } else {
-    resultado += " pesos"
+    resultado += " pesos";
   }
 
-  resultado += ` ${centavos.toString().padStart(2, "0")}/100 M.N.`
+  resultado += ` ${centavos.toString().padStart(2, "0")}/100 M.N.`;
 
-  return resultado.charAt(0).toUpperCase() + resultado.slice(1)
-}
+  return resultado.charAt(0).toUpperCase() + resultado.slice(1);
+};
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayClick = true }) => {
+const Modal = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = "md",
+  closeOnOverlayClick = true,
+}) => {
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "unset";
-    return () => { document.body.style.overflow = "unset"; };
+    return () => {
+      document.body.style.overflow = "unset";
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   const overlayStyle = {
-    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1050,
   };
 
-  let widthStyle = '500px';
-  let maxWidthStyle = '95%';
+  let widthStyle = "500px";
+  let maxWidthStyle = "95%";
 
-  if (size === 'lg') widthStyle = '800px';
-  else if (size === 'xl') widthStyle = '950px';
+  if (size === "lg") widthStyle = "800px";
+  else if (size === "xl") widthStyle = "950px";
 
   const contentStyle = {
-    backgroundColor: 'white', borderRadius: '8px', padding: '20px',
-    maxHeight: '95vh', overflowY: 'auto', width: widthStyle, maxWidth: maxWidthStyle,
-    position: 'relative', boxShadow: '0 5px 15px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column'
+    backgroundColor: "white",
+    borderRadius: "8px",
+    padding: "20px",
+    maxHeight: "95vh",
+    overflowY: "auto",
+    width: widthStyle,
+    maxWidth: maxWidthStyle,
+    position: "relative",
+    boxShadow: "0 5px 15px rgba(0,0,0,0.5)",
+    display: "flex",
+    flexDirection: "column",
   };
 
   return (
-    <div style={overlayStyle} onClick={closeOnOverlayClick ? onClose : () => { }}>
+    <div
+      style={overlayStyle}
+      onClick={closeOnOverlayClick ? onClose : () => {}}
+    >
       <div style={contentStyle} onClick={(e) => e.stopPropagation()}>
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          marginBottom: '10px', borderBottom: '1px solid #dee2e6', paddingBottom: '10px'
-        }}>
-          <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>{title}</h2>
-          <button onClick={onClose} style={{
-            border: 'none', background: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#6c757d', padding: '0 5px'
-          }}>✕</button>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "10px",
+            borderBottom: "1px solid #dee2e6",
+            paddingBottom: "10px",
+          }}
+        >
+          <h2 style={{ margin: 0, fontSize: "1rem", fontWeight: 600 }}>
+            {title}
+          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              border: "none",
+              background: "none",
+              fontSize: "1.2rem",
+              cursor: "pointer",
+              color: "#6c757d",
+              padding: "0 5px",
+            }}
+          >
+            ✕
+          </button>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           {children}
         </div>
       </div>
@@ -180,34 +246,52 @@ const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Vista previa" size="xl" closeOnOverlayClick={false}>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Vista previa"
+      size="xl"
+      closeOnOverlayClick={false}
+    >
+      <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: "10px",
+          }}
+        >
           <button
             type="button"
             onClick={onDownload}
             className="cotizaciones-btn cotizaciones-btn-primary" // Corregí la clase para que coincida con el módulo
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              backgroundColor: '#c73232',
-              borderColor: '#c73232',
-              color: '#ffffff'
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              backgroundColor: "#c73232",
+              borderColor: "#c73232",
+              color: "#ffffff",
             }}
           >
             Descargar PDF
           </button>
         </div>
 
-        <div style={{
-          border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden',
-          height: '75vh'
-        }}>
+        <div
+          style={{
+            border: "1px solid #ddd",
+            borderRadius: "4px",
+            overflow: "hidden",
+            height: "75vh",
+          }}
+        >
           <iframe
             src={`${pdfUrl}#view=FitH&navpanes=0&toolbar=0`}
             title="Vista Previa"
-            width="100%" height="100%" style={{ border: 'none' }}
+            width="100%"
+            height="100%"
+            style={{ border: "none" }}
           />
         </div>
       </div>
@@ -275,7 +359,10 @@ const NuevoConceptoModal = ({ isOpen, onClose, onSave, concepto }) => {
     if (!formData.concepto) {
       newErrors.concepto = "El concepto es obligatorio";
     }
-    if (!formData.precioUnitario || Number.parseFloat(formData.precioUnitario) <= 0) {
+    if (
+      !formData.precioUnitario ||
+      Number.parseFloat(formData.precioUnitario) <= 0
+    ) {
       newErrors.precioUnitario = "El precio unitario debe ser mayor a 0";
     }
 
@@ -287,8 +374,9 @@ const NuevoConceptoModal = ({ isOpen, onClose, onSave, concepto }) => {
     const cantidad = Number.parseFloat(formData.cantidad) || 0;
     const precioUnitario = Number.parseFloat(formData.precioUnitario) || 0;
     const descuentoPorcentaje = Number.parseFloat(formData.descuento) || 0;
-    const descuentoMonto = (precioUnitario * descuentoPorcentaje / 100) * cantidad;
-    return (cantidad * precioUnitario) - descuentoMonto;
+    const descuentoMonto =
+      ((precioUnitario * descuentoPorcentaje) / 100) * cantidad;
+    return cantidad * precioUnitario - descuentoMonto;
   };
 
   const handleSubmit = (e) => {
@@ -309,10 +397,18 @@ const NuevoConceptoModal = ({ isOpen, onClose, onSave, concepto }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Nuevo concepto" size="md" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Nuevo concepto"
+      size="md"
+      closeOnOverlayClick={false}
+    >
       <form onSubmit={handleSubmit} className="cotizaciones-form">
         <div className="cotizaciones-form-group">
-          <label htmlFor="cantidad">Cantidad  <span className="required"> *</span></label>
+          <label htmlFor="cantidad">
+            Cantidad <span className="required"> *</span>
+          </label>
           <input
             type="number"
             id="cantidad"
@@ -322,11 +418,17 @@ const NuevoConceptoModal = ({ isOpen, onClose, onSave, concepto }) => {
             step="1"
             min="1"
           />
-          {errors.cantidad && <span className="cotizaciones-error-message">{errors.cantidad}</span>}
+          {errors.cantidad && (
+            <span className="cotizaciones-error-message">
+              {errors.cantidad}
+            </span>
+          )}
         </div>
 
         <div className="cotizaciones-form-group">
-          <label htmlFor="unidad">Unidad  <span className="required"> *</span></label>
+          <label htmlFor="unidad">
+            Unidad <span className="required"> *</span>
+          </label>
           <select
             id="unidad"
             value={formData.unidad}
@@ -338,11 +440,15 @@ const NuevoConceptoModal = ({ isOpen, onClose, onSave, concepto }) => {
             <option value="Equipos">Equipos</option>
             <option value="Instalaciones">Instalaciones</option>
           </select>
-          {errors.unidad && <span className="cotizaciones-error-message">{errors.unidad}</span>}
+          {errors.unidad && (
+            <span className="cotizaciones-error-message">{errors.unidad}</span>
+          )}
         </div>
 
         <div className="cotizaciones-form-group">
-          <label htmlFor="concepto">Concepto <span className="required"> *</span></label>
+          <label htmlFor="concepto">
+            Concepto <span className="required"> *</span>
+          </label>
           <select
             id="concepto-select"
             onChange={(e) => handleInputChange("concepto", e.target.value)}
@@ -352,7 +458,9 @@ const NuevoConceptoModal = ({ isOpen, onClose, onSave, concepto }) => {
             <option value="">Seleccionar concepto</option>
             {conceptosPredefinidos.map((concepto, index) => (
               <option key={index} value={concepto}>
-                {concepto.length > 50 ? `${concepto.substring(0, 50)}...` : concepto}
+                {concepto.length > 50
+                  ? `${concepto.substring(0, 50)}...`
+                  : concepto}
               </option>
             ))}
           </select>
@@ -365,24 +473,36 @@ const NuevoConceptoModal = ({ isOpen, onClose, onSave, concepto }) => {
             rows="3"
             placeholder="O escribe tu propio concepto"
           />
-          {errors.concepto && <span className="cotizaciones-error-message">{errors.concepto}</span>}
+          {errors.concepto && (
+            <span className="cotizaciones-error-message">
+              {errors.concepto}
+            </span>
+          )}
         </div>
 
         <div className="cotizaciones-form-group">
-          <label htmlFor="precioUnitario">Precio Unitario  <span className="required"> *</span></label>
+          <label htmlFor="precioUnitario">
+            Precio Unitario <span className="required"> *</span>
+          </label>
           <div className="cotizaciones-input-with-symbol">
             <span className="cotizaciones-currency-symbol">$</span>
             <input
               type="number"
               id="precioUnitario"
               value={formData.precioUnitario}
-              onChange={(e) => handleInputChange("precioUnitario", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("precioUnitario", e.target.value)
+              }
               className={`cotizaciones-form-control ${errors.precioUnitario ? "error" : ""}`}
               step="0.01"
               min="0"
             />
           </div>
-          {errors.precioUnitario && <span className="cotizaciones-error-message">{errors.precioUnitario}</span>}
+          {errors.precioUnitario && (
+            <span className="cotizaciones-error-message">
+              {errors.precioUnitario}
+            </span>
+          )}
         </div>
 
         <div className="cotizaciones-form-group">
@@ -416,10 +536,17 @@ const NuevoConceptoModal = ({ isOpen, onClose, onSave, concepto }) => {
         </div>
 
         <div className="cotizaciones-form-actions">
-          <button type="button" onClick={onClose} className="cotizaciones-btn cotizaciones-btn-cancel">
+          <button
+            type="button"
+            onClick={onClose}
+            className="cotizaciones-btn cotizaciones-btn-cancel"
+          >
             Cancelar
           </button>
-          <button type="submit" className="cotizaciones-btn cotizaciones-btn-primary">
+          <button
+            type="submit"
+            className="cotizaciones-btn cotizaciones-btn-primary"
+          >
             Guardar
           </button>
         </div>
@@ -429,7 +556,16 @@ const NuevoConceptoModal = ({ isOpen, onClose, onSave, concepto }) => {
 };
 
 // Modal para Nueva/Editar Cotización
-const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes, modals, setModals, users }) => {
+const CotizacionModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  cotizacion = null,
+  clientes,
+  modals,
+  setModals,
+  users,
+}) => {
   const [formData, setFormData] = useState({
     cliente: "",
     conceptos: [],
@@ -441,7 +577,7 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
   const [tratosDisponibles, setTratosDisponibles] = useState([]);
   const [loadingTratos, setLoadingTratos] = useState(false);
 
-  const isEditing = !!(cotizacion?.id);
+  const isEditing = !!cotizacion?.id;
 
   const cargarTratosDisponibles = async (empresaId) => {
     if (!empresaId) {
@@ -452,16 +588,16 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
     setLoadingTratos(true);
     try {
       const response = await fetchWithToken(
-        `${API_BASE_URL}/cotizaciones/tratos-disponibles/${empresaId}`
+        `${API_BASE_URL}/cotizaciones/tratos-disponibles/${empresaId}`,
       );
       const data = await response.json();
       setTratosDisponibles(data);
     } catch (error) {
-      console.error('Error cargando tratos:', error);
+      console.error("Error cargando tratos:", error);
       Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudieron cargar los tratos disponibles'
+        icon: "error",
+        title: "Error",
+        text: "No se pudieron cargar los tratos disponibles",
       });
       setTratosDisponibles([]);
     } finally {
@@ -474,15 +610,17 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
       if (cotizacion) {
         setFormData({
           cliente: cotizacion.clienteNombre || "",
-          conceptos: Array.isArray(cotizacion.unidades) ? cotizacion.unidades.map((c) => ({
-            id: c.id,
-            cantidad: c.cantidad,
-            unidad: c.unidad,
-            concepto: c.concepto,
-            precioUnitario: c.precioUnitario,
-            descuento: c.descuento,
-            importeTotal: c.importeTotal,
-          })) : [],
+          conceptos: Array.isArray(cotizacion.unidades)
+            ? cotizacion.unidades.map((c) => ({
+                id: c.id,
+                cantidad: c.cantidad,
+                unidad: c.unidad,
+                concepto: c.concepto,
+                precioUnitario: c.precioUnitario,
+                descuento: c.descuento,
+                importeTotal: c.importeTotal,
+              }))
+            : [],
           empresaData: cotizacion.empresaData || null,
           tratoId: cotizacion.tratoId || null,
         });
@@ -503,7 +641,6 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
     }
   }, [isOpen, cotizacion]);
 
-
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -515,8 +652,9 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
     const cantidad = Number.parseFloat(concepto.cantidad) || 0;
     const precioUnitario = Number.parseFloat(concepto.precioUnitario) || 0;
     const descuentoPorcentaje = Number.parseFloat(concepto.descuento) || 0;
-    const descuentoMonto = (precioUnitario * descuentoPorcentaje / 100) * cantidad;
-    return (cantidad * precioUnitario) - descuentoMonto;
+    const descuentoMonto =
+      ((precioUnitario * descuentoPorcentaje) / 100) * cantidad;
+    return cantidad * precioUnitario - descuentoMonto;
   };
 
   const handleAddConcepto = (conceptoData) => {
@@ -524,20 +662,25 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
       setFormData((prev) => ({
         ...prev,
         conceptos: prev.conceptos.map((concepto, index) =>
-          index === editingConcepto ? {
-            ...conceptoData,
-            importeTotal: calculateImporteTotalForConcepto(conceptoData)
-          } : concepto
+          index === editingConcepto
+            ? {
+                ...conceptoData,
+                importeTotal: calculateImporteTotalForConcepto(conceptoData),
+              }
+            : concepto,
         ),
       }));
       setEditingConcepto(null);
     } else {
       setFormData((prev) => ({
         ...prev,
-        conceptos: [...prev.conceptos, {
-          ...conceptoData,
-          importeTotal: calculateImporteTotalForConcepto(conceptoData)
-        }],
+        conceptos: [
+          ...prev.conceptos,
+          {
+            ...conceptoData,
+            importeTotal: calculateImporteTotalForConcepto(conceptoData),
+          },
+        ],
       }));
     }
     setShowConceptoModal(false);
@@ -556,15 +699,25 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
   };
 
   const calculateTotals = () => {
-    const subtotal = formData.conceptos.reduce((sum, concepto) => sum + concepto.importeTotal, 0);
+    const subtotal = formData.conceptos.reduce(
+      (sum, concepto) => sum + concepto.importeTotal,
+      0,
+    );
     const iva = subtotal * 0.16;
     let isrEstatal = 0;
     let isrFederal = 0;
 
-    if (formData.empresaData &&
-      (formData.empresaData.regimenFiscal === "601" || formData.empresaData.regimenFiscal === "627")) {
-      const domicilioFiscal = (formData.empresaData.domicilioFiscal || "").toLowerCase();
-      const hasGuanajuato = domicilioFiscal.includes("gto") || domicilioFiscal.includes("guanajuato");
+    if (
+      formData.empresaData &&
+      (formData.empresaData.regimenFiscal === "601" ||
+        formData.empresaData.regimenFiscal === "627")
+    ) {
+      const domicilioFiscal = (
+        formData.empresaData.domicilioFiscal || ""
+      ).toLowerCase();
+      const hasGuanajuato =
+        domicilioFiscal.includes("gto") ||
+        domicilioFiscal.includes("guanajuato");
       const cpMatch = domicilioFiscal.match(/\b(36|37|38)\d{4}\b/);
 
       if (cpMatch || hasGuanajuato) {
@@ -605,7 +758,7 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
         cliente: formData.cliente,
         conceptos: formData.conceptos,
         cantidadTotal: formData.conceptos
-          .filter(concepto => concepto.unidad === "Equipos")
+          .filter((concepto) => concepto.unidad === "Equipos")
           .reduce((sum, concepto) => sum + concepto.cantidad, 0),
         conceptosCount: new Set(formData.conceptos.map((c) => c.concepto)).size,
         subtotal,
@@ -629,7 +782,7 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
     handleInputChange("cliente", clienteNombre);
 
     const empresaSeleccionada = clientes.find(
-      c => c.nombre === clienteNombre
+      (c) => c.nombre === clienteNombre,
     );
 
     if (empresaSeleccionada) {
@@ -652,7 +805,9 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
       >
         <form onSubmit={handleSubmit} className="cotizaciones-form">
           <div className="cotizaciones-form-group">
-            <label htmlFor="cliente">Cliente  <span className="required"> *</span></label>
+            <label htmlFor="cliente">
+              Cliente <span className="required"> *</span>
+            </label>
             <select
               id="cliente"
               value={formData.cliente}
@@ -668,16 +823,27 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
                   </option>
                 ))}
             </select>
-            {errors.cliente && <span className="cotizaciones-error-message">{errors.cliente}</span>}
+            {errors.cliente && (
+              <span className="cotizaciones-error-message">
+                {errors.cliente}
+              </span>
+            )}
           </div>
 
           {tratosDisponibles.length > 0 && (
             <div className="cotizaciones-form-group">
-              <label htmlFor="trato">Vincular a Trato <span className="required"> *</span></label>
+              <label htmlFor="trato">
+                Vincular a Trato <span className="required"> *</span>
+              </label>
               <select
                 id="trato"
                 value={formData.tratoId || ""}
-                onChange={(e) => handleInputChange("tratoId", e.target.value ? parseInt(e.target.value) : null)}
+                onChange={(e) =>
+                  handleInputChange(
+                    "tratoId",
+                    e.target.value ? parseInt(e.target.value) : null,
+                  )
+                }
                 className={`cotizaciones-form-control ${errors.tratoId ? "error" : ""}`}
                 disabled={loadingTratos}
               >
@@ -688,20 +854,34 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
                   </option>
                 ))}
               </select>
-              {loadingTratos && <span className="cotizaciones-info-message">Cargando tratos...</span>}
-              {errors.tratoId && <span className="cotizaciones-error-message">{errors.tratoId}</span>}
+              {loadingTratos && (
+                <span className="cotizaciones-info-message">
+                  Cargando tratos...
+                </span>
+              )}
+              {errors.tratoId && (
+                <span className="cotizaciones-error-message">
+                  {errors.tratoId}
+                </span>
+              )}
             </div>
           )}
           <div className="cotizaciones-form-group">
             <div className="cotizaciones-conceptos-header">
-              <label>Conceptos  <span className="required"> *</span></label>
+              <label>
+                Conceptos <span className="required"> *</span>
+              </label>
               <button
                 type="button"
                 onClick={() => setShowConceptoModal(true)}
                 className="cotizaciones-btn cotizaciones-btn-add-concepto"
               >
                 Agregar
-                <img src={addIcon || "/placeholder.svg"} alt="Agregar" className="cotizaciones-btn-icon" />
+                <img
+                  src={addIcon || "/placeholder.svg"}
+                  alt="Agregar"
+                  className="cotizaciones-btn-icon"
+                />
               </button>
             </div>
 
@@ -711,28 +891,44 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
                   <div key={concepto.id} className="cotizaciones-concepto-item">
                     <div className="cotizaciones-concepto-info">
                       <div className="cotizaciones-concepto-row">
-                        <span className="cotizaciones-concepto-label">Cantidad:</span>
+                        <span className="cotizaciones-concepto-label">
+                          Cantidad:
+                        </span>
                         <span>{concepto.cantidad}</span>
                       </div>
                       <div className="cotizaciones-concepto-row">
-                        <span className="cotizaciones-concepto-label">Unidad:</span>
+                        <span className="cotizaciones-concepto-label">
+                          Unidad:
+                        </span>
                         <span>{concepto.unidad}</span>
                       </div>
                       <div className="cotizaciones-concepto-row">
-                        <span className="cotizaciones-concepto-label">Concepto:</span>
-                        <span className="cotizaciones-concepto-text">{concepto.concepto}</span>
+                        <span className="cotizaciones-concepto-label">
+                          Concepto:
+                        </span>
+                        <span className="cotizaciones-concepto-text">
+                          {concepto.concepto}
+                        </span>
                       </div>
                       <div className="cotizaciones-concepto-row">
-                        <span className="cotizaciones-concepto-label">Precio:</span>
+                        <span className="cotizaciones-concepto-label">
+                          Precio:
+                        </span>
                         <span>${concepto.precioUnitario.toFixed(2)}</span>
                       </div>
                       <div className="cotizaciones-concepto-row">
-                        <span className="cotizaciones-concepto-label">Descuento:</span>
+                        <span className="cotizaciones-concepto-label">
+                          Descuento:
+                        </span>
                         <span>{concepto.descuento}%</span>
                       </div>
                       <div className="cotizaciones-concepto-row">
-                        <span className="cotizaciones-concepto-label">Total:</span>
-                        <span className="cotizaciones-concepto-total">${concepto.importeTotal.toFixed(2)}</span>
+                        <span className="cotizaciones-concepto-label">
+                          Total:
+                        </span>
+                        <span className="cotizaciones-concepto-total">
+                          ${concepto.importeTotal.toFixed(2)}
+                        </span>
                       </div>
                     </div>
                     <div className="cotizaciones-concepto-actions">
@@ -765,9 +961,15 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
                 ))}
               </div>
             ) : (
-              <div className="cotizaciones-no-conceptos">No hay conceptos agregados</div>
+              <div className="cotizaciones-no-conceptos">
+                No hay conceptos agregados
+              </div>
             )}
-            {errors.conceptos && <span className="cotizaciones-error-message">{errors.conceptos}</span>}
+            {errors.conceptos && (
+              <span className="cotizaciones-error-message">
+                {errors.conceptos}
+              </span>
+            )}
           </div>
 
           <div className="cotizaciones-totals-section">
@@ -775,15 +977,27 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
               <label>Subtotal:</label>
               <div className="cotizaciones-input-with-symbol">
                 <span className="cotizaciones-currency-symbol">$</span>
-                <input type="text" value={subtotal.toFixed(2)} className="cotizaciones-form-control" readOnly />
+                <input
+                  type="text"
+                  value={subtotal.toFixed(2)}
+                  className="cotizaciones-form-control"
+                  readOnly
+                />
               </div>
             </div>
 
             <div className="cotizaciones-form-group">
-              <label>IVA(16%)  <span className="required"> *</span></label>
+              <label>
+                IVA(16%) <span className="required"> *</span>
+              </label>
               <div className="cotizaciones-input-with-symbol">
                 <span className="cotizaciones-currency-symbol">$</span>
-                <input type="text" value={iva.toFixed(2)} className="cotizaciones-form-control" readOnly />
+                <input
+                  type="text"
+                  value={iva.toFixed(2)}
+                  className="cotizaciones-form-control"
+                  readOnly
+                />
               </div>
             </div>
 
@@ -791,10 +1005,14 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
               <label>Total</label>
               <div className="cotizaciones-input-with-symbol">
                 <span className="cotizaciones-currency-symbol">$</span>
-                <input type="text" value={total.toFixed(2)} className="cotizaciones-form-control" readOnly />
+                <input
+                  type="text"
+                  value={total.toFixed(2)}
+                  className="cotizaciones-form-control"
+                  readOnly
+                />
               </div>
             </div>
-
 
             <div className="cotizaciones-form-group">
               <label>Importe con Letra</label>
@@ -808,10 +1026,17 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
           </div>
 
           <div className="cotizaciones-form-actions">
-            <button type="button" onClick={onClose} className="cotizaciones-btn cotizaciones-btn-cancel">
+            <button
+              type="button"
+              onClick={onClose}
+              className="cotizaciones-btn cotizaciones-btn-cancel"
+            >
               Cancelar
             </button>
-            <button type="submit" className="cotizaciones-btn cotizaciones-btn-primary">
+            <button
+              type="submit"
+              className="cotizaciones-btn cotizaciones-btn-primary"
+            >
               {isEditing ? "Guardar cambios" : "Crear"}
             </button>
           </div>
@@ -825,7 +1050,9 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
           setEditingConcepto(null);
         }}
         onSave={handleAddConcepto}
-        concepto={editingConcepto !== null ? formData.conceptos[editingConcepto] : null}
+        concepto={
+          editingConcepto !== null ? formData.conceptos[editingConcepto] : null
+        }
       />
     </>
   );
@@ -834,25 +1061,39 @@ const CotizacionModal = ({ isOpen, onClose, onSave, cotizacion = null, clientes,
 // Modal de Confirmación de Eliminación
 const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Confirmar eliminación"
+      size="sm"
+      closeOnOverlayClick={false}
+    >
       <div className="cotizaciones-confirmar-eliminacion">
         <div className="cotizaciones-confirmation-content">
           <p className="cotizaciones-confirmation-message">
             ¿Seguro que quieres eliminar esta cotización de forma permanente?
           </p>
           <div className="cotizaciones-modal-form-actions">
-            <button type="button" onClick={onClose} className="cotizaciones-btn cotizaciones-btn-cancel">
+            <button
+              type="button"
+              onClick={onClose}
+              className="cotizaciones-btn cotizaciones-btn-cancel"
+            >
               Cancelar
             </button>
-            <button type="button" onClick={onConfirm} className="cotizaciones-btn cotizaciones-btn-confirm">
+            <button
+              type="button"
+              onClick={onConfirm}
+              className="cotizaciones-btn cotizaciones-btn-confirm"
+            >
               Confirmar
             </button>
           </div>
         </div>
       </div>
     </Modal>
-  )
-}
+  );
+};
 
 // Modal para Crear Cuentas por Cobrar
 const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
@@ -870,8 +1111,16 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
   const esquemas = [
     { value: "ANUAL", label: "Anual", editablePagos: true },
     { value: "MENSUAL", label: "Mensual", editablePagos: true },
-    { value: "DISTRIBUIDOR", label: "Distribuidor - 1 solo pago", editablePagos: false },
-    { value: "VITALICIA", label: "Vitalicia - 1 solo pago", editablePagos: false },
+    {
+      value: "DISTRIBUIDOR",
+      label: "Distribuidor - 1 solo pago",
+      editablePagos: false,
+    },
+    {
+      value: "VITALICIA",
+      label: "Vitalicia - 1 solo pago",
+      editablePagos: false,
+    },
   ];
 
   useEffect(() => {
@@ -880,12 +1129,20 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
         cotizacionId: cotizacion.id || "",
         clienteNombre: cotizacion.clienteNombre || "",
         noEquipos: cotizacion.unidades
-          ? cotizacion.unidades.reduce((sum, u) => u.unidad === "Equipos" ? sum + u.cantidad : sum, 0)
+          ? cotizacion.unidades.reduce(
+              (sum, u) => (u.unidad === "Equipos" ? sum + u.cantidad : sum),
+              0,
+            )
           : 0,
         esquema: "ANUAL",
         numeroPagos: "1",
-        fechaInicial: new Date().toISOString().split('T')[0],
-        conceptos: cotizacion.unidades ? cotizacion.unidades.map(u => ({ text: u.concepto, selected: true })) : [],
+        fechaInicial: new Date().toISOString().split("T")[0],
+        conceptos: cotizacion.unidades
+          ? cotizacion.unidades.map((u) => ({
+              text: u.concepto,
+              selected: true,
+            }))
+          : [],
       });
       setErrors({});
     }
@@ -907,17 +1164,18 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
-
   };
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.clienteNombre) newErrors.clienteNombre = "El cliente es obligatorio";
+    if (!formData.clienteNombre)
+      newErrors.clienteNombre = "El cliente es obligatorio";
     if (!formData.esquema) newErrors.esquema = "El esquema es obligatorio";
     if (!formData.numeroPagos || Number.parseInt(formData.numeroPagos) <= 0) {
       newErrors.numeroPagos = "El número de pagos debe ser mayor a 0";
     }
-    if (!formData.fechaInicial) newErrors.fechaInicial = "La fecha inicial es obligatoria"; // AGREGAR ESTA LÍNEA
-    if (formData.conceptos.filter(c => c.selected).length === 0) {
+    if (!formData.fechaInicial)
+      newErrors.fechaInicial = "La fecha inicial es obligatoria"; // AGREGAR ESTA LÍNEA
+    if (formData.conceptos.filter((c) => c.selected).length === 0) {
       newErrors.conceptos = "Debe seleccionar al menos un concepto";
     }
     setErrors(newErrors);
@@ -927,20 +1185,28 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-    const conceptosSeleccionados = formData.conceptos.filter(c => c.selected).map(c => c.text);
+    const conceptosSeleccionados = formData.conceptos
+      .filter((c) => c.selected)
+      .map((c) => c.text);
     if (conceptosSeleccionados.length === 0) {
-      setErrors((prev) => ({ ...prev, conceptos: "Debe seleccionar al menos un concepto" }));
+      setErrors((prev) => ({
+        ...prev,
+        conceptos: "Debe seleccionar al menos un concepto",
+      }));
       return;
     }
     try {
       const queryParams = new URLSearchParams();
-      conceptosSeleccionados.forEach(concepto => queryParams.append('conceptosSeleccionados', concepto));
-      queryParams.append('numeroPagos', formData.numeroPagos);
-      const url = `${API_BASE_URL}/cuentas-por-cobrar/from-cotizacion/${formData.cotizacionId}?esquema=${formData.esquema}&fechaInicial=${formData.fechaInicial}&${queryParams.toString()}`;
+      queryParams.append("esquema", formData.esquema);
+      queryParams.append("fechaInicial", formData.fechaInicial);
+      queryParams.append("numeroPagos", formData.numeroPagos);
+
+      const url = `${API_BASE_URL}/cuentas-por-cobrar/from-cotizacion/${formData.cotizacionId}?${queryParams.toString()}`;
 
       const response = await fetchWithToken(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(conceptosSeleccionados),
       });
       const savedCuentas = await response.json();
       onSave(savedCuentas);
@@ -951,18 +1217,38 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Cuenta/s por Cobrar" size="md" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Cuenta/s por Cobrar"
+      size="md"
+      closeOnOverlayClick={false}
+    >
       <form onSubmit={handleSubmit} className="cuentascobrar-form">
         <div className="cuentascobrar-form-group">
           <label htmlFor="cliente">Cliente</label>
-          <input type="text" id="cliente" value={formData.clienteNombre} className="cuentascobrar-form-control" readOnly />
+          <input
+            type="text"
+            id="cliente"
+            value={formData.clienteNombre}
+            className="cuentascobrar-form-control"
+            readOnly
+          />
         </div>
         <div className="cuentascobrar-form-group">
           <label htmlFor="noEquipos">Número de Equipos</label>
-          <input type="number" id="noEquipos" value={formData.noEquipos} className="cuentascobrar-form-control" readOnly />
+          <input
+            type="number"
+            id="noEquipos"
+            value={formData.noEquipos}
+            className="cuentascobrar-form-control"
+            readOnly
+          />
         </div>
         <div className="cuentascobrar-form-group">
-          <label htmlFor="esquema">Esquema <span className="required"> *</span></label>
+          <label htmlFor="esquema">
+            Esquema <span className="required"> *</span>
+          </label>
           <select
             id="esquema"
             value={formData.esquema}
@@ -970,10 +1256,16 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
             className={`cuentascobrar-form-control cuentascobrar-select-contained ${errors.esquema ? "error" : ""}`}
           >
             {esquemas.map((esquema) => (
-              <option key={esquema.value} value={esquema.value}>{esquema.label}</option>
+              <option key={esquema.value} value={esquema.value}>
+                {esquema.label}
+              </option>
             ))}
           </select>
-          {errors.esquema && <span className="cuentascobrar-error-message">{errors.esquema}</span>}
+          {errors.esquema && (
+            <span className="cuentascobrar-error-message">
+              {errors.esquema}
+            </span>
+          )}
         </div>
         <div className="cuentascobrar-form-group">
           <label htmlFor="numeroPagos">Número de Pagos</label>
@@ -982,19 +1274,29 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
             id="numeroPagos"
             value={formData.numeroPagos}
             onChange={(e) => {
-              const esquemaSeleccionado = esquemas.find(e => e.value === formData.esquema);
+              const esquemaSeleccionado = esquemas.find(
+                (e) => e.value === formData.esquema,
+              );
               if (esquemaSeleccionado.editablePagos) {
                 handleInputChange("numeroPagos", e.target.value);
               }
             }}
             className="cuentascobrar-form-control"
-            readOnly={!esquemas.find(e => e.value === formData.esquema)?.editablePagos}
+            readOnly={
+              !esquemas.find((e) => e.value === formData.esquema)?.editablePagos
+            }
             min="1"
           />
-          {errors.numeroPagos && <span className="cuentascobrar-error-message">{errors.numeroPagos}</span>}
+          {errors.numeroPagos && (
+            <span className="cuentascobrar-error-message">
+              {errors.numeroPagos}
+            </span>
+          )}
         </div>
         <div className="cuentascobrar-form-group">
-          <label htmlFor="fechaInicial">Fecha Inicial <span className="required"> *</span></label>
+          <label htmlFor="fechaInicial">
+            Fecha Inicial <span className="required"> *</span>
+          </label>
           <input
             type="date"
             id="fechaInicial"
@@ -1003,7 +1305,11 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
             className={`cuentascobrar-form-control ${errors.fechaInicial ? "error" : ""}`}
             required
           />
-          {errors.fechaInicial && <span className="cuentascobrar-error-message">{errors.fechaInicial}</span>}
+          {errors.fechaInicial && (
+            <span className="cuentascobrar-error-message">
+              {errors.fechaInicial}
+            </span>
+          )}
         </div>
         <div className="cuentascobrar-form-group">
           <label>Concepto/s</label>
@@ -1015,17 +1321,37 @@ const CrearCuentasModal = ({ isOpen, onClose, onSave, cotizacion }) => {
                 onChange={(e) => {
                   const updatedConceptos = [...formData.conceptos];
                   updatedConceptos[index].selected = e.target.checked;
-                  setFormData((prev) => ({ ...prev, conceptos: updatedConceptos }));
+                  setFormData((prev) => ({
+                    ...prev,
+                    conceptos: updatedConceptos,
+                  }));
                 }}
               />
-              <span className="cuentascobrar-concepto-text">{concepto.text}</span>
+              <span className="cuentascobrar-concepto-text">
+                {concepto.text}
+              </span>
             </div>
           ))}
-          {errors.conceptos && <span className="cuentascobrar-error-message">{errors.conceptos}</span>}
+          {errors.conceptos && (
+            <span className="cuentascobrar-error-message">
+              {errors.conceptos}
+            </span>
+          )}
         </div>
         <div className="cuentascobrar-form-actions">
-          <button type="button" onClick={onClose} className="cuentascobrar-btn cuentascobrar-btn-cancel">Cancelar</button>
-          <button type="submit" className="cuentascobrar-btn cuentascobrar-btn-primary">Generar</button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="cuentascobrar-btn cuentascobrar-btn-cancel"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="cuentascobrar-btn cuentascobrar-btn-primary"
+          >
+            Generar
+          </button>
         </div>
       </form>
     </Modal>
@@ -1048,28 +1374,35 @@ const SubirArchivoModal = ({ isOpen, onClose, onDownload, cotizacion }) => {
 
   const handleFileChange = (tipo, e) => {
     const file = e.target.files[0];
-    if (file && (file.type === 'application/pdf' || file.type === 'image/png')) {
-      if (tipo === 'notas') {
+    if (
+      file &&
+      (file.type === "application/pdf" || file.type === "image/png")
+    ) {
+      if (tipo === "notas") {
         setNotasComerciales(file);
       } else {
         setFichaTecnica(file);
       }
-      setErrors(prev => ({ ...prev, [tipo]: null }));
+      setErrors((prev) => ({ ...prev, [tipo]: null }));
     } else {
       Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Solo se permiten archivos PDF y PNG'
+        icon: "error",
+        title: "Error",
+        text: "Solo se permiten archivos PDF y PNG",
       });
-      e.target.value = '';
+      e.target.value = "";
     }
   };
 
   const validateFiles = () => {
     const newErrors = {};
 
-    if ((notasComerciales && !fichaTecnica) || (!notasComerciales && fichaTecnica)) {
-      newErrors.general = 'Si subes un archivo, debes subir ambos: Notas Comerciales y Ficha Técnica';
+    if (
+      (notasComerciales && !fichaTecnica) ||
+      (!notasComerciales && fichaTecnica)
+    ) {
+      newErrors.general =
+        "Si subes un archivo, debes subir ambos: Notas Comerciales y Ficha Técnica";
       setErrors(newErrors);
       return false;
     }
@@ -1084,25 +1417,28 @@ const SubirArchivoModal = ({ isOpen, onClose, onDownload, cotizacion }) => {
     const formData = new FormData();
 
     if (notasComerciales) {
-      formData.append('notasComerciales', notasComerciales);
+      formData.append("notasComerciales", notasComerciales);
     }
     if (fichaTecnica) {
-      formData.append('fichaTecnica', fichaTecnica);
+      formData.append("fichaTecnica", fichaTecnica);
     }
 
     try {
-      await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacion.id}/upload-archivos`, {
-        method: 'POST',
-        body: formData,
-      });
+      await fetchWithToken(
+        `${API_BASE_URL}/cotizaciones/${cotizacion.id}/upload-archivos`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
 
       await onDownload(cotizacion.id, true);
       onClose();
     } catch (error) {
       Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Error al subir los archivos: ' + error.message
+        icon: "error",
+        title: "Error",
+        text: "Error al subir los archivos: " + error.message,
       });
     } finally {
       setUploading(false);
@@ -1115,7 +1451,13 @@ const SubirArchivoModal = ({ isOpen, onClose, onDownload, cotizacion }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Descargar Cotización" size="lg" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Descargar Cotización"
+      size="lg"
+      closeOnOverlayClick={false}
+    >
       <div className="cotizaciones-form">
         <div className="cotizaciones-form-group">
           <p className="cotizaciones-modal-text">
@@ -1129,13 +1471,22 @@ const SubirArchivoModal = ({ isOpen, onClose, onDownload, cotizacion }) => {
         {/* Advertencia de tamaños recomendados */}
         <div className="cotizaciones-form-group">
           <div className="cotizaciones-size-warning">
-            <h4 className="cotizaciones-warning-title">Recomendaciones para imágenes PNG:</h4>
+            <h4 className="cotizaciones-warning-title">
+              Recomendaciones para imágenes PNG:
+            </h4>
             <ul className="cotizaciones-warning-list">
-              <li><strong>Tamaño recomendado:</strong> 1240 x 1754 píxeles (proporción A4)</li>
-              <li><strong>Orientación:</strong> Vertical (portrait) preferentemente</li>
+              <li>
+                <strong>Tamaño recomendado:</strong> 1240 x 1754 píxeles
+                (proporción A4)
+              </li>
+              <li>
+                <strong>Orientación:</strong> Vertical (portrait)
+                preferentemente
+              </li>
             </ul>
             <p className="cotizaciones-warning-note">
-              <strong>Nota:</strong> Las imágenes PNG se convertirán automáticamente a PDF y se ajustarán al tamaño de página A4.
+              <strong>Nota:</strong> Las imágenes PNG se convertirán
+              automáticamente a PDF y se ajustarán al tamaño de página A4.
             </p>
           </div>
         </div>
@@ -1145,7 +1496,7 @@ const SubirArchivoModal = ({ isOpen, onClose, onDownload, cotizacion }) => {
           <input
             type="file"
             accept=".pdf,.png"
-            onChange={(e) => handleFileChange('notas', e)}
+            onChange={(e) => handleFileChange("notas", e)}
             className="cotizaciones-form-control"
           />
           {notasComerciales && (
@@ -1154,7 +1505,8 @@ const SubirArchivoModal = ({ isOpen, onClose, onDownload, cotizacion }) => {
                 <strong>Archivo seleccionado:</strong> {notasComerciales.name}
               </p>
               <p className="cotizaciones-file-details">
-                <strong>Tamaño:</strong> {(notasComerciales.size / 1024 / 1024).toFixed(2)} MB
+                <strong>Tamaño:</strong>{" "}
+                {(notasComerciales.size / 1024 / 1024).toFixed(2)} MB
               </p>
             </div>
           )}
@@ -1165,7 +1517,7 @@ const SubirArchivoModal = ({ isOpen, onClose, onDownload, cotizacion }) => {
           <input
             type="file"
             accept=".pdf,.png"
-            onChange={(e) => handleFileChange('ficha', e)}
+            onChange={(e) => handleFileChange("ficha", e)}
             className="cotizaciones-form-control"
           />
           {fichaTecnica && (
@@ -1174,7 +1526,8 @@ const SubirArchivoModal = ({ isOpen, onClose, onDownload, cotizacion }) => {
                 <strong>Archivo seleccionado:</strong> {fichaTecnica.name}
               </p>
               <p className="cotizaciones-file-details">
-                <strong>Tamaño:</strong> {(fichaTecnica.size / 1024 / 1024).toFixed(2)} MB
+                <strong>Tamaño:</strong>{" "}
+                {(fichaTecnica.size / 1024 / 1024).toFixed(2)} MB
               </p>
             </div>
           )}
@@ -1200,7 +1553,7 @@ const SubirArchivoModal = ({ isOpen, onClose, onDownload, cotizacion }) => {
             className="cotizaciones-btn cotizaciones-btn-primary"
             disabled={uploading || (!notasComerciales && !fichaTecnica)}
           >
-            {uploading ? 'Cargando...' : 'Cargar y ver'}
+            {uploading ? "Cargando..." : "Cargar y ver"}
           </button>
         </div>
       </div>
@@ -1209,7 +1562,12 @@ const SubirArchivoModal = ({ isOpen, onClose, onDownload, cotizacion }) => {
 };
 
 // Modal para Compartir Cotización con opción de archivos
-const CompartirCotizacionModal = ({ isOpen, onClose, onCompartir, cotizacion }) => {
+const CompartirCotizacionModal = ({
+  isOpen,
+  onClose,
+  onCompartir,
+  cotizacion,
+}) => {
   const [notasComerciales, setNotasComerciales] = useState(null);
   const [fichaTecnica, setFichaTecnica] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -1225,28 +1583,35 @@ const CompartirCotizacionModal = ({ isOpen, onClose, onCompartir, cotizacion }) 
 
   const handleFileChange = (tipo, e) => {
     const file = e.target.files[0];
-    if (file && (file.type === 'application/pdf' || file.type === 'image/png')) {
-      if (tipo === 'notas') {
+    if (
+      file &&
+      (file.type === "application/pdf" || file.type === "image/png")
+    ) {
+      if (tipo === "notas") {
         setNotasComerciales(file);
       } else {
         setFichaTecnica(file);
       }
-      setErrors(prev => ({ ...prev, [tipo]: null }));
+      setErrors((prev) => ({ ...prev, [tipo]: null }));
     } else {
       Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Solo se permiten archivos PDF y PNG'
+        icon: "error",
+        title: "Error",
+        text: "Solo se permiten archivos PDF y PNG",
       });
-      e.target.value = '';
+      e.target.value = "";
     }
   };
 
   const validateFiles = () => {
     const newErrors = {};
 
-    if ((notasComerciales && !fichaTecnica) || (!notasComerciales && fichaTecnica)) {
-      newErrors.general = 'Si subes un archivo, debes subir ambos: Notas Comerciales y Ficha Técnica';
+    if (
+      (notasComerciales && !fichaTecnica) ||
+      (!notasComerciales && fichaTecnica)
+    ) {
+      newErrors.general =
+        "Si subes un archivo, debes subir ambos: Notas Comerciales y Ficha Técnica";
       setErrors(newErrors);
       return false;
     }
@@ -1261,25 +1626,28 @@ const CompartirCotizacionModal = ({ isOpen, onClose, onCompartir, cotizacion }) 
     const formData = new FormData();
 
     if (notasComerciales) {
-      formData.append('notasComerciales', notasComerciales);
+      formData.append("notasComerciales", notasComerciales);
     }
     if (fichaTecnica) {
-      formData.append('fichaTecnica', fichaTecnica);
+      formData.append("fichaTecnica", fichaTecnica);
     }
 
     try {
-      await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacion.id}/upload-archivos`, {
-        method: 'POST',
-        body: formData,
-      });
+      await fetchWithToken(
+        `${API_BASE_URL}/cotizaciones/${cotizacion.id}/upload-archivos`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
 
       await onCompartir(true);
       onClose();
     } catch (error) {
       Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Error al subir los archivos: ' + error.message
+        icon: "error",
+        title: "Error",
+        text: "Error al subir los archivos: " + error.message,
       });
     } finally {
       setUploading(false);
@@ -1292,11 +1660,18 @@ const CompartirCotizacionModal = ({ isOpen, onClose, onCompartir, cotizacion }) 
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Compartir Cotización" size="lg" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Compartir Cotización"
+      size="lg"
+      closeOnOverlayClick={false}
+    >
       <div className="cotizaciones-form">
         <div className="cotizaciones-form-group">
           <p className="cotizaciones-modal-text">
-            ¿Deseas agregar archivos adicionales antes de compartir esta cotización?
+            ¿Deseas agregar archivos adicionales antes de compartir esta
+            cotización?
           </p>
           {errors.general && (
             <div className="cotizaciones-error-message">{errors.general}</div>
@@ -1305,13 +1680,22 @@ const CompartirCotizacionModal = ({ isOpen, onClose, onCompartir, cotizacion }) 
 
         <div className="cotizaciones-form-group">
           <div className="cotizaciones-size-warning">
-            <h4 className="cotizaciones-warning-title">Recomendaciones para imágenes PNG:</h4>
+            <h4 className="cotizaciones-warning-title">
+              Recomendaciones para imágenes PNG:
+            </h4>
             <ul className="cotizaciones-warning-list">
-              <li><strong>Tamaño recomendado:</strong> 1240 x 1754 píxeles (proporción A4)</li>
-              <li><strong>Orientación:</strong> Vertical (portrait) preferentemente</li>
+              <li>
+                <strong>Tamaño recomendado:</strong> 1240 x 1754 píxeles
+                (proporción A4)
+              </li>
+              <li>
+                <strong>Orientación:</strong> Vertical (portrait)
+                preferentemente
+              </li>
             </ul>
             <p className="cotizaciones-warning-note">
-              <strong>Nota:</strong> Las imágenes PNG se convertirán automáticamente a PDF y se ajustarán al tamaño de página A4.
+              <strong>Nota:</strong> Las imágenes PNG se convertirán
+              automáticamente a PDF y se ajustarán al tamaño de página A4.
             </p>
           </div>
         </div>
@@ -1321,7 +1705,7 @@ const CompartirCotizacionModal = ({ isOpen, onClose, onCompartir, cotizacion }) 
           <input
             type="file"
             accept=".pdf,.png"
-            onChange={(e) => handleFileChange('notas', e)}
+            onChange={(e) => handleFileChange("notas", e)}
             className="cotizaciones-form-control"
           />
           {notasComerciales && (
@@ -1330,7 +1714,8 @@ const CompartirCotizacionModal = ({ isOpen, onClose, onCompartir, cotizacion }) 
                 <strong>Archivo seleccionado:</strong> {notasComerciales.name}
               </p>
               <p className="cotizaciones-file-details">
-                <strong>Tamaño:</strong> {(notasComerciales.size / 1024 / 1024).toFixed(2)} MB
+                <strong>Tamaño:</strong>{" "}
+                {(notasComerciales.size / 1024 / 1024).toFixed(2)} MB
               </p>
             </div>
           )}
@@ -1341,7 +1726,7 @@ const CompartirCotizacionModal = ({ isOpen, onClose, onCompartir, cotizacion }) 
           <input
             type="file"
             accept=".pdf,.png"
-            onChange={(e) => handleFileChange('ficha', e)}
+            onChange={(e) => handleFileChange("ficha", e)}
             className="cotizaciones-form-control"
           />
           {fichaTecnica && (
@@ -1350,7 +1735,8 @@ const CompartirCotizacionModal = ({ isOpen, onClose, onCompartir, cotizacion }) 
                 <strong>Archivo seleccionado:</strong> {fichaTecnica.name}
               </p>
               <p className="cotizaciones-file-details">
-                <strong>Tamaño:</strong> {(fichaTecnica.size / 1024 / 1024).toFixed(2)} MB
+                <strong>Tamaño:</strong>{" "}
+                {(fichaTecnica.size / 1024 / 1024).toFixed(2)} MB
               </p>
             </div>
           )}
@@ -1376,7 +1762,7 @@ const CompartirCotizacionModal = ({ isOpen, onClose, onCompartir, cotizacion }) 
             className="cotizaciones-btn cotizaciones-btn-primary"
             disabled={uploading || (!notasComerciales && !fichaTecnica)}
           >
-            {uploading ? 'Cargando...' : 'Compartir con archivos'}
+            {uploading ? "Cargando..." : "Compartir con archivos"}
           </button>
         </div>
       </div>
@@ -1415,23 +1801,25 @@ const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
 
 // Componente Principal
 const AdminCotizaciones = () => {
-  const navigate = useNavigate()
-  const userRol = localStorage.getItem("userRol")
+  const navigate = useNavigate();
+  const userRol = localStorage.getItem("userRol");
   const [cotizaciones, setCotizaciones] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [users, setUsers] = useState([]);
   const [emisores, setEmisores] = useState([]);
   const [filterReceptor, setFilterReceptor] = useState("");
-  const [cotizacionesVinculadas, setCotizacionesVinculadas] = useState(new Set());
+  const [cotizacionesVinculadas, setCotizacionesVinculadas] = useState(
+    new Set(),
+  );
   const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
-  const [ordenFecha, setOrdenFecha] = useState('asc');
+  const [ordenFecha, setOrdenFecha] = useState("asc");
   const [isLoading, setIsLoading] = useState(true);
   const [rangoFechas, setRangoFechas] = useState([null, null]);
   const [fechaInicio, fechaFin] = rangoFechas;
   const [pdfPreview, setPdfPreview] = useState({
     isOpen: false,
     url: null,
-    filename: ""
+    filename: "",
   });
 
   const [modals, setModals] = useState({
@@ -1446,15 +1834,18 @@ const AdminCotizaciones = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const fasesInteres = "COTIZACION_PROPUESTA_PRACTICA,NEGOCIACION_REVISION,CERRADO_GANADO";
+        const fasesInteres =
+          "COTIZACION_PROPUESTA_PRACTICA,NEGOCIACION_REVISION,CERRADO_GANADO";
         const [
           empresasPorFaseResp,
           cotizacionesResp,
           usersResp,
           emisoresResp,
-          cuentasResp
+          cuentasResp,
         ] = await Promise.all([
-          fetchWithToken(`${API_BASE_URL}/empresas/por-fases-trato?fases=${fasesInteres}`),
+          fetchWithToken(
+            `${API_BASE_URL}/empresas/por-fases-trato?fases=${fasesInteres}`,
+          ),
           fetchWithToken(`${API_BASE_URL}/cotizaciones`),
           fetchWithToken(`${API_BASE_URL}/auth/users`),
           fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/emisores`),
@@ -1468,11 +1859,21 @@ const AdminCotizaciones = () => {
         const emisoresData = await emisoresResp.json();
         const cuentasData = await cuentasResp.json();
 
-        const listaClientes = Array.isArray(empresasData) ? empresasData : empresasData.data || [];
-        const cotizaciones = Array.isArray(cotizacionesData) ? cotizacionesData : cotizacionesData.data || [];
-        const users = Array.isArray(usersData) ? usersData : usersData.data || [];
-        const emisores = Array.isArray(emisoresData) ? emisoresData : emisoresData.data || [];
-        const cuentasPorCobrar = Array.isArray(cuentasData) ? cuentasData : cuentasData.data || [];
+        const listaClientes = Array.isArray(empresasData)
+          ? empresasData
+          : empresasData.data || [];
+        const cotizaciones = Array.isArray(cotizacionesData)
+          ? cotizacionesData
+          : cotizacionesData.data || [];
+        const users = Array.isArray(usersData)
+          ? usersData
+          : usersData.data || [];
+        const emisores = Array.isArray(emisoresData)
+          ? emisoresData
+          : emisoresData.data || [];
+        const cuentasPorCobrar = Array.isArray(cuentasData)
+          ? cuentasData
+          : cuentasData.data || [];
 
         setClientes(listaClientes);
         setCotizaciones(cotizaciones);
@@ -1483,7 +1884,6 @@ const AdminCotizaciones = () => {
         setUsers(users);
         setEmisores(emisores);
         setCuentasPorCobrar(cuentasPorCobrar);
-
       } catch (error) {
         console.error("Error en fetchData:", error);
         Swal.fire({
@@ -1501,14 +1901,16 @@ const AdminCotizaciones = () => {
   const checkVinculaciones = async (cotizacionesList) => {
     try {
       const vinculacionPromises = cotizacionesList.map(async (cotizacion) => {
-        const response = await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacion.id}/check-vinculada`);
+        const response = await fetchWithToken(
+          `${API_BASE_URL}/cotizaciones/${cotizacion.id}/check-vinculada`,
+        );
         const { vinculada } = await response.json();
         return { id: cotizacion.id, vinculada };
       });
 
       const resultados = await Promise.all(vinculacionPromises);
       const vinculadas = new Set(
-        resultados.filter(r => r.vinculada).map(r => r.id)
+        resultados.filter((r) => r.vinculada).map((r) => r.id),
       );
       setCotizacionesVinculadas(vinculadas);
     } catch (error) {
@@ -1533,33 +1935,33 @@ const AdminCotizaciones = () => {
   const handleMenuNavigation = (menuItem) => {
     switch (menuItem) {
       case "balance":
-        navigate("/admin_balance")
-        break
+        navigate("/admin_balance");
+        break;
       case "transacciones":
-        navigate("/admin_transacciones")
-        break
+        navigate("/admin_transacciones");
+        break;
       case "cotizaciones":
-        navigate("/admin_cotizaciones")
-        break
+        navigate("/admin_cotizaciones");
+        break;
       case "facturacion":
-        navigate("/admin_facturacion")
-        break
+        navigate("/admin_facturacion");
+        break;
       case "cuentas-cobrar":
-        navigate("/admin_cuentas_cobrar")
-        break
+        navigate("/admin_cuentas_cobrar");
+        break;
       case "cuentas-pagar":
-        navigate("/admin_cuentas_pagar")
-        break
+        navigate("/admin_cuentas_pagar");
+        break;
       case "caja-chica":
-        navigate("/admin_caja_chica")
-        break
+        navigate("/admin_caja_chica");
+        break;
       case "comisiones":
         navigate("/admin_comisiones");
         break;
       default:
-        break
+        break;
     }
-  }
+  };
 
   const limpiarFiltroFechas = () => {
     setRangoFechas([null, null]);
@@ -1592,7 +1994,7 @@ const AdminCotizaciones = () => {
       const data = await response.json();
       if (cotizacionData.id) {
         setCotizaciones((prev) =>
-          prev.map((c) => (c.id === cotizacionData.id ? { ...c, ...data } : c))
+          prev.map((c) => (c.id === cotizacionData.id ? { ...c, ...data } : c)),
         );
         Swal.fire({
           icon: "success",
@@ -1616,7 +2018,6 @@ const AdminCotizaciones = () => {
     }
   };
 
-
   const handleDeleteCotizacion = (cotizacion) => {
     openModal("confirmarEliminacion", { cotizacion });
   };
@@ -1626,7 +2027,9 @@ const AdminCotizaciones = () => {
 
     try {
       // Primero verificar si la cotización está vinculada a alguna cuenta por cobrar
-      const checkResponse = await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacionId}/check-vinculada`);
+      const checkResponse = await fetchWithToken(
+        `${API_BASE_URL}/cotizaciones/${cotizacionId}/check-vinculada`,
+      );
       const checkData = await checkResponse.json();
 
       if (checkData.vinculada) {
@@ -1635,15 +2038,18 @@ const AdminCotizaciones = () => {
           icon: "warning",
           title: "No se puede eliminar",
           text: "No se puede eliminar la cotización porque está vinculada a una o más cuentas por cobrar",
-          confirmButtonText: "Entendido"
+          confirmButtonText: "Entendido",
         });
         return;
       }
 
       // Si no está vinculada, proceder con la eliminación
-      const deleteResponse = await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacionId}`, {
-        method: "DELETE"
-      });
+      const deleteResponse = await fetchWithToken(
+        `${API_BASE_URL}/cotizaciones/${cotizacionId}`,
+        {
+          method: "DELETE",
+        },
+      );
 
       if (deleteResponse.ok) {
         setCotizaciones((prev) => prev.filter((c) => c.id !== cotizacionId));
@@ -1657,7 +2063,6 @@ const AdminCotizaciones = () => {
         const errorData = await deleteResponse.json();
         throw new Error(errorData.error || "Error al eliminar la cotización");
       }
-
     } catch (error) {
       closeModal("confirmarEliminacion");
       Swal.fire({
@@ -1670,7 +2075,7 @@ const AdminCotizaciones = () => {
 
   const handleSaveCuenta = (cuenta) => {
     setCuentasPorCobrar((prev) =>
-      prev.map((c) => (c.id === cuenta.id ? { ...c, ...cuenta } : c))
+      prev.map((c) => (c.id === cuenta.id ? { ...c, ...cuenta } : c)),
     );
     Swal.fire({
       icon: "success",
@@ -1678,7 +2083,6 @@ const AdminCotizaciones = () => {
       text: "Cuenta/s por cobrar actualizada correctamente",
     });
   };
-
 
   const handleDownloadCotizacionPDF = (cotizacionId) => {
     openModal("subirArchivo", { cotizacion: { id: cotizacionId } });
@@ -1689,36 +2093,35 @@ const AdminCotizaciones = () => {
       const response = await fetchWithToken(
         `${API_BASE_URL}/cotizaciones/${cotizacionId}/download-pdf?incluirArchivos=${incluirArchivos}`,
         {
-          method: 'GET',
-          headers: { 'Accept': 'application/pdf' }
-        }
+          method: "GET",
+          headers: { Accept: "application/pdf" },
+        },
       );
 
-      if (!response.ok) throw new Error('Error downloading PDF');
+      if (!response.ok) throw new Error("Error downloading PDF");
 
       const blob = await response.blob();
 
       const url = window.URL.createObjectURL(blob);
-      const filename = `COTIZACION_${cotizacionId}_${new Date().toLocaleDateString('es-MX').replace(/\//g, '-')}.pdf`;
+      const filename = `COTIZACION_${cotizacionId}_${new Date().toLocaleDateString("es-MX").replace(/\//g, "-")}.pdf`;
 
       setPdfPreview({
         isOpen: true,
         url: url,
-        filename: filename
+        filename: filename,
       });
-
     } catch (error) {
       Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudo generar la vista previa: ' + error.message,
+        icon: "error",
+        title: "Error",
+        text: "No se pudo generar la vista previa: " + error.message,
       });
     }
   };
 
   const handleDownloadFromPreview = () => {
     if (pdfPreview.url) {
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = pdfPreview.url;
       a.download = pdfPreview.filename;
       document.body.appendChild(a);
@@ -1742,7 +2145,7 @@ const AdminCotizaciones = () => {
   };
 
   const toggleOrdenFecha = () => {
-    setOrdenFecha(prevOrden => prevOrden === 'desc' ? 'asc' : 'desc');
+    setOrdenFecha((prevOrden) => (prevOrden === "desc" ? "asc" : "desc"));
   };
 
   const cotizacionesFiltradas = cotizaciones.filter((cotizacion) => {
@@ -1758,14 +2161,26 @@ const AdminCotizaciones = () => {
       let fin = fechaFin ? new Date(fechaFin) : null;
 
       if (inicio) {
-        inicio = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
+        inicio = new Date(
+          inicio.getFullYear(),
+          inicio.getMonth(),
+          inicio.getDate(),
+        );
       }
       if (fin) {
-        fin = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59, 59);
+        fin = new Date(
+          fin.getFullYear(),
+          fin.getMonth(),
+          fin.getDate(),
+          23,
+          59,
+          59,
+        );
       }
 
       if (!isNaN(fechaItem.getTime())) {
-        pasaFechas = (!inicio || fechaItem >= inicio) && (!fin || fechaItem <= fin);
+        pasaFechas =
+          (!inicio || fechaItem >= inicio) && (!fin || fechaItem <= fin);
       }
     }
 
@@ -1777,7 +2192,7 @@ const AdminCotizaciones = () => {
       const fechaA = new Date(a.fechaCreacion);
       const fechaB = new Date(b.fechaCreacion);
 
-      if (ordenFecha === 'desc') {
+      if (ordenFecha === "desc") {
         return fechaB - fechaA;
       } else {
         return fechaA - fechaB;
@@ -1803,11 +2218,17 @@ const AdminCotizaciones = () => {
               </div>
               <div className="cotizaciones-sidebar-menu">
                 {userRol === "ADMINISTRADOR" && (
-                  <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("balance")}>
+                  <div
+                    className="cotizaciones-menu-item"
+                    onClick={() => handleMenuNavigation("balance")}
+                  >
                     Balance
                   </div>
                 )}
-                <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
+                <div
+                  className="cotizaciones-menu-item"
+                  onClick={() => handleMenuNavigation("transacciones")}
+                >
                   Transacciones
                 </div>
                 <div
@@ -1816,19 +2237,34 @@ const AdminCotizaciones = () => {
                 >
                   Cotizaciones
                 </div>
-                <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("facturacion")}>
+                <div
+                  className="cotizaciones-menu-item"
+                  onClick={() => handleMenuNavigation("facturacion")}
+                >
                   Facturas/Notas
                 </div>
-                <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("cuentas-cobrar")}>
+                <div
+                  className="cotizaciones-menu-item"
+                  onClick={() => handleMenuNavigation("cuentas-cobrar")}
+                >
                   Cuentas por Cobrar
                 </div>
-                <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("cuentas-pagar")}>
+                <div
+                  className="cotizaciones-menu-item"
+                  onClick={() => handleMenuNavigation("cuentas-pagar")}
+                >
                   Cuentas por Pagar
                 </div>
-                <div className="cotizaciones-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>
+                <div
+                  className="cotizaciones-menu-item"
+                  onClick={() => handleMenuNavigation("caja-chica")}
+                >
                   Caja chica
                 </div>
-                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("comisiones")}>
+                <div
+                  className="transacciones-menu-item"
+                  onClick={() => handleMenuNavigation("comisiones")}
+                >
                   Comisiones
                 </div>
               </div>
@@ -1837,15 +2273,18 @@ const AdminCotizaciones = () => {
             {/* Main Content */}
             <section className="cotizaciones-content-panel">
               <div className="cotizaciones-header">
-
                 <div className="cotizaciones-header-info">
                   <h3 className="cotizaciones-page-title">Cotizaciones</h3>
-                  <p className="cotizaciones-subtitle">Gestión de cotizaciones para clientes</p>
+                  <p className="cotizaciones-subtitle">
+                    Gestión de cotizaciones para clientes
+                  </p>
                 </div>
                 <div className="cotizaciones-header-actions">
                   <button
                     className="cotizaciones-btn cotizaciones-btn-primary"
-                    onClick={() => openModal("cotizacion", { cotizacion: null })}
+                    onClick={() =>
+                      openModal("cotizacion", { cotizacion: null })
+                    }
                   >
                     Crear cotización
                   </button>
@@ -1854,12 +2293,10 @@ const AdminCotizaciones = () => {
 
               {/* Tabla de Cotizaciones */}
               <div className="cotizaciones-table-card">
-
                 <div className="cotizaciones-table-header-row">
                   <h4 className="cotizaciones-table-title">Cotizaciones</h4>
 
                   <div className="cotizaciones-header-controls">
-
                     {/* Filtro Receptor */}
                     <input
                       type="text"
@@ -1890,10 +2327,12 @@ const AdminCotizaciones = () => {
                     <button
                       className="cotizaciones-btn-orden"
                       onClick={toggleOrdenFecha}
-                      title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
+                      title={`Cambiar a orden ${ordenFecha === "desc" ? "ascendente" : "descendente"}`}
                     >
                       <span className="cotizaciones-icon-orden">📅</span>
-                      {ordenFecha === 'desc' ? '↓ Recientes primero' : '↑ Antiguas primero'}
+                      {ordenFecha === "desc"
+                        ? "↓ Recientes primero"
+                        : "↑ Antiguas primero"}
                     </button>
                   </div>
                 </div>
@@ -1905,7 +2344,9 @@ const AdminCotizaciones = () => {
                         <th>No. Cotización</th>
                         <th>Receptor</th>
                         <th>Fecha</th>
-                        <th className="cotizaciones-equipos-column-header">Total de equipos</th>
+                        <th className="cotizaciones-equipos-column-header">
+                          Total de equipos
+                        </th>
                         <th>Concepto</th>
                         <th>Subtotal</th>
                         <th>IVA</th>
@@ -1915,22 +2356,36 @@ const AdminCotizaciones = () => {
                     </thead>
                     <tbody>
                       {cotizaciones.length > 0 ? (
-                        ordenarCotizaciones(cotizacionesFiltradas)
-                          .map((cotizacion, index) => (
+                        ordenarCotizaciones(cotizacionesFiltradas).map(
+                          (cotizacion, index) => (
                             <tr key={cotizacion.id}>
                               <td>#{cotizacion.id}</td>
                               <td>{cotizacion.clienteNombre}</td>
                               <td>{cotizacion.fecha}</td>
-                              <td className="cotizaciones-equipos-column">{cotizacion.cantidadTotal || 0}</td>
-                              <td>{cotizacion.conceptosCount === 1 ? "1 concepto" : cotizacion.conceptosCount > 0 ? `${cotizacion.conceptosCount} conceptos` : "0 conceptos"}</td>
-                              <td>${cotizacion.subtotal?.toFixed(2) || '0.00'}</td>
-                              <td>${cotizacion.iva?.toFixed(2) || '0.00'}</td>
-                              <td className="cotizaciones-total-cell">${cotizacion.total?.toFixed(2) || '0.00'}</td>
+                              <td className="cotizaciones-equipos-column">
+                                {cotizacion.cantidadTotal || 0}
+                              </td>
+                              <td>
+                                {cotizacion.conceptosCount === 1
+                                  ? "1 concepto"
+                                  : cotizacion.conceptosCount > 0
+                                    ? `${cotizacion.conceptosCount} conceptos`
+                                    : "0 conceptos"}
+                              </td>
+                              <td>
+                                ${cotizacion.subtotal?.toFixed(2) || "0.00"}
+                              </td>
+                              <td>${cotizacion.iva?.toFixed(2) || "0.00"}</td>
+                              <td className="cotizaciones-total-cell">
+                                ${cotizacion.total?.toFixed(2) || "0.00"}
+                              </td>
                               <td>
                                 <div className="cotizaciones-actions">
                                   <button
                                     className="cotizaciones-action-btn cotizaciones-edit-btn"
-                                    onClick={() => openModal("cotizacion", { cotizacion })}
+                                    onClick={() =>
+                                      openModal("cotizacion", { cotizacion })
+                                    }
                                     title="Editar"
                                   >
                                     <img
@@ -1941,7 +2396,9 @@ const AdminCotizaciones = () => {
                                   </button>
                                   <button
                                     className="cotizaciones-action-btn cotizaciones-delete-btn"
-                                    onClick={() => handleDeleteCotizacion(cotizacion)}
+                                    onClick={() =>
+                                      handleDeleteCotizacion(cotizacion)
+                                    }
                                     title="Eliminar"
                                   >
                                     <img
@@ -1952,7 +2409,9 @@ const AdminCotizaciones = () => {
                                   </button>
                                   <button
                                     className="cotizaciones-action-btn cotizaciones-download-btn"
-                                    onClick={() => handleDownloadCotizacionPDF(cotizacion.id)}
+                                    onClick={() =>
+                                      handleDownloadCotizacionPDF(cotizacion.id)
+                                    }
                                     title="Descargar Cotización en PDF"
                                   >
                                     <img
@@ -1962,13 +2421,17 @@ const AdminCotizaciones = () => {
                                     />
                                   </button>
                                   <button
-                                    className={`cotizaciones-action-btn cotizaciones-receivable-btn ${cotizacionesVinculadas.has(cotizacion.id)
-                                      ? 'cotizaciones-receivable-btn-vinculada'
-                                      : 'cotizaciones-receivable-btn-disponible'
-                                      }`}
+                                    className={`cotizaciones-action-btn cotizaciones-receivable-btn ${
+                                      cotizacionesVinculadas.has(cotizacion.id)
+                                        ? "cotizaciones-receivable-btn-vinculada"
+                                        : "cotizaciones-receivable-btn-disponible"
+                                    }`}
                                     onClick={async () => {
-                                      const response = await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cotizacion.id}/check-vinculada`);
-                                      const { vinculada } = await response.json();
+                                      const response = await fetchWithToken(
+                                        `${API_BASE_URL}/cotizaciones/${cotizacion.id}/check-vinculada`,
+                                      );
+                                      const { vinculada } =
+                                        await response.json();
                                       if (vinculada) {
                                         Swal.fire({
                                           icon: "warning",
@@ -1976,7 +2439,9 @@ const AdminCotizaciones = () => {
                                           text: "Ya se generaron las cuentas por cobrar",
                                         });
                                       } else {
-                                        openModal("crearCuentas", { cotizacion: cotizacion });
+                                        openModal("crearCuentas", {
+                                          cotizacion: cotizacion,
+                                        });
                                       }
                                     }}
                                     title={
@@ -1994,7 +2459,8 @@ const AdminCotizaciones = () => {
                                 </div>
                               </td>
                             </tr>
-                          ))
+                          ),
+                        )
                       ) : (
                         <tr>
                           <td colSpan="10" className="cotizaciones-no-data">
@@ -2031,7 +2497,10 @@ const AdminCotizaciones = () => {
             onClose={() => closeModal("crearCuentas")}
             onSave={(savedCuentas) => {
               setCuentasPorCobrar((prev) => [...prev, ...savedCuentas]);
-              setCotizacionesVinculadas(prev => new Set([...prev, modals.crearCuentas?.cotizacion?.id]));
+              setCotizacionesVinculadas(
+                (prev) =>
+                  new Set([...prev, modals.crearCuentas?.cotizacion?.id]),
+              );
               handleSaveCuenta(savedCuentas[0]);
               Swal.fire({
                 icon: "success",
@@ -2056,16 +2525,15 @@ const AdminCotizaciones = () => {
             pdfUrl={pdfPreview.url}
             onDownload={handleDownloadFromPreview}
           />
-
         </main>
       </div>
     </>
-  )
-}
+  );
+};
 
 export default AdminCotizaciones;
 export { CotizacionModal };
 export { CrearCuentasModal };
 export { SubirArchivoModal };
 export { NuevoConceptoModal };
-export { CompartirCotizacionModal }; 
+export { CompartirCotizacionModal };
