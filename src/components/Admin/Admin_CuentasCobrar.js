@@ -1,17 +1,17 @@
-import { useState, useEffect } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
-import "./Admin_CuentasCobrar.css"
-import Header from "../Header/Header"
-import Swal from "sweetalert2"
-import deleteIcon from "../../assets/icons/eliminar.png"
-import downloadIcon from "../../assets/icons/descarga.png"
-import editIcon from "../../assets/icons/editar.png"
-import requestIcon from "../../assets/icons/cotizacion.png"
-import detailsIcon from "../../assets/icons/lupa.png"
-import checkIcon from "../../assets/icons/check.png"
-import DatePicker from "react-datepicker"
-import "react-datepicker/dist/react-datepicker.css"
-import { NuevoConceptoModal } from '../Admin/Admin_Cotizaciones';
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import "./Admin_CuentasCobrar.css";
+import Header from "../Header/Header";
+import Swal from "sweetalert2";
+import deleteIcon from "../../assets/icons/eliminar.png";
+import downloadIcon from "../../assets/icons/descarga.png";
+import editIcon from "../../assets/icons/editar.png";
+import requestIcon from "../../assets/icons/cotizacion.png";
+import detailsIcon from "../../assets/icons/lupa.png";
+import checkIcon from "../../assets/icons/check.png";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { NuevoConceptoModal } from "../Admin/Admin_Cotizaciones";
 import { API_BASE_URL } from "../Config/Config";
 
 const fetchWithToken = async (url, options = {}) => {
@@ -34,58 +34,78 @@ const fetchWithToken = async (url, options = {}) => {
     });
     clearTimeout(timeoutId);
 
-    if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`);
+    if (!response.ok)
+      throw new Error(
+        `Error en la solicitud: ${response.status} - ${response.statusText}`,
+      );
     if (response.status === 204) return response;
     return response.json();
   } catch (error) {
     clearTimeout(timeoutId);
-    if (error.name === 'AbortError') {
-      throw new Error('La operación tardó demasiado tiempo. Verifique su conexión.');
+    if (error.name === "AbortError") {
+      throw new Error(
+        "La operación tardó demasiado tiempo. Verifique su conexión.",
+      );
     }
     throw error;
   }
 };
 
 const fetchFileWithToken = async (url, options = {}) => {
-  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  const token =
+    localStorage.getItem("token") || sessionStorage.getItem("token");
 
   const config = {
     ...options,
     headers: {
-      'Authorization': `Bearer ${token}`,
-      ...options.headers
-    }
+      Authorization: `Bearer ${token}`,
+      ...options.headers,
+    },
   };
 
   return fetch(url, config);
 };
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
+const Modal = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = "md",
+  canClose = true,
+  closeOnOverlayClick = true,
+}) => {
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden"
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "unset"
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.body.style.overflow = "unset"
-    }
-  }, [isOpen])
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   const sizeClasses = {
     sm: "cuentascobrar-modal-sm",
     md: "cuentascobrar-modal-md",
     lg: "cuentascobrar-modal-lg",
     xl: "cuentascobrar-modal-xl",
-  }
+  };
 
   return (
-    <div className="cuentascobrar-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
-      <div className={`cuentascobrar-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
+    <div
+      className="cuentascobrar-modal-overlay"
+      onClick={closeOnOverlayClick ? onClose : () => {}}
+    >
+      <div
+        className={`cuentascobrar-modal-content ${sizeClasses[size]}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="cuentascobrar-modal-header">
           <h2 className="cuentascobrar-modal-title">{title}</h2>
           {canClose && (
@@ -97,8 +117,8 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true,
         <div className="cuentascobrar-modal-body">{children}</div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 // Función para convertir números a letras
 const numeroALetras = (numero) => {
@@ -123,9 +143,20 @@ const numeroALetras = (numero) => {
     "diecisiete",
     "dieciocho",
     "diecinueve",
-  ]
+  ];
 
-  const decenas = ["", "", "veinte", "treinta", "cuarenta", "cincuenta", "sesenta", "setenta", "ochenta", "noventa"]
+  const decenas = [
+    "",
+    "",
+    "veinte",
+    "treinta",
+    "cuarenta",
+    "cincuenta",
+    "sesenta",
+    "setenta",
+    "ochenta",
+    "noventa",
+  ];
 
   const centenas = [
     "",
@@ -138,67 +169,67 @@ const numeroALetras = (numero) => {
     "setecientos",
     "ochocientos",
     "novecientos",
-  ]
+  ];
 
-  if (numero === 0) return "cero pesos 00/100 M.N."
-  if (numero === 1) return "un peso 00/100 M.N."
+  if (numero === 0) return "cero pesos 00/100 M.N.";
+  if (numero === 1) return "un peso 00/100 M.N.";
 
-  let entero = Math.floor(numero)
-  const centavos = Math.round((numero - entero) * 100)
+  let entero = Math.floor(numero);
+  const centavos = Math.round((numero - entero) * 100);
 
   const convertirGrupo = (num) => {
-    if (num === 0) return ""
-    if (num < 20) return unidades[num]
+    if (num === 0) return "";
+    if (num < 20) return unidades[num];
     if (num < 100) {
-      const dec = Math.floor(num / 10)
-      const uni = num % 10
-      if (uni === 0) return decenas[dec]
-      if (dec === 2) return "veinti" + unidades[uni]
-      return decenas[dec] + (uni > 0 ? " y " + unidades[uni] : "")
+      const dec = Math.floor(num / 10);
+      const uni = num % 10;
+      if (uni === 0) return decenas[dec];
+      if (dec === 2) return "veinti" + unidades[uni];
+      return decenas[dec] + (uni > 0 ? " y " + unidades[uni] : "");
     }
 
-    const cen = Math.floor(num / 100)
-    const resto = num % 100
-    let resultado = ""
+    const cen = Math.floor(num / 100);
+    const resto = num % 100;
+    let resultado = "";
 
-    if (cen === 1 && resto === 0) resultado = "cien"
-    else resultado = centenas[cen]
+    if (cen === 1 && resto === 0) resultado = "cien";
+    else resultado = centenas[cen];
 
-    if (resto > 0) resultado += " " + convertirGrupo(resto)
-    return resultado
-  }
+    if (resto > 0) resultado += " " + convertirGrupo(resto);
+    return resultado;
+  };
 
-  let resultado = ""
+  let resultado = "";
 
   if (entero >= 1000000) {
-    const millones = Math.floor(entero / 1000000)
-    if (millones === 1) resultado += "un millón "
-    else resultado += convertirGrupo(millones) + " millones "
-    entero %= 1000000
+    const millones = Math.floor(entero / 1000000);
+    if (millones === 1) resultado += "un millón ";
+    else resultado += convertirGrupo(millones) + " millones ";
+    entero %= 1000000;
   }
 
   if (entero >= 1000) {
-    const miles = Math.floor(entero / 1000)
-    if (miles === 1) resultado += "mil "
-    else resultado += convertirGrupo(miles) + " mil "
-    entero %= 1000
+    const miles = Math.floor(entero / 1000);
+    if (miles === 1) resultado += "mil ";
+    else resultado += convertirGrupo(miles) + " mil ";
+    entero %= 1000;
   }
 
   if (entero > 0) {
-    resultado += convertirGrupo(entero)
+    resultado += convertirGrupo(entero);
   }
 
-  resultado = resultado.trim()
+  resultado = resultado.trim();
   if (Math.floor(numero) === 1) {
-    resultado += " peso"
+    resultado += " peso";
   } else {
-    resultado += " pesos"
+    resultado += " pesos";
   }
 
-  resultado += ` ${centavos.toString().padStart(2, "0")}/100 M.N.`
+  resultado += ` ${centavos.toString().padStart(2, "0")}/100 M.N.`;
 
-  return resultado.charAt(0).toUpperCase() + resultado.slice(1)
-}
+  return resultado.charAt(0).toUpperCase() + resultado.slice(1);
+};
 
 const getEstatusClass = (estatus) => {
   switch (estatus) {
@@ -231,7 +262,7 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
     { id: 1, descripcion: "Ventas" },
     { id: 2, descripcion: "Renta Mensual" },
     { id: 25, descripcion: "Renta Anual" },
-    { id: 3, descripcion: "Revisiones" }
+    { id: 3, descripcion: "Revisiones" },
   ];
 
   useEffect(() => {
@@ -300,9 +331,12 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
       newErrors.montoPago = `El monto no puede ser mayor al saldo pendiente ($${saldoPendiente})`;
     }
 
-    if (!formData.fechaPago) newErrors.fechaPago = "La fecha de pago es obligatoria";
-    if (!formData.comprobantePago) newErrors.comprobantePago = "El comprobante de pago es obligatorio";
-    if (!categoriaSeleccionada) newErrors.categoriaId = "Debe seleccionar una categoría";
+    if (!formData.fechaPago)
+      newErrors.fechaPago = "La fecha de pago es obligatoria";
+    if (!formData.comprobantePago)
+      newErrors.comprobantePago = "El comprobante de pago es obligatorio";
+    if (!categoriaSeleccionada)
+      newErrors.categoriaId = "Debe seleccionar una categoría";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -313,32 +347,35 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
     e.preventDefault();
     if (validateForm()) {
       const formDataToSend = new FormData();
-      formDataToSend.append("montoPago", formData.montoPago)
+      formDataToSend.append("montoPago", formData.montoPago);
       formDataToSend.append("fechaPago", formData.fechaPago);
       formDataToSend.append("categoriaId", formData.categoriaId);
       formDataToSend.append("comprobante", formData.comprobantePago);
 
       try {
         Swal.fire({
-          title: 'Procesando...',
-          text: 'Marcando como pagado y subiendo comprobante',
+          title: "Procesando...",
+          text: "Marcando como pagado y subiendo comprobante",
           allowOutsideClick: false,
           showConfirmButton: false,
           willOpen: () => {
             Swal.showLoading();
-          }
+          },
         });
 
-        const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/marcar-pagada`, {
-          method: "POST",
-          body: formDataToSend,
-        });
+        const response = await fetchWithToken(
+          `${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/marcar-pagada`,
+          {
+            method: "POST",
+            body: formDataToSend,
+          },
+        );
 
         Swal.close();
 
         const responseData = {
           cuenta: response,
-          mostrarModalComision: response.mostrarModalComision || false
+          mostrarModalComision: response.mostrarModalComision || false,
         };
 
         onSave(responseData, formData.montoPago, cuenta.id);
@@ -348,13 +385,13 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
           Swal.fire({
             icon: "warning",
             title: "Parcialmente completado",
-            text: "La cuenta se marcó como pagada, pero hubo un error al subir el comprobante. Puede intentar subirlo nuevamente más tarde."
+            text: "La cuenta se marcó como pagada, pero hubo un error al subir el comprobante. Puede intentar subirlo nuevamente más tarde.",
           });
         } else if (!response.mostrarModalComision) {
           Swal.fire({
             icon: "success",
             title: "Éxito",
-            text: "Cuenta marcada como pagada correctamente"
+            text: "Cuenta marcada como pagada correctamente",
           });
         }
       } catch (error) {
@@ -369,7 +406,13 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Agregar Comprobante de Cobro" size="md" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Agregar Comprobante de Cobro"
+      size="md"
+      closeOnOverlayClick={false}
+    >
       <form onSubmit={handleSubmit} className="cuentascobrar-form">
         <div className="cuentascobrar-info-section">
           <div className="cuentascobrar-info-item">
@@ -388,7 +431,9 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
           </div>
         </div>
         <div className="cuentascobrar-form-group">
-          <label htmlFor="montoPago">Monto a Cobrar <span className="required"> *</span></label>
+          <label htmlFor="montoPago">
+            Monto a Cobrar <span className="required"> *</span>
+          </label>
           <div className="cuentascobrar-input-with-prefix">
             <span className="cuentascobrar-prefix">$</span>
             <input
@@ -401,8 +446,14 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
               className={`cuentascobrar-form-control ${errors.montoPago ? "error" : ""}`}
             />
           </div>
-          {errors.montoPago && <span className="cuentascobrar-error-message">{errors.montoPago}</span>}
-          <label htmlFor="fechaPago">Fecha Pago <span className="required"> *</span></label>
+          {errors.montoPago && (
+            <span className="cuentascobrar-error-message">
+              {errors.montoPago}
+            </span>
+          )}
+          <label htmlFor="fechaPago">
+            Fecha Pago <span className="required"> *</span>
+          </label>
           <input
             type="date"
             id="fechaPago"
@@ -410,11 +461,17 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
             onChange={(e) => handleInputChange("fechaPago", e.target.value)}
             className={`cuentascobrar-form-control ${errors.fechaPago ? "error" : ""}`}
           />
-          {errors.fechaPago && <span className="cuentascobrar-error-message">{errors.fechaPago}</span>}
+          {errors.fechaPago && (
+            <span className="cuentascobrar-error-message">
+              {errors.fechaPago}
+            </span>
+          )}
         </div>
 
         <div className="cuentascobrar-form-group">
-          <label>Categoría <span className="required"> *</span></label>
+          <label>
+            Categoría <span className="required"> *</span>
+          </label>
           <div className="cuentascobrar-checkbox-group">
             {categoriasPermitidas.map((categoria) => (
               <div key={categoria.id} className="cuentascobrar-checkbox-item">
@@ -424,35 +481,64 @@ const ComprobanteModal = ({ isOpen, onClose, onSave, cuenta }) => {
                   name="categoria"
                   value={categoria.id}
                   checked={categoriaSeleccionada === categoria.id.toString()}
-                  onChange={() => handleCategoriaChange(categoria.id.toString())}
+                  onChange={() =>
+                    handleCategoriaChange(categoria.id.toString())
+                  }
                   className="cuentascobrar-radio-input"
                 />
-                <label htmlFor={`categoria-${categoria.id}`} className="cuentascobrar-radio-label">
+                <label
+                  htmlFor={`categoria-${categoria.id}`}
+                  className="cuentascobrar-radio-label"
+                >
                   {categoria.descripcion}
                 </label>
               </div>
             ))}
           </div>
-          {errors.categoriaId && <span className="cuentascobrar-error-message">{errors.categoriaId}</span>}
+          {errors.categoriaId && (
+            <span className="cuentascobrar-error-message">
+              {errors.categoriaId}
+            </span>
+          )}
         </div>
 
         <div className="cuentascobrar-form-group">
-          <label htmlFor="comprobantePago">Comprobante de pago <span className="required"> *</span></label>
+          <label htmlFor="comprobantePago">
+            Comprobante de pago <span className="required"> *</span>
+          </label>
           <div className="cuentascobrar-file-upload">
-            <input type="file" id="comprobantePago" onChange={handleFileChange} accept="application/pdf" className="cuentascobrar-file-input" />
+            <input
+              type="file"
+              id="comprobantePago"
+              onChange={handleFileChange}
+              accept="application/pdf"
+              className="cuentascobrar-file-input"
+            />
             <div className="cuentascobrar-file-upload-area">
               <div className="cuentascobrar-file-upload-icon">📁</div>
               <div className="cuentascobrar-file-upload-text">
-                {formData.comprobantePago ? formData.comprobantePago.name : "Arrastra y suelta tu archivo aquí"}
+                {formData.comprobantePago
+                  ? formData.comprobantePago.name
+                  : "Arrastra y suelta tu archivo aquí"}
               </div>
-              <div className="cuentascobrar-file-upload-subtext">PDF máx. 5MB</div>
+              <div className="cuentascobrar-file-upload-subtext">
+                PDF máx. 5MB
+              </div>
             </div>
           </div>
-          {errors.comprobantePago && <span className="cuentascobrar-error-message">{errors.comprobantePago}</span>}
+          {errors.comprobantePago && (
+            <span className="cuentascobrar-error-message">
+              {errors.comprobantePago}
+            </span>
+          )}
         </div>
 
         <div className="cuentascobrar-form-actions">
-          <button type="button" onClick={onClose} className="cuentascobrar-btn cuentascobrar-btn-cancel">
+          <button
+            type="button"
+            onClick={onClose}
+            className="cuentascobrar-btn cuentascobrar-btn-cancel"
+          >
             Cancelar
           </button>
           <button
@@ -473,19 +559,30 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
   const handleConfirmDelete = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}`, {
-        method: "DELETE",
-        headers: { "Authorization": `Bearer ${token}` }
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
       if (response.status === 204) {
         onConfirm(cuenta.id);
         onClose();
-        Swal.fire({ icon: "success", title: "Éxito", text: "Cuenta eliminada correctamente" });
+        Swal.fire({
+          icon: "success",
+          title: "Éxito",
+          text: "Cuenta eliminada correctamente",
+        });
       } else if (response.status === 409) {
         const data = await response.json();
         onClose();
-        Swal.fire({ icon: "error", title: "No se puede eliminar", text: data.error });
+        Swal.fire({
+          icon: "error",
+          title: "No se puede eliminar",
+          text: data.error,
+        });
       } else {
         throw new Error("Error inesperado");
       }
@@ -495,17 +592,32 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Confirmar eliminación"
+      size="sm"
+      closeOnOverlayClick={false}
+    >
       <div className="cuentascobrar-confirmar-eliminacion">
         <div className="cuentascobrar-confirmation-content">
           <p className="cuentascobrar-confirmation-message">
-            ¿Seguro que quieres eliminar la cuenta por cobrar de forma permanente?
+            ¿Seguro que quieres eliminar la cuenta por cobrar de forma
+            permanente?
           </p>
           <div className="cuentascobrar-modal-form-actions">
-            <button type="button" onClick={onClose} className="cuentascobrar-btn cuentascobrar-btn-cancel">
+            <button
+              type="button"
+              onClick={onClose}
+              className="cuentascobrar-btn cuentascobrar-btn-cancel"
+            >
               Cancelar
             </button>
-            <button type="button" onClick={handleConfirmDelete} className="cuentascobrar-btn cuentascobrar-btn-confirm">
+            <button
+              type="button"
+              onClick={handleConfirmDelete}
+              className="cuentascobrar-btn cuentascobrar-btn-confirm"
+            >
               Confirmar
             </button>
           </div>
@@ -515,11 +627,20 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, cuenta }) => {
   );
 };
 
-const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobrar, emisores, preloadedCotizacion, preloadedCuenta }) => {
+const SolicitudModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  cotizaciones,
+  cuentasPorCobrar,
+  emisores,
+  preloadedCotizacion,
+  preloadedCuenta,
+}) => {
   const [formData, setFormData] = useState({
     id: null,
     cotizacion: "",
-    fechaEmision: new Date().toISOString().split('T')[0],
+    fechaEmision: new Date().toISOString().split("T")[0],
     metodoPago: "",
     formaPago: "",
     tipo: "",
@@ -542,23 +663,49 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
     { value: "G02", label: "G02 - Devoluciones, descuentos o bonificaciones" },
     { value: "G03", label: "G03 - Gastos en General" },
     { value: "I01", label: "I01 - Construcciones" },
-    { value: "I02", label: "I02 - Mobiliario y Equipo de Oficina por inversiones" },
+    {
+      value: "I02",
+      label: "I02 - Mobiliario y Equipo de Oficina por inversiones",
+    },
     { value: "I03", label: "I03 - Equipo de transporte" },
     { value: "I04", label: "I04 - Equipo de cómputo y accesorios" },
-    { value: "I05", label: "I05 - Dados, troqueles, moldes, matrices y herramientas" },
+    {
+      value: "I05",
+      label: "I05 - Dados, troqueles, moldes, matrices y herramientas",
+    },
     { value: "I06", label: "I06 - Comunicaciones telefónicas" },
     { value: "I07", label: "I07 - Comunicaciones satelitales" },
     { value: "I08", label: "I08 - Otra maquinaria y equipo" },
-    { value: "D01", label: "D01 - Honorarios médicos, dentales y hospitalarios" },
-    { value: "D02", label: "D02 - Gastos médicos por incapacidad o discapacidad" },
+    {
+      value: "D01",
+      label: "D01 - Honorarios médicos, dentales y hospitalarios",
+    },
+    {
+      value: "D02",
+      label: "D02 - Gastos médicos por incapacidad o discapacidad",
+    },
     { value: "D03", label: "D03 - Gastos funerales" },
     { value: "D04", label: "D04 - Donativos" },
-    { value: "D05", label: "D05 - Intereses reales efectivamente pagados por créditos hipotecarios (casa habitación)" },
+    {
+      value: "D05",
+      label:
+        "D05 - Intereses reales efectivamente pagados por créditos hipotecarios (casa habitación)",
+    },
     { value: "D06", label: "D06 - Aportaciones voluntarias al SAR" },
     { value: "D07", label: "D07 - Primas por seguros de gastos médicos" },
-    { value: "D08", label: "D08 - Gastos por transportación escolar obligatoria" },
-    { value: "D09", label: "D09 - Depósitos en cuentas para el ahorro, primas que tengan como base planes de pensiones" },
-    { value: "D10", label: "D10 - Pagos por servicios educativos (colegiaturas)" },
+    {
+      value: "D08",
+      label: "D08 - Gastos por transportación escolar obligatoria",
+    },
+    {
+      value: "D09",
+      label:
+        "D09 - Depósitos en cuentas para el ahorro, primas que tengan como base planes de pensiones",
+    },
+    {
+      value: "D10",
+      label: "D10 - Pagos por servicios educativos (colegiaturas)",
+    },
     { value: "P01", label: "P01 - Por definir" },
   ];
 
@@ -584,15 +731,45 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
   ];
 
   const clavesProductoServicio = [
-    { value: "25173108", label: "25173108 - Sistemas de navegación vehicular (Sistema GPS)" },
-    { value: "25173107", label: "25173107 - Sistemas de posicionamiento global de vehículos" },
-    { value: "43211710", label: "43211710 - Dispositivos de identificación de radio frecuencia" },
-    { value: "43212116", label: "43212116 - Impresoras de etiquetas de identificación de radio frecuencia rfid" },
-    { value: "81111810", label: "81111810 - Servicios de codificación de software" },
-    { value: "81111501", label: "81111501 - Diseño de aplicaciones de software de la unidad central" },
-    { value: "81111510", label: "81111510 - Servicios de desarrollo de aplicaciones para servidores" },
-    { value: "81112106", label: "81112106 - Proveedores de servicios de aplicación" },
-    { value: "81112105", label: "81112105 - Servicios de hospedaje de operación de sitios web" },
+    {
+      value: "25173108",
+      label: "25173108 - Sistemas de navegación vehicular (Sistema GPS)",
+    },
+    {
+      value: "25173107",
+      label: "25173107 - Sistemas de posicionamiento global de vehículos",
+    },
+    {
+      value: "43211710",
+      label: "43211710 - Dispositivos de identificación de radio frecuencia",
+    },
+    {
+      value: "43212116",
+      label:
+        "43212116 - Impresoras de etiquetas de identificación de radio frecuencia rfid",
+    },
+    {
+      value: "81111810",
+      label: "81111810 - Servicios de codificación de software",
+    },
+    {
+      value: "81111501",
+      label:
+        "81111501 - Diseño de aplicaciones de software de la unidad central",
+    },
+    {
+      value: "81111510",
+      label:
+        "81111510 - Servicios de desarrollo de aplicaciones para servidores",
+    },
+    {
+      value: "81112106",
+      label: "81112106 - Proveedores de servicios de aplicación",
+    },
+    {
+      value: "81112105",
+      label: "81112105 - Servicios de hospedaje de operación de sitios web",
+    },
     { value: "20121910", label: "20121910 - Sistemas de telemetría" },
   ];
 
@@ -610,7 +787,7 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
         setFormData({
           id: null,
           cotizacion: preloadedCotizacion.id,
-          fechaEmision: new Date().toISOString().split('T')[0],
+          fechaEmision: new Date().toISOString().split("T")[0],
           metodoPago: "",
           formaPago: "",
           tipo: "",
@@ -618,15 +795,31 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
           claveUnidad: "E48",
           emisor: emisores.length > 0 ? emisores[0].id : "",
           cuentaPorCobrar: preloadedCuenta ? preloadedCuenta.id : "",
-          subtotal: preloadedCotizacion.subtotal !== undefined ? String(preloadedCotizacion.subtotal) : "",
-          iva: preloadedCotizacion.iva !== undefined ? String(preloadedCotizacion.iva) : "",
-          total: preloadedCotizacion.total !== undefined ? String(preloadedCotizacion.total) : "",
+          subtotal:
+            preloadedCotizacion.subtotal !== undefined
+              ? String(preloadedCotizacion.subtotal)
+              : "",
+          iva:
+            preloadedCotizacion.iva !== undefined
+              ? String(preloadedCotizacion.iva)
+              : "",
+          total:
+            preloadedCotizacion.total !== undefined
+              ? String(preloadedCotizacion.total)
+              : "",
           importeLetra: preloadedCotizacion.importeConLetra || "",
           usoCfdi: "",
         });
         const empresaData = preloadedCotizacion.empresaData || {};
-        const requiredFields = ["domicilioFiscal", "rfc", "razonSocial", "regimenFiscal"];
-        const hasAllFiscalData = requiredFields.every((field) => !!empresaData[field]);
+        const requiredFields = [
+          "domicilioFiscal",
+          "rfc",
+          "razonSocial",
+          "regimenFiscal",
+        ];
+        const hasAllFiscalData = requiredFields.every(
+          (field) => !!empresaData[field],
+        );
         if (!hasAllFiscalData) {
           setFormData((prev) => ({
             ...prev,
@@ -637,7 +830,7 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
         setFormData({
           id: null,
           cotizacion: "",
-          fechaEmision: new Date().toISOString().split('T')[0],
+          fechaEmision: new Date().toISOString().split("T")[0],
           metodoPago: "",
           formaPago: "",
           tipo: "",
@@ -658,13 +851,24 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
 
   useEffect(() => {
     if (formData.cotizacion && cotizaciones) {
-      const cotizacionSeleccionada = cotizaciones.find((c) => c.id === parseInt(formData.cotizacion));
+      const cotizacionSeleccionada = cotizaciones.find(
+        (c) => c.id === parseInt(formData.cotizacion),
+      );
       if (cotizacionSeleccionada) {
         setFormData((prev) => ({
           ...prev,
-          subtotal: cotizacionSeleccionada.subtotal !== undefined ? String(cotizacionSeleccionada.subtotal) : "",
-          iva: cotizacionSeleccionada.iva !== undefined ? String(cotizacionSeleccionada.iva) : "",
-          total: cotizacionSeleccionada.total !== undefined ? String(cotizacionSeleccionada.total) : "",
+          subtotal:
+            cotizacionSeleccionada.subtotal !== undefined
+              ? String(cotizacionSeleccionada.subtotal)
+              : "",
+          iva:
+            cotizacionSeleccionada.iva !== undefined
+              ? String(cotizacionSeleccionada.iva)
+              : "",
+          total:
+            cotizacionSeleccionada.total !== undefined
+              ? String(cotizacionSeleccionada.total)
+              : "",
           importeLetra: cotizacionSeleccionada.importeConLetra || "",
         }));
       }
@@ -681,15 +885,25 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.metodoPago) newErrors.metodoPago = "El método de pago es obligatorio";
-    if (!formData.formaPago) newErrors.formaPago = "La forma de pago es obligatoria";
+    if (!formData.metodoPago)
+      newErrors.metodoPago = "El método de pago es obligatorio";
+    if (!formData.formaPago)
+      newErrors.formaPago = "La forma de pago es obligatoria";
     if (!formData.tipo) newErrors.tipo = "El tipo es obligatorio";
-    if (!formData.claveProductoServicio) newErrors.claveProductoServicio = "La clave producto/servicio es obligatoria";
-    if (!formData.claveUnidad) newErrors.claveUnidad = "La clave unidad es obligatoria";
+    if (!formData.claveProductoServicio)
+      newErrors.claveProductoServicio =
+        "La clave producto/servicio es obligatoria";
+    if (!formData.claveUnidad)
+      newErrors.claveUnidad = "La clave unidad es obligatoria";
     if (!formData.emisor) newErrors.emisor = "El emisor es obligatorio";
-    if (!formData.cuentaPorCobrar) newErrors.cuentaPorCobrar = "La cuenta por cobrar es obligatoria";
-    if (formData.tipo === "SOLICITUD_DE_FACTURA" && (!formData.usoCfdi || formData.usoCfdi === "")) {
-      newErrors.usoCfdi = "El uso de CFDI es obligatorio para solicitudes de factura";
+    if (!formData.cuentaPorCobrar)
+      newErrors.cuentaPorCobrar = "La cuenta por cobrar es obligatoria";
+    if (
+      formData.tipo === "SOLICITUD_DE_FACTURA" &&
+      (!formData.usoCfdi || formData.usoCfdi === "")
+    ) {
+      newErrors.usoCfdi =
+        "El uso de CFDI es obligatorio para solicitudes de factura";
     }
 
     setErrors(newErrors);
@@ -699,8 +913,15 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
   const validateEmpresaFiscal = () => {
     if (formData.tipo === "SOLICITUD_DE_FACTURA") {
       if (preloadedCotizacion && preloadedCotizacion.empresaData) {
-        const requiredFields = ["domicilioFiscal", "rfc", "razonSocial", "regimenFiscal"];
-        const hasAllFiscalData = requiredFields.every((field) => !!preloadedCotizacion.empresaData[field]);
+        const requiredFields = [
+          "domicilioFiscal",
+          "rfc",
+          "razonSocial",
+          "regimenFiscal",
+        ];
+        const hasAllFiscalData = requiredFields.every(
+          (field) => !!preloadedCotizacion.empresaData[field],
+        );
         return hasAllFiscalData;
       }
       return false;
@@ -720,17 +941,27 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
         return;
       }
 
-      const cotizacionSeleccionada = cotizaciones.find((c) => c.id === parseInt(formData.cotizacion));
+      const cotizacionSeleccionada = cotizaciones.find(
+        (c) => c.id === parseInt(formData.cotizacion),
+      );
       let isrEstatal = 0;
       let isrFederal = 0;
       let total = parseFloat(formData.total) || 0;
       let subtotal = parseFloat(formData.subtotal) || 0;
 
-      if (formData.tipo === "SOLICITUD_DE_FACTURA" &&
+      if (
+        formData.tipo === "SOLICITUD_DE_FACTURA" &&
         (cotizacionSeleccionada?.empresaData?.regimenFiscal === "601" ||
-          cotizacionSeleccionada?.empresaData?.regimenFiscal === "627")) {
-        const domicilioFiscal = (cotizacionSeleccionada.empresaData.domicilioFiscal || "").toLowerCase();
-        const hasGuanajuato = domicilioFiscal.includes("gto") || domicilioFiscal.includes("guanajuato") || domicilioFiscal.includes("Gto") || domicilioFiscal.includes("Guanajuato");
+          cotizacionSeleccionada?.empresaData?.regimenFiscal === "627")
+      ) {
+        const domicilioFiscal = (
+          cotizacionSeleccionada.empresaData.domicilioFiscal || ""
+        ).toLowerCase();
+        const hasGuanajuato =
+          domicilioFiscal.includes("gto") ||
+          domicilioFiscal.includes("guanajuato") ||
+          domicilioFiscal.includes("Gto") ||
+          domicilioFiscal.includes("Guanajuato");
         const cpMatch = domicilioFiscal.match(/\b(36|37|38)\d{4}\b/);
 
         if (cpMatch || hasGuanajuato) {
@@ -742,7 +973,9 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
         total = subtotal + parseFloat(formData.iva) - isrEstatal - isrFederal;
       }
 
-      const cuentaPorCobrarData = cuentasPorCobrar.find((c) => c.id === formData.cuentaPorCobrar);
+      const cuentaPorCobrarData = cuentasPorCobrar.find(
+        (c) => c.id === formData.cuentaPorCobrar,
+      );
       const clienteId = cuentaPorCobrarData?.cliente?.id || null;
 
       const solicitudData = {
@@ -766,11 +999,14 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
       };
 
       try {
-        const savedSolicitud = await fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota`, {
-          method: "POST",
-          body: JSON.stringify(solicitudData),
-          headers: { "Content-Type": "application/json" },
-        });
+        const savedSolicitud = await fetchWithToken(
+          `${API_BASE_URL}/solicitudes-factura-nota`,
+          {
+            method: "POST",
+            body: JSON.stringify(solicitudData),
+            headers: { "Content-Type": "application/json" },
+          },
+        );
 
         onSave(savedSolicitud);
         onClose();
@@ -789,13 +1025,19 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditing ? "Editar Solicitud de Factura/Nota" : "Nueva Solicitud de Factura/Nota"}
+      title={
+        isEditing
+          ? "Editar Solicitud de Factura/Nota"
+          : "Nueva Solicitud de Factura/Nota"
+      }
       size="md"
       closeOnOverlayClick={false}
     >
       <form onSubmit={handleSubmit} className="facturacion-form">
         <div className="facturacion-form-group">
-          <label htmlFor="cotizacion">Cotización <span className="required"> *</span></label>
+          <label htmlFor="cotizacion">
+            Cotización <span className="required"> *</span>
+          </label>
           <select
             id="cotizacion"
             value={formData.cotizacion}
@@ -805,12 +1047,16 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
           >
             <option value="">Ninguna seleccionada</option>
             {cotizaciones.map((cotizacion) => (
-              <option key={cotizacion.id} value={cotizacion.id}>{cotizacion.clienteNombre} - {cotizacion.id}</option>
+              <option key={cotizacion.id} value={cotizacion.id}>
+                {cotizacion.clienteNombre} - {cotizacion.id}
+              </option>
             ))}
           </select>
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="metodoPago">Método de pago <span className="required"> *</span></label>
+          <label htmlFor="metodoPago">
+            Método de pago <span className="required"> *</span>
+          </label>
           <select
             id="metodoPago"
             value={formData.metodoPago}
@@ -819,13 +1065,21 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
           >
             <option value="">Seleccione un método</option>
             {metodosPago.map((metodo) => (
-              <option key={metodo.value} value={metodo.value}>{metodo.label}</option>
+              <option key={metodo.value} value={metodo.value}>
+                {metodo.label}
+              </option>
             ))}
           </select>
-          {errors.metodoPago && <span className="facturacion-error-message">{errors.metodoPago}</span>}
+          {errors.metodoPago && (
+            <span className="facturacion-error-message">
+              {errors.metodoPago}
+            </span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="formaPago">Forma de pago <span className="required"> *</span></label>
+          <label htmlFor="formaPago">
+            Forma de pago <span className="required"> *</span>
+          </label>
           <select
             id="formaPago"
             value={formData.formaPago}
@@ -834,13 +1088,21 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
           >
             <option value="">Seleccione una forma</option>
             {formasPago.map((forma) => (
-              <option key={forma.value} value={forma.value}>{forma.label}</option>
+              <option key={forma.value} value={forma.value}>
+                {forma.label}
+              </option>
             ))}
           </select>
-          {errors.formaPago && <span className="facturacion-error-message">{errors.formaPago}</span>}
+          {errors.formaPago && (
+            <span className="facturacion-error-message">
+              {errors.formaPago}
+            </span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="tipo">Tipo <span className="required"> *</span></label>
+          <label htmlFor="tipo">
+            Tipo <span className="required"> *</span>
+          </label>
           <select
             id="tipo"
             value={formData.tipo}
@@ -850,13 +1112,22 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
             <option value="">Seleccione un tipo</option>
             {tipos.map((tipo) => {
               const empresaData = preloadedCotizacion?.empresaData || {};
-              const requiredFields = ["domicilioFiscal", "rfc", "razonSocial", "regimenFiscal"];
-              const hasAllFiscalData = requiredFields.every((field) => !!empresaData[field]);
+              const requiredFields = [
+                "domicilioFiscal",
+                "rfc",
+                "razonSocial",
+                "regimenFiscal",
+              ];
+              const hasAllFiscalData = requiredFields.every(
+                (field) => !!empresaData[field],
+              );
               return (
                 <option
                   key={tipo.value}
                   value={tipo.value}
-                  disabled={!hasAllFiscalData && tipo.value === "SOLICITUD_DE_FACTURA"}
+                  disabled={
+                    !hasAllFiscalData && tipo.value === "SOLICITUD_DE_FACTURA"
+                  }
                 >
                   {tipo.label}
                 </option>
@@ -865,27 +1136,43 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
           </select>
           {!preloadedCotizacion?.empresaData?.domicilioFiscal && (
             <small className="help-text">
-              Debe completar los datos fiscales (domicilio fiscal, RFC, razón social, régimen fiscal) de la empresa para poder generar una solicitud de factura.
+              Debe completar los datos fiscales (domicilio fiscal, RFC, razón
+              social, régimen fiscal) de la empresa para poder generar una
+              solicitud de factura.
             </small>
           )}
-          {errors.tipo && <span className="facturacion-error-message">{errors.tipo}</span>}
+          {errors.tipo && (
+            <span className="facturacion-error-message">{errors.tipo}</span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="claveProductoServicio">Clave Producto/Servicio <span className="required"> *</span></label>
+          <label htmlFor="claveProductoServicio">
+            Clave Producto/Servicio <span className="required"> *</span>
+          </label>
           <select
             id="claveProductoServicio"
             value={formData.claveProductoServicio}
-            onChange={(e) => handleInputChange("claveProductoServicio", e.target.value)}
+            onChange={(e) =>
+              handleInputChange("claveProductoServicio", e.target.value)
+            }
             className={`facturacion-form-control ${errors.claveProductoServicio ? "error" : ""}`}
           >
             {clavesProductoServicio.map((clave) => (
-              <option key={clave.value} value={clave.value}>{clave.label}</option>
+              <option key={clave.value} value={clave.value}>
+                {clave.label}
+              </option>
             ))}
           </select>
-          {errors.claveProductoServicio && <span className="facturacion-error-message">{errors.claveProductoServicio}</span>}
+          {errors.claveProductoServicio && (
+            <span className="facturacion-error-message">
+              {errors.claveProductoServicio}
+            </span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="claveUnidad">Clave Unidad <span className="required"> *</span></label>
+          <label htmlFor="claveUnidad">
+            Clave Unidad <span className="required"> *</span>
+          </label>
           <select
             id="claveUnidad"
             value={formData.claveUnidad}
@@ -893,13 +1180,21 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
             className={`facturacion-form-control ${errors.claveUnidad ? "error" : ""}`}
           >
             {clavesUnidad.map((clave) => (
-              <option key={clave.value} value={clave.value}>{clave.label}</option>
+              <option key={clave.value} value={clave.value}>
+                {clave.label}
+              </option>
             ))}
           </select>
-          {errors.claveUnidad && <span className="facturacion-error-message">{errors.claveUnidad}</span>}
+          {errors.claveUnidad && (
+            <span className="facturacion-error-message">
+              {errors.claveUnidad}
+            </span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="emisor">Emisor <span className="required"> *</span></label>
+          <label htmlFor="emisor">
+            Emisor <span className="required"> *</span>
+          </label>
           <select
             id="emisor"
             value={formData.emisor}
@@ -908,29 +1203,45 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
           >
             <option value="">Seleccione un emisor</option>
             {emisores.map((emisor) => (
-              <option key={emisor.id} value={emisor.id}>{emisor.nombre}</option>
+              <option key={emisor.id} value={emisor.id}>
+                {emisor.nombre}
+              </option>
             ))}
           </select>
-          {errors.emisor && <span className="facturacion-error-message">{errors.emisor}</span>}
+          {errors.emisor && (
+            <span className="facturacion-error-message">{errors.emisor}</span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="cuentaPorCobrar">Cuenta por Cobrar <span className="required"> *</span></label>
+          <label htmlFor="cuentaPorCobrar">
+            Cuenta por Cobrar <span className="required"> *</span>
+          </label>
           <select
             id="cuentaPorCobrar"
             value={formData.cuentaPorCobrar}
-            onChange={(e) => handleInputChange("cuentaPorCobrar", e.target.value)}
+            onChange={(e) =>
+              handleInputChange("cuentaPorCobrar", e.target.value)
+            }
             className={`facturacion-form-control ${errors.cuentaPorCobrar ? "error" : ""}`}
             disabled={!!preloadedCuenta}
           >
             <option value="">Ninguna seleccionada</option>
             {cuentasPorCobrar.map((cuenta) => (
-              <option key={cuenta.id} value={cuenta.id}>{cuenta.folio}</option>
+              <option key={cuenta.id} value={cuenta.id}>
+                {cuenta.folio}
+              </option>
             ))}
           </select>
-          {errors.cuentaPorCobrar && <span className="facturacion-error-message">{errors.cuentaPorCobrar}</span>}
+          {errors.cuentaPorCobrar && (
+            <span className="facturacion-error-message">
+              {errors.cuentaPorCobrar}
+            </span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="usoCfdi">Uso de CFDI <span className="required"> *</span></label>
+          <label htmlFor="usoCfdi">
+            Uso de CFDI <span className="required"> *</span>
+          </label>
           <select
             id="usoCfdi"
             value={formData.usoCfdi}
@@ -940,14 +1251,27 @@ const SolicitudModal = ({ isOpen, onClose, onSave, cotizaciones, cuentasPorCobra
           >
             <option value="">Seleccione un uso</option>
             {usosCfdi.map((uso) => (
-              <option key={uso.value} value={uso.value}>{uso.label}</option>
+              <option key={uso.value} value={uso.value}>
+                {uso.label}
+              </option>
             ))}
           </select>
-          {errors.usoCfdi && <span className="facturacion-error-message">{errors.usoCfdi}</span>}
+          {errors.usoCfdi && (
+            <span className="facturacion-error-message">{errors.usoCfdi}</span>
+          )}
         </div>
         <div className="facturacion-form-actions">
-          <button type="button" onClick={onClose} className="facturacion-btn facturacion-btn-cancel">Cancelar</button>
-          <button type="submit" className="facturacion-btn facturacion-btn-primary">
+          <button
+            type="button"
+            onClick={onClose}
+            className="facturacion-btn facturacion-btn-cancel"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="facturacion-btn facturacion-btn-primary"
+          >
             {isEditing ? "Guardar cambios" : "Crear"}
           </button>
         </div>
@@ -978,11 +1302,14 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta }) => {
 
   const handleRemoveConcepto = (index) => {
     const filtrados = formData.conceptos.filter((_, i) => i !== index);
-    const nuevoTotal = filtrados.reduce((sum, c) => sum + (parseFloat(c.importeTotal) || 0), 0);
+    const nuevoTotal = filtrados.reduce(
+      (sum, c) => sum + (parseFloat(c.importeTotal) || 0),
+      0,
+    );
     setFormData({
       ...formData,
       conceptos: filtrados,
-      cantidadCobrar: nuevoTotal
+      cantidadCobrar: nuevoTotal,
     });
   };
 
@@ -994,12 +1321,15 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta }) => {
       nuevosConceptos.push(conceptoData);
     }
 
-    const nuevoTotal = nuevosConceptos.reduce((sum, c) => sum + (parseFloat(c.importeTotal) || 0), 0);
+    const nuevoTotal = nuevosConceptos.reduce(
+      (sum, c) => sum + (parseFloat(c.importeTotal) || 0),
+      0,
+    );
 
     setFormData({
       ...formData,
       conceptos: nuevosConceptos,
-      cantidadCobrar: nuevoTotal
+      cantidadCobrar: nuevoTotal,
     });
     setShowConceptoModal(false);
     setEditingIndex(null);
@@ -1016,67 +1346,138 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta }) => {
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} title="Editar Conceptos de Cuenta" size="lg">
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title="Editar Conceptos de Cuenta"
+        size="lg"
+      >
         <form onSubmit={handleSubmit} className="cuentascobrar-form">
           <div className="cuentascobrar-form-group">
             <label>Fecha de Vencimiento</label>
             <input
               type="date"
               value={formData.fechaPago}
-              onChange={(e) => setFormData({ ...formData, fechaPago: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, fechaPago: e.target.value })
+              }
               className="cuentascobrar-form-control"
             />
           </div>
 
           <div className="cuentascobrar-form-group">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
               <label>Conceptos Facturables</label>
               <button
                 type="button"
-                onClick={() => { setEditingIndex(null); setShowConceptoModal(true); }}
+                onClick={() => {
+                  setEditingIndex(null);
+                  setShowConceptoModal(true);
+                }}
                 className="cotizaciones-btn cotizaciones-btn-primary"
-                style={{ minWidth: 'auto', padding: '5px 15px', borderRadius: '4px' }}
+                style={{
+                  minWidth: "auto",
+                  padding: "5px 15px",
+                  borderRadius: "4px",
+                }}
               >
                 + Agregar Concepto
               </button>
             </div>
 
-            <div className="cotizaciones-conceptos-list" style={{ marginTop: '10px', border: 'none' }}>
+            <div
+              className="cotizaciones-conceptos-list"
+              style={{ marginTop: "10px", border: "none" }}
+            >
               {formData.conceptos.map((c, index) => (
-                <div key={index} className="cotizaciones-concepto-item" style={{ marginBottom: '10px', borderRadius: '8px', border: '1px solid #e0e0e0' }}>
+                <div
+                  key={index}
+                  className="cotizaciones-concepto-item"
+                  style={{
+                    marginBottom: "10px",
+                    borderRadius: "8px",
+                    border: "1px solid #e0e0e0",
+                  }}
+                >
                   <div className="cotizaciones-concepto-info">
                     <div className="cotizaciones-concepto-row">
-                      <span className="cotizaciones-concepto-label">Cantidad:</span>
+                      <span className="cotizaciones-concepto-label">
+                        Cantidad:
+                      </span>
                       <span>{c.cantidad}</span>
                     </div>
                     <div className="cotizaciones-concepto-row">
-                      <span className="cotizaciones-concepto-label">Unidad:</span>
+                      <span className="cotizaciones-concepto-label">
+                        Unidad:
+                      </span>
                       <span>{c.unidad}</span>
                     </div>
                     <div className="cotizaciones-concepto-row">
-                      <span className="cotizaciones-concepto-label">Concepto:</span>
-                      <span className="cotizaciones-concepto-text" title={c.concepto}>{c.concepto}</span>
+                      <span className="cotizaciones-concepto-label">
+                        Concepto:
+                      </span>
+                      <span
+                        className="cotizaciones-concepto-text"
+                        title={c.concepto}
+                      >
+                        {c.concepto}
+                      </span>
                     </div>
                     <div className="cotizaciones-concepto-row">
-                      <span className="cotizaciones-concepto-label">Precio:</span>
-                      <span>${parseFloat(c.precioUnitario || 0).toFixed(2)}</span>
+                      <span className="cotizaciones-concepto-label">
+                        Precio:
+                      </span>
+                      <span>
+                        ${parseFloat(c.precioUnitario || 0).toFixed(2)}
+                      </span>
                     </div>
                     <div className="cotizaciones-concepto-row">
-                      <span className="cotizaciones-concepto-label">Descuento:</span>
+                      <span className="cotizaciones-concepto-label">
+                        Descuento:
+                      </span>
                       <span>{c.descuento || 0}%</span>
                     </div>
                     <div className="cotizaciones-concepto-row">
-                      <span className="cotizaciones-concepto-label">Total:</span>
-                      <span className="cotizaciones-concepto-total">${parseFloat(c.importeTotal || 0).toFixed(2)}</span>
+                      <span className="cotizaciones-concepto-label">
+                        Total:
+                      </span>
+                      <span className="cotizaciones-concepto-total">
+                        ${parseFloat(c.importeTotal || 0).toFixed(2)}
+                      </span>
                     </div>
                   </div>
 
                   <div className="cotizaciones-concepto-actions">
-                    <button type="button" onClick={() => { setEditingIndex(index); setShowConceptoModal(true); }} className="cotizaciones-action-btn cotizaciones-edit-btn">
-                      <img src={editIcon} alt="Editar" className="cotizaciones-action-icon" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingIndex(index);
+                        setShowConceptoModal(true);
+                      }}
+                      className="cotizaciones-action-btn cotizaciones-edit-btn"
+                    >
+                      <img
+                        src={editIcon}
+                        alt="Editar"
+                        className="cotizaciones-action-icon"
+                      />
                     </button>
-                    <button type="button" onClick={() => handleRemoveConcepto(index)} className="cotizaciones-action-btn cotizaciones-delete-btn">
-                      <img src={deleteIcon} alt="Eliminar" className="cotizaciones-action-icon" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveConcepto(index)}
+                      className="cotizaciones-action-btn cotizaciones-delete-btn"
+                    >
+                      <img
+                        src={deleteIcon}
+                        alt="Eliminar"
+                        className="cotizaciones-action-icon"
+                      />
                     </button>
                   </div>
                 </div>
@@ -1085,7 +1486,10 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta }) => {
           </div>
 
           <div className="cuentascobrar-form-group">
-            <label>Total de la cuenta: <strong>${parseFloat(formData.cantidadCobrar).toFixed(2)}</strong></label>
+            <label>
+              Total de la cuenta:{" "}
+              <strong>${parseFloat(formData.cantidadCobrar).toFixed(2)}</strong>
+            </label>
           </div>
 
           <div className="cotizaciones-form-actions">
@@ -1114,7 +1518,9 @@ const EditarCuentaModal = ({ isOpen, onClose, onSave, cuenta }) => {
             setEditingIndex(null);
           }}
           onSave={handleSaveConcepto}
-          concepto={editingIndex !== null ? formData.conceptos[editingIndex] : null}
+          concepto={
+            editingIndex !== null ? formData.conceptos[editingIndex] : null
+          }
         />
       )}
     </>
@@ -1133,38 +1539,56 @@ const DetallesCuentaModal = ({ isOpen, onClose, cuenta, tratoNombre }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Detalles de la Cuenta por Cobrar" size="lg">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Detalles de la Cuenta por Cobrar"
+      size="lg"
+    >
       <div className="cuentascobrar-detalles-container">
-
         <div className="detalle-header-grid">
-          <div><strong>Folio:</strong> <span className="detalle-folio-text">{cuenta.folio}</span></div>
-          <div><strong>ID Cotización:</strong> {cuenta.cotizacionId || "N/A"}</div>
-          <div><strong>Cliente:</strong> {cuenta.clienteNombre}</div>
+          <div>
+            <strong>Folio:</strong>{" "}
+            <span className="detalle-folio-text">{cuenta.folio}</span>
+          </div>
+          <div>
+            <strong>ID Cotización:</strong> {cuenta.cotizacionId || "N/A"}
+          </div>
+          <div>
+            <strong>Cliente:</strong> {cuenta.clienteNombre}
+          </div>
           <div>
             <strong>Estatus:</strong>
-            <span className={`cuentascobrar-estatus-badge ${getEstatusClass(cuenta.estatus)}`}>
+            <span
+              className={`cuentascobrar-estatus-badge ${getEstatusClass(cuenta.estatus)}`}
+            >
               {cuenta.estatus}
             </span>
           </div>
-          <div><strong>Esquema:</strong> {cuenta.esquema}</div>
+          <div>
+            <strong>Esquema:</strong> {cuenta.esquema}
+          </div>
         </div>
 
         <h4 className="detalle-seccion-titulo">Conceptos de esta cuenta</h4>
 
         <div className="detalle-conceptos-lista">
-          {cuenta.conceptos && cuenta.conceptos.map((c, index) => (
-            <div key={index} className="detalle-concepto-card">
-              <div className="detalle-concepto-main">
-                <span className="detalle-concepto-badge">{c.cantidad} {c.unidad}</span>
-                <span className="detalle-concepto-separador">|</span>
-                {/* CORRECCIÓN: Usar c.concepto que es el nombre del campo en el objeto */}
-                <span>{c.concepto}</span>
+          {cuenta.conceptos &&
+            cuenta.conceptos.map((c, index) => (
+              <div key={index} className="detalle-concepto-card">
+                <div className="detalle-concepto-main">
+                  <span className="detalle-concepto-badge">
+                    {c.cantidad} {c.unidad}
+                  </span>
+                  <span className="detalle-concepto-separador">|</span>
+                  {/* CORRECCIÓN: Usar c.concepto que es el nombre del campo en el objeto */}
+                  <span>{c.concepto}</span>
+                </div>
+                <div className="detalle-concepto-importe">
+                  {formatCurrency(c.importeTotal)}
+                </div>
               </div>
-              <div className="detalle-concepto-importe">
-                {formatCurrency(c.importeTotal)}
-              </div>
-            </div>
-          ))}
+            ))}
         </div>
 
         <div className="detalle-footer-total">
@@ -1207,13 +1631,19 @@ const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
   </div>
 );
 
-const CrearComisionDesdeCuentaModal = ({ isOpen, onClose, onSave, cuentaId, montoPagado }) => {
+const CrearComisionDesdeCuentaModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  cuentaId,
+  montoPagado,
+}) => {
   const [formData, setFormData] = useState({
     vendedorCuentaId: "",
     vendedorNuevoNombre: "",
     porcentajeVenta: "",
     porcentajeProyecto: "",
-    notas: ""
+    notas: "",
   });
   const [errors, setErrors] = useState({});
   const [cuentasComisiones, setCuentasComisiones] = useState([]);
@@ -1225,7 +1655,9 @@ const CrearComisionDesdeCuentaModal = ({ isOpen, onClose, onSave, cuentaId, mont
     if (isOpen) {
       fetchCuentasComisiones().then((cuentas) => {
         if (cuentas && Array.isArray(cuentas)) {
-          const cuentaDagoberto = cuentas.find(c => c.nombre.includes("Dagoberto"));
+          const cuentaDagoberto = cuentas.find((c) =>
+            c.nombre.includes("Dagoberto"),
+          );
 
           setFormData({
             vendedorCuentaId: "",
@@ -1233,7 +1665,7 @@ const CrearComisionDesdeCuentaModal = ({ isOpen, onClose, onSave, cuentaId, mont
             porcentajeVenta: "",
             proyectoCuentaId: cuentaDagoberto ? cuentaDagoberto.id : "",
             porcentajeProyecto: "",
-            notas: ""
+            notas: "",
           });
         }
       });
@@ -1244,7 +1676,9 @@ const CrearComisionDesdeCuentaModal = ({ isOpen, onClose, onSave, cuentaId, mont
 
   const fetchCuentasComisiones = async () => {
     try {
-      const data = await fetchWithToken(`${API_BASE_URL}/comisiones/cuentas-comisiones`);
+      const data = await fetchWithToken(
+        `${API_BASE_URL}/comisiones/cuentas-comisiones`,
+      );
       setCuentasComisiones(data);
       return data;
     } catch (error) {
@@ -1255,7 +1689,8 @@ const CrearComisionDesdeCuentaModal = ({ isOpen, onClose, onSave, cuentaId, mont
 
   useEffect(() => {
     if (formData.porcentajeVenta && montoPagado) {
-      const monto = (parseFloat(montoPagado) * parseFloat(formData.porcentajeVenta)) / 100;
+      const monto =
+        (parseFloat(montoPagado) * parseFloat(formData.porcentajeVenta)) / 100;
       setMontoVentaCalculado(monto);
     } else {
       setMontoVentaCalculado(0);
@@ -1264,7 +1699,9 @@ const CrearComisionDesdeCuentaModal = ({ isOpen, onClose, onSave, cuentaId, mont
 
   useEffect(() => {
     if (formData.porcentajeProyecto && montoPagado) {
-      const monto = (parseFloat(montoPagado) * parseFloat(formData.porcentajeProyecto)) / 100;
+      const monto =
+        (parseFloat(montoPagado) * parseFloat(formData.porcentajeProyecto)) /
+        100;
       setMontoProyectoCalculado(monto);
     } else {
       setMontoProyectoCalculado(0);
@@ -1278,9 +1715,9 @@ const CrearComisionDesdeCuentaModal = ({ isOpen, onClose, onSave, cuentaId, mont
       }
     }
 
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
@@ -1295,11 +1732,19 @@ const CrearComisionDesdeCuentaModal = ({ isOpen, onClose, onSave, cuentaId, mont
       newErrors.vendedorNuevoNombre = "Ingrese nombre";
     }
 
-    if (!formData.porcentajeVenta || parseFloat(formData.porcentajeVenta) < 0 || parseFloat(formData.porcentajeVenta) > 100) {
+    if (
+      !formData.porcentajeVenta ||
+      parseFloat(formData.porcentajeVenta) < 0 ||
+      parseFloat(formData.porcentajeVenta) > 100
+    ) {
       newErrors.porcentajeVenta = "Inválido";
     }
 
-    if (!formData.porcentajeProyecto || parseFloat(formData.porcentajeProyecto) < 0 || parseFloat(formData.porcentajeProyecto) > 100) {
+    if (
+      !formData.porcentajeProyecto ||
+      parseFloat(formData.porcentajeProyecto) < 0 ||
+      parseFloat(formData.porcentajeProyecto) > 100
+    ) {
       newErrors.porcentajeProyecto = "Inválido";
     }
 
@@ -1311,14 +1756,22 @@ const CrearComisionDesdeCuentaModal = ({ isOpen, onClose, onSave, cuentaId, mont
     e.preventDefault();
     if (validateForm()) {
       const dataToSend = {
-        vendedorCuentaId: isCreatingNewVendedor ? null : parseInt(formData.vendedorCuentaId),
-        vendedorNuevoNombre: isCreatingNewVendedor ? formData.vendedorNuevoNombre : null,
+        vendedorCuentaId: isCreatingNewVendedor
+          ? null
+          : parseInt(formData.vendedorCuentaId),
+        vendedorNuevoNombre: isCreatingNewVendedor
+          ? formData.vendedorNuevoNombre
+          : null,
         porcentajeVenta: parseFloat(formData.porcentajeVenta),
         porcentajeProyecto: parseFloat(formData.porcentajeProyecto),
-        notas: formData.notas
+        notas: formData.notas,
       };
       if (!cuentaId) {
-        Swal.fire({ icon: "error", title: "Error", text: "No se identificó la cuenta" });
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se identificó la cuenta",
+        });
         return;
       }
       onSave(dataToSend);
@@ -1333,66 +1786,102 @@ const CrearComisionDesdeCuentaModal = ({ isOpen, onClose, onSave, cuentaId, mont
       size="md"
       closeOnOverlayClick={false}
     >
-      <form onSubmit={handleSubmit} className="cuentascobrar-form" style={{ gap: '15px' }}>
-
+      <form
+        onSubmit={handleSubmit}
+        className="cuentascobrar-form"
+        style={{ gap: "15px" }}
+      >
         <div className="cuentascobrar-info-section cuentascobrar-info-compact">
-          <div className="cuentascobrar-info-item" style={{ marginBottom: 0, alignItems: 'center' }}>
+          <div
+            className="cuentascobrar-info-item"
+            style={{ marginBottom: 0, alignItems: "center" }}
+          >
             <label style={{ marginBottom: 0 }}>Monto Base (Pagado):</label>
-            <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#00133b' }}>
+            <span
+              style={{
+                fontSize: "1.1rem",
+                fontWeight: "bold",
+                color: "#00133b",
+              }}
+            >
               ${parseFloat(montoPagado).toFixed(2)}
             </span>
           </div>
         </div>
 
-        <div className="cuentascobrar-form-group" style={{ gap: '5px' }}>
+        <div className="cuentascobrar-form-group" style={{ gap: "5px" }}>
           <label>
             <input
               type="checkbox"
               checked={isCreatingNewVendedor}
               onChange={(e) => {
                 setIsCreatingNewVendedor(e.target.checked);
-                setFormData(prev => ({ ...prev, vendedorCuentaId: "", vendedorNuevoNombre: "" }));
+                setFormData((prev) => ({
+                  ...prev,
+                  vendedorCuentaId: "",
+                  vendedorNuevoNombre: "",
+                }));
               }}
-            />
-            {' '}Crear nuevo vendedor
+            />{" "}
+            Crear nuevo vendedor
           </label>
         </div>
 
         {!isCreatingNewVendedor ? (
           <div className="cuentascobrar-form-group">
-            <label htmlFor="vendedorCuentaId">Vendedor <span className="required">*</span></label>
+            <label htmlFor="vendedorCuentaId">
+              Vendedor <span className="required">*</span>
+            </label>
             <select
               id="vendedorCuentaId"
               value={formData.vendedorCuentaId}
-              onChange={(e) => handleInputChange("vendedorCuentaId", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("vendedorCuentaId", e.target.value)
+              }
               className={`cuentascobrar-form-control ${errors.vendedorCuentaId ? "error" : ""}`}
             >
               <option value="">Seleccione un vendedor</option>
               {cuentasComisiones.map((cuenta) => (
-                <option key={cuenta.id} value={cuenta.id}>{cuenta.nombre}</option>
+                <option key={cuenta.id} value={cuenta.id}>
+                  {cuenta.nombre}
+                </option>
               ))}
             </select>
-            {errors.vendedorCuentaId && <span className="cuentascobrar-error-message">{errors.vendedorCuentaId}</span>}
+            {errors.vendedorCuentaId && (
+              <span className="cuentascobrar-error-message">
+                {errors.vendedorCuentaId}
+              </span>
+            )}
           </div>
         ) : (
           <div className="cuentascobrar-form-group">
-            <label htmlFor="vendedorNuevoNombre">Nombre del vendedor <span className="required">*</span></label>
+            <label htmlFor="vendedorNuevoNombre">
+              Nombre del vendedor <span className="required">*</span>
+            </label>
             <input
               type="text"
               id="vendedorNuevoNombre"
               value={formData.vendedorNuevoNombre}
-              onChange={(e) => handleInputChange("vendedorNuevoNombre", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("vendedorNuevoNombre", e.target.value)
+              }
               className={`cuentascobrar-form-control ${errors.vendedorNuevoNombre ? "error" : ""}`}
               placeholder="Ingrese el nombre"
             />
-            {errors.vendedorNuevoNombre && <span className="cuentascobrar-error-message">{errors.vendedorNuevoNombre}</span>}
+            {errors.vendedorNuevoNombre && (
+              <span className="cuentascobrar-error-message">
+                {errors.vendedorNuevoNombre}
+              </span>
+            )}
           </div>
         )}
 
         <div className="cuentascobrar-form-row">
           <div className="cuentascobrar-form-group" style={{ flex: 1 }}>
-            <label htmlFor="porcentajeVenta">Comisión Venta (%) <span className="required">*</span></label>
-            <div style={{ position: 'relative' }}>
+            <label htmlFor="porcentajeVenta">
+              Comisión Venta (%) <span className="required">*</span>
+            </label>
+            <div style={{ position: "relative" }}>
               <input
                 type="number"
                 id="porcentajeVenta"
@@ -1400,13 +1889,28 @@ const CrearComisionDesdeCuentaModal = ({ isOpen, onClose, onSave, cuentaId, mont
                 min="0"
                 max="100"
                 value={formData.porcentajeVenta}
-                onChange={(e) => handleInputChange("porcentajeVenta", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("porcentajeVenta", e.target.value)
+                }
                 className={`cuentascobrar-form-control ${errors.porcentajeVenta ? "error" : ""}`}
                 placeholder="0"
               />
-              <span style={{ position: 'absolute', right: '10px', top: '8px', color: '#999' }}>%</span>
+              <span
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "8px",
+                  color: "#999",
+                }}
+              >
+                %
+              </span>
             </div>
-            {errors.porcentajeVenta && <span className="cuentascobrar-error-message">{errors.porcentajeVenta}</span>}
+            {errors.porcentajeVenta && (
+              <span className="cuentascobrar-error-message">
+                {errors.porcentajeVenta}
+              </span>
+            )}
           </div>
 
           <div className="cuentascobrar-form-group" style={{ flex: 1 }}>
@@ -1418,7 +1922,7 @@ const CrearComisionDesdeCuentaModal = ({ isOpen, onClose, onSave, cuentaId, mont
                 value={montoVentaCalculado.toFixed(2)}
                 className="cuentascobrar-form-control"
                 disabled
-                style={{ backgroundColor: '#e9ecef', fontWeight: 'bold' }}
+                style={{ backgroundColor: "#e9ecef", fontWeight: "bold" }}
               />
             </div>
           </div>
@@ -1431,14 +1935,20 @@ const CrearComisionDesdeCuentaModal = ({ isOpen, onClose, onSave, cuentaId, mont
             value="Dagoberto Emmanuel Nieto González"
             disabled
             className="cuentascobrar-form-control"
-            style={{ backgroundColor: '#f0f0f0', color: '#666', fontSize: '0.85rem' }}
+            style={{
+              backgroundColor: "#f0f0f0",
+              color: "#666",
+              fontSize: "0.85rem",
+            }}
           />
         </div>
 
         <div className="cuentascobrar-form-row">
           <div className="cuentascobrar-form-group" style={{ flex: 1 }}>
-            <label htmlFor="porcentajeProyecto">Comisión Proy. (%) <span className="required">*</span></label>
-            <div style={{ position: 'relative' }}>
+            <label htmlFor="porcentajeProyecto">
+              Comisión Proy. (%) <span className="required">*</span>
+            </label>
+            <div style={{ position: "relative" }}>
               <input
                 type="number"
                 id="porcentajeProyecto"
@@ -1446,13 +1956,28 @@ const CrearComisionDesdeCuentaModal = ({ isOpen, onClose, onSave, cuentaId, mont
                 min="0"
                 max="100"
                 value={formData.porcentajeProyecto}
-                onChange={(e) => handleInputChange("porcentajeProyecto", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("porcentajeProyecto", e.target.value)
+                }
                 className={`cuentascobrar-form-control ${errors.porcentajeProyecto ? "error" : ""}`}
                 placeholder="0"
               />
-              <span style={{ position: 'absolute', right: '10px', top: '8px', color: '#999' }}>%</span>
+              <span
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "8px",
+                  color: "#999",
+                }}
+              >
+                %
+              </span>
             </div>
-            {errors.porcentajeProyecto && <span className="cuentascobrar-error-message">{errors.porcentajeProyecto}</span>}
+            {errors.porcentajeProyecto && (
+              <span className="cuentascobrar-error-message">
+                {errors.porcentajeProyecto}
+              </span>
+            )}
           </div>
 
           <div className="cuentascobrar-form-group" style={{ flex: 1 }}>
@@ -1464,7 +1989,7 @@ const CrearComisionDesdeCuentaModal = ({ isOpen, onClose, onSave, cuentaId, mont
                 value={montoProyectoCalculado.toFixed(2)}
                 className="cuentascobrar-form-control"
                 disabled
-                style={{ backgroundColor: '#e9ecef', fontWeight: 'bold' }}
+                style={{ backgroundColor: "#e9ecef", fontWeight: "bold" }}
               />
             </div>
           </div>
@@ -1482,11 +2007,21 @@ const CrearComisionDesdeCuentaModal = ({ isOpen, onClose, onSave, cuentaId, mont
           ></textarea>
         </div>
 
-        <div className="cuentascobrar-form-actions" style={{ marginTop: '10px' }}>
-          <button type="button" onClick={onClose} className="cuentascobrar-btn cuentascobrar-btn-cancel">
+        <div
+          className="cuentascobrar-form-actions"
+          style={{ marginTop: "10px" }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="cuentascobrar-btn cuentascobrar-btn-cancel"
+          >
             Cancelar
           </button>
-          <button type="submit" className="cuentascobrar-btn cuentascobrar-btn-primary">
+          <button
+            type="submit"
+            className="cuentascobrar-btn cuentascobrar-btn-primary"
+          >
             Crear Comisión
           </button>
         </div>
@@ -1499,7 +2034,7 @@ const CrearComisionDesdeCuentaModal = ({ isOpen, onClose, onSave, cuentaId, mont
 const AdminCuentasCobrar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const userRol = localStorage.getItem("userRol")
+  const userRol = localStorage.getItem("userRol");
   const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
   const [filtroFolio, setFiltroFolio] = useState("");
   const [clientes, setClientes] = useState([]);
@@ -1510,7 +2045,7 @@ const AdminCuentasCobrar = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [filtroEstatus, setFiltroEstatus] = useState("PENDIENTE");
   const [categoriasIngreso, setCategoriasIngreso] = useState([]);
-  const [ordenFecha, setOrdenFecha] = useState('asc');
+  const [ordenFecha, setOrdenFecha] = useState("asc");
   const [rangoFechas, setRangoFechas] = useState([null, null]);
   const [fechaInicio, fechaFin] = rangoFechas;
   const [filtroCliente, setFiltroCliente] = useState("");
@@ -1540,26 +2075,35 @@ const AdminCuentasCobrar = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const params = filtroEstatus !== "Todas" ? `?estatus=${filtroEstatus}` : "";
+        const params =
+          filtroEstatus !== "Todas" ? `?estatus=${filtroEstatus}` : "";
 
-        const [clientesData, cuentasData, emisoresData, categoriasIngresoData] = await Promise.all([
-          fetchWithToken(`${API_BASE_URL}/empresas?estatus=CLIENTE`),
-          fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar${params}`),
-          fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/emisores`),
-          fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/categorias-ingreso`),
-        ]);
+        const [clientesData, cuentasData, emisoresData, categoriasIngresoData] =
+          await Promise.all([
+            fetchWithToken(`${API_BASE_URL}/empresas?estatus=CLIENTE`),
+            fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar${params}`),
+            fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/emisores`),
+            fetchWithToken(
+              `${API_BASE_URL}/cuentas-por-cobrar/categorias-ingreso`,
+            ),
+          ]);
 
         setClientes(clientesData);
         setCuentasPorCobrar(cuentasData);
         setEmisores(emisoresData);
         setCategoriasIngreso(categoriasIngresoData);
 
-        const vinculacionesData = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/vinculaciones`);
+        const vinculacionesData = await fetchWithToken(
+          `${API_BASE_URL}/cuentas-por-cobrar/vinculaciones`,
+        );
         const cuentasVinculadasIds = new Set(vinculacionesData.idsVinculadas);
         setCuentasVinculadas(cuentasVinculadasIds);
-
       } catch (error) {
-        Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos" });
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudieron cargar los datos",
+        });
       } finally {
         setIsLoading(false);
       }
@@ -1606,7 +2150,9 @@ const AdminCuentasCobrar = () => {
     if (modalType === "crearSolicitud" && data.cuenta) {
       try {
         Swal.showLoading();
-        const cotizacionData = await fetchWithToken(`${API_BASE_URL}/cotizaciones/${data.cuenta.cotizacionId}`);
+        const cotizacionData = await fetchWithToken(
+          `${API_BASE_URL}/cotizaciones/${data.cuenta.cotizacionId}`,
+        );
         Swal.close();
 
         setModals((prev) => ({
@@ -1618,7 +2164,11 @@ const AdminCuentasCobrar = () => {
           },
         }));
       } catch (error) {
-        Swal.fire("Error", "No se pudo cargar la información de la cotización", "error");
+        Swal.fire(
+          "Error",
+          "No se pudo cargar la información de la cotización",
+          "error",
+        );
       }
     } else {
       setModals((prev) => ({
@@ -1670,13 +2220,21 @@ const AdminCuentasCobrar = () => {
     setRangoFechas([null, null]);
   };
 
-  const clientesUnicos = [...new Set(cuentasPorCobrar.map(c => c.clienteNombre || c.cliente?.razonSocial))].filter(Boolean).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+  const clientesUnicos = [
+    ...new Set(
+      cuentasPorCobrar.map((c) => c.clienteNombre || c.cliente?.razonSocial),
+    ),
+  ]
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
 
   const handleMarcarPagada = async (responseData, montoPagado, cuentaId) => {
     const updatedCuenta = responseData.cuenta;
 
     setCuentasPorCobrar((prev) =>
-      prev.map((c) => (c.id === updatedCuenta.id ? { ...c, ...updatedCuenta } : c))
+      prev.map((c) =>
+        c.id === updatedCuenta.id ? { ...c, ...updatedCuenta } : c,
+      ),
     );
 
     if (responseData.mostrarModalComision) {
@@ -1696,8 +2254,10 @@ const AdminCuentasCobrar = () => {
 
   const handleDeleteCuenta = async (cuenta) => {
     try {
-      const data = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/check-vinculada`);
-      if (data.vinculada) {
+      const data = await fetchWithToken(
+        `${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/check-vinculada`,
+      );
+      if (data.tieneSolicitud) {
         Swal.fire({
           icon: "error",
           title: "Error",
@@ -1718,7 +2278,9 @@ const AdminCuentasCobrar = () => {
 
   const handleCheckMarcarCompletada = async (cuenta) => {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/check-vinculada`);
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/check-vinculada`,
+      );
       if (!response.vinculada) {
         Swal.fire({
           icon: "error",
@@ -1741,12 +2303,16 @@ const AdminCuentasCobrar = () => {
     try {
       Swal.showLoading();
 
-      const cotizacionData = await fetchWithToken(`${API_BASE_URL}/cotizaciones/${cuenta.cotizacionId}`);
+      const cotizacionData = await fetchWithToken(
+        `${API_BASE_URL}/cotizaciones/${cuenta.cotizacionId}`,
+      );
 
       let tratoNombre = null;
       if (cotizacionData.tratoId) {
         try {
-          const tratoResponse = await fetchWithToken(`${API_BASE_URL}/tratos/${cotizacionData.tratoId}`);
+          const tratoResponse = await fetchWithToken(
+            `${API_BASE_URL}/tratos/${cotizacionData.tratoId}`,
+          );
           tratoNombre = tratoResponse.nombre;
         } catch (error) {
           console.warn("No se pudo cargar el trato:", error);
@@ -1813,17 +2379,24 @@ const AdminCuentasCobrar = () => {
     }
 
     try {
-      const response = await fetchFileWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/download-comprobante`, {
-        method: "GET",
-      });
+      const response = await fetchFileWithToken(
+        `${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/download-comprobante`,
+        {
+          method: "GET",
+        },
+      );
 
-      if (!response.ok) throw new Error(`Error al descargar el archivo: ${response.statusText}`);
+      if (!response.ok)
+        throw new Error(
+          `Error al descargar el archivo: ${response.statusText}`,
+        );
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = cuenta.comprobantePagoUrl.split("/").pop() || "comprobante_pago.pdf";
+      a.download =
+        cuenta.comprobantePagoUrl.split("/").pop() || "comprobante_pago.pdf";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -1847,27 +2420,41 @@ const AdminCuentasCobrar = () => {
     if (filtroFolio) {
       return cuenta.folio === filtroFolio;
     }
-    const pasaFiltroEstatus = filtroEstatus === "Todas" || cuenta.estatus === filtroEstatus;
+    const pasaFiltroEstatus =
+      filtroEstatus === "Todas" || cuenta.estatus === filtroEstatus;
 
     const nombreCliente = cuenta.clienteNombre || cuenta.cliente?.razonSocial;
-    const pasaFiltroCliente = filtroCliente === "" || nombreCliente === filtroCliente;
+    const pasaFiltroCliente =
+      filtroCliente === "" || nombreCliente === filtroCliente;
 
     let pasaFiltroFechas = true;
     if (fechaInicio || fechaFin) {
-      const fechaCuenta = new Date(cuenta.fechaPago + 'T00:00:00');
+      const fechaCuenta = new Date(cuenta.fechaPago + "T00:00:00");
 
       let inicio = fechaInicio ? new Date(fechaInicio) : null;
       let fin = fechaFin ? new Date(fechaFin) : null;
 
       // Normalizar fechas
       if (inicio) {
-        inicio = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
+        inicio = new Date(
+          inicio.getFullYear(),
+          inicio.getMonth(),
+          inicio.getDate(),
+        );
       }
       if (fin) {
-        fin = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59, 59);
+        fin = new Date(
+          fin.getFullYear(),
+          fin.getMonth(),
+          fin.getDate(),
+          23,
+          59,
+          59,
+        );
       }
 
-      pasaFiltroFechas = (!inicio || fechaCuenta >= inicio) && (!fin || fechaCuenta <= fin);
+      pasaFiltroFechas =
+        (!inicio || fechaCuenta >= inicio) && (!fin || fechaCuenta <= fin);
     }
 
     return pasaFiltroEstatus && pasaFiltroCliente && pasaFiltroFechas;
@@ -1877,7 +2464,7 @@ const AdminCuentasCobrar = () => {
     const fechaA = new Date(a.fechaPago);
     const fechaB = new Date(b.fechaPago);
 
-    if (ordenFecha === 'asc') {
+    if (ordenFecha === "asc") {
       return fechaA - fechaB;
     } else {
       return fechaB - fechaA;
@@ -1885,7 +2472,7 @@ const AdminCuentasCobrar = () => {
   });
 
   const toggleOrdenFecha = () => {
-    setOrdenFecha(prevOrden => prevOrden === 'asc' ? 'desc' : 'asc');
+    setOrdenFecha((prevOrden) => (prevOrden === "asc" ? "desc" : "asc"));
   };
 
   return (
@@ -1906,17 +2493,29 @@ const AdminCuentasCobrar = () => {
               </div>
               <div className="cuentascobrar-sidebar-menu">
                 {userRol === "ADMINISTRADOR" && (
-                  <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("balance")}>
+                  <div
+                    className="cuentascobrar-menu-item"
+                    onClick={() => handleMenuNavigation("balance")}
+                  >
                     Balance
                   </div>
                 )}
-                <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("transacciones")}>
+                <div
+                  className="cuentascobrar-menu-item"
+                  onClick={() => handleMenuNavigation("transacciones")}
+                >
                   Transacciones
                 </div>
-                <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("cotizaciones")}>
+                <div
+                  className="cuentascobrar-menu-item"
+                  onClick={() => handleMenuNavigation("cotizaciones")}
+                >
                   Cotizaciones
                 </div>
-                <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("facturacion")}>
+                <div
+                  className="cuentascobrar-menu-item"
+                  onClick={() => handleMenuNavigation("facturacion")}
+                >
                   Facturas/Notas
                 </div>
                 <div
@@ -1925,13 +2524,22 @@ const AdminCuentasCobrar = () => {
                 >
                   Cuentas por Cobrar
                 </div>
-                <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("cuentas-pagar")}>
+                <div
+                  className="cuentascobrar-menu-item"
+                  onClick={() => handleMenuNavigation("cuentas-pagar")}
+                >
                   Cuentas por Pagar
                 </div>
-                <div className="cuentascobrar-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>
+                <div
+                  className="cuentascobrar-menu-item"
+                  onClick={() => handleMenuNavigation("caja-chica")}
+                >
                   Caja chica
                 </div>
-                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("comisiones")}>
+                <div
+                  className="transacciones-menu-item"
+                  onClick={() => handleMenuNavigation("comisiones")}
+                >
                   Comisiones
                 </div>
               </div>
@@ -1940,23 +2548,31 @@ const AdminCuentasCobrar = () => {
             <section className="cuentascobrar-content-panel">
               <div className="cuentascobrar-header">
                 <div className="cuentascobrar-header-info">
-                  <h3 className="cuentascobrar-page-title">Cuentas por Cobrar</h3>
-                  <p className="cuentascobrar-subtitle">Gestión de cobros pendientes</p>
+                  <h3 className="cuentascobrar-page-title">
+                    Cuentas por Cobrar
+                  </h3>
+                  <p className="cuentascobrar-subtitle">
+                    Gestión de cobros pendientes
+                  </p>
                 </div>
               </div>
 
               <div className="cuentascobrar-table-card">
                 <div className="cuentascobrar-table-header">
-                  <h4 className="cuentascobrar-table-title">Cuentas por cobrar</h4>
+                  <h4 className="cuentascobrar-table-title">
+                    Cuentas por cobrar
+                  </h4>
                   <div className="cuentascobrar-filters-container">
-
                     {filtroFolio && (
                       <div className="cuentascobrar-filter-container">
-                        <div style={{ height: '21px' }}></div>
+                        <div style={{ height: "21px" }}></div>
                         <button
                           className="cuentascobrar-btn cuentascobrar-btn-cancel"
-                          onClick={() => { setFiltroFolio(""); setFiltroEstatus("PENDIENTE"); }}
-                          style={{ backgroundColor: '#6c757d', color: 'white' }}
+                          onClick={() => {
+                            setFiltroFolio("");
+                            setFiltroEstatus("PENDIENTE");
+                          }}
+                          style={{ backgroundColor: "#6c757d", color: "white" }}
                         >
                           Ver lista completa (Filtro: {filtroFolio}) ✕
                         </button>
@@ -1964,18 +2580,22 @@ const AdminCuentasCobrar = () => {
                     )}
 
                     <div className="cuentascobrar-filter-container">
-                      <div style={{ height: '21px' }}></div>
+                      <div style={{ height: "21px" }}></div>
                       <button
                         className="cuentascobrar-btn-orden"
                         onClick={toggleOrdenFecha}
-                        title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'}`}
+                        title={`Cambiar a orden ${ordenFecha === "asc" ? "descendente" : "ascendente"}`}
                       >
-                        {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
+                        {ordenFecha === "asc"
+                          ? "📅 ↑ Antiguas primero"
+                          : "📅 ↓ Recientes primero"}
                       </button>
                     </div>
 
                     <div className="cuentascobrar-filter-container">
-                      <label htmlFor="filtroCliente">Filtrar por cliente:</label>
+                      <label htmlFor="filtroCliente">
+                        Filtrar por cliente:
+                      </label>
                       <select
                         id="filtroCliente"
                         value={filtroCliente}
@@ -1992,7 +2612,9 @@ const AdminCuentasCobrar = () => {
                     </div>
 
                     <div className="cuentascobrar-filter-container">
-                      <label htmlFor="filtroEstatus">Filtrar por estatus:</label>
+                      <label htmlFor="filtroEstatus">
+                        Filtrar por estatus:
+                      </label>
                       <select
                         id="filtroEstatus"
                         value={filtroEstatus}
@@ -2025,7 +2647,6 @@ const AdminCuentasCobrar = () => {
                         />
                       </div>
                     </div>
-
                   </div>
                 </div>
 
@@ -2051,32 +2672,43 @@ const AdminCuentasCobrar = () => {
                             <td>{cuenta.fechaPago}</td>
                             <td>{cuenta.clienteNombre || cuenta.cliente}</td>
                             <td>
-                              <span className={`cuentascobrar-estatus-badge ${getEstatusClass(cuenta.estatus)}`}>
+                              <span
+                                className={`cuentascobrar-estatus-badge ${getEstatusClass(cuenta.estatus)}`}
+                              >
                                 {cuenta.estatus}
                               </span>
                             </td>
                             <td>{cuenta.esquema}</td>
                             <td>
                               <div className="cuentascobrar-monto-info">
-                                <div>{formatCurrency(cuenta.cantidadCobrar)}</div>
+                                <div>
+                                  {formatCurrency(cuenta.cantidadCobrar)}
+                                </div>
                                 {cuenta.montoPagado > 0 && (
                                   <div className="cuentascobrar-monto-detalle">
-                                    <small>Pagado: {formatCurrency(cuenta.montoPagado)}</small>
-                                    <small>Pendiente: {formatCurrency(cuenta.saldoPendiente)}</small>
+                                    <small>
+                                      Pagado:{" "}
+                                      {formatCurrency(cuenta.montoPagado)}
+                                    </small>
+                                    <small>
+                                      Pendiente:{" "}
+                                      {formatCurrency(cuenta.saldoPendiente)}
+                                    </small>
                                   </div>
                                 )}
                               </div>
                             </td>
                             <td className="cuentascobrar-concepto-cell">
-                              {cuenta.conceptos && cuenta.conceptos.length > 0 ? (
-                                cuenta.conceptos.length > 1
+                              {cuenta.conceptos && cuenta.conceptos.length > 0
+                                ? cuenta.conceptos.length > 1
                                   ? `${cuenta.conceptos.length} conceptos`
                                   : cuenta.conceptos[0].concepto.length > 50
-                                    ? cuenta.conceptos[0].concepto.substring(0, 50) + "..."
+                                    ? cuenta.conceptos[0].concepto.substring(
+                                        0,
+                                        50,
+                                      ) + "..."
                                     : cuenta.conceptos[0].concepto
-                              ) : (
-                                "Sin conceptos"
-                              )}
+                                : "Sin conceptos"}
                             </td>
                             <td>
                               <div className="cuentascobrar-actions">
@@ -2105,7 +2737,9 @@ const AdminCuentasCobrar = () => {
                                 {cuenta.estatus !== "PAGADO" && (
                                   <button
                                     className="cuentascobrar-action-btn cuentascobrar-edit-btn"
-                                    onClick={() => openModal("editarCuenta", { cuenta })}
+                                    onClick={() =>
+                                      openModal("editarCuenta", { cuenta })
+                                    }
                                     title="Editar cuenta"
                                   >
                                     <img
@@ -2118,7 +2752,9 @@ const AdminCuentasCobrar = () => {
                                 {cuenta.estatus !== "PAGADO" && (
                                   <button
                                     className="cuentascobrar-action-btn cuentascobrar-check-btn"
-                                    onClick={() => handleCheckMarcarCompletada(cuenta)}
+                                    onClick={() =>
+                                      handleCheckMarcarCompletada(cuenta)
+                                    }
                                     title="Marcar como completado"
                                   >
                                     <img
@@ -2130,11 +2766,14 @@ const AdminCuentasCobrar = () => {
                                 )}
                                 {cuenta.estatus === "PAGADO" &&
                                   cuenta.comprobantePagoUrl &&
-                                  cuenta.comprobantePagoUrl !== "ERROR_UPLOAD" &&
+                                  cuenta.comprobantePagoUrl !==
+                                    "ERROR_UPLOAD" &&
                                   cuenta.comprobantePagoUrl !== "UPLOADING" && (
                                     <button
                                       className="cuentascobrar-action-btn cuentascobrar-download-btn"
-                                      onClick={() => handleDescargarComprobante(cuenta)}
+                                      onClick={() =>
+                                        handleDescargarComprobante(cuenta)
+                                      }
                                       title="Descargar comprobante de pago"
                                     >
                                       <img
@@ -2145,19 +2784,45 @@ const AdminCuentasCobrar = () => {
                                     </button>
                                   )}
                                 <button
-                                  className={`cuentascobrar-action-btn cuentascobrar-download-btn ${cuentasVinculadas.has(cuenta.id)
-                                    ? 'cuentascobrar-request-btn-vinculada'
-                                    : 'cuentascobrar-request-btn-disponible'
-                                    }`}
+                                  className={`cuentascobrar-action-btn cuentascobrar-download-btn ${
+                                    cuentasVinculadas.has(cuenta.id)
+                                      ? "cuentascobrar-request-btn-vinculada"
+                                      : "cuentascobrar-request-btn-disponible"
+                                  }`}
                                   onClick={async () => {
-                                    if (cuentasVinculadas.has(cuenta.id)) {
+                                    try {
+                                      const check = await fetchWithToken(
+                                        `${API_BASE_URL}/cuentas-por-cobrar/${cuenta.id}/check-vinculada`,
+                                      );
+
+                                      if (check.tieneSolicitud) {
+                                        setCuentasVinculadas(
+                                          (prev) =>
+                                            new Set([...prev, cuenta.id]),
+                                        );
+                                        Swal.fire({
+                                          icon: "warning",
+                                          title: "Alerta",
+                                          text: "Ya se generó su solicitud de factura/nota",
+                                        });
+                                      } else {
+                                        setCuentasVinculadas((prev) => {
+                                          const nuevo = new Set(prev);
+                                          nuevo.delete(cuenta.id);
+                                          return nuevo;
+                                        });
+                                        openModal("crearSolicitud", {
+                                          cuenta: cuenta,
+                                        });
+                                      }
+                                    } catch (error) {
                                       Swal.fire({
-                                        icon: "warning",
-                                        title: "Alerta",
-                                        text: "Ya se generó su solicitud de factura/nota",
+                                        icon: "error",
+                                        title: "Error",
+                                        text:
+                                          "No se pudo verificar el estado de la cuenta: " +
+                                          error.message,
                                       });
-                                    } else {
-                                      openModal("crearSolicitud", { cuenta: cuenta });
                                     }
                                   }}
                                   title={
@@ -2199,7 +2864,7 @@ const AdminCuentasCobrar = () => {
               setSolicitudes((prev) => [...prev, savedSolicitud]);
               const cuentaId = modals.crearSolicitud.cuenta?.id;
               if (cuentaId) {
-                setCuentasVinculadas(prev => new Set([...prev, cuentaId]));
+                setCuentasVinculadas((prev) => new Set([...prev, cuentaId]));
               }
               Swal.fire({
                 icon: "success",
@@ -2208,7 +2873,11 @@ const AdminCuentasCobrar = () => {
               });
               closeModal("crearSolicitud");
             }}
-            cotizaciones={modals.crearSolicitud.cotizacion ? [modals.crearSolicitud.cotizacion] : []}
+            cotizaciones={
+              modals.crearSolicitud.cotizacion
+                ? [modals.crearSolicitud.cotizacion]
+                : []
+            }
             cuentasPorCobrar={cuentasPorCobrar}
             emisores={emisores}
             preloadedCotizacion={modals.crearSolicitud.cotizacion}
@@ -2230,26 +2899,35 @@ const AdminCuentasCobrar = () => {
                 const payload = {
                   ...updatedData,
                   cantidadCobrar: parseFloat(updatedData.cantidadCobrar),
-                  conceptos: updatedData.conceptos.map(c => ({
+                  conceptos: updatedData.conceptos.map((c) => ({
                     ...c,
                     cantidad: parseInt(c.cantidad),
                     precioUnitario: parseFloat(c.precioUnitario),
                     importeTotal: parseFloat(c.importeTotal),
-                    descuento: parseFloat(c.descuento || 0)
-                  }))
+                    descuento: parseFloat(c.descuento || 0),
+                  })),
                 };
 
-                const response = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${modals.editarCuenta.cuenta.id}`, {
-                  method: "PUT",
-                  body: JSON.stringify(payload),
-                });
+                const response = await fetchWithToken(
+                  `${API_BASE_URL}/cuentas-por-cobrar/${modals.editarCuenta.cuenta.id}`,
+                  {
+                    method: "PUT",
+                    body: JSON.stringify(payload),
+                  },
+                );
 
-                setCuentasPorCobrar(prev =>
-                  prev.map(c => c.id === modals.editarCuenta.cuenta.id ? response : c)
+                setCuentasPorCobrar((prev) =>
+                  prev.map((c) =>
+                    c.id === modals.editarCuenta.cuenta.id ? response : c,
+                  ),
                 );
 
                 closeModal("editarCuenta");
-                Swal.fire("Éxito", "Cuenta y conceptos actualizados", "success");
+                Swal.fire(
+                  "Éxito",
+                  "Cuenta y conceptos actualizados",
+                  "success",
+                );
               } catch (error) {
                 Swal.fire("Error", error.message, "error");
               }
@@ -2261,7 +2939,9 @@ const AdminCuentasCobrar = () => {
             isOpen={modals.confirmarEliminacion.isOpen}
             onClose={() => closeModal("confirmarEliminacion")}
             onConfirm={(cuentaId) => {
-              setCuentasPorCobrar((prev) => prev.filter((c) => c.id !== cuentaId));
+              setCuentasPorCobrar((prev) =>
+                prev.filter((c) => c.id !== cuentaId),
+              );
               closeModal("confirmarEliminacion");
             }}
             cuenta={modals.confirmarEliminacion.cuenta}
@@ -2279,10 +2959,17 @@ const AdminCuentasCobrar = () => {
             <CrearComisionDesdeCuentaModal
               isOpen={modalComision.isOpen}
               onClose={async () => {
-                setModalComision({ isOpen: false, cuentaId: null, montoPagado: 0 });
+                setModalComision({
+                  isOpen: false,
+                  cuentaId: null,
+                  montoPagado: 0,
+                });
 
-                const params = filtroEstatus !== "Todas" ? `?estatus=${filtroEstatus}` : "";
-                const cuentasActualizadas = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar${params}`);
+                const params =
+                  filtroEstatus !== "Todas" ? `?estatus=${filtroEstatus}` : "";
+                const cuentasActualizadas = await fetchWithToken(
+                  `${API_BASE_URL}/cuentas-por-cobrar${params}`,
+                );
                 setCuentasPorCobrar(cuentasActualizadas);
 
                 Swal.fire({
@@ -2293,17 +2980,32 @@ const AdminCuentasCobrar = () => {
               }}
               onSave={async (comisionData) => {
                 try {
-                  console.log("Creando comisión para cuenta ID:", modalComision.cuentaId);
+                  console.log(
+                    "Creando comisión para cuenta ID:",
+                    modalComision.cuentaId,
+                  );
 
-                  await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar/${modalComision.cuentaId}/crear-comision`, {
-                    method: "POST",
-                    body: JSON.stringify(comisionData),
-                    headers: { "Content-Type": "application/json" },
+                  await fetchWithToken(
+                    `${API_BASE_URL}/cuentas-por-cobrar/${modalComision.cuentaId}/crear-comision`,
+                    {
+                      method: "POST",
+                      body: JSON.stringify(comisionData),
+                      headers: { "Content-Type": "application/json" },
+                    },
+                  );
+
+                  setModalComision({
+                    isOpen: false,
+                    cuentaId: null,
+                    montoPagado: 0,
                   });
-
-                  setModalComision({ isOpen: false, cuentaId: null, montoPagado: 0 });
-                  const params = filtroEstatus !== "Todas" ? `?estatus=${filtroEstatus}` : "";
-                  const cuentasActualizadas = await fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar${params}`);
+                  const params =
+                    filtroEstatus !== "Todas"
+                      ? `?estatus=${filtroEstatus}`
+                      : "";
+                  const cuentasActualizadas = await fetchWithToken(
+                    `${API_BASE_URL}/cuentas-por-cobrar${params}`,
+                  );
                   setCuentasPorCobrar(cuentasActualizadas);
 
                   Swal.fire({
@@ -2329,4 +3031,4 @@ const AdminCuentasCobrar = () => {
   );
 };
 
-export default AdminCuentasCobrar
+export default AdminCuentasCobrar;
