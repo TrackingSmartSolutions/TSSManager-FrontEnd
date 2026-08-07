@@ -87,6 +87,7 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
     cantidadCreditos: "",
   });
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Verificar si es una cuenta de créditos plataforma o licencias
   const esCuentaCreditos = cuenta?.transaccion?.categoria?.descripcion
@@ -147,18 +148,24 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (validateForm()) {
-      const cuentaActualizada = {
-        ...cuenta,
-        montoPago: parseFloat(formData.montoPago),
-        formaPago: formData.formaPago,
-        cantidadCreditos: esCuentaCreditos
-          ? parseFloat(formData.cantidadCreditos)
-          : null,
-        fechaPago: cuenta.fechaPago,
-      };
-      await onSave(cuentaActualizada);
-      onClose();
+      setIsSubmitting(true);
+      try {
+        const cuentaActualizada = {
+          ...cuenta,
+          montoPago: parseFloat(formData.montoPago),
+          formaPago: formData.formaPago,
+          cantidadCreditos: esCuentaCreditos
+            ? parseFloat(formData.cantidadCreditos)
+            : null,
+          fechaPago: cuenta.fechaPago,
+        };
+        await onSave(cuentaActualizada);
+        onClose();
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -292,8 +299,9 @@ const MarcarPagadaModal = ({ isOpen, onClose, onSave, cuenta, formasPago }) => {
           <button
             type="submit"
             className="cuentaspagar-btn cuentaspagar-btn-primary"
+            disabled={isSubmitting}
           >
-            Registrar Pago
+            {isSubmitting ? "Registrando..." : "Registrar Pago"}
           </button>
         </div>
       </form>
