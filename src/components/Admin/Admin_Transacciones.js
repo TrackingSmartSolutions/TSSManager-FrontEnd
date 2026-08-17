@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import "./Admin_Transacciones.css"
-import Header from "../Header/Header"
-import Swal from "sweetalert2"
-import deleteIcon from "../../assets/icons/eliminar.png"
-import DatePicker from "react-datepicker"
-import "react-datepicker/dist/react-datepicker.css"
-import { API_BASE_URL } from "../Config/Config"
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import "./Admin_Transacciones.css";
+import Header from "../Header/Header";
+import Swal from "sweetalert2";
+import deleteIcon from "../../assets/icons/eliminar.png";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { API_BASE_URL } from "../Config/Config";
 
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token");
@@ -22,7 +22,9 @@ const fetchWithToken = async (url, options = {}) => {
     headers,
   });
   if (!response.ok) {
-    throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`);
+    throw new Error(
+      `Error en la solicitud: ${response.status} - ${response.statusText}`,
+    );
   }
   if (response.status === 204) {
     return { status: 204, data: null };
@@ -37,8 +39,12 @@ const fetchWithToken = async (url, options = {}) => {
 
 const fetchEmpresas = async () => {
   try {
-    const response = await fetchWithToken(`${API_BASE_URL}/empresas?estatus=CLIENTE`);
-    const clientesResponse = await fetchWithToken(`${API_BASE_URL}/empresas?estatus=EN_PROCESO`);
+    const response = await fetchWithToken(
+      `${API_BASE_URL}/empresas?estatus=CLIENTE`,
+    );
+    const clientesResponse = await fetchWithToken(
+      `${API_BASE_URL}/empresas?estatus=EN_PROCESO`,
+    );
     return [...(response.data || []), ...(clientesResponse.data || [])];
   } catch (error) {
     console.error("Error fetching empresas:", error);
@@ -46,31 +52,45 @@ const fetchEmpresas = async () => {
   }
 };
 
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
+const Modal = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = "md",
+  canClose = true,
+  closeOnOverlayClick = true,
+}) => {
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden"
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "unset"
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.body.style.overflow = "unset"
-    }
-  }, [isOpen])
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   const sizeClasses = {
     sm: "transacciones-modal-sm",
     md: "transacciones-modal-md",
     lg: "transacciones-modal-lg",
     xl: "transacciones-modal-xl",
-  }
+  };
 
   return (
-    <div className="transacciones-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
-      <div className={`transacciones-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
+    <div
+      className="transacciones-modal-overlay"
+      onClick={closeOnOverlayClick ? onClose : () => {}}
+    >
+      <div
+        className={`transacciones-modal-content ${sizeClasses[size]}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="transacciones-modal-header">
           <h2 className="transacciones-modal-title">{title}</h2>
           {canClose && (
@@ -82,32 +102,49 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true,
         <div className="transacciones-modal-body">{children}</div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 const getTodayDate = () => {
   const today = new Date();
   const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
 
 const getDefaultPagos = (esquema) => {
   switch (esquema) {
-    case "UNICA": return 1;
-    case "SEMANAL": return 4;
-    case "QUINCENAL": return 6;
-    case "MENSUAL": return 12;
-    case "BIMESTRAL": return 6;
-    case "TRIMESTRAL": return 4;
-    case "SEMESTRAL": return 4;
-    case "ANUAL": return 3;
-    default: return 1;
+    case "UNICA":
+      return 1;
+    case "SEMANAL":
+      return 4;
+    case "QUINCENAL":
+      return 6;
+    case "MENSUAL":
+      return 12;
+    case "BIMESTRAL":
+      return 6;
+    case "TRIMESTRAL":
+      return 4;
+    case "SEMESTRAL":
+      return 4;
+    case "ANUAL":
+      return 3;
+    default:
+      return 1;
   }
 };
 
-const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, formasPago, setTransacciones }) => {
+const NuevaTransaccionModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  categorias,
+  cuentas,
+  formasPago,
+  setTransacciones,
+}) => {
   const [formData, setFormData] = useState({
     fecha: getTodayDate(),
     tipo: "",
@@ -122,10 +159,21 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
   const [errors, setErrors] = useState({});
   const [dynamicCuentas, setDynamicCuentas] = useState([]);
   const [apiCuentas, setApiCuentas] = useState([]);
-  const esquemas = ["UNICA", "SEMANAL", "QUINCENAL", "MENSUAL", "BIMESTRAL", "TRIMESTRAL", "SEMESTRAL", "ANUAL"];
-  const [mostrarModalPagoInmediato, setMostrarModalPagoInmediato] = useState(false);
+  const esquemas = [
+    "UNICA",
+    "SEMANAL",
+    "QUINCENAL",
+    "MENSUAL",
+    "BIMESTRAL",
+    "TRIMESTRAL",
+    "SEMESTRAL",
+    "ANUAL",
+  ];
+  const [mostrarModalPagoInmediato, setMostrarModalPagoInmediato] =
+    useState(false);
   const [cuentaPorPagarCreada, setCuentaPorPagarCreada] = useState(null);
   const [datosTransaccionCreada, setDatosTransaccionCreada] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -157,26 +205,45 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
     }
   }, [formData.esquema]);
 
-
   useEffect(() => {
     const fetchDynamicCuentas = async () => {
       if (formData.categoria) {
-        const cat = categorias.find(c => c.descripcion === formData.categoria);
+        const cat = categorias.find(
+          (c) => c.descripcion === formData.categoria,
+        );
         if (cat) {
           // Cuentas existentes en base de datos
-          const cuentasForCat = cuentas.filter(c => c.categoria && c.categoria.id === cat.id).map(c => c.nombre);
+          const cuentasForCat = cuentas
+            .filter((c) => c.categoria && c.categoria.id === cat.id)
+            .map((c) => c.nombre);
 
           // Cuentas dinámicas desde APIs
           let cuentasAPI = [];
           const categoriaDesc = formData.categoria.toLowerCase();
 
-          if (formData.tipo === "INGRESO" && ["ventas", "datos y plataforma", "revisiones", "equipos", "pagos de préstamo", "depósitos en garantía"].includes(categoriaDesc)) {
+          if (
+            formData.tipo === "INGRESO" &&
+            [
+              "ventas",
+              "datos y plataforma",
+              "revisiones",
+              "equipos",
+              "pagos de préstamo",
+              "depósitos en garantía",
+            ].includes(categoriaDesc)
+          ) {
             const empresas = await fetchEmpresas();
-            cuentasAPI = empresas.map(emp => emp.nombre);
+            cuentasAPI = empresas.map((emp) => emp.nombre);
           } else if (formData.tipo === "GASTO") {
-            if (["rentas", "compra y activación de sim", "recargas de saldos"].includes(categoriaDesc)) {
+            if (
+              [
+                "rentas",
+                "compra y activación de sim",
+                "recargas de saldos",
+              ].includes(categoriaDesc)
+            ) {
               const empresas = await fetchEmpresas();
-              cuentasAPI = empresas.map(emp => emp.nombre);
+              cuentasAPI = empresas.map((emp) => emp.nombre);
             }
           }
 
@@ -207,11 +274,13 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
 
     if (!formData.fecha) newErrors.fecha = "La fecha es obligatoria";
     if (!formData.tipo) newErrors.tipo = "El tipo es obligatorio";
-    if (!formData.categoria) newErrors.categoria = "La categoría es obligatoria";
+    if (!formData.categoria)
+      newErrors.categoria = "La categoría es obligatoria";
     if (!formData.cuenta) newErrors.cuenta = "La cuenta es obligatoria";
     if (!formData.monto || Number.parseFloat(formData.monto) <= 0)
       newErrors.monto = "El monto debe ser mayor a 0";
-    if (!formData.fechaPago) newErrors.fechaPago = "La fecha de pago es obligatoria";
+    if (!formData.fechaPago)
+      newErrors.fechaPago = "La fecha de pago es obligatoria";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -219,24 +288,32 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (validateForm()) {
+      setIsSubmitting(true);
       try {
-        const response = await fetchWithToken(`${API_BASE_URL}/transacciones/crear`, {
-          method: "POST",
-          body: JSON.stringify({
-            fecha: formData.fecha,
-            tipo: formData.tipo,
-            categoriaId: categorias.find((c) => c.descripcion === formData.categoria)?.id,
-            cuentaId: cuentas.find((c) => c.nombre === formData.cuenta)?.id || null,
-            cuentaNombre: formData.cuenta,
-            monto: parseFloat(formData.monto),
-            esquema: formData.esquema,
-            numeroPagos: parseInt(formData.numeroPagos),
-            fechaPago: formData.fechaPago,
-            formaPago: formData.formaPago,
-            notas: formData.nota,
-          }),
-        });
+        const response = await fetchWithToken(
+          `${API_BASE_URL}/transacciones/crear`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              fecha: formData.fecha,
+              tipo: formData.tipo,
+              categoriaId: categorias.find(
+                (c) => c.descripcion === formData.categoria,
+              )?.id,
+              cuentaId:
+                cuentas.find((c) => c.nombre === formData.cuenta)?.id || null,
+              cuentaNombre: formData.cuenta,
+              monto: parseFloat(formData.monto),
+              esquema: formData.esquema,
+              numeroPagos: parseInt(formData.numeroPagos),
+              fechaPago: formData.fechaPago,
+              formaPago: formData.formaPago,
+              notas: formData.nota,
+            }),
+          },
+        );
 
         // Verificar si es GASTO con esquema UNICA
         if (response.data.esUnicaGasto && response.data.cuentaPorPagarId) {
@@ -260,19 +337,31 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
           title: "Error",
           text: error.message || "No se pudo crear la transacción",
         });
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
 
-  const categoriasFiltradas = categorias ? categorias.filter((cat) => cat && cat.tipo === formData.tipo) : [];
+  const categoriasFiltradas = categorias
+    ? categorias.filter((cat) => cat && cat.tipo === formData.tipo)
+    : [];
   const cuentasFiltradas = dynamicCuentas;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Nueva transacción" size="md" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Nueva transacción"
+      size="md"
+      closeOnOverlayClick={false}
+    >
       <form onSubmit={handleSubmit} className="transacciones-form">
         <div className="transacciones-form-row">
           <div className="transacciones-form-group">
-            <label htmlFor="fecha">Fecha de registro <span className="required"> *</span></label>
+            <label htmlFor="fecha">
+              Fecha de registro <span className="required"> *</span>
+            </label>
             <input
               type="date"
               id="fecha"
@@ -280,12 +369,18 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
               onChange={(e) => handleInputChange("fecha", e.target.value)}
               className={`transacciones-form-control ${errors.fecha ? "error" : ""}`}
             />
-            {errors.fecha && <span className="transacciones-error-message">{errors.fecha}</span>}
+            {errors.fecha && (
+              <span className="transacciones-error-message">
+                {errors.fecha}
+              </span>
+            )}
           </div>
         </div>
         <div className="transacciones-form-row">
           <div className="transacciones-form-group">
-            <label htmlFor="tipo">Tipo <span className="required"> *</span></label>
+            <label htmlFor="tipo">
+              Tipo <span className="required"> *</span>
+            </label>
             <select
               id="tipo"
               value={formData.tipo}
@@ -296,12 +391,16 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
               <option value="INGRESO">Ingreso</option>
               <option value="GASTO">Gasto</option>
             </select>
-            {errors.tipo && <span className="transacciones-error-message">{errors.tipo}</span>}
+            {errors.tipo && (
+              <span className="transacciones-error-message">{errors.tipo}</span>
+            )}
           </div>
         </div>
         <div className="transacciones-form-row">
           <div className="transacciones-form-group">
-            <label htmlFor="categoria">Categoría <span className="required"> *</span></label>
+            <label htmlFor="categoria">
+              Categoría <span className="required"> *</span>
+            </label>
             <select
               id="categoria"
               value={formData.categoria}
@@ -311,19 +410,29 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
             >
               <option value="">Ninguna seleccionada</option>
               {categoriasFiltradas
-                .sort((a, b) => a.descripcion.localeCompare(b.descripcion, 'es', { sensitivity: 'base' }))
+                .sort((a, b) =>
+                  a.descripcion.localeCompare(b.descripcion, "es", {
+                    sensitivity: "base",
+                  }),
+                )
                 .map((cat) => (
                   <option key={cat.id} value={cat.descripcion}>
                     {cat.descripcion}
                   </option>
                 ))}
             </select>
-            {errors.categoria && <span className="transacciones-error-message">{errors.categoria}</span>}
+            {errors.categoria && (
+              <span className="transacciones-error-message">
+                {errors.categoria}
+              </span>
+            )}
           </div>
         </div>
         <div className="transacciones-form-row">
           <div className="transacciones-form-group">
-            <label htmlFor="cuenta">Cuenta <span className="required"> *</span></label>
+            <label htmlFor="cuenta">
+              Cuenta <span className="required"> *</span>
+            </label>
             <select
               id="cuenta"
               value={formData.cuenta}
@@ -340,12 +449,18 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
                   </option>
                 ))}
             </select>
-            {errors.cuenta && <span className="transacciones-error-message">{errors.cuenta}</span>}
+            {errors.cuenta && (
+              <span className="transacciones-error-message">
+                {errors.cuenta}
+              </span>
+            )}
           </div>
         </div>
         <div className="transacciones-form-row">
           <div className="transacciones-form-group">
-            <label htmlFor="esquema">Esquema <span className="required"> *</span></label>
+            <label htmlFor="esquema">
+              Esquema <span className="required"> *</span>
+            </label>
             <select
               id="esquema"
               value={formData.esquema}
@@ -354,14 +469,21 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
             >
               {esquemas.map((esquema) => (
                 <option key={esquema} value={esquema}>
-                  {esquema === "UNICA" ? "Única" :
-                    esquema === "SEMANAL" ? "Semanal" :
-                      esquema === "QUINCENAL" ? "Quincenal" :
-                        esquema === "MENSUAL" ? "Mensual" :
-                          esquema === "BIMESTRAL" ? "Bimestral" :
-                            esquema === "TRIMESTRAL" ? "Trimestral" :
-                              esquema === "SEMESTRAL" ? "Semestral" :
-                                "Anual"}
+                  {esquema === "UNICA"
+                    ? "Única"
+                    : esquema === "SEMANAL"
+                      ? "Semanal"
+                      : esquema === "QUINCENAL"
+                        ? "Quincenal"
+                        : esquema === "MENSUAL"
+                          ? "Mensual"
+                          : esquema === "BIMESTRAL"
+                            ? "Bimestral"
+                            : esquema === "TRIMESTRAL"
+                              ? "Trimestral"
+                              : esquema === "SEMESTRAL"
+                                ? "Semestral"
+                                : "Anual"}
                 </option>
               ))}
             </select>
@@ -369,7 +491,9 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
         </div>
         <div className="transacciones-form-row">
           <div className="transacciones-form-group">
-            <label htmlFor="numeroPagos">Número de pagos <span className="required"> *</span></label>
+            <label htmlFor="numeroPagos">
+              Número de pagos <span className="required"> *</span>
+            </label>
             <input
               type="number"
               id="numeroPagos"
@@ -401,12 +525,18 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
               className={`transacciones-form-control ${errors.fechaPago ? "error" : ""}`}
               disabled={false}
             />
-            {errors.fechaPago && <span className="transacciones-error-message">{errors.fechaPago}</span>}
+            {errors.fechaPago && (
+              <span className="transacciones-error-message">
+                {errors.fechaPago}
+              </span>
+            )}
           </div>
         </div>
         <div className="transacciones-form-row">
           <div className="transacciones-form-group">
-            <label htmlFor="monto">Monto <span className="required"> *</span></label>
+            <label htmlFor="monto">
+              Monto <span className="required"> *</span>
+            </label>
             <input
               type="number"
               id="monto"
@@ -417,12 +547,18 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
               step="0.01"
               min="0"
             />
-            {errors.monto && <span className="transacciones-error-message">{errors.monto}</span>}
+            {errors.monto && (
+              <span className="transacciones-error-message">
+                {errors.monto}
+              </span>
+            )}
           </div>
         </div>
         <div className="transacciones-form-row">
           <div className="transacciones-form-group">
-            <label htmlFor="formaPago">Forma de Pago <span className="required"> *</span></label>
+            <label htmlFor="formaPago">
+              Forma de Pago <span className="required"> *</span>
+            </label>
             <select
               id="formaPago"
               value={formData.formaPago}
@@ -451,11 +587,20 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
           </div>
         </div>
         <div className="transacciones-form-actions">
-          <button type="button" onClick={onClose} className="transacciones-btn transacciones-btn-cancel">
+          <button
+            type="button"
+            onClick={onClose}
+            className="transacciones-btn transacciones-btn-cancel"
+            disabled={isSubmitting}
+          >
             Cancelar
           </button>
-          <button type="submit" className="transacciones-btn transacciones-btn-primary">
-            Crear
+          <button
+            type="submit"
+            className="transacciones-btn transacciones-btn-primary"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Creando..." : "Crear"}{" "}
           </button>
         </div>
       </form>
@@ -466,19 +611,24 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
         formasPago={formasPago}
         onConfirmarPago={async (datosPago) => {
           try {
-            await fetchWithToken(`${API_BASE_URL}/cuentas-por-pagar/marcar-como-pagada`, {
-              method: "POST",
-              body: JSON.stringify({
-                id: cuentaPorPagarCreada,
-                montoPago: datosPago.montoPago,
-                formaPago: datosPago.formaPago,
-                usuarioId: 1
-              }),
-            });
+            await fetchWithToken(
+              `${API_BASE_URL}/cuentas-por-pagar/marcar-como-pagada`,
+              {
+                method: "POST",
+                body: JSON.stringify({
+                  id: cuentaPorPagarCreada,
+                  montoPago: datosPago.montoPago,
+                  formaPago: datosPago.formaPago,
+                  usuarioId: 1,
+                }),
+              },
+            );
 
             const transaccionActualizada = {
               ...datosTransaccionCreada,
-              notas: " Transacción generada desde Cuentas por Pagar -" + (datosTransaccionCreada.notas || "")
+              notas:
+                " Transacción generada desde Cuentas por Pagar -" +
+                (datosTransaccionCreada.notas || ""),
             };
 
             onSave(transaccionActualizada);
@@ -515,64 +665,84 @@ const NuevaTransaccionModal = ({ isOpen, onClose, onSave, categorias, cuentas, f
   );
 };
 
-const GestionarCategoriasModal = ({ isOpen, onClose, categorias, onSaveCategoria, onDeleteCategoria }) => {
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [formData, setFormData] = useState({ tipo: "INGRESO", descripcion: "" })
-  const [errors, setErrors] = useState({})
+const GestionarCategoriasModal = ({
+  isOpen,
+  onClose,
+  categorias,
+  onSaveCategoria,
+  onDeleteCategoria,
+}) => {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [formData, setFormData] = useState({
+    tipo: "INGRESO",
+    descripcion: "",
+  });
+  const [errors, setErrors] = useState({});
 
   const handleAddCategoria = () => {
-    setShowAddForm(true)
-    setFormData({ tipo: "INGRESO", descripcion: "" })
-    setErrors({})
-  }
+    setShowAddForm(true);
+    setFormData({ tipo: "INGRESO", descripcion: "" });
+    setErrors({});
+  };
 
   const handleSaveCategoria = async (e) => {
-    e.preventDefault()
-    const newErrors = {}
+    e.preventDefault();
+    const newErrors = {};
 
     if (!formData.descripcion.trim()) {
-      newErrors.descripcion = "La descripción es obligatoria"
+      newErrors.descripcion = "La descripción es obligatoria";
     }
 
     if (Object.keys(newErrors).length === 0) {
       try {
-        const response = await fetchWithToken(`${API_BASE_URL}/categorias/crear`, {
-          method: "POST",
-          body: JSON.stringify({
-            tipo: formData.tipo.toUpperCase(),
-            descripcion: formData.descripcion.trim(),
-          }),
-        })
+        const response = await fetchWithToken(
+          `${API_BASE_URL}/categorias/crear`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              tipo: formData.tipo.toUpperCase(),
+              descripcion: formData.descripcion.trim(),
+            }),
+          },
+        );
 
+        onSaveCategoria(response);
 
-        onSaveCategoria(response)
-
-        setShowAddForm(false)
-        setFormData({ tipo: "INGRESO", descripcion: "" })
+        setShowAddForm(false);
+        setFormData({ tipo: "INGRESO", descripcion: "" });
         Swal.fire({
           icon: "success",
           title: "Éxito",
           text: "Categoría creada correctamente",
-        })
+        });
       } catch (error) {
         Swal.fire({
           icon: "error",
           title: "Error",
           text: error.message || "No se pudo crear la categoría",
-        })
+        });
       }
     } else {
-      setErrors(newErrors)
+      setErrors(newErrors);
     }
-  }
+  };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Categorías" size="lg" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Categorías"
+      size="lg"
+      closeOnOverlayClick={false}
+    >
       <div className="transacciones-categorias-content">
         {!showAddForm ? (
           <>
             <div className="transacciones-categorias-header">
-              <button className="transacciones-btn transacciones-btn-primary" onClick={handleAddCategoria}>
+              <button
+                className="transacciones-btn transacciones-btn-primary"
+                onClick={handleAddCategoria}
+              >
                 Agregar categoría
               </button>
             </div>
@@ -589,9 +759,13 @@ const GestionarCategoriasModal = ({ isOpen, onClose, categorias, onSaveCategoria
                 <tbody>
                   {[...categorias]
                     .sort((a, b) => {
-                      const tipoCompare = a.tipo.localeCompare(b.tipo, 'es', { sensitivity: 'base' });
+                      const tipoCompare = a.tipo.localeCompare(b.tipo, "es", {
+                        sensitivity: "base",
+                      });
                       if (tipoCompare !== 0) return tipoCompare;
-                      return a.descripcion.localeCompare(b.descripcion, 'es', { sensitivity: 'base' });
+                      return a.descripcion.localeCompare(b.descripcion, "es", {
+                        sensitivity: "base",
+                      });
                     })
                     .map((categoria) => (
                       <tr key={categoria.id}>
@@ -617,21 +791,34 @@ const GestionarCategoriasModal = ({ isOpen, onClose, categorias, onSaveCategoria
             </div>
 
             <div className="transacciones-modal-actions">
-              <button className="transacciones-btn transacciones-btn-primary" onClick={onClose}>
+              <button
+                className="transacciones-btn transacciones-btn-primary"
+                onClick={onClose}
+              >
                 Guardar
               </button>
             </div>
           </>
         ) : (
-          <form onSubmit={handleSaveCategoria} className="transacciones-add-categoria-form">
+          <form
+            onSubmit={handleSaveCategoria}
+            className="transacciones-add-categoria-form"
+          >
             <h4>Agregar categoría</h4>
 
             <div className="transacciones-form-group">
-              <label htmlFor="tipoCategoria">Tipo <span className="required"> *</span></label>
+              <label htmlFor="tipoCategoria">
+                Tipo <span className="required"> *</span>
+              </label>
               <select
                 id="tipoCategoria"
                 value={formData.tipo}
-                onChange={(e) => setFormData((prev) => ({ ...prev, tipo: e.target.value.toUpperCase() }))} // Convert to uppercase
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    tipo: e.target.value.toUpperCase(),
+                  }))
+                } // Convert to uppercase
                 className="transacciones-form-control"
               >
                 <option value="INGRESO">Ingreso</option>
@@ -640,16 +827,27 @@ const GestionarCategoriasModal = ({ isOpen, onClose, categorias, onSaveCategoria
             </div>
 
             <div className="transacciones-form-group">
-              <label htmlFor="descripcionCategoria">Descripción <span className="required"> *</span></label>
+              <label htmlFor="descripcionCategoria">
+                Descripción <span className="required"> *</span>
+              </label>
               <input
                 type="text"
                 id="descripcionCategoria"
                 value={formData.descripcion}
-                onChange={(e) => setFormData((prev) => ({ ...prev, descripcion: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    descripcion: e.target.value,
+                  }))
+                }
                 className={`transacciones-form-control ${errors.descripcion ? "error" : ""}`}
                 placeholder="Descripción de la categoría"
               />
-              {errors.descripcion && <span className="transacciones-error-message">{errors.descripcion}</span>}
+              {errors.descripcion && (
+                <span className="transacciones-error-message">
+                  {errors.descripcion}
+                </span>
+              )}
             </div>
 
             <div className="transacciones-form-actions">
@@ -660,7 +858,10 @@ const GestionarCategoriasModal = ({ isOpen, onClose, categorias, onSaveCategoria
               >
                 Cancelar
               </button>
-              <button type="submit" className="transacciones-btn transacciones-btn-primary">
+              <button
+                type="submit"
+                className="transacciones-btn transacciones-btn-primary"
+              >
                 Agregar
               </button>
             </div>
@@ -668,14 +869,23 @@ const GestionarCategoriasModal = ({ isOpen, onClose, categorias, onSaveCategoria
         )}
       </div>
     </Modal>
-  )
-}
+  );
+};
 
-const GestionarCuentasModal = ({ isOpen, onClose, cuentas, categorias, onSaveCuenta, onDeleteCuenta }) => {
+const GestionarCuentasModal = ({
+  isOpen,
+  onClose,
+  cuentas,
+  categorias,
+  onSaveCuenta,
+  onDeleteCuenta,
+}) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({ categoria: "", nombre: "" });
   const [errors, setErrors] = useState({});
-  const [filtroCategoria, setFiltroCategoria] = useState("Todas las categorías");
+  const [filtroCategoria, setFiltroCategoria] = useState(
+    "Todas las categorías",
+  );
 
   const handleAddCuenta = () => {
     setShowAddForm(true);
@@ -696,7 +906,9 @@ const GestionarCuentasModal = ({ isOpen, onClose, cuentas, categorias, onSaveCue
 
     if (Object.keys(newErrors).length === 0) {
       try {
-        const selectedCategory = categorias.find((cat) => cat.descripcion === formData.categoria);
+        const selectedCategory = categorias.find(
+          (cat) => cat.descripcion === formData.categoria,
+        );
         const categoryId = selectedCategory ? selectedCategory.id : null;
 
         if (!categoryId) {
@@ -733,10 +945,18 @@ const GestionarCuentasModal = ({ isOpen, onClose, cuentas, categorias, onSaveCue
   const cuentasFiltradas =
     filtroCategoria === "Todas las categorías"
       ? cuentas
-      : cuentas.filter((cuenta) => cuenta.categoria.descripcion === filtroCategoria);
+      : cuentas.filter(
+          (cuenta) => cuenta.categoria.descripcion === filtroCategoria,
+        );
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Cuentas" size="lg" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Cuentas"
+      size="lg"
+      closeOnOverlayClick={false}
+    >
       <div className="transacciones-cuentas-content">
         {!showAddForm ? (
           <>
@@ -747,7 +967,9 @@ const GestionarCuentasModal = ({ isOpen, onClose, cuentas, categorias, onSaveCue
                   onChange={(e) => setFiltroCategoria(e.target.value)}
                   className="transacciones-form-control"
                 >
-                  <option value="Todas las categorías">Todas las categorías</option>
+                  <option value="Todas las categorías">
+                    Todas las categorías
+                  </option>
                   {categorias.map((cat) => (
                     <option key={cat.id} value={cat.descripcion}>
                       {cat.descripcion}
@@ -755,7 +977,10 @@ const GestionarCuentasModal = ({ isOpen, onClose, cuentas, categorias, onSaveCue
                   ))}
                 </select>
               </div>
-              <button className="transacciones-btn transacciones-btn-primary" onClick={handleAddCuenta}>
+              <button
+                className="transacciones-btn transacciones-btn-primary"
+                onClick={handleAddCuenta}
+              >
                 Agregar cuenta
               </button>
             </div>
@@ -772,9 +997,14 @@ const GestionarCuentasModal = ({ isOpen, onClose, cuentas, categorias, onSaveCue
                 <tbody>
                   {[...cuentasFiltradas]
                     .sort((a, b) => {
-                      const categoriaCompare = a.categoria.descripcion.localeCompare(b.categoria.descripcion);
+                      const categoriaCompare =
+                        a.categoria.descripcion.localeCompare(
+                          b.categoria.descripcion,
+                        );
                       if (categoriaCompare !== 0) return categoriaCompare;
-                      return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
+                      return a.nombre.localeCompare(b.nombre, "es", {
+                        sensitivity: "base",
+                      });
                     })
                     .map((cuenta) => (
                       <tr key={cuenta.id}>
@@ -800,21 +1030,34 @@ const GestionarCuentasModal = ({ isOpen, onClose, cuentas, categorias, onSaveCue
             </div>
 
             <div className="transacciones-modal-actions">
-              <button className="transacciones-btn transacciones-btn-primary" onClick={onClose}>
+              <button
+                className="transacciones-btn transacciones-btn-primary"
+                onClick={onClose}
+              >
                 Guardar
               </button>
             </div>
           </>
         ) : (
-          <form onSubmit={handleSaveCuenta} className="transacciones-add-cuenta-form">
+          <form
+            onSubmit={handleSaveCuenta}
+            className="transacciones-add-cuenta-form"
+          >
             <h4>Agregar cuenta</h4>
 
             <div className="transacciones-form-group">
-              <label htmlFor="categoriaCuenta">Categoría <span className="required"> *</span></label>
+              <label htmlFor="categoriaCuenta">
+                Categoría <span className="required"> *</span>
+              </label>
               <select
                 id="categoriaCuenta"
                 value={formData.categoria}
-                onChange={(e) => setFormData((prev) => ({ ...prev, categoria: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    categoria: e.target.value,
+                  }))
+                }
                 className={`transacciones-form-control ${errors.categoria ? "error" : ""}`}
               >
                 <option value="">Seleccione una categoría</option>
@@ -826,20 +1069,32 @@ const GestionarCuentasModal = ({ isOpen, onClose, cuentas, categorias, onSaveCue
                     </option>
                   ))}
               </select>
-              {errors.categoria && <span className="transacciones-error-message">{errors.categoria}</span>}
+              {errors.categoria && (
+                <span className="transacciones-error-message">
+                  {errors.categoria}
+                </span>
+              )}
             </div>
 
             <div className="transacciones-form-group">
-              <label htmlFor="nombreCuenta">Nombre <span className="required"> *</span></label>
+              <label htmlFor="nombreCuenta">
+                Nombre <span className="required"> *</span>
+              </label>
               <input
                 type="text"
                 id="nombreCuenta"
                 value={formData.nombre}
-                onChange={(e) => setFormData((prev) => ({ ...prev, nombre: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, nombre: e.target.value }))
+                }
                 className={`transacciones-form-control ${errors.nombre ? "error" : ""}`}
                 placeholder="Nombre de la cuenta"
               />
-              {errors.nombre && <span className="transacciones-error-message">{errors.nombre}</span>}
+              {errors.nombre && (
+                <span className="transacciones-error-message">
+                  {errors.nombre}
+                </span>
+              )}
             </div>
 
             <div className="transacciones-form-actions">
@@ -850,7 +1105,10 @@ const GestionarCuentasModal = ({ isOpen, onClose, cuentas, categorias, onSaveCue
               >
                 Cancelar
               </button>
-              <button type="submit" className="transacciones-btn transacciones-btn-primary">
+              <button
+                type="submit"
+                className="transacciones-btn transacciones-btn-primary"
+              >
                 Agregar
               </button>
             </div>
@@ -861,7 +1119,15 @@ const GestionarCuentasModal = ({ isOpen, onClose, cuentas, categorias, onSaveCue
   );
 };
 
-const ModalPagoInmediato = ({ isOpen, onClose, onConfirmarPago, onOmitir, monto, formaPago, formasPago }) => {
+const ModalPagoInmediato = ({
+  isOpen,
+  onClose,
+  onConfirmarPago,
+  onOmitir,
+  monto,
+  formaPago,
+  formasPago,
+}) => {
   const [montoPago, setMontoPago] = useState("");
   const [formaPagoSeleccionada, setFormaPagoSeleccionada] = useState("01");
 
@@ -884,19 +1150,31 @@ const ModalPagoInmediato = ({ isOpen, onClose, onConfirmarPago, onOmitir, monto,
 
     onConfirmarPago({
       montoPago: parseFloat(montoPago),
-      formaPago: formaPagoSeleccionada
+      formaPago: formaPagoSeleccionada,
     });
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onOmitir} title="¿Marcar como pagada?" size="sm" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onOmitir}
+      title="¿Marcar como pagada?"
+      size="sm"
+      closeOnOverlayClick={false}
+    >
       <div className="transacciones-pago-inmediato">
-        <p className="transacciones-pago-mensaje" style={{ marginBottom: "20px", fontSize: "14px" }}>
-          Esta cuenta por pagar ha sido creada. ¿Deseas marcarla como pagada ahora?
+        <p
+          className="transacciones-pago-mensaje"
+          style={{ marginBottom: "20px", fontSize: "14px" }}
+        >
+          Esta cuenta por pagar ha sido creada. ¿Deseas marcarla como pagada
+          ahora?
         </p>
 
         <div className="transacciones-form-group">
-          <label htmlFor="montoPagoInmediato">Monto a pagar <span className="required"> *</span></label>
+          <label htmlFor="montoPagoInmediato">
+            Monto a pagar <span className="required"> *</span>
+          </label>
           <input
             type="number"
             id="montoPagoInmediato"
@@ -910,7 +1188,9 @@ const ModalPagoInmediato = ({ isOpen, onClose, onConfirmarPago, onOmitir, monto,
         </div>
 
         <div className="transacciones-form-group">
-          <label htmlFor="formaPagoInmediato">Forma de pago <span className="required"> *</span></label>
+          <label htmlFor="formaPagoInmediato">
+            Forma de pago <span className="required"> *</span>
+          </label>
           <select
             id="formaPagoInmediato"
             value={formaPagoSeleccionada}
@@ -946,38 +1226,58 @@ const ModalPagoInmediato = ({ isOpen, onClose, onConfirmarPago, onOmitir, monto,
   );
 };
 
-const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, tipo, item }) => {
+const ConfirmarEliminacionModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  tipo,
+  item,
+}) => {
   const getMessage = () => {
     switch (tipo) {
       case "transaccion":
-        return "¿Seguro que quieres eliminar la transacción de forma permanente?"
+        return "¿Seguro que quieres eliminar la transacción de forma permanente?";
       case "categoria":
-        return "¿Seguro que quieres eliminar la categoría de forma permanente?"
+        return "¿Seguro que quieres eliminar la categoría de forma permanente?";
       case "cuenta":
-        return "¿Seguro que quieres eliminar la cuenta de forma permanente?"
+        return "¿Seguro que quieres eliminar la cuenta de forma permanente?";
       default:
-        return "¿Seguro que quieres eliminar este elemento de forma permanente?"
+        return "¿Seguro que quieres eliminar este elemento de forma permanente?";
     }
-  }
+  };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Confirmar eliminación"
+      size="sm"
+      closeOnOverlayClick={false}
+    >
       <div className="transacciones-confirmar-eliminacion">
         <div className="transacciones-confirmation-content">
           <p className="transacciones-confirmation-message">{getMessage()}</p>
           <div className="transacciones-modal-form-actions">
-            <button type="button" onClick={onClose} className="transacciones-btn transacciones-btn-cancel">
+            <button
+              type="button"
+              onClick={onClose}
+              className="transacciones-btn transacciones-btn-cancel"
+            >
               Cancelar
             </button>
-            <button type="button" onClick={onConfirm} className="transacciones-btn transacciones-btn-confirm">
+            <button
+              type="button"
+              onClick={onConfirm}
+              className="transacciones-btn transacciones-btn-confirm"
+            >
               Confirmar
             </button>
           </div>
         </div>
       </div>
     </Modal>
-  )
-}
+  );
+};
 
 const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
   <div className="transacciones-date-picker-wrapper">
@@ -1010,7 +1310,7 @@ const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
 
 const AdminTransacciones = () => {
   const navigate = useNavigate();
-  const userRol = localStorage.getItem("userRol")
+  const userRol = localStorage.getItem("userRol");
   const [transacciones, setTransacciones] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [cuentas, setCuentas] = useState([]);
@@ -1018,12 +1318,17 @@ const AdminTransacciones = () => {
   const [filtroCategoria, setFiltroCategoria] = useState("Todas");
   const [filtroFormaPago, setFiltroFormaPago] = useState("Todas");
   const [isLoading, setIsLoading] = useState(true);
-  const [ordenFecha, setOrdenFecha] = useState('asc');
+  const [ordenFecha, setOrdenFecha] = useState("asc");
   const [modals, setModals] = useState({
     nuevaTransaccion: { isOpen: false },
     gestionarCategorias: { isOpen: false },
     gestionarCuentas: { isOpen: false },
-    confirmarEliminacion: { isOpen: false, tipo: "", item: null, onConfirm: null },
+    confirmarEliminacion: {
+      isOpen: false,
+      tipo: "",
+      item: null,
+      onConfirm: null,
+    },
   });
 
   const [rangoFechas, setRangoFechas] = useState([null, null]);
@@ -1055,11 +1360,12 @@ const AdminTransacciones = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [transaccionesResp, categoriasResp, cuentasResp] = await Promise.all([
-          fetchWithToken(`${API_BASE_URL}/transacciones`),
-          fetchWithToken(`${API_BASE_URL}/categorias`),
-          fetchWithToken(`${API_BASE_URL}/cuentas`),
-        ]);
+        const [transaccionesResp, categoriasResp, cuentasResp] =
+          await Promise.all([
+            fetchWithToken(`${API_BASE_URL}/transacciones`),
+            fetchWithToken(`${API_BASE_URL}/categorias`),
+            fetchWithToken(`${API_BASE_URL}/cuentas`),
+          ]);
         setTransacciones(transaccionesResp.data || []);
         setCategorias(categoriasResp.data || []);
         setCuentas(cuentasResp.data || []);
@@ -1081,25 +1387,42 @@ const AdminTransacciones = () => {
 
   const isFullyPaid = (transaccionId) => {
     const transaccion = transacciones.find((t) => t.id === transaccionId);
-    return transaccion && transaccion.notas && transaccion.notas.includes("Transacción generada desde Cuentas por Pagar");
+    return (
+      transaccion &&
+      transaccion.notas &&
+      transaccion.notas.includes("Transacción generada desde Cuentas por Pagar")
+    );
   };
 
   const filtrarTransaccionesPorFecha = (transacciones) => {
-    return transacciones.filter(transaccion => {
-      const fechaTransaccion = new Date(transaccion.fechaPago + 'T00:00:00');
+    return transacciones.filter((transaccion) => {
+      const fechaTransaccion = new Date(transaccion.fechaPago + "T00:00:00");
 
       let inicio = fechaInicio ? new Date(fechaInicio) : null;
       let fin = fechaFin ? new Date(fechaFin) : null;
 
       if (inicio) {
-        inicio = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
+        inicio = new Date(
+          inicio.getFullYear(),
+          inicio.getMonth(),
+          inicio.getDate(),
+        );
       }
 
       if (fin) {
-        fin = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59, 59);
+        fin = new Date(
+          fin.getFullYear(),
+          fin.getMonth(),
+          fin.getDate(),
+          23,
+          59,
+          59,
+        );
       }
 
-      const pasaFechas = (!inicio || fechaTransaccion >= inicio) && (!fin || fechaTransaccion <= fin);
+      const pasaFechas =
+        (!inicio || fechaTransaccion >= inicio) &&
+        (!fin || fechaTransaccion <= fin);
 
       return pasaFechas;
     });
@@ -1173,9 +1496,14 @@ const AdminTransacciones = () => {
       item: transaccion,
       onConfirm: async () => {
         try {
-          const result = await fetchWithToken(`${API_BASE_URL}/transacciones/${transaccion.id}`, { method: "DELETE" });
+          const result = await fetchWithToken(
+            `${API_BASE_URL}/transacciones/${transaccion.id}`,
+            { method: "DELETE" },
+          );
           if (result.status === 204) {
-            setTransacciones((prev) => prev.filter((t) => t.id !== transaccion.id));
+            setTransacciones((prev) =>
+              prev.filter((t) => t.id !== transaccion.id),
+            );
             closeModal("confirmarEliminacion");
             Swal.fire({
               icon: "success",
@@ -1197,7 +1525,9 @@ const AdminTransacciones = () => {
   };
 
   const handleDeleteCategoria = (categoria) => {
-    const tieneCuentas = cuentas.some((cuenta) => cuenta.categoria.descripcion === categoria.descripcion);
+    const tieneCuentas = cuentas.some(
+      (cuenta) => cuenta.categoria.descripcion === categoria.descripcion,
+    );
 
     if (tieneCuentas) {
       Swal.fire({
@@ -1213,7 +1543,10 @@ const AdminTransacciones = () => {
       item: categoria,
       onConfirm: async () => {
         try {
-          const result = await fetchWithToken(`${API_BASE_URL}/categorias/${categoria.id}`, { method: "DELETE" });
+          const result = await fetchWithToken(
+            `${API_BASE_URL}/categorias/${categoria.id}`,
+            { method: "DELETE" },
+          );
           if (result.status === 204) {
             setCategorias((prev) => prev.filter((c) => c.id !== categoria.id));
             closeModal("confirmarEliminacion");
@@ -1238,9 +1571,11 @@ const AdminTransacciones = () => {
 
   const handleDeleteCuenta = (cuenta) => {
     const tieneTransacciones = transacciones.some((transaccion) => {
-      return transaccion.cuentaId === cuenta.id ||
+      return (
+        transaccion.cuentaId === cuenta.id ||
         transaccion.cuenta?.id === cuenta.id ||
-        transaccion.cuenta?.nombre === cuenta.nombre;
+        transaccion.cuenta?.nombre === cuenta.nombre
+      );
     });
 
     if (tieneTransacciones) {
@@ -1257,7 +1592,10 @@ const AdminTransacciones = () => {
       item: cuenta,
       onConfirm: async () => {
         try {
-          const result = await fetchWithToken(`${API_BASE_URL}/cuentas/${cuenta.id}`, { method: "DELETE" });
+          const result = await fetchWithToken(
+            `${API_BASE_URL}/cuentas/${cuenta.id}`,
+            { method: "DELETE" },
+          );
           if (result.status === 204) {
             setCuentas((prev) => prev.filter((c) => c.id !== cuenta.id));
             closeModal("confirmarEliminacion");
@@ -1280,52 +1618,71 @@ const AdminTransacciones = () => {
     });
   };
 
-  const transaccionesBase = transacciones.filter((t) => t.tipo === "INGRESO" || (t.tipo === "GASTO" && isFullyPaid(t.id)));
+  const transaccionesBase = transacciones.filter(
+    (t) => t.tipo === "INGRESO" || (t.tipo === "GASTO" && isFullyPaid(t.id)),
+  );
   const transaccionesPorFecha = filtrarTransaccionesPorFecha(transaccionesBase);
 
   // Filtrar por categoría primero
-  const transaccionesPorCategoria = filtroCategoria === "Todas"
-    ? transaccionesPorFecha
-    : transaccionesPorFecha.filter((t) => t.categoria && t.categoria.descripcion === filtroCategoria);
+  const transaccionesPorCategoria =
+    filtroCategoria === "Todas"
+      ? transaccionesPorFecha
+      : transaccionesPorFecha.filter(
+          (t) => t.categoria && t.categoria.descripcion === filtroCategoria,
+        );
 
   // Luego filtrar por cuenta
-  const transaccionesSinOrdenar = filtrosCuenta === "Todas"
-    ? transaccionesPorCategoria
-    : transaccionesPorCategoria.filter((t) => t.cuenta && t.cuenta.nombre === filtrosCuenta);
+  const transaccionesSinOrdenar =
+    filtrosCuenta === "Todas"
+      ? transaccionesPorCategoria
+      : transaccionesPorCategoria.filter(
+          (t) => t.cuenta && t.cuenta.nombre === filtrosCuenta,
+        );
 
-  const transaccionesPorFormaPago = filtroFormaPago === "Todas"
-    ? transaccionesSinOrdenar
-    : transaccionesSinOrdenar.filter((t) => t.formaPago === filtroFormaPago);
+  const transaccionesPorFormaPago =
+    filtroFormaPago === "Todas"
+      ? transaccionesSinOrdenar
+      : transaccionesSinOrdenar.filter((t) => t.formaPago === filtroFormaPago);
 
   const transaccionesFiltradas = transaccionesPorFormaPago.sort((a, b) => {
     const fechaA = new Date(a.fechaPago);
     const fechaB = new Date(b.fechaPago);
-    return ordenFecha === 'desc' ? fechaB - fechaA : fechaA - fechaB;
+    return ordenFecha === "desc" ? fechaB - fechaA : fechaA - fechaB;
   });
 
   const cuentasUnicas = (() => {
     if (filtroCategoria === "Todas") {
-      return ["Todas", ...new Set(cuentas.filter(c => c && c.nombre).map((c) => c.nombre))];
+      return [
+        "Todas",
+        ...new Set(cuentas.filter((c) => c && c.nombre).map((c) => c.nombre)),
+      ];
     } else {
-      const cuentasFiltradas = cuentas.filter(c =>
-        c && c.nombre && c.categoria && c.categoria.descripcion === filtroCategoria
+      const cuentasFiltradas = cuentas.filter(
+        (c) =>
+          c &&
+          c.nombre &&
+          c.categoria &&
+          c.categoria.descripcion === filtroCategoria,
       );
       return ["Todas", ...new Set(cuentasFiltradas.map((c) => c.nombre))];
     }
   })();
 
-  const categoriasUnicas = ["Todas", ...new Set(categorias.map(c => c.descripcion))];
+  const categoriasUnicas = [
+    "Todas",
+    ...new Set(categorias.map((c) => c.descripcion)),
+  ];
 
   const toggleOrdenFecha = () => {
-    setOrdenFecha(prevOrden => prevOrden === 'desc' ? 'asc' : 'desc');
+    setOrdenFecha((prevOrden) => (prevOrden === "desc" ? "asc" : "desc"));
   };
 
   const totalIngresos = transaccionesFiltradas
-    .filter(t => t.tipo === "INGRESO")
+    .filter((t) => t.tipo === "INGRESO")
     .reduce((acc, curr) => acc + Number(curr.monto), 0);
 
   const totalGastos = transaccionesFiltradas
-    .filter(t => t.tipo === "GASTO")
+    .filter((t) => t.tipo === "GASTO")
     .reduce((acc, curr) => acc + Number(curr.monto), 0);
 
   return (
@@ -1346,7 +1703,10 @@ const AdminTransacciones = () => {
               </div>
               <div className="transacciones-sidebar-menu">
                 {userRol === "ADMINISTRADOR" && (
-                  <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("balance")}>
+                  <div
+                    className="transacciones-menu-item"
+                    onClick={() => handleMenuNavigation("balance")}
+                  >
                     Balance
                   </div>
                 )}
@@ -1356,22 +1716,40 @@ const AdminTransacciones = () => {
                 >
                   Transacciones
                 </div>
-                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("cotizaciones")}>
+                <div
+                  className="transacciones-menu-item"
+                  onClick={() => handleMenuNavigation("cotizaciones")}
+                >
                   Cotizaciones
                 </div>
-                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("facturacion")}>
+                <div
+                  className="transacciones-menu-item"
+                  onClick={() => handleMenuNavigation("facturacion")}
+                >
                   Facturas/Notas
                 </div>
-                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("cuentas-cobrar")}>
+                <div
+                  className="transacciones-menu-item"
+                  onClick={() => handleMenuNavigation("cuentas-cobrar")}
+                >
                   Cuentas por Cobrar
                 </div>
-                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("cuentas-pagar")}>
+                <div
+                  className="transacciones-menu-item"
+                  onClick={() => handleMenuNavigation("cuentas-pagar")}
+                >
                   Cuentas por Pagar
                 </div>
-                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>
+                <div
+                  className="transacciones-menu-item"
+                  onClick={() => handleMenuNavigation("caja-chica")}
+                >
                   Caja chica
                 </div>
-                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("comisiones")}>
+                <div
+                  className="transacciones-menu-item"
+                  onClick={() => handleMenuNavigation("comisiones")}
+                >
                   Comisiones
                 </div>
               </div>
@@ -1380,7 +1758,9 @@ const AdminTransacciones = () => {
               <div className="transacciones-header">
                 <div className="transacciones-header-info">
                   <h3 className="transacciones-page-title">Transacciones</h3>
-                  <p className="transacciones-subtitle">Gestión de ingresos y gastos</p>
+                  <p className="transacciones-subtitle">
+                    Gestión de ingresos y gastos
+                  </p>
                 </div>
                 <div className="transacciones-header-actions">
                   <button
@@ -1405,21 +1785,28 @@ const AdminTransacciones = () => {
               </div>
               <div className="transacciones-resumen-grid">
                 <div className="transacciones-resumen-card transacciones-ingresos">
-                  <h4 className="transacciones-resumen-titulo">Total Ingresos</h4>
+                  <h4 className="transacciones-resumen-titulo">
+                    Total Ingresos
+                  </h4>
                   <p className="transacciones-resumen-monto">
-                    ${totalIngresos.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                    $
+                    {totalIngresos.toLocaleString("es-MX", {
+                      minimumFractionDigits: 2,
+                    })}
                   </p>
                 </div>
                 <div className="transacciones-resumen-card transacciones-gastos">
                   <h4 className="transacciones-resumen-titulo">Total Gastos</h4>
                   <p className="transacciones-resumen-monto">
-                    ${totalGastos.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                    $
+                    {totalGastos.toLocaleString("es-MX", {
+                      minimumFractionDigits: 2,
+                    })}
                   </p>
                 </div>
               </div>
               <div className="transacciones-filters-section">
                 <div className="filters-left">
-
                   <div className="transacciones-filter-group">
                     <select
                       value={filtroCategoria}
@@ -1428,7 +1815,9 @@ const AdminTransacciones = () => {
                     >
                       {categoriasUnicas.map((categoria) => (
                         <option key={categoria} value={categoria}>
-                          {categoria === "Todas" ? "Todas las categorías" : categoria}
+                          {categoria === "Todas"
+                            ? "Todas las categorías"
+                            : categoria}
                         </option>
                       ))}
                     </select>
@@ -1462,7 +1851,6 @@ const AdminTransacciones = () => {
                       ))}
                     </select>
                   </div>
-
                 </div>
 
                 <div className="filters-right">
@@ -1493,9 +1881,11 @@ const AdminTransacciones = () => {
                   <button
                     className="transacciones-btn transacciones-btn-filtro transacciones-btn-orden"
                     onClick={toggleOrdenFecha}
-                    title={`Cambiar a orden ${ordenFecha === 'desc' ? 'ascendente' : 'descendente'}`}
+                    title={`Cambiar a orden ${ordenFecha === "desc" ? "ascendente" : "descendente"}`}
                   >
-                    {ordenFecha === 'desc' ? '📅 ↓ Recientes primero' : '📅 ↑ Antiguas primero'}
+                    {ordenFecha === "desc"
+                      ? "📅 ↓ Recientes primero"
+                      : "📅 ↑ Antiguas primero"}
                   </button>
                 </div>
               </div>
@@ -1519,25 +1909,36 @@ const AdminTransacciones = () => {
                       {transaccionesFiltradas.length > 0 ? (
                         transaccionesFiltradas.map((transaccion) => (
                           <tr key={transaccion.id}>
+                            <td>{transaccion.fechaPago}</td>
                             <td>
-                              {transaccion.fechaPago}
-                            </td>
-                            <td>
-                              <span className={`transacciones-tipo-badge ${transaccion.tipo.toLowerCase()}`}>
+                              <span
+                                className={`transacciones-tipo-badge ${transaccion.tipo.toLowerCase()}`}
+                              >
                                 {transaccion.tipo}
                               </span>
                             </td>
-                            <td>{transaccion.categoria?.descripcion || 'N/A'}</td>
-                            <td>{transaccion.cuenta?.nombre || 'N/A'}</td>
-                            <td>${transaccion.monto.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
                             <td>
-                              {formasPago.find((fp) => fp.value === transaccion.formaPago)?.label || transaccion.formaPago}
+                              {transaccion.categoria?.descripcion || "N/A"}
+                            </td>
+                            <td>{transaccion.cuenta?.nombre || "N/A"}</td>
+                            <td>
+                              $
+                              {transaccion.monto.toLocaleString("es-MX", {
+                                minimumFractionDigits: 2,
+                              })}
+                            </td>
+                            <td>
+                              {formasPago.find(
+                                (fp) => fp.value === transaccion.formaPago,
+                              )?.label || transaccion.formaPago}
                             </td>
                             <td>{transaccion.notas || "-"}</td>
                             <td>
                               <button
                                 className="transacciones-action-btn transacciones-delete-btn"
-                                onClick={() => handleDeleteTransaccion(transaccion)}
+                                onClick={() =>
+                                  handleDeleteTransaccion(transaccion)
+                                }
                                 title="Eliminar"
                               >
                                 <img
@@ -1599,4 +2000,4 @@ const AdminTransacciones = () => {
   );
 };
 
-export default AdminTransacciones
+export default AdminTransacciones;
