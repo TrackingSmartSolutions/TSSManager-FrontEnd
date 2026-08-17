@@ -1,14 +1,37 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import "./ReportePersonal.css";
 import Header from "../Header/Header";
 import Swal from "sweetalert2";
 import downloadIcon from "../../assets/icons/descarga.png";
 import { API_BASE_URL } from "../Config/Config";
 import Chart from "chart.js/auto";
-import html2canvas from "html2canvas";
 import { jwtDecode } from "jwt-decode";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+
+const BAR_SLOT = 30;
+const CHART_VIEWPORT = 420;
+const CHART_PADDING = 70;
+
+const TOP_N_OPTIONS = [
+  { label: "Top 10", value: 10 },
+  { label: "Top 25", value: 25 },
+  { label: "Top 50", value: 50 },
+  { label: "Todas", value: "all" },
+];
+
+const TYPE_COLORS = {
+  TAREAS: "#f0ad4e",
+  TAREA: "#f0ad4e",
+  LLAMADAS: "#ff6b8a",
+  LLAMADA: "#ff6b8a",
+  REUNIONES: "#5bc0de",
+  REUNION: "#5bc0de",
+  CORREOS: "#45b7d1",
+  MENSAJES: "#96ceb4",
+};
+const FALLBACK_COLOR = "#9aa5b1";
+const colorForType = (tipo) => TYPE_COLORS[tipo] || FALLBACK_COLOR;
 
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token");
@@ -18,48 +41,122 @@ const fetchWithToken = async (url, options = {}) => {
     ...options.headers,
   };
   const response = await fetch(url, { ...options, headers });
-  if (!response.ok) throw new Error(`Error: ${response.status} - ${response.statusText}`);
+  if (!response.ok) {
+    throw new Error(`Error: ${response.status} - ${response.statusText}`);
+  }
   return response;
 };
 
-const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayClick = true }) => {
+const formatDateForAPI = (date) => {
+  if (!date) return null;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const getTodayDate = () => {
+  const today = new Date();
+  const mexicoTime = new Date(
+    today.toLocaleString("en-US", { timeZone: "America/Mexico_City" }),
+  );
+  return formatDateForAPI(mexicoTime);
+};
+
+const puedeFiltrarUsuarios = () => {
+  const rol = localStorage.getItem("userRol");
+  return rol === "ADMINISTRADOR" || rol === "GESTOR";
+};
+
+const Modal = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = "md",
+  closeOnOverlayClick = true,
+}) => {
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "unset";
-    return () => { document.body.style.overflow = "unset"; };
+    return () => {
+      document.body.style.overflow = "unset";
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   const overlayStyle = {
-    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1050,
   };
 
-  let widthStyle = '500px';
-  let maxWidthStyle = '95%';
-
-  if (size === 'lg') widthStyle = '800px';
-  if (size === 'xl') widthStyle = '950px';
+  let widthStyle = "500px";
+  if (size === "lg") widthStyle = "800px";
+  if (size === "xl") widthStyle = "950px";
 
   const contentStyle = {
-    backgroundColor: 'white', borderRadius: '8px', padding: '20px',
-    maxHeight: '95vh', overflowY: 'auto', width: widthStyle, maxWidth: maxWidthStyle,
-    position: 'relative', boxShadow: '0 5px 15px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column'
+    backgroundColor: "white",
+    borderRadius: "8px",
+    padding: "20px",
+    maxHeight: "95vh",
+    overflowY: "auto",
+    width: widthStyle,
+    maxWidth: "95%",
+    position: "relative",
+    boxShadow: "0 5px 15px rgba(0,0,0,0.5)",
+    display: "flex",
+    flexDirection: "column",
   };
 
   return (
-    <div style={overlayStyle} onClick={closeOnOverlayClick ? onClose : () => { }}>
+    <div
+      style={overlayStyle}
+      onClick={closeOnOverlayClick ? onClose : () => {}}
+    >
       <div style={contentStyle} onClick={(e) => e.stopPropagation()}>
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          marginBottom: '10px', borderBottom: '1px solid #dee2e6', paddingBottom: '10px'
-        }}>
-          <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>{title}</h2>
-          <button onClick={onClose} style={{
-            border: 'none', background: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#6c757d', padding: '0 5px'
-          }}>✕</button>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "10px",
+            borderBottom: "1px solid #dee2e6",
+            paddingBottom: "10px",
+          }}
+        >
+          <h2 style={{ margin: 0, fontSize: "1rem", fontWeight: 600 }}>
+            {title}
+          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              border: "none",
+              background: "none",
+              fontSize: "1.2rem",
+              cursor: "pointer",
+              color: "#6c757d",
+              padding: "0 5px",
+            }}
+          >
+            ✕
+          </button>
         </div>
-        <div style={{ flex: 1, overflowY: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div
+          style={{
+            flex: 1,
+            overflowY: "hidden",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           {children}
         </div>
       </div>
@@ -67,33 +164,60 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayCl
   );
 };
 
-// Modal de Vista Previa
 const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Vista previa" size="xl" closeOnOverlayClick={false}>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Vista previa"
+      size="xl"
+      closeOnOverlayClick={false}
+    >
+      <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: "10px",
+          }}
+        >
           <button
             type="button"
             onClick={onDownload}
             className="reporte-btn reporte-btn-download"
-            style={{ display: 'flex', alignItems: 'center', gap: '5px', width: 'auto', padding: '8px 16px' }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              width: "auto",
+              padding: "8px 16px",
+            }}
           >
-            <img src={downloadIcon} alt="Descargar" className="reporte-btn-icon" style={{ width: '16px', height: '16px' }} />
+            <img
+              src={downloadIcon}
+              alt="Descargar"
+              className="reporte-btn-icon"
+              style={{ width: "16px", height: "16px" }}
+            />
             Descargar PDF
           </button>
         </div>
-
-        <div style={{
-          border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden',
-          height: '75vh'
-        }}>
+        <div
+          style={{
+            border: "1px solid #ddd",
+            borderRadius: "4px",
+            overflow: "hidden",
+            height: "75vh",
+          }}
+        >
           <iframe
             src={`${pdfUrl}#view=FitH&navpanes=0&toolbar=0`}
-            title="Vista Previa"
-            width="100%" height="100%" style={{ border: 'none' }}
+            title="Vista previa del reporte"
+            width="100%"
+            height="100%"
+            style={{ border: "none" }}
           />
         </div>
       </div>
@@ -130,6 +254,33 @@ const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
   </div>
 );
 
+const renderChartToImage = (config, width, height) => {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, width, height);
+
+  const chart = new Chart(ctx, {
+    ...config,
+    options: {
+      ...config.options,
+      responsive: false,
+      maintainAspectRatio: false,
+      animation: false,
+      devicePixelRatio: 1,
+    },
+  });
+
+  chart.update("none");
+  const image = canvas.toDataURL("image/png", 1.0);
+  chart.destroy();
+
+  return { image, ratio: height / width };
+};
+
 const ReportePersonal = () => {
   const [dateRange, setDateRange] = useState([null, null]);
   const [startDate, endDate] = dateRange;
@@ -138,410 +289,368 @@ const ReportePersonal = () => {
   const [empresasData, setEmpresasData] = useState([]);
   const [notasData, setNotasData] = useState([]);
   const [currentUser, setCurrentUser] = useState({ nombre: "", apellidos: "" });
-  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [topN, setTopN] = useState(10);
+  const [ready, setReady] = useState(false);
   const [pdfPreview, setPdfPreview] = useState({
     isOpen: false,
     url: null,
-    filename: ""
+    filename: "",
   });
 
   const activitiesChartRef = useRef(null);
   const companiesChartRef = useRef(null);
-  const chartsSectionRef = useRef(null);
-  const notesSectionRef = useRef(null);
+  const activitiesCanvasRef = useRef(null);
+  const companiesCanvasRef = useRef(null);
+  const requestIdRef = useRef(0);
 
-  // Función para obtener la fecha actual en formato YYYY-MM-DD
-  const getTodayDate = () => {
-    const today = new Date();
-    const mexicoTime = new Date(today.toLocaleString("en-US", { timeZone: "America/Mexico_City" }));
-    const year = mexicoTime.getFullYear();
-    const month = String(mexicoTime.getMonth() + 1).padStart(2, '0');
-    const day = String(mexicoTime.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+  const canFilterUsers = puedeFiltrarUsuarios();
+  const empresasOrdenadas = useMemo(
+    () =>
+      empresasData
+        .map((item) => ({
+          name: item.name || item.empresa || item.nombre || "Sin nombre",
+          value: Number(
+            item.value ??
+              item.cantidad ??
+              item.count ??
+              item.interacciones ??
+              0,
+          ),
+        }))
+        .sort((a, b) => b.value - a.value),
+    [empresasData],
+  );
 
-  useEffect(() => {
-    const loadCurrentUser = async () => {
-      const token = localStorage.getItem("token");
-      const userRol = localStorage.getItem("userRol");
+  const empresasChartData = useMemo(() => {
+    if (topN === "all") return empresasOrdenadas;
+    const top = empresasOrdenadas.slice(0, topN);
+    const resto = empresasOrdenadas.slice(topN);
+    if (resto.length > 0) {
+      top.push({
+        name: `Otras (${resto.length})`,
+        value: resto.reduce((sum, e) => sum + e.value, 0),
+        esOtras: true,
+      });
+    }
+    return top;
+  }, [empresasOrdenadas, topN]);
 
-      if (token) {
-        try {
-          const decodedToken = jwtDecode(token);
-          const nombreUsuario = decodedToken.sub;
-          const userData = await fetchUserDetails(nombreUsuario);
+  const companiesSizerHeight = Math.max(
+    240,
+    empresasChartData.length * BAR_SLOT + CHART_PADDING,
+  );
 
-          setCurrentUser({
-            nombre: userData.nombre,
-            apellidos: userData.apellidos
-          });
+  const totalActividades = useMemo(
+    () =>
+      actividadesData.reduce((sum, item) => sum + (Number(item.value) || 0), 0),
+    [actividadesData],
+  );
 
-          if (userRol === "ADMINISTRADOR" || userRol === "GESTOR") {
-            setSelectedUser(userData.nombre);
-          }
-        } catch (decodeError) {
-          console.error("Error decodificando el token:", decodeError);
-          setCurrentUser({ nombre: "Usuario", apellidos: "Desconocido" });
-        }
+  const buildActivitiesConfig = useCallback(
+    (fontScale = 1) => {
+      if (actividadesData.length === 0) {
+        return {
+          type: "bar",
+          data: {
+            labels: ["Sin datos"],
+            datasets: [
+              { label: "Actividades", data: [0], backgroundColor: "#e0e0e0" },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } },
+          },
+        };
       }
+
+      const labels = [...new Set(actividadesData.map((item) => item.name))];
+      const tipos = [
+        ...new Set(actividadesData.map((item) => item.tipo || "OTROS")),
+      ];
+
+      const datasets = tipos.map((tipo) => {
+        const items = actividadesData.filter(
+          (item) => (item.tipo || "OTROS") === tipo,
+        );
+        return {
+          label: tipo,
+          data: labels.map((label) => {
+            const match = items.find((i) => i.name === label);
+            return match ? Number(match.value) || 0 : 0;
+          }),
+          backgroundColor: colorForType(tipo),
+          borderColor: colorForType(tipo),
+          borderWidth: 1,
+          categoryPercentage: 0.8,
+          barPercentage: 0.9,
+        };
+      });
+
+      return {
+        type: "bar",
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 300 },
+          plugins: {
+            legend: {
+              display: true,
+              position: "top",
+              labels: { font: { size: 12 * fontScale } },
+            },
+            tooltip: {
+              callbacks: {
+                title: (items) =>
+                  `${items[0].dataset.label} - ${items[0].label}`,
+              },
+            },
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: "Medio de comunicación",
+                font: { size: 12 * fontScale },
+              },
+              ticks: { font: { size: 11 * fontScale } },
+            },
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: "Cantidad",
+                font: { size: 12 * fontScale },
+              },
+              ticks: { font: { size: 11 * fontScale } },
+            },
+          },
+        },
+      };
+    },
+    [actividadesData],
+  );
+
+  const buildCompaniesConfig = useCallback((data, fontScale = 1) => {
+    if (data.length === 0) {
+      return {
+        type: "bar",
+        data: {
+          labels: ["Sin datos"],
+          datasets: [
+            { label: "Interacciones", data: [0], backgroundColor: "#e0e0e0" },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: "y",
+          plugins: { legend: { display: false } },
+          scales: { x: { beginAtZero: true } },
+        },
+      };
+    }
+
+    return {
+      type: "bar",
+      data: {
+        labels: data.map((e) => e.name),
+        datasets: [
+          {
+            label: "Interacciones",
+            data: data.map((e) => e.value),
+            backgroundColor: data.map((e) =>
+              e.esOtras ? "#b9c2cc" : "#4ecdc4",
+            ),
+            borderRadius: 3,
+            barPercentage: 0.75,
+            categoryPercentage: 0.85,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: "y",
+        animation: data.length > 25 ? false : { duration: 300 },
+        layout: { padding: { top: 8, bottom: 8, left: 8, right: 16 } },
+        scales: {
+          x: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: "Número de interacciones",
+              font: { size: 12 * fontScale },
+            },
+            ticks: { precision: 0, font: { size: 11 * fontScale } },
+          },
+          y: {
+            ticks: {
+              autoSkip: false,
+              font: { size: (data.length > 30 ? 10 : 11.5) * fontScale },
+              callback(value) {
+                const label = this.getLabelForValue(value);
+                return label.length > 28 ? `${label.slice(0, 28)}…` : label;
+              },
+            },
+          },
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: (items) => data[items[0].dataIndex]?.name ?? "",
+              label: (ctx) => `Interacciones: ${ctx.parsed.x}`,
+            },
+          },
+        },
+      },
     };
-
-    loadCurrentUser();
-
-    if (!initialDataLoaded) {
-      fetchReportData();
-      setInitialDataLoaded(true);
-    }
   }, []);
-
-  useEffect(() => {
-    const loadUsers = async () => {
-      const userRol = localStorage.getItem("userRol");
-
-      if (userRol === "ADMINISTRADOR" || userRol === "GESTOR") {
-        try {
-          const response = await fetchWithToken(`${API_BASE_URL}/auth/users/active`);
-          const data = await response.json();
-          const usersList = data.map(user => user.nombre.trim());
-          console.log("Lista de usuarios cargada:", usersList);
-          setUsers(usersList);
-        } catch (error) {
-          console.error("ERROR al cargar usuarios:", error);
-        }
-      }
-    };
-
-    loadUsers();
-  }, []);
-
-  // Actualizar datos cuando cambie el rango de fechas
-  useEffect(() => {
-    if (initialDataLoaded && (startDate || endDate)) {
-      fetchReportData();
-    }
-  }, [startDate, endDate, initialDataLoaded]);
-
-  useEffect(() => {
-    if (initialDataLoaded && selectedUser) {
-      fetchReportData();
-    }
-  }, [selectedUser, initialDataLoaded]);
-
-  // Crear/actualizar gráficos cuando cambien los datos
-  useEffect(() => {
-    requestAnimationFrame(() => {
-      updateCharts();
-    });
-  }, [actividadesData, empresasData]);
-
 
   const fetchUserDetails = async (nombreUsuario) => {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/auth/users/by-username/${nombreUsuario}`);
-      const user = await response.json();
-      return user;
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/auth/users/by-username/${nombreUsuario}`,
+      );
+      return await response.json();
     } catch (error) {
-      console.error("Error fetching user details:", error);
+      console.error("Error obteniendo datos del usuario:", error);
       return { nombre: "Usuario", apellidos: "Desconocido" };
     }
   };
 
-  const fetchReportData = async () => {
+  const fetchReportData = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
+
     try {
       const todayDate = getTodayDate();
-
-      const formatDateForAPI = (date) => {
-        if (!date) return todayDate;
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      };
-
-      const startDateFormatted = formatDateForAPI(startDate);
-      const endDateFormatted = formatDateForAPI(endDate);
-      const userRol = localStorage.getItem("userRol");
+      const startDateFormatted = formatDateForAPI(startDate) || todayDate;
+      const endDateFormatted = formatDateForAPI(endDate) || startDateFormatted;
 
       let url = `${API_BASE_URL}/reportes/actividades?startDate=${startDateFormatted}&endDate=${endDateFormatted}`;
-
-      // Si es administrador y tiene un usuario seleccionado, agregarlo a la URL
-      if (userRol === "ADMINISTRADOR" && selectedUser) {
-        url += `&usuario=${selectedUser}`;
+      if (canFilterUsers && selectedUser) {
+        url += `&usuario=${encodeURIComponent(selectedUser)}`;
       }
 
       const response = await fetchWithToken(url);
       const data = await response.json();
 
+      if (requestId !== requestIdRef.current) return;
+
       setActividadesData(data.actividades || []);
       setEmpresasData(data.empresas || []);
       setNotasData(data.notas || []);
-
     } catch (error) {
-      console.error("Error fetching report data:", error);
+      console.error("Error obteniendo datos del reporte:", error);
+      if (requestId !== requestIdRef.current) return;
       setActividadesData([]);
       setEmpresasData([]);
       setNotasData([]);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
-  };
+  }, [startDate, endDate, selectedUser, canFilterUsers]);
 
-  const updateCharts = () => {
-    if (actividadesData.length > 0) {
-      console.log("   - Primer elemento actividades:", actividadesData[0]);
-      console.log("   - Propiedades disponibles:", Object.keys(actividadesData[0]));
-    }
-    if (empresasData.length > 0) {
-      console.log("   - Primer elemento empresas:", empresasData[0]);
-      console.log("   - Propiedades disponibles:", Object.keys(empresasData[0]));
-    }
+  useEffect(() => {
+    let cancelled = false;
 
-    // Destruir gráficos existentes
-    if (activitiesChartRef.current) {
-      activitiesChartRef.current.destroy();
+    const init = async () => {
+      const token = localStorage.getItem("token");
+
+      if (token) {
+        try {
+          const decodedToken = jwtDecode(token);
+          const userData = await fetchUserDetails(decodedToken.sub);
+          if (cancelled) return;
+
+          setCurrentUser({
+            nombre: userData.nombre,
+            apellidos: userData.apellidos,
+          });
+          if (canFilterUsers) setSelectedUser(userData.nombre);
+        } catch (error) {
+          console.error("Error decodificando el token:", error);
+          if (!cancelled)
+            setCurrentUser({ nombre: "Usuario", apellidos: "Desconocido" });
+        }
+      }
+
+      if (canFilterUsers) {
+        try {
+          const response = await fetchWithToken(
+            `${API_BASE_URL}/auth/users/active`,
+          );
+          const data = await response.json();
+          if (!cancelled) setUsers(data.map((user) => user.nombre.trim()));
+        } catch (error) {
+          console.error("Error cargando la lista de usuarios:", error);
+        }
+      }
+
+      if (!cancelled) setReady(true);
+    };
+
+    init();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    fetchReportData();
+  }, [ready, fetchReportData]);
+
+  useEffect(() => {
+    if (!activitiesCanvasRef.current) return;
+
+    activitiesChartRef.current?.destroy();
+    activitiesChartRef.current = new Chart(
+      activitiesCanvasRef.current.getContext("2d"),
+      buildActivitiesConfig(),
+    );
+
+    return () => {
+      activitiesChartRef.current?.destroy();
       activitiesChartRef.current = null;
-    }
-    if (companiesChartRef.current) {
-      companiesChartRef.current.destroy();
+    };
+  }, [buildActivitiesConfig]);
+
+  useEffect(() => {
+    if (!companiesCanvasRef.current) return;
+
+    companiesChartRef.current?.destroy();
+    companiesChartRef.current = new Chart(
+      companiesCanvasRef.current.getContext("2d"),
+      buildCompaniesConfig(empresasChartData),
+    );
+
+    return () => {
+      companiesChartRef.current?.destroy();
       companiesChartRef.current = null;
-    }
-
-    // Obtener contextos de los canvas
-    const activitiesCtx = document.getElementById("activitiesChart")?.getContext("2d");
-    const companiesCtx = document.getElementById("companiesChart")?.getContext("2d");
-
-    // Crear gráfico de actividades
-    if (activitiesCtx) {
-      if (actividadesData.length > 0) {
-        try {
-          // Agrupar datos por tipo principal
-          const groupedData = actividadesData.reduce((acc, item) => {
-            const tipo = item.tipo || "OTROS";
-            if (!acc[tipo]) {
-              acc[tipo] = [];
-            }
-            acc[tipo].push(item);
-            return acc;
-          }, {});
-
-          // Crear datasets para cada tipo
-          const datasets = [];
-          const allLabels = new Set();
-
-          // Colores por tipo
-          const typeColors = {
-            'TAREAS': ['#45b7d1', '#5bc0de', '#17a2b8'],
-            'LLAMADAS': ['#4ecdc4', '#26d0ce'],
-            'REUNIONES': ['#ff6b6b', '#fd79a8']
-          };
-
-          Object.entries(groupedData).forEach(([tipo, items], typeIndex) => {
-            const labels = items.map(item => item.name);
-            const values = items.map(item => item.value);
-            const colors = typeColors[tipo];
-
-            labels.forEach(label => allLabels.add(label));
-
-            datasets.push({
-              label: tipo,
-              data: Array.from(allLabels).map(label => {
-                const item = items.find(i => i.name === label);
-                return item ? item.value : 0;
-              }),
-              backgroundColor: colors,
-              borderColor: colors,
-              borderWidth: 1,
-              categoryPercentage: 0.8,
-              barPercentage: 0.9
-            });
-          });
-
-          activitiesChartRef.current = new Chart(activitiesCtx, {
-            type: "bar",
-            data: {
-              labels: Array.from(allLabels),
-              datasets: datasets
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  display: true,
-                  position: 'top'
-                },
-                tooltip: {
-                  callbacks: {
-                    title: function (tooltipItems) {
-                      const datasetLabel = tooltipItems[0].dataset.label;
-                      const label = tooltipItems[0].label;
-                      return `${datasetLabel} - ${label}`;
-                    }
-                  }
-                }
-              },
-              scales: {
-                x: {
-                  title: {
-                    display: true,
-                    text: 'Medio de Comunicación'
-                  }
-                },
-                y: {
-                  beginAtZero: true,
-                  title: {
-                    display: true,
-                    text: 'Cantidad'
-                  }
-                }
-              }
-            }
-          });
-        } catch (error) {
-          console.error("Error creando gráfico de actividades:", error);
-        }
-      } else {
-        activitiesChartRef.current = new Chart(activitiesCtx, {
-          type: "bar",
-          data: {
-            labels: ["Sin datos"],
-            datasets: [{
-              label: "Actividades",
-              data: [0],
-              backgroundColor: "#e0e0e0",
-            }],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true } }
-          },
-        });
-      }
-    }
-
-    // Crear gráfico de empresas
-    if (companiesCtx) {
-      if (empresasData.length > 0) {
-        try {
-          // Procesar datos para el gráfico
-          const labels = empresasData.map((item) => {
-            return item.name || item.empresa || item.nombre || "Sin nombre";
-          });
-          const values = empresasData.map((item) => {
-            const value = item.value || item.cantidad || item.count || item.interacciones || 0;
-            return value;
-          });
-
-          companiesChartRef.current = new Chart(companiesCtx, {
-            type: "bar",
-            data: {
-              labels: labels,
-              datasets: [{
-                label: "Interacciones",
-                data: values,
-                backgroundColor: "#4ecdc4",
-                barPercentage: 0.5,
-                categoryPercentage: 0.8,
-              }],
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              indexAxis: "y",
-              layout: {
-                padding: {
-                  top: 10,
-                  bottom: 10,
-                  left: 10,
-                  right: 10
-                }
-              },
-              scales: {
-                x: {
-                  beginAtZero: true,
-                  title: {
-                    display: true,
-                    text: 'Número de Interacciones'
-                  }
-                },
-                y: {
-                  ticks: {
-                    maxRotation: 0,
-                    minRotation: 0,
-                    autoSkip: false,
-                    font: {
-                      size: empresasData.length > 20 ? 10 : 12
-                    },
-                    callback: function (value, index) {
-                      const label = this.getLabelForValue(value);
-                      return label.length > 25 ? label.substring(0, 25) + '...' : label;
-                    }
-                  },
-                  title: {
-                    display: true,
-                    text: 'Empresas'
-                  }
-                }
-              },
-              plugins: {
-                legend: {
-                  display: true,
-                  position: 'top'
-                },
-                tooltip: {
-                  callbacks: {
-                    title: function (tooltipItems) {
-                      return labels[tooltipItems[0].dataIndex];
-                    },
-                    label: function (context) {
-                      return `Interacciones: ${context.parsed.x}`;
-                    }
-                  }
-                }
-              }
-            }
-          });
-          if (companiesChartRef.current && empresasData.length > 0) {
-            const canvas = document.getElementById("companiesChart");
-            const minHeight = Math.max(400, empresasData.length * 25);
-            canvas.style.height = `${minHeight}px`;
-            companiesChartRef.current.resize();
-          }
-        } catch (error) {
-          console.error("Error creando gráfico de empresas:", error);
-        }
-      } else {
-        companiesChartRef.current = new Chart(companiesCtx, {
-          type: "bar",
-          data: {
-            labels: ["Sin datos"],
-            datasets: [{
-              label: "Interacciones",
-              data: [0],
-              backgroundColor: "#e0e0e0",
-              barPercentage: 0.5,
-              categoryPercentage: 0.8,
-            }],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: "y",
-            scales: { x: { beginAtZero: true } },
-          },
-        });
-      }
-    }
-  };
+    };
+  }, [buildCompaniesConfig, empresasChartData]);
 
   const formatDate = (dateString) => {
     const date = dateString ? new Date(dateString) : new Date();
-    return date.toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric" });
+    return date.toLocaleDateString("es-MX", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
   };
+
+  const getUserInfo = () =>
+    canFilterUsers && selectedUser
+      ? selectedUser
+      : `${currentUser.nombre} ${currentUser.apellidos}`.trim();
 
   const handleDownloadPDF = async () => {
     try {
@@ -551,77 +660,21 @@ const ReportePersonal = () => {
         title: "Generando reporte",
         text: "Creando reporte en PDF...",
         showConfirmButton: false,
-      });
-
-      const originalChartCardStyle = chartsSectionRef.current.querySelector('.reporte-chart-card')?.style.backgroundColor;
-      const originalNotesSectionStyle = notesSectionRef.current.style.backgroundColor;
-      const originalTableStyle = notesSectionRef.current.querySelector('.reporte-table')?.style.backgroundColor;
-      const originalOpacity = chartsSectionRef.current.style.opacity;
-      const originalAnimation = chartsSectionRef.current.style.animation;
-
-      chartsSectionRef.current.querySelectorAll('.reporte-chart-card').forEach(card => {
-        card.style.backgroundColor = '#ffffff';
-        card.style.opacity = '1';
-        card.style.animation = 'none';
-      });
-
-      if (notesSectionRef.current.querySelector('.reporte-table')) {
-        notesSectionRef.current.querySelectorAll('.reporte-notas-cell, td').forEach(cell => {
-          cell.style.whiteSpace = 'normal';
-          cell.style.wordWrap = 'break-word';
-          cell.style.wordBreak = 'break-word';
-          cell.style.maxWidth = '200px';
-          cell.style.verticalAlign = 'top';
-          cell.style.padding = '8px';
-        });
-      }
-
-      notesSectionRef.current.style.backgroundColor = '#ffffff';
-      notesSectionRef.current.style.opacity = '1';
-      notesSectionRef.current.style.animation = 'none';
-
-      if (notesSectionRef.current.querySelector('.reporte-table')) {
-        notesSectionRef.current.querySelector('.reporte-table').style.backgroundColor = '#ffffff';
-        notesSectionRef.current.querySelector('.reporte-table').style.opacity = '1';
-      }
-
-      if (activitiesChartRef.current) activitiesChartRef.current.resize();
-      if (companiesChartRef.current) companiesChartRef.current.resize();
-      await new Promise(resolve => setTimeout(resolve, 150));
-
-      chartsSectionRef.current.querySelectorAll('.reporte-chart-card').forEach(card => {
-        card.style.backgroundColor = originalChartCardStyle || '';
-        card.style.opacity = originalOpacity || '';
-        card.style.animation = originalAnimation || '';
-      });
-      notesSectionRef.current.style.backgroundColor = originalNotesSectionStyle || '';
-      notesSectionRef.current.style.opacity = originalOpacity || '';
-      notesSectionRef.current.style.animation = originalAnimation || '';
-      if (notesSectionRef.current.querySelector('.reporte-table')) {
-        notesSectionRef.current.querySelector('.reporte-table').style.backgroundColor = originalTableStyle || '';
-      }
-      notesSectionRef.current.querySelectorAll('.reporte-notas-cell, td').forEach(cell => {
-        cell.style.whiteSpace = '';
-        cell.style.wordWrap = '';
-        cell.style.wordBreak = '';
-        cell.style.maxWidth = '';
-        cell.style.verticalAlign = '';
-        cell.style.padding = '';
+        allowOutsideClick: false,
       });
 
       const { jsPDF } = await import("jspdf");
-      const doc = new jsPDF('p', 'mm', 'a4');
+      const doc = new jsPDF("p", "mm", "a4");
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 20;
-      const contentWidth = pageWidth - (margin * 2);
+      const contentWidth = pageWidth - margin * 2;
 
-      const primaryBlue = [37, 99, 235]; // #2563eb
-      const darkBlue = [30, 64, 175]; // #1e40af  
-      const lightBlue = [239, 246, 255]; // #eff6ff
-      const textDark = [31, 41, 55]; // #1f2937
-      const textGray = [107, 114, 128]; // #6b7280
-      const borderGray = [229, 231, 235]; // #e5e7eb
+      const primaryBlue = [37, 99, 235];
+      const lightBlue = [239, 246, 255];
+      const textDark = [31, 41, 55];
+      const textGray = [107, 114, 128];
+      const borderGray = [229, 231, 235];
 
       const addHeader = (pageNum = 1) => {
         doc.setDrawColor(...primaryBlue);
@@ -636,68 +689,43 @@ const ReportePersonal = () => {
         doc.setFontSize(11);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...textGray);
-        const userInfo = `${(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR") && selectedUser ? selectedUser : `${currentUser.nombre} ${currentUser.apellidos}`}`;
-        doc.text(userInfo, margin, 32);
+        doc.text(getUserInfo(), margin, 32);
 
-        const currentDate = new Date().toLocaleDateString('es-MX', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
+        const currentDate = new Date().toLocaleDateString("es-MX", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
         });
-        doc.text(currentDate, pageWidth - margin - doc.getTextWidth(currentDate), 32);
-
-        // Período
-        const period = `${formatDate(startDate)} - ${formatDate(endDate)}`;
-        doc.text(period, margin, 38);
+        doc.text(
+          currentDate,
+          pageWidth - margin - doc.getTextWidth(currentDate),
+          32,
+        );
+        doc.text(
+          `${formatDate(startDate)} - ${formatDate(endDate)}`,
+          margin,
+          38,
+        );
 
         doc.setFontSize(9);
         doc.text(`${pageNum}`, pageWidth - margin - 5, pageHeight - 10);
       };
 
+      const ensureSpace = (needed) => {
+        if (currentY + needed <= pageHeight - 25) return;
+        doc.addPage();
+        addHeader(doc.internal.getNumberOfPages());
+        currentY = 50;
+      };
+
       addHeader(1);
       let currentY = 50;
 
-      let activitiesImgData = null;
-      let companiesImgData = null;
-
-      const activitiesCanvas = document.getElementById("activitiesChart");
-      const companiesCanvas = document.getElementById("companiesChart");
-
-      if (activitiesCanvas) {
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-        const scale = 2;
-
-        tempCanvas.width = activitiesCanvas.width * scale;
-        tempCanvas.height = activitiesCanvas.height * scale;
-        tempCtx.scale(scale, scale);
-        tempCtx.drawImage(activitiesCanvas, 0, 0);
-
-        activitiesImgData = tempCanvas.toDataURL("image/png", 1.0);
-      }
-
-      if (companiesCanvas) {
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-        const scale = 2;
-
-        tempCanvas.width = companiesCanvas.width * scale;
-        tempCanvas.height = companiesCanvas.height * scale;
-        tempCtx.scale(scale, scale);
-        tempCtx.drawImage(companiesCanvas, 0, 0);
-
-        companiesImgData = tempCanvas.toDataURL("image/png", 1.0);
-      }
-
-      const totalActividades = actividadesData.reduce((sum, item) => sum + (item.value || 0), 0);
-      const totalEmpresas = empresasData.length;
-      const totalNotas = notasData.length;
-
       doc.setFillColor(...lightBlue);
-      doc.roundedRect(margin, currentY, contentWidth, 25, 2, 2, 'F');
+      doc.roundedRect(margin, currentY, contentWidth, 25, 2, 2, "F");
       doc.setDrawColor(...borderGray);
       doc.setLineWidth(0.5);
-      doc.roundedRect(margin, currentY, contentWidth, 25, 2, 2, 'S');
+      doc.roundedRect(margin, currentY, contentWidth, 25, 2, 2, "S");
 
       doc.setTextColor(...textDark);
       doc.setFontSize(12);
@@ -707,186 +735,262 @@ const ReportePersonal = () => {
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
       doc.text(`Actividades: ${totalActividades}`, margin + 8, currentY + 16);
-      doc.text(`Empresas: ${totalEmpresas}`, margin + 60, currentY + 16);
-      doc.text(`Interacciones: ${totalNotas}`, margin + 110, currentY + 16);
+      doc.text(
+        `Empresas: ${empresasOrdenadas.length}`,
+        margin + 60,
+        currentY + 16,
+      );
+      doc.text(
+        `Interacciones: ${notasData.length}`,
+        margin + 110,
+        currentY + 16,
+      );
 
       currentY += 35;
 
-      if (activitiesImgData) {
-        // Título de sección
+      if (actividadesData.length > 0) {
+        const { image, ratio } = renderChartToImage(
+          buildActivitiesConfig(1.6),
+          1200,
+          520,
+        );
+        const imgHeight = contentWidth * ratio;
+
+        ensureSpace(imgHeight + 15);
         doc.setTextColor(...primaryBlue);
         doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
         doc.text("Actividades", margin, currentY);
+        currentY += 8;
 
-        currentY += 10;
-
-        // Gráfico con borde sutil
-        const chartHeight = 70;
         doc.setDrawColor(...borderGray);
         doc.setLineWidth(0.5);
-        doc.rect(margin, currentY, contentWidth, chartHeight);
-        doc.addImage(activitiesImgData, "PNG", margin + 1, currentY + 1, contentWidth - 2, chartHeight - 2);
-
-        currentY += chartHeight + 10;
+        doc.rect(margin, currentY, contentWidth, imgHeight);
+        doc.addImage(image, "PNG", margin, currentY, contentWidth, imgHeight);
+        currentY += imgHeight + 12;
       }
 
-      if (companiesImgData) {
-        // Verificar espacio
-        const companiesChartHeight = 70;
-        if (currentY + companiesChartHeight + 20 > pageHeight - 30) {
-          doc.addPage();
-          addHeader(2);
-          currentY = 50;
+      if (empresasOrdenadas.length > 0) {
+        const pdfTop = empresasOrdenadas.slice(0, 12);
+        const resto = empresasOrdenadas.slice(12);
+        const pdfData = [...pdfTop];
+        if (resto.length > 0) {
+          pdfData.push({
+            name: `Otras (${resto.length})`,
+            value: resto.reduce((sum, e) => sum + e.value, 0),
+            esOtras: true,
+          });
         }
 
-        // Título de sección
+        const chartPxHeight = Math.max(360, pdfData.length * 46 + 90);
+        const { image, ratio } = renderChartToImage(
+          buildCompaniesConfig(pdfData, 1.7),
+          1200,
+          chartPxHeight,
+        );
+        const imgHeight = contentWidth * ratio;
+
+        ensureSpace(imgHeight + 18);
         doc.setTextColor(...primaryBlue);
         doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
         doc.text("Empresas Contactadas", margin, currentY);
+        currentY += 6;
 
-        currentY += 10;
+        if (resto.length > 0) {
+          doc.setTextColor(...textGray);
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "normal");
+          doc.text(
+            `Mostrando las 12 empresas con más interacciones de ${empresasOrdenadas.length} en total.`,
+            margin,
+            currentY,
+          );
+          currentY += 5;
+        }
 
-        // Gráfico con borde sutil
         doc.setDrawColor(...borderGray);
         doc.setLineWidth(0.5);
-        doc.rect(margin, currentY, contentWidth, companiesChartHeight);
-        doc.addImage(companiesImgData, "PNG", margin + 1, currentY + 1, contentWidth - 2, companiesChartHeight - 2);
+        doc.rect(margin, currentY, contentWidth, imgHeight);
+        doc.addImage(image, "PNG", margin, currentY, contentWidth, imgHeight);
+        currentY += imgHeight + 12;
       }
 
-      // PÁGINAS DE TABLA: Interacciones
-      if (notasData.length > 0) {
+      if (empresasOrdenadas.length > 12) {
         doc.addPage();
-        let pageNum = doc.internal.getNumberOfPages();
-        addHeader(pageNum);
-
+        addHeader(doc.internal.getNumberOfPages());
         currentY = 50;
 
-        // Título de sección
+        doc.setTextColor(...primaryBlue);
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text("Empresas Contactadas (detalle)", margin, currentY);
+        currentY += 12;
+
+        const empHeaderHeight = 9;
+        const empRowHeight = 7;
+        const empColWidths = [contentWidth - 35, 35];
+
+        const drawEmpresasHeader = () => {
+          doc.setFillColor(...primaryBlue);
+          doc.rect(margin, currentY, contentWidth, empHeaderHeight, "F");
+          doc.setTextColor(255, 255, 255);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(10);
+          doc.text("Empresa", margin + 3, currentY + 6.5);
+          doc.text(
+            "Interacciones",
+            margin + empColWidths[0] + 3,
+            currentY + 6.5,
+          );
+          currentY += empHeaderHeight;
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(9);
+          doc.setTextColor(...textDark);
+        };
+
+        drawEmpresasHeader();
+
+        empresasOrdenadas.forEach((empresa, index) => {
+          if (currentY + empRowHeight > pageHeight - 25) {
+            doc.addPage();
+            addHeader(doc.internal.getNumberOfPages());
+            currentY = 50;
+            drawEmpresasHeader();
+          }
+
+          if (index % 2 === 0) {
+            doc.setFillColor(248, 250, 252);
+            doc.rect(margin, currentY, contentWidth, empRowHeight, "F");
+          }
+
+          doc.setDrawColor(...borderGray);
+          doc.setLineWidth(0.2);
+          doc.rect(margin, currentY, contentWidth, empRowHeight);
+          doc.setTextColor(...textDark);
+
+          const nombre =
+            doc.splitTextToSize(empresa.name, empColWidths[0] - 6)[0] || "";
+          doc.text(nombre, margin + 3, currentY + 4.8);
+          doc.text(
+            String(empresa.value),
+            margin + empColWidths[0] + 3,
+            currentY + 4.8,
+          );
+
+          currentY += empRowHeight;
+        });
+      }
+
+      if (notasData.length > 0) {
+        doc.addPage();
+        addHeader(doc.internal.getNumberOfPages());
+        currentY = 50;
+
         doc.setTextColor(...primaryBlue);
         doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
         doc.text("Detalle de Interacciones", margin, currentY);
+        currentY += 12;
 
-        currentY += 15;
-
-        // Configuración de tabla limpia
-        const rowHeight = 20;
         const headerHeight = 10;
+        const lineHeight = 3.6;
         const colWidths = [45, 35, 35, 55];
         const headers = ["Empresa", "Respuesta", "Interés", "Observaciones"];
 
-        // Header de tabla
-        const drawTableHeader = (yPosition) => {
+        const drawTableHeader = () => {
           doc.setFillColor(...primaryBlue);
-          doc.rect(margin, yPosition, contentWidth, headerHeight, 'F');
-
+          doc.rect(margin, currentY, contentWidth, headerHeight, "F");
           doc.setTextColor(255, 255, 255);
           doc.setFont("helvetica", "bold");
           doc.setFontSize(10);
 
-          let currentX = margin + 3;
+          let x = margin + 3;
           headers.forEach((header, index) => {
-            doc.text(header, currentX, yPosition + 7);
-            currentX += colWidths[index];
+            doc.text(header, x, currentY + 7);
+            x += colWidths[index];
           });
 
-          return yPosition + headerHeight;
+          currentY += headerHeight;
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(9);
         };
 
-        currentY = drawTableHeader(currentY);
-
-        // Filas de datos
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(9);
+        drawTableHeader();
 
         notasData.forEach((nota, index) => {
           const notasText = nota.notas || "";
           const notasLines = doc.splitTextToSize(notasText, colWidths[3] - 6);
-          const requiredHeight = Math.max(rowHeight, notasLines.length * 3 + 8);
+          const rowHeight = Math.max(12, notasLines.length * lineHeight + 6);
 
-          // Nueva página si es necesario
-          if (currentY + requiredHeight > pageHeight - 30) {
+          if (currentY + rowHeight > pageHeight - 25) {
             doc.addPage();
-            pageNum = doc.internal.getNumberOfPages();
-            addHeader(pageNum);
+            addHeader(doc.internal.getNumberOfPages());
             currentY = 50;
 
             doc.setTextColor(...primaryBlue);
             doc.setFontSize(14);
             doc.setFont("helvetica", "bold");
             doc.text("Detalle de Interacciones (cont.)", margin, currentY);
-            currentY += 15;
-
-            currentY = drawTableHeader(currentY);
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(9);
+            currentY += 12;
+            drawTableHeader();
           }
 
-          // Fila alternada
           if (index % 2 === 0) {
             doc.setFillColor(248, 250, 252);
-            doc.rect(margin, currentY, contentWidth, requiredHeight, 'F');
+            doc.rect(margin, currentY, contentWidth, rowHeight, "F");
           }
 
-          // Borde de fila
           doc.setDrawColor(...borderGray);
           doc.setLineWidth(0.3);
-          doc.rect(margin, currentY, contentWidth, requiredHeight);
+          doc.rect(margin, currentY, contentWidth, rowHeight);
+          doc.setTextColor(...textDark);
 
-          // Contenido
-          let currentX = margin + 3;
           const rowData = [
             nota.empresa || "",
             nota.respuesta || "",
             nota.interes || "",
-            notasText
+            notasText,
           ];
-
-          doc.setTextColor(...textDark);
+          let x = margin + 3;
 
           rowData.forEach((cellData, cellIndex) => {
             const maxWidth = colWidths[cellIndex] - 6;
 
-            if (cellIndex === 3) { // Observaciones
-              const lines = doc.splitTextToSize(cellData, maxWidth);
-              lines.forEach((line, lineIndex) => {
-                doc.text(line, currentX, currentY + 6 + (lineIndex * 3));
+            if (cellIndex === 3) {
+              notasLines.forEach((line, lineIndex) => {
+                doc.text(line, x, currentY + 5 + lineIndex * lineHeight);
               });
             } else {
               const lines = doc.splitTextToSize(cellData, maxWidth);
-              doc.text(lines[0] || "", currentX, currentY + (requiredHeight / 2) + 1);
+              doc.text(lines[0] || "", x, currentY + 5);
+              if (lines[1]) doc.text(lines[1], x, currentY + 5 + lineHeight);
             }
 
-            currentX += colWidths[cellIndex];
+            x += colWidths[cellIndex];
           });
 
-          currentY += requiredHeight;
+          currentY += rowHeight;
         });
       }
 
-      const userInfo = `${(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR") && selectedUser ? selectedUser : `${currentUser.nombre} ${currentUser.apellidos}`}`;
-      const startStr = startDate ? startDate.toISOString().split('T')[0] : getTodayDate();
-      const endStr = endDate ? endDate.toISOString().split('T')[0] : getTodayDate();
-      const fileName = `Reporte_${userInfo.replace(/\s+/g, '_')}_${startStr}_${endStr}.pdf`;
-      const blobUrl = doc.output('bloburl');
+      const startStr = formatDateForAPI(startDate) || getTodayDate();
+      const endStr = formatDateForAPI(endDate) || startStr;
+      const fileName = `Reporte_${getUserInfo().replace(/\s+/g, "_")}_${startStr}_${endStr}.pdf`;
 
       setPdfPreview({
         isOpen: true,
-        url: blobUrl,
-        filename: fileName
+        url: doc.output("bloburl"),
+        filename: fileName,
       });
-
       Swal.close();
-
     } catch (error) {
       console.error("Error generando PDF:", error);
       Swal.fire({
         icon: "error",
-        title: "Error",
-        text: "No se pudo generar el reporte: " + error.message,
-        confirmButtonColor: '#dc2626'
+        title: "No se pudo generar el reporte",
+        text: error.message,
+        confirmButtonColor: "#dc2626",
       });
     } finally {
       setLoading(false);
@@ -894,173 +998,237 @@ const ReportePersonal = () => {
   };
 
   const handleDownloadFromPreview = () => {
-    if (pdfPreview.url) {
-      const a = document.createElement('a');
-      a.href = pdfPreview.url;
-      a.download = pdfPreview.filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+    if (!pdfPreview.url) return;
 
-      Swal.fire({
-        icon: "success",
-        title: "Reporte descargado",
-        text: "PDF guardado exitosamente",
-        confirmButtonColor: '#2563eb',
-        timer: 2000,
-        showConfirmButton: false
-      });
-    }
+    const link = document.createElement("a");
+    link.href = pdfPreview.url;
+    link.download = pdfPreview.filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    Swal.fire({
+      icon: "success",
+      title: "Reporte descargado",
+      text: "PDF guardado exitosamente",
+      confirmButtonColor: "#2563eb",
+      timer: 2000,
+      showConfirmButton: false,
+    });
   };
 
   const handleClosePreview = () => {
-    if (pdfPreview.url) {
-      window.URL.revokeObjectURL(pdfPreview.url);
-    }
+    if (pdfPreview.url) window.URL.revokeObjectURL(pdfPreview.url);
     setPdfPreview({ isOpen: false, url: null, filename: "" });
   };
 
-  const handleUserChange = (e) => {
-    const newUser = e.target.value;
-    setSelectedUser(newUser);
-  };
+  const subtituloUsuario =
+    canFilterUsers && selectedUser
+      ? selectedUser
+      : `${currentUser.nombre} ${currentUser.apellidos}`;
+
+  const subtituloFechas =
+    startDate && endDate
+      ? `${formatDate(startDate)} a ${formatDate(endDate)}`
+      : formatDate();
 
   return (
-    <>
-      <div className="page-with-header">
-        <Header />
-        <main className="reporte-main-content">
-          <div className="reporte-container">
-            <div className="reporte-header">
-              <div className="reporte-header-info">
-                <h1 className="reporte-page-title">Reportes de actividad</h1>
-                <p className="reporte-subtitle">
-                  {(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR") && selectedUser
-                    ? `${selectedUser} - ${startDate && endDate
-                      ? `${formatDate(startDate)} a ${formatDate(endDate)}`
-                      : formatDate()}`
-                    : `${currentUser.nombre} ${currentUser.apellidos} - ${startDate && endDate
-                      ? `${formatDate(startDate)} a ${formatDate(endDate)}`
-                      : formatDate()}`
+    <div className="page-with-header">
+      <Header />
+      <main className="reporte-main-content">
+        <div className="reporte-container">
+          <div className="reporte-header">
+            <div className="reporte-header-info">
+              <h1 className="reporte-page-title">Reportes de actividad</h1>
+              <p className="reporte-subtitle">{`${subtituloUsuario} - ${subtituloFechas}`}</p>
+            </div>
+
+            <div className="reporte-header-controls">
+              {canFilterUsers && (
+                <div className="reporte-user-filter">
+                  <label className="reporte-date-label">Usuario</label>
+                  <select
+                    value={selectedUser || ""}
+                    onChange={(e) => setSelectedUser(e.target.value)}
+                    className="reporte-user-select"
+                  >
+                    {users.map((user) => (
+                      <option key={user} value={user}>
+                        {user}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="reporte-date-range-container">
+                <label className="reporte-date-label">Rango de fecha</label>
+                <DatePicker
+                  selectsRange
+                  startDate={startDate}
+                  endDate={endDate}
+                  onChange={setDateRange}
+                  isClearable
+                  placeholderText="Seleccione fecha o rango"
+                  dateFormat="dd/MM/yyyy"
+                  customInput={<CustomDatePickerInput />}
+                  locale="es"
+                />
+              </div>
+
+              <button
+                className="reporte-btn reporte-btn-download"
+                onClick={handleDownloadPDF}
+                disabled={loading}
+              >
+                <img src={downloadIcon} alt="" className="reporte-btn-icon" />
+                Visualizar PDF
+              </button>
+            </div>
+          </div>
+
+          {loading && (
+            <div className="reporte-loading">
+              <div className="reporte-loading-spinner"></div>
+              <span>Cargando datos...</span>
+            </div>
+          )}
+
+          <div className="reporte-charts-section">
+            <div className="reporte-chart-card">
+              <h3 className="reporte-chart-title">Actividades Realizadas</h3>
+              <div className="reporte-chart-subtitle">Actividades por tipo</div>
+              <div style={{ position: "relative", height: "300px" }}>
+                <canvas ref={activitiesCanvasRef} />
+              </div>
+            </div>
+
+            <div className="reporte-chart-card">
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  flexWrap: "wrap",
+                }}
+              >
+                <h3 className="reporte-chart-title" style={{ margin: 0 }}>
+                  Empresas Contactadas
+                </h3>
+                <select
+                  className="reporte-user-select"
+                  value={topN}
+                  onChange={(e) =>
+                    setTopN(
+                      e.target.value === "all" ? "all" : Number(e.target.value),
+                    )
                   }
-                </p>
+                  style={{
+                    padding: "4px 8px",
+                    fontSize: "0.8rem",
+                    width: "auto",
+                  }}
+                >
+                  {TOP_N_OPTIONS.map((option) => (
+                    <option key={option.label} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div className="reporte-header-controls">
-                {(localStorage.getItem("userRol") === "ADMINISTRADOR" || localStorage.getItem("userRol") === "GESTOR") && (
-                  <div className="reporte-user-filter">
-                    <label className="reporte-date-label">Usuario</label>
-                    <select
-                      value={selectedUser || ""}
-                      onChange={handleUserChange}
-                      className="reporte-user-select"
-                    >
-                      {users.map((user) => (
-                        <option key={user} value={user}>
-                          {user}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                <div className="reporte-date-range-container">
-                  <label className="reporte-date-label">Rango de fecha</label>
-                  <DatePicker
-                    selectsRange={true}
-                    startDate={startDate}
-                    endDate={endDate}
-                    onChange={(update) => {
-                      setDateRange(update);
-                    }}
-                    isClearable={true}
-                    placeholderText="Seleccione fecha o rango"
-                    dateFormat="dd/MM/yyyy"
-                    customInput={<CustomDatePickerInput />}
-                    locale="es"
-                  />
-                </div>
-                <button className="reporte-btn reporte-btn-download" onClick={handleDownloadPDF}>
-                  <img src={downloadIcon} alt="Descargar" className="reporte-btn-icon" />
-                  Visualizar PDF
-                </button>
-              </div>
-            </div>
 
-            {loading && (
-              <div className="reporte-loading">
-                <div className="reporte-loading-spinner"></div>
-                <span>Cargando datos...</span>
+              <div className="reporte-chart-subtitle">
+                {empresasOrdenadas.length > 0
+                  ? `${empresasChartData.length} de ${empresasOrdenadas.length} empresas`
+                  : "Sin empresas en este periodo"}
               </div>
-            )}
 
-            <div className="reporte-charts-section" ref={chartsSectionRef}>
-              <div className="reporte-chart-card">
-                <h3 className="reporte-chart-title">Actividades Realizadas</h3>
-                <div className="reporte-chart-subtitle">Actividades por Tipo</div>
-                <div style={{ position: 'relative', height: '300px' }}>
-                  <canvas id="activitiesChart"></canvas>
-                </div>
-              </div>
-              <div className="reporte-chart-card">
-                <h3 className="reporte-chart-title">Empresas Contactadas</h3>
-                <div style={{ position: 'relative', height: '400px', width: '100%' }}>
-                  <div style={{
-                    height: '400px',
-                    overflowY: empresasData.length > 15 ? 'auto' : 'hidden',
-                    overflowX: 'hidden'
-                  }}>
-                    <canvas
-                      id="companiesChart"
-                      style={{
-                        minHeight: `${Math.max(400, empresasData.length * 25)}px`,
-                        width: '100%'
-                      }}
-                    ></canvas>
-                  </div>
+              <div
+                style={{
+                  height: `${CHART_VIEWPORT}px`,
+                  overflowY: "auto",
+                  overflowX: "hidden",
+                }}
+              >
+                {/* Sizer: aquí vive el alto dinámico, el canvas no lo toca */}
+                <div
+                  style={{
+                    position: "relative",
+                    height: `${companiesSizerHeight}px`,
+                  }}
+                >
+                  <canvas ref={companiesCanvasRef} />
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="reporte-notes-section" ref={notesSectionRef}>
-              <div className="reporte-notes-header">
-                <h3 className="reporte-notes-title">Notas de interacciones</h3>
-              </div>
-              <div className="reporte-table-container">
-                <table className="reporte-table">
-                  <thead>
-                    <tr><th>Empresa</th><th>Respuesta</th><th>Interés</th><th>Notas</th></tr>
-                  </thead>
-                  <tbody>
-                    {notasData.map((nota, index) => (
-                      <tr key={index}>
+          <div className="reporte-notes-section">
+            <div className="reporte-notes-header">
+              <h3 className="reporte-notes-title">Notas de interacciones</h3>
+            </div>
+            <div className="reporte-table-container">
+              <table className="reporte-table">
+                <thead>
+                  <tr>
+                    <th>Empresa</th>
+                    <th>Respuesta</th>
+                    <th>Interés</th>
+                    <th>Notas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {notasData.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        style={{
+                          textAlign: "center",
+                          padding: "20px",
+                          color: "#6b7280",
+                        }}
+                      >
+                        No hay interacciones registradas en este periodo.
+                      </td>
+                    </tr>
+                  ) : (
+                    notasData.map((nota, index) => (
+                      <tr key={`${nota.empresa}-${index}`}>
                         <td className="reporte-empresa-cell">{nota.empresa}</td>
                         <td className="reporte-respuesta-cell">
-                          <span className={`reporte-badge reporte-respuesta-${nota.respuesta.toLowerCase()}`}>
+                          <span
+                            className={`reporte-badge reporte-respuesta-${(nota.respuesta || "").toLowerCase()}`}
+                          >
                             {nota.respuesta}
                           </span>
                         </td>
                         <td className="reporte-interes-cell">
-                          <span className={`reporte-badge reporte-interes-${nota.interes.toLowerCase()}`}>
+                          <span
+                            className={`reporte-badge reporte-interes-${(nota.interes || "").toLowerCase()}`}
+                          >
                             {nota.interes}
                           </span>
                         </td>
                         <td className="reporte-notas-cell">{nota.notas}</td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
-        </main>
-        <PdfPreviewModal
-          isOpen={pdfPreview.isOpen}
-          onClose={handleClosePreview}
-          pdfUrl={pdfPreview.url}
-          onDownload={handleDownloadFromPreview}
-        />
-      </div>
-    </>
+        </div>
+      </main>
+
+      <PdfPreviewModal
+        isOpen={pdfPreview.isOpen}
+        onClose={handleClosePreview}
+        pdfUrl={pdfPreview.url}
+        onDownload={handleDownloadFromPreview}
+      />
+    </div>
   );
 };
 
-export default ReportePersonal
+export default ReportePersonal;
