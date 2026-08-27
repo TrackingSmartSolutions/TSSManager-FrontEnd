@@ -686,9 +686,8 @@ const CheckEquiposSidePanel = ({
                                 >
                                   Desfase GPS:{" "}
                                   {equiposStatus[equipo.id].desfaseMinutos} min
-                                  · señal{" "}
-                                  {equiposStatus[equipo.id].ultimaConexion} /
-                                  fix {equiposStatus[equipo.id].ultimoFix}
+                                  · última ubicación{" "}
+                                  {equiposStatus[equipo.id].ultimoFix}
                                 </div>
                               )}
                           </div>
