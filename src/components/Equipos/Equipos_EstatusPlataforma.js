@@ -4,11 +4,25 @@ import "./Equipos_EstatusPlataforma.css";
 import Header from "../Header/Header";
 import Swal from "sweetalert2";
 import { Bar } from "react-chartjs-2";
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
 import { API_BASE_URL } from "../Config/Config";
 import html2pdf from "html2pdf.js";
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
-
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+);
 
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token");
@@ -22,8 +36,12 @@ const fetchWithToken = async (url, options = {}) => {
     const response = await fetch(url, { ...options, headers });
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Error en la solicitud: ${response.status} - ${response.statusText} - ${errorText}`);
-      throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText} - ${errorText}`);
+      console.error(
+        `Error en la solicitud: ${response.status} - ${response.statusText} - ${errorText}`,
+      );
+      throw new Error(
+        `Error en la solicitud: ${response.status} - ${response.statusText} - ${errorText}`,
+      );
     }
     return response;
   } catch (error) {
@@ -74,46 +92,99 @@ const useCountdown = (targetTime) => {
 };
 
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayClick = true }) => {
+const Modal = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = "md",
+  closeOnOverlayClick = true,
+}) => {
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "unset";
-    return () => { document.body.style.overflow = "unset"; };
+    return () => {
+      document.body.style.overflow = "unset";
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   const overlayStyle = {
-    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1050,
   };
 
-  let widthStyle = '500px';
-  let maxWidthStyle = '95%';
+  let widthStyle = "500px";
+  let maxWidthStyle = "95%";
 
-  if (size === 'sm') widthStyle = '400px';
-  if (size === 'md') widthStyle = '600px';
-  if (size === 'lg') widthStyle = '800px';
-  if (size === 'xl') widthStyle = '950px';
+  if (size === "sm") widthStyle = "400px";
+  if (size === "md") widthStyle = "600px";
+  if (size === "lg") widthStyle = "800px";
+  if (size === "xl") widthStyle = "950px";
 
   const contentStyle = {
-    backgroundColor: 'white', borderRadius: '8px', padding: '20px',
-    maxHeight: '95vh', overflowY: 'auto', width: widthStyle, maxWidth: maxWidthStyle,
-    position: 'relative', boxShadow: '0 5px 15px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column'
+    backgroundColor: "white",
+    borderRadius: "8px",
+    padding: "20px",
+    maxHeight: "95vh",
+    overflowY: "auto",
+    width: widthStyle,
+    maxWidth: maxWidthStyle,
+    position: "relative",
+    boxShadow: "0 5px 15px rgba(0,0,0,0.5)",
+    display: "flex",
+    flexDirection: "column",
   };
 
   return (
-    <div style={overlayStyle} onClick={closeOnOverlayClick ? onClose : () => { }}>
+    <div
+      style={overlayStyle}
+      onClick={closeOnOverlayClick ? onClose : () => {}}
+    >
       <div style={contentStyle} onClick={(e) => e.stopPropagation()}>
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          marginBottom: '10px', borderBottom: '1px solid #dee2e6', paddingBottom: '10px'
-        }}>
-          <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>{title}</h2>
-          <button onClick={onClose} style={{
-            border: 'none', background: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#6c757d', padding: '0 5px'
-          }}>✕</button>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "10px",
+            borderBottom: "1px solid #dee2e6",
+            paddingBottom: "10px",
+          }}
+        >
+          <h2 style={{ margin: 0, fontSize: "1rem", fontWeight: 600 }}>
+            {title}
+          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              border: "none",
+              background: "none",
+              fontSize: "1.2rem",
+              cursor: "pointer",
+              color: "#6c757d",
+              padding: "0 5px",
+            }}
+          >
+            ✕
+          </button>
         </div>
-        <div style={{ flex: 1, overflowY: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div
+          style={{
+            flex: 1,
+            overflowY: "hidden",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           {children}
         </div>
       </div>
@@ -126,27 +197,45 @@ const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Vista previa" size="xl" closeOnOverlayClick={false}>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Vista previa"
+      size="xl"
+      closeOnOverlayClick={false}
+    >
+      <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: "10px",
+          }}
+        >
           <button
             type="button"
             onClick={onDownload}
             className="estatusplataforma-btn estatusplataforma-btn-pdf"
-            style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+            style={{ display: "flex", alignItems: "center", gap: "5px" }}
           >
             Descargar PDF
           </button>
         </div>
 
-        <div style={{
-          border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden',
-          height: '75vh'
-        }}>
+        <div
+          style={{
+            border: "1px solid #ddd",
+            borderRadius: "4px",
+            overflow: "hidden",
+            height: "75vh",
+          }}
+        >
           <iframe
             src={`${pdfUrl}#view=FitH&navpanes=0&toolbar=0`}
             title="Vista Previa"
-            width="100%" height="100%" style={{ border: 'none' }}
+            width="100%"
+            height="100%"
+            style={{ border: "none" }}
           />
         </div>
       </div>
@@ -157,8 +246,8 @@ const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
 const processEquiposPorMotivo = (equiposOffline) => {
   const motivoCount = {};
 
-  equiposOffline.forEach(equipo => {
-    const motivo = equipo.motivo || 'Sin motivo especificado';
+  equiposOffline.forEach((equipo) => {
+    const motivo = equipo.motivo || "Sin motivo especificado";
     motivoCount[motivo] = (motivoCount[motivo] || 0) + 1;
   });
 
@@ -191,20 +280,27 @@ const CheckEquiposSidePanel = ({
     JOINTCLOUD: "JointCloud",
   };
 
-  const allPlatforms = [...new Set(equipos.map(e => e.plataforma?.nombrePlataforma))]
-    .filter(p => p && p.trim() !== "");
+  const allPlatforms = [
+    ...new Set(equipos.map((e) => e.plataforma?.nombrePlataforma)),
+  ].filter((p) => p && p.trim() !== "");
 
-  const hasSinPlataforma = equipos.some(e => !e.plataforma?.nombrePlataforma || e.plataforma?.nombrePlataforma.trim() === "");
+  const hasSinPlataforma = equipos.some(
+    (e) =>
+      !e.plataforma?.nombrePlataforma ||
+      e.plataforma?.nombrePlataforma.trim() === "",
+  );
   const plataformas = hasSinPlataforma
     ? ["Todos", ...allPlatforms.sort(), "Sin plataforma"]
     : ["Todos", ...allPlatforms.sort()];
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const nextCheckTime = lastCheckTime ? lastCheckTime + (6 * 60 * 60 * 1000) : null;
+  const nextCheckTime = lastCheckTime
+    ? lastCheckTime + 6 * 60 * 60 * 1000
+    : null;
   const countdown = useCountdown(nextCheckTime);
 
   const formatCountdown = (countdown) => {
-    if (!countdown) return '';
+    if (!countdown) return "";
     const { hours, minutes, seconds } = countdown;
     if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
     else if (minutes > 0) return `${minutes}m ${seconds}s`;
@@ -213,11 +309,13 @@ const CheckEquiposSidePanel = ({
 
   const refreshEquipos = useCallback(async () => {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/equipos/dashboard-estatus`);
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/equipos/dashboard-estatus`,
+      );
       const data = await response.json();
-      if (isOpen) setRefreshTrigger(prev => prev + 1);
+      if (isOpen) setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
-      console.error('Error refreshing equipos:', error);
+      console.error("Error refreshing equipos:", error);
     }
   }, [isOpen]);
 
@@ -231,7 +329,7 @@ const CheckEquiposSidePanel = ({
 
   useEffect(() => {
     if (isOpen && equipos.length > 0) {
-      setEquiposStatus(prevStatus => {
+      setEquiposStatus((prevStatus) => {
         const newStatus = { ...prevStatus };
         equipos.forEach((equipo) => {
           if (!newStatus[equipo.id]) {
@@ -245,14 +343,20 @@ const CheckEquiposSidePanel = ({
 
   useEffect(() => {
     if (countdown === null && lastCheckTime && isOpen) {
-      setTimeout(() => { refreshEquipos(); }, 1000);
+      setTimeout(() => {
+        refreshEquipos();
+      }, 1000);
     }
   }, [countdown, lastCheckTime, isOpen, refreshEquipos]);
 
   const filteredEquipos = equipos
     .filter((equipo) => {
       if (selectedPlatform === "Todos") return true;
-      if (selectedPlatform === "Sin plataforma") return !equipo.plataforma?.nombrePlataforma || equipo.plataforma?.nombrePlataforma.trim() === "";
+      if (selectedPlatform === "Sin plataforma")
+        return (
+          !equipo.plataforma?.nombrePlataforma ||
+          equipo.plataforma?.nombrePlataforma.trim() === ""
+        );
       return equipo.plataforma?.nombrePlataforma === selectedPlatform;
     })
     .sort((a, b) => {
@@ -262,10 +366,10 @@ const CheckEquiposSidePanel = ({
     });
 
   const handleStatusChange = (equipoId, newStatus) => {
-    const equipo = equipos.find(e => e.id === equipoId);
+    const equipo = equipos.find((e) => e.id === equipoId);
     const isEditing = equiposStatus[equipoId]?.status === newStatus;
 
-    setModals(prev => ({
+    setModals((prev) => ({
       ...prev,
       confirmarCambio: {
         isOpen: true,
@@ -275,10 +379,14 @@ const CheckEquiposSidePanel = ({
         isEditing: isEditing,
         onConfirm: (selectedMotivo) => {
           if (newStatus === false && !selectedMotivo.trim()) {
-            Swal.fire({ icon: "warning", title: "Advertencia", text: "Debe seleccionar un motivo para equipos no reportando." });
+            Swal.fire({
+              icon: "warning",
+              title: "Advertencia",
+              text: "Debe seleccionar un motivo para equipos no reportando.",
+            });
             return;
           }
-          setEquiposStatus(prevStatus => ({
+          setEquiposStatus((prevStatus) => ({
             ...prevStatus,
             [equipoId]: { status: newStatus, motivo: selectedMotivo || "" },
           }));
@@ -291,16 +399,20 @@ const CheckEquiposSidePanel = ({
   const handleAutoCompletarApis = async () => {
     try {
       Swal.fire({
-        title: 'Consultando plataformas...',
-        text: 'Obteniendo estatus en vivo de Tracksolid y WhatsGPS...',
+        title: "Consultando plataformas...",
+        text: "Obteniendo estatus en vivo de Tracksolid y WhatsGPS...",
         allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
+        didOpen: () => {
+          Swal.showLoading();
+        },
       });
 
-      const response = await fetchWithToken(`${API_BASE_URL}/equipos/consultar-apis-gps`);
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/equipos/consultar-apis-gps`,
+      );
       const dataApis = await response.json();
 
-      setEquiposStatus(prevStatus => {
+      setEquiposStatus((prevStatus) => {
         const newStatus = { ...prevStatus };
         let actualizados = 0;
 
@@ -314,12 +426,19 @@ const CheckEquiposSidePanel = ({
 
             newStatus[equipo.id] = {
               status: isOnline,
-              motivo: isOnline ? "" : (apiInfo.motivo || "Sin reporte en plataforma"),
-              retrasado: isRetrasado
+              motivo: isOnline
+                ? ""
+                : apiInfo.motivo || "Sin reporte en plataforma",
+              retrasado: isRetrasado,
+              ultimaConexion: apiInfo.ultimaConexion,
+              ultimoFix: apiInfo.ultimoFix,
+              desfaseMinutos: apiInfo.desfaseMinutos,
             };
             actualizados++;
           } else {
-            console.warn(`El IMEI ${imeiLimpio} del equipo ${equipo.nombre} no se encontró en las plataformas GPS.`);
+            console.warn(
+              `El IMEI ${imeiLimpio} del equipo ${equipo.nombre} no se encontró en las plataformas GPS.`,
+            );
           }
         });
 
@@ -331,12 +450,13 @@ const CheckEquiposSidePanel = ({
 
         return newStatus;
       });
-
     } catch (error) {
       Swal.fire({
         icon: "error",
         title: "Error de conexión",
-        text: "Hubo un problema comunicándose con las plataformas: " + error.message,
+        text:
+          "Hubo un problema comunicándose con las plataformas: " +
+          error.message,
       });
     }
   };
@@ -352,13 +472,24 @@ const CheckEquiposSidePanel = ({
       }));
 
     if (equiposConStatus.length === 0) {
-      Swal.fire({ icon: "warning", title: "Advertencia", text: "Debes asignar un estatus a al menos un equipo antes de guardar." });
+      Swal.fire({
+        icon: "warning",
+        title: "Advertencia",
+        text: "Debes asignar un estatus a al menos un equipo antes de guardar.",
+      });
       return;
     }
 
-    const equiposSinMotivo = equiposConStatus.filter(e => e.status === "NO_REPORTANDO" && (!e.motivo || e.motivo.trim() === ""));
+    const equiposSinMotivo = equiposConStatus.filter(
+      (e) =>
+        e.status === "NO_REPORTANDO" && (!e.motivo || e.motivo.trim() === ""),
+    );
     if (equiposSinMotivo.length > 0) {
-      Swal.fire({ icon: "warning", title: "Advertencia", text: "Todos los equipos marcados como 'NO_REPORTANDO' deben tener un motivo." });
+      Swal.fire({
+        icon: "warning",
+        title: "Advertencia",
+        text: "Todos los equipos marcados como 'NO_REPORTANDO' deben tener un motivo.",
+      });
       return;
     }
 
@@ -369,7 +500,11 @@ const CheckEquiposSidePanel = ({
         body: JSON.stringify(equiposConStatus),
       });
 
-      Swal.fire({ icon: "success", title: "Éxito", text: `Se ha guardado el checklist de ${equiposConStatus.length} equipos.` });
+      Swal.fire({
+        icon: "success",
+        title: "Éxito",
+        text: `Se ha guardado el checklist de ${equiposConStatus.length} equipos.`,
+      });
       localStorage.removeItem("checklist_temp_data");
       setEquiposStatus({});
       const currentTime = Date.now();
@@ -378,32 +513,67 @@ const CheckEquiposSidePanel = ({
       closeModal("checkEquipos");
     } catch (error) {
       console.error("Error al guardar checklist:", error);
-      Swal.fire({ icon: "error", title: "Error", text: error.message || "Error al guardar el checklist" });
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.message || "Error al guardar el checklist",
+      });
     } finally {
       setIsSaving(false);
     }
   };
 
   const canCheck = !lastCheckTime || countdown === null;
-  const allEquiposHaveStatus = equipos.length > 0 &&
-    equipos.every(equipo => equiposStatus[equipo.id]?.status !== null && equiposStatus[equipo.id]?.status !== undefined);
+  const allEquiposHaveStatus =
+    equipos.length > 0 &&
+    equipos.every(
+      (equipo) =>
+        equiposStatus[equipo.id]?.status !== null &&
+        equiposStatus[equipo.id]?.status !== undefined,
+    );
   const hasPendingMotives = equipos.some(
-    (equipo) => equiposStatus[equipo.id]?.status === false && equiposStatus[equipo.id]?.motivo === "Sin reporte en plataforma"
+    (equipo) =>
+      equiposStatus[equipo.id]?.status === false &&
+      equiposStatus[equipo.id]?.motivo === "Sin reporte en plataforma",
   );
 
   return (
     <>
-      {isOpen && <div className="estatusplataforma-side-panel-overlay" onClick={onClose}></div>}
+      {isOpen && (
+        <div
+          className="estatusplataforma-side-panel-overlay"
+          onClick={onClose}
+        ></div>
+      )}
 
-      <div className={`estatusplataforma-side-panel ${isOpen ? "estatusplataforma-side-panel-open" : ""}`}>
+      <div
+        className={`estatusplataforma-side-panel ${isOpen ? "estatusplataforma-side-panel-open" : ""}`}
+      >
         <div className="estatusplataforma-side-panel-header">
-          <h2 className="estatusplataforma-side-panel-title">Selecciona la plataforma</h2>
+          <h2 className="estatusplataforma-side-panel-title">
+            Selecciona la plataforma
+          </h2>
           {countdown && (
-            <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', textAlign: 'center' }}>
-              Próximo check disponible en: <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>{formatCountdown(countdown)}</span>
+            <div
+              style={{
+                fontSize: "12px",
+                color: "#6b7280",
+                marginTop: "4px",
+                textAlign: "center",
+              }}
+            >
+              Próximo check disponible en:{" "}
+              <span style={{ color: "#3b82f6", fontWeight: "bold" }}>
+                {formatCountdown(countdown)}
+              </span>
             </div>
           )}
-          <button className="estatusplataforma-side-panel-close" onClick={onClose}>✕</button>
+          <button
+            className="estatusplataforma-side-panel-close"
+            onClick={onClose}
+          >
+            ✕
+          </button>
         </div>
 
         <div className="estatusplataforma-side-panel-content">
@@ -425,30 +595,44 @@ const CheckEquiposSidePanel = ({
             </div>
 
             <div className="estatusplataforma-side-panel-form-group">
-              <div className="estatusplataforma-progress-info" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Progreso total: {Object.values(equiposStatus).filter(s => s.status !== null).length} / {equipos.length} equipos</span>
+              <div
+                className="estatusplataforma-progress-info"
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <span>
+                  Progreso total:{" "}
+                  {
+                    Object.values(equiposStatus).filter(
+                      (s) => s.status !== null,
+                    ).length
+                  }{" "}
+                  / {equipos.length} equipos
+                </span>
 
                 <button
                   type="button"
                   onClick={handleAutoCompletarApis}
                   disabled={!canCheck}
                   style={{
-                    backgroundColor: canCheck ? '#3b82f6' : '#9ca3af',
-                    color: 'white',
-                    border: 'none',
-                    padding: '6px 12px',
-                    borderRadius: '4px',
-                    cursor: canCheck ? 'pointer' : 'not-allowed',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px'
+                    backgroundColor: canCheck ? "#3b82f6" : "#9ca3af",
+                    color: "white",
+                    border: "none",
+                    padding: "6px 12px",
+                    borderRadius: "4px",
+                    cursor: canCheck ? "pointer" : "not-allowed",
+                    fontSize: "12px",
+                    fontWeight: "bold",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
                   }}
                 >
                   Autocompletar con GPS
                 </button>
-
               </div>
             </div>
           </div>
@@ -466,53 +650,87 @@ const CheckEquiposSidePanel = ({
                 {canCheck ? (
                   filteredEquipos.length > 0 ? (
                     filteredEquipos.map((equipo) => (
-                      <tr key={equipo.id} style={{
-                        backgroundColor:
-                          equiposStatus[equipo.id]?.status === true
-                            ? (equiposStatus[equipo.id]?.retrasado ? '#fef08a' : '#f0fdf4')
-
-                            : (equiposStatus[equipo.id]?.status === false
-                              ? (equiposStatus[equipo.id]?.motivo === "Sin reporte en plataforma" ? '#fef08a' : '#fef2f2')
-
-                              : 'transparent'),
-                        transition: 'background-color 0.3s'
-                      }}>
+                      <tr
+                        key={equipo.id}
+                        style={{
+                          backgroundColor:
+                            equiposStatus[equipo.id]?.status === true
+                              ? equiposStatus[equipo.id]?.retrasado
+                                ? "#fef08a"
+                                : "#f0fdf4"
+                              : equiposStatus[equipo.id]?.status === false
+                                ? equiposStatus[equipo.id]?.motivo ===
+                                  "Sin reporte en plataforma"
+                                  ? "#fef08a"
+                                  : "#fef2f2"
+                                : "transparent",
+                          transition: "background-color 0.3s",
+                        }}
+                      >
                         <td>
                           <div className="estatusplataforma-equipo-info">
-                            <div className="estatusplataforma-equipo-nombre">{equipo.codigo}</div>
-                            <div className="estatusplataforma-equipo-detalle">{equipo.nombre}</div>
+                            <div className="estatusplataforma-equipo-nombre">
+                              {equipo.codigo}
+                            </div>
+                            <div className="estatusplataforma-equipo-detalle">
+                              {equipo.nombre}
+                            </div>
+                            {equiposStatus[equipo.id]?.retrasado &&
+                              equiposStatus[equipo.id]?.status === true && (
+                                <div
+                                  style={{
+                                    fontSize: "11px",
+                                    color: "#a16207",
+                                    marginTop: "2px",
+                                  }}
+                                >
+                                  Desfase GPS:{" "}
+                                  {equiposStatus[equipo.id].desfaseMinutos} min
+                                  · señal{" "}
+                                  {equiposStatus[equipo.id].ultimaConexion} /
+                                  fix {equiposStatus[equipo.id].ultimoFix}
+                                </div>
+                              )}
                           </div>
                         </td>
                         <td className="estatusplataforma-status-cell">
                           <div
                             className="estatusplataforma-status-radio-container"
                             onClick={() => handleStatusChange(equipo.id, true)}
-                            style={{ cursor: 'pointer' }}
+                            style={{ cursor: "pointer" }}
                           >
                             <input
                               type="radio"
                               name={`status-${equipo.id}`}
-                              checked={equiposStatus[equipo.id]?.status === true}
+                              checked={
+                                equiposStatus[equipo.id]?.status === true
+                              }
                               readOnly
                               className="estatusplataforma-status-radio estatusplataforma-status-radio-green"
                             />
-                            <span className="estatusplataforma-status-checkmark estatusplataforma-green">✓</span>
+                            <span className="estatusplataforma-status-checkmark estatusplataforma-green">
+                              ✓
+                            </span>
                           </div>
                         </td>
                         <td className="estatusplataforma-status-cell">
                           <div
                             className="estatusplataforma-status-radio-container"
                             onClick={() => handleStatusChange(equipo.id, false)}
-                            style={{ cursor: 'pointer' }}
+                            style={{ cursor: "pointer" }}
                           >
                             <input
                               type="radio"
                               name={`status-${equipo.id}`}
-                              checked={equiposStatus[equipo.id]?.status === false}
+                              checked={
+                                equiposStatus[equipo.id]?.status === false
+                              }
                               readOnly
                               className="estatusplataforma-status-radio estatusplataforma-status-radio-red"
                             />
-                            <span className="estatusplataforma-status-checkmark estatusplataforma-red">✗</span>
+                            <span className="estatusplataforma-status-checkmark estatusplataforma-red">
+                              ✗
+                            </span>
                           </div>
                         </td>
                       </tr>
@@ -523,11 +741,25 @@ const CheckEquiposSidePanel = ({
                         <div>
                           El checklist ya se realizó.
                           {countdown ? (
-                            <div style={{ marginTop: '8px', fontSize: '14px', fontWeight: 'bold', color: '#3b82f6' }}>
-                              Próximo check disponible en: {formatCountdown(countdown)}
+                            <div
+                              style={{
+                                marginTop: "8px",
+                                fontSize: "14px",
+                                fontWeight: "bold",
+                                color: "#3b82f6",
+                              }}
+                            >
+                              Próximo check disponible en:{" "}
+                              {formatCountdown(countdown)}
                             </div>
                           ) : (
-                            <div style={{ marginTop: '8px', fontSize: '14px', color: '#22c55e' }}>
+                            <div
+                              style={{
+                                marginTop: "8px",
+                                fontSize: "14px",
+                                color: "#22c55e",
+                              }}
+                            >
                               ¡Ya puedes realizar un nuevo check!
                             </div>
                           )}
@@ -538,7 +770,8 @@ const CheckEquiposSidePanel = ({
                 ) : (
                   <tr>
                     <td colSpan="3" className="estatusplataforma-no-data">
-                      El checklist ya se realizó. Espera 6 horas para volver a realizarlo :).
+                      El checklist ya se realizó. Espera 6 horas para volver a
+                      realizarlo :).
                     </td>
                   </tr>
                 )}
@@ -552,10 +785,30 @@ const CheckEquiposSidePanel = ({
             type="button"
             onClick={handleSaveChecklist}
             className="estatusplataforma-btn estatusplataforma-btn-primary estatusplataforma-btn-full-width"
-            disabled={!canCheck || filteredEquipos.length === 0 || isSaving || !allEquiposHaveStatus || hasPendingMotives}
+            disabled={
+              !canCheck ||
+              filteredEquipos.length === 0 ||
+              isSaving ||
+              !allEquiposHaveStatus ||
+              hasPendingMotives
+            }
             style={{
-              opacity: (!canCheck || filteredEquipos.length === 0 || isSaving || !allEquiposHaveStatus || hasPendingMotives) ? 0.5 : 1,
-              cursor: (!canCheck || filteredEquipos.length === 0 || isSaving || !allEquiposHaveStatus || hasPendingMotives) ? 'not-allowed' : 'pointer'
+              opacity:
+                !canCheck ||
+                filteredEquipos.length === 0 ||
+                isSaving ||
+                !allEquiposHaveStatus ||
+                hasPendingMotives
+                  ? 0.5
+                  : 1,
+              cursor:
+                !canCheck ||
+                filteredEquipos.length === 0 ||
+                isSaving ||
+                !allEquiposHaveStatus ||
+                hasPendingMotives
+                  ? "not-allowed"
+                  : "pointer",
             }}
           >
             {isSaving
@@ -563,11 +816,10 @@ const CheckEquiposSidePanel = ({
               : countdown
                 ? `Disponible en ${formatCountdown(countdown)}`
                 : !allEquiposHaveStatus
-                  ? `Selecciona todos los equipos (${equipos.filter(e => equiposStatus[e.id]?.status !== null).length}/${equipos.length})`
+                  ? `Selecciona todos los equipos (${equipos.filter((e) => equiposStatus[e.id]?.status !== null).length}/${equipos.length})`
                   : hasPendingMotives
                     ? "Corrige el motivo de los equipos en amarillo"
-                    : "Guardar checklist"
-            }
+                    : "Guardar checklist"}
           </button>
         </div>
       </div>
@@ -598,7 +850,7 @@ const ConfirmarCambioEstatusModal = ({
     "Falla del equipo",
     "Sin Plataforma",
     "Sin reporte en plataforma",
-    "En modo ahorro de energía"
+    "En modo ahorro de energía",
   ];
 
   const handleConfirm = () => {
@@ -606,7 +858,13 @@ const ConfirmarCambioEstatusModal = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar cambio de estatus" size="sm" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Confirmar cambio de estatus"
+      size="sm"
+      closeOnOverlayClick={false}
+    >
       <div className="estatusplataforma-confirmar-eliminacion">
         <div className="estatusplataforma-confirmation-content">
           <p className="estatusplataforma-confirmation-message">
@@ -616,8 +874,13 @@ const ConfirmarCambioEstatusModal = ({
           </p>
 
           {nuevoEstatus === "NO_REPORTANDO" && (
-            <div className="estatusplataforma-modal-form-group" style={{ width: "100%", marginTop: "1rem" }}>
-              <label htmlFor="motivo">Motivo: <span style={{ color: "red" }}>*</span></label>
+            <div
+              className="estatusplataforma-modal-form-group"
+              style={{ width: "100%", marginTop: "1rem" }}
+            >
+              <label htmlFor="motivo">
+                Motivo: <span style={{ color: "red" }}>*</span>
+              </label>
               <select
                 id="motivo"
                 value={motivo || ""}
@@ -636,7 +899,11 @@ const ConfirmarCambioEstatusModal = ({
           )}
 
           <div className="estatusplataforma-modal-form-actions">
-            <button type="button" onClick={onClose} className="estatusplataforma-btn estatusplataforma-btn-cancel">
+            <button
+              type="button"
+              onClick={onClose}
+              className="estatusplataforma-btn estatusplataforma-btn-cancel"
+            >
               Cancelar
             </button>
             <button
@@ -654,19 +921,19 @@ const ConfirmarCambioEstatusModal = ({
 };
 
 const formatDateTime = (isoString) => {
-  if (!isoString) return '';
+  if (!isoString) return "";
 
   const date = new Date(isoString);
   const options = {
-    timeZone: 'America/Mexico_City',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+    timeZone: "America/Mexico_City",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   };
 
-  return date.toLocaleDateString('es-MX', options);
+  return date.toLocaleDateString("es-MX", options);
 };
 
 // Componente Principal
@@ -702,7 +969,7 @@ const EquiposEstatusPlataforma = () => {
   const [pdfPreview, setPdfPreview] = useState({
     isOpen: false,
     url: null,
-    filename: ""
+    filename: "",
   });
 
   const fetchData = async () => {
@@ -710,25 +977,31 @@ const EquiposEstatusPlataforma = () => {
       setIsLoading(true);
 
       const dashboardResponse = await fetchWithToken(
-        `${API_BASE_URL}/equipos/dashboard-estatus`
+        `${API_BASE_URL}/equipos/dashboard-estatus`,
       );
       const dashboardData = await dashboardResponse.json();
 
       setEquiposData({
         estatusPorCliente: dashboardData.estatusPorCliente || [],
-        equiposPorPlataforma: (dashboardData.equiposPorPlataforma || []).filter(item =>
-          item.plataforma && item.plataforma.trim() !== "" && item.plataforma !== "Sin Plataforma"
+        equiposPorPlataforma: (dashboardData.equiposPorPlataforma || []).filter(
+          (item) =>
+            item.plataforma &&
+            item.plataforma.trim() !== "" &&
+            item.plataforma !== "Sin Plataforma",
         ),
         equiposOffline: dashboardData.equiposOffline || [],
-        equiposPorMotivo: processEquiposPorMotivo(dashboardData.equiposOffline || []),
+        equiposPorMotivo: processEquiposPorMotivo(
+          dashboardData.equiposOffline || [],
+        ),
         equiposParaCheck: dashboardData.equiposParaCheck || [],
         fechaUltimoCheck: dashboardData.fechaUltimoCheck,
       });
 
-      setLastCheckTime(dashboardData.fechaUltimoCheck ?
-        new Date(dashboardData.fechaUltimoCheck).getTime() : null
+      setLastCheckTime(
+        dashboardData.fechaUltimoCheck
+          ? new Date(dashboardData.fechaUltimoCheck).getTime()
+          : null,
       );
-
     } catch (error) {
       console.error("Error loading dashboard:", error);
       Swal.fire({
@@ -764,7 +1037,7 @@ const EquiposEstatusPlataforma = () => {
   }, [equiposData.equiposOffline.length]);
 
   const notifyEquiposUpdate = useCallback(() => {
-    setEquiposVersion(prev => prev + 1);
+    setEquiposVersion((prev) => prev + 1);
     if (modals.checkEquipos.isOpen) {
       fetchData();
     }
@@ -813,10 +1086,10 @@ const EquiposEstatusPlataforma = () => {
 
   const handleGeneratePDF = async () => {
     Swal.fire({
-      title: 'Generando vista previa...',
-      text: 'Por favor espere',
+      title: "Generando vista previa...",
+      text: "Por favor espere",
       allowOutsideClick: false,
-      didOpen: () => Swal.showLoading()
+      didOpen: () => Swal.showLoading(),
     });
 
     const element = document.createElement("div");
@@ -825,15 +1098,18 @@ const EquiposEstatusPlataforma = () => {
       getChartImage("plataformaChart"),
     ]);
 
-    const currentDate = new Date().toLocaleDateString('es-MX', {
-      timeZone: 'America/Mexico_City',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    const currentDate = new Date().toLocaleDateString("es-MX", {
+      timeZone: "America/Mexico_City",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
 
     const totalEquiposOffline = equiposData.equiposOffline.length;
-    const totalEquiposOnline = equiposData.estatusPorCliente.reduce((acc, cliente) => acc + cliente.enLinea, 0);
+    const totalEquiposOnline = equiposData.estatusPorCliente.reduce(
+      (acc, cliente) => acc + cliente.enLinea,
+      0,
+    );
     const totalEquipos = totalEquiposOnline + totalEquiposOffline;
 
     element.innerHTML = `
@@ -957,7 +1233,9 @@ const EquiposEstatusPlataforma = () => {
                     padding: 10px; border-radius: 6px; border-left: 4px solid #ea580c; text-align: center;">
             📈 Distribución por Motivos de Desconexión
           </h3>
-          ${equiposData.equiposPorMotivo.length > 0 ? `
+          ${
+            equiposData.equiposPorMotivo.length > 0
+              ? `
             <table style="width: 100%; border-collapse: collapse; font-size: 12px; 
                           background: #ffffff; border-radius: 8px; overflow: hidden; 
                           box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
@@ -969,16 +1247,22 @@ const EquiposEstatusPlataforma = () => {
                 </tr>
               </thead>
               <tbody>
-                ${equiposData.equiposPorMotivo.map((item, index) => `
-                  <tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#fffbeb'}; border-bottom: 1px solid #fde68a;">
+                ${equiposData.equiposPorMotivo
+                  .map(
+                    (item, index) => `
+                  <tr style="background-color: ${index % 2 === 0 ? "#ffffff" : "#fffbeb"}; border-bottom: 1px solid #fde68a;">
                     <td style="border: 1px solid #fde68a; padding: 10px 8px;">${item.motivo}</td>
                     <td style="border: 1px solid #fde68a; padding: 10px 8px; text-align: center; font-weight: bold; color: #dc2626;">${item.cantidad}</td>
                     <td style="border: 1px solid #fde68a; padding: 10px 8px; text-align: center; color: #7c2d12;">${((item.cantidad / equiposData.equiposOffline.length) * 100).toFixed(1)}%</td>
                   </tr>
-                `).join('')}
+                `,
+                  )
+                  .join("")}
               </tbody>
             </table>
-          ` : `<div style="text-align: center; color: #6b7280; font-style: italic;">No hay datos</div>`}
+          `
+              : `<div style="text-align: center; color: #6b7280; font-style: italic;">No hay datos</div>`
+          }
         </div>
 
         <div style="flex: 1;">
@@ -995,8 +1279,10 @@ const EquiposEstatusPlataforma = () => {
               </tr>
             </thead>
             <tbody>
-              ${equiposData.equiposOffline.map((e, index) => `
-                <tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#fef2f2'}; border-bottom: 1px solid #fee2e2;">
+              ${equiposData.equiposOffline
+                .map(
+                  (e, index) => `
+                <tr style="background-color: ${index % 2 === 0 ? "#ffffff" : "#fef2f2"}; border-bottom: 1px solid #fee2e2;">
                   <td style="border: 1px solid #fecaca; padding: 10px 8px; word-wrap: break-word; font-weight: 500;">${e.cliente}</td>
                   <td style="border: 1px solid #fecaca; padding: 10px 8px; word-wrap: break-word;">${e.nombre}</td>
                   <td style="border: 1px solid #fecaca; padding: 10px 8px; text-align: center; font-weight: 500;">${e.plataforma}</td>
@@ -1005,7 +1291,9 @@ const EquiposEstatusPlataforma = () => {
                   </td>
                   <td style="border: 1px solid #fecaca; padding: 10px 8px; word-wrap: break-word; color: #7f1d1d;">${e.motivo}</td>
                 </tr>
-              `).join('')}
+              `,
+                )
+                .join("")}
             </tbody>
           </table>
         </div>
@@ -1014,7 +1302,7 @@ const EquiposEstatusPlataforma = () => {
                     border-top: 1px solid #e5e7eb; padding-top: 15px; page-break-inside: avoid;">
           <div>Página 2 de 2 - Detalle de Equipos Offline</div>
           <div style="margin-top: 5px; font-size: 10px;">
-            Reporte generado automáticamente - ${new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })}
+            Reporte generado automáticamente - ${new Date().toLocaleString("es-MX", { timeZone: "America/Mexico_City" })}
           </div>
         </div>
       </div>
@@ -1023,8 +1311,8 @@ const EquiposEstatusPlataforma = () => {
 
     const opt = {
       margin: [0.5, 0.4, 0.5, 0.4],
-      filename: `reporte_estatus_${new Date().toISOString().split('T')[0]}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
+      filename: `reporte_estatus_${new Date().toISOString().split("T")[0]}.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
       html2canvas: {
         scale: 2,
         useCORS: true,
@@ -1034,38 +1322,37 @@ const EquiposEstatusPlataforma = () => {
         windowWidth: 800,
       },
       jsPDF: {
-        unit: 'in',
-        format: 'a4',
-        orientation: 'portrait',
-        compress: true
+        unit: "in",
+        format: "a4",
+        orientation: "portrait",
+        compress: true,
       },
-      pagebreak: { mode: ['css', 'legacy'] }
+      pagebreak: { mode: ["css", "legacy"] },
     };
 
     try {
-      const blobUrl = await html2pdf().set(opt).from(element).output('bloburl');
+      const blobUrl = await html2pdf().set(opt).from(element).output("bloburl");
 
       setPdfPreview({
         isOpen: true,
         url: blobUrl,
-        filename: opt.filename
+        filename: opt.filename,
       });
 
       Swal.close();
-
     } catch (error) {
       console.error("Error al generar PDF:", error);
       Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudo generar la vista previa del PDF'
+        icon: "error",
+        title: "Error",
+        text: "No se pudo generar la vista previa del PDF",
       });
     }
   };
 
   const handleDownloadFromPreview = () => {
     if (pdfPreview.url) {
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = pdfPreview.url;
       a.download = pdfPreview.filename;
       document.body.appendChild(a);
@@ -1088,31 +1375,32 @@ const EquiposEstatusPlataforma = () => {
     setPdfPreview({ isOpen: false, url: null, filename: "" });
   };
 
-
   const getChartImage = (chartId) => {
     return new Promise((resolve) => {
       const chartInstance = chartRefs.current[chartId];
       if (chartInstance) {
         const canvas = chartInstance.canvas;
-        const ctx = canvas.getContext('2d');
-        const tempCanvas = document.createElement('canvas');
+        const ctx = canvas.getContext("2d");
+        const tempCanvas = document.createElement("canvas");
         const scale = 4;
         tempCanvas.width = canvas.width * scale;
         tempCanvas.height = canvas.height * scale;
 
-        const tempCtx = tempCanvas.getContext('2d');
+        const tempCtx = tempCanvas.getContext("2d");
         tempCtx.scale(scale, scale);
 
         chartInstance.draw();
         tempCtx.drawImage(canvas, 0, 0);
 
-        resolve(tempCanvas.toDataURL('image/png', 1.0));
+        resolve(tempCanvas.toDataURL("image/png", 1.0));
       } else {
         const canvas = document.querySelector(`#${chartId} canvas`);
         if (canvas) {
-          resolve(canvas.toDataURL('image/png', 1.0));
+          resolve(canvas.toDataURL("image/png", 1.0));
         } else {
-          resolve('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==');
+          resolve(
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+          );
         }
       }
     });
@@ -1120,9 +1408,9 @@ const EquiposEstatusPlataforma = () => {
 
   const estatusClienteChartData = {
     labels: equiposData.estatusPorCliente.map((item) => {
-      return item.cliente.length > 18 ?
-        item.cliente.substring(0, 18) + '...' :
-        item.cliente;
+      return item.cliente.length > 18
+        ? item.cliente.substring(0, 18) + "..."
+        : item.cliente;
     }),
     datasets: [
       {
@@ -1176,9 +1464,9 @@ const EquiposEstatusPlataforma = () => {
             const index = context[0].dataIndex;
             const fullName = equiposData.estatusPorCliente[index]?.cliente;
             return fullName || context[0].label;
-          }
-        }
-      }
+          },
+        },
+      },
     },
     scales: {
       y: {
@@ -1202,11 +1490,11 @@ const EquiposEstatusPlataforma = () => {
           maxTicksLimit: false,
           callback: function (value, index, values) {
             const label = this.getLabelForValue(value);
-            if (typeof label === 'string') {
-              return label.length > 18 ? label.substring(0, 18) + '...' : label;
+            if (typeof label === "string") {
+              return label.length > 18 ? label.substring(0, 18) + "..." : label;
             }
             return label;
-          }
+          },
         },
         display: true,
       },
@@ -1217,16 +1505,16 @@ const EquiposEstatusPlataforma = () => {
         if (chartId) {
           chartRefs.current[chartId] = this;
         }
-      }
+      },
     },
     layout: {
       padding: {
         bottom: 20,
         left: 10,
         right: 10,
-        top: 10
-      }
-    }
+        top: 10,
+      },
+    },
   };
 
   const plataformaChartOptions = {
@@ -1244,8 +1532,7 @@ const EquiposEstatusPlataforma = () => {
           },
         },
       },
-      tooltip: {
-      }
+      tooltip: {},
     },
     scales: {
       y: {
@@ -1275,18 +1562,17 @@ const EquiposEstatusPlataforma = () => {
         if (chartId) {
           chartRefs.current[chartId] = this;
         }
-      }
+      },
     },
     layout: {
       padding: {
         bottom: 20,
         left: 10,
         right: 10,
-        top: 10
-      }
-    }
+        top: 10,
+      },
+    },
   };
-
 
   const handleMenuNavigation = (menuItem) => {
     switch (menuItem) {
@@ -1305,7 +1591,9 @@ const EquiposEstatusPlataforma = () => {
       case "sim":
         navigate("/equipos_sim");
         break;
-      case "creditos-plataforma": navigate("/equipos_creditosplataforma"); break;
+      case "creditos-plataforma":
+        navigate("/equipos_creditosplataforma");
+        break;
       default:
         break;
     }
@@ -1334,16 +1622,28 @@ const EquiposEstatusPlataforma = () => {
                 >
                   Estatus plataforma
                 </div>
-                <div className="estatusplataforma-menu-item" onClick={() => handleMenuNavigation("modelos")}>
+                <div
+                  className="estatusplataforma-menu-item"
+                  onClick={() => handleMenuNavigation("modelos")}
+                >
                   Modelos
                 </div>
-                <div className="estatusplataforma-menu-item" onClick={() => handleMenuNavigation("proveedores")}>
+                <div
+                  className="estatusplataforma-menu-item"
+                  onClick={() => handleMenuNavigation("proveedores")}
+                >
                   Proveedores
                 </div>
-                <div className="estatusplataforma-menu-item" onClick={() => handleMenuNavigation("inventario")}>
+                <div
+                  className="estatusplataforma-menu-item"
+                  onClick={() => handleMenuNavigation("inventario")}
+                >
                   Inventario de equipos
                 </div>
-                <div className="estatusplataforma-menu-item" onClick={() => handleMenuNavigation("sim")}>
+                <div
+                  className="estatusplataforma-menu-item"
+                  onClick={() => handleMenuNavigation("sim")}
+                >
                   SIM
                 </div>
                 <div
@@ -1357,48 +1657,71 @@ const EquiposEstatusPlataforma = () => {
 
             <section className="estatusplataforma-content-panel">
               <div className="estatusplataforma-header">
-                <h3 className="estatusplataforma-page-title">Estatus plataforma</h3>
+                <h3 className="estatusplataforma-page-title">
+                  Estatus plataforma
+                </h3>
                 <div className="estatusplataforma-header-actions">
-                  <button className="estatusplataforma-btn estatusplataforma-btn-primary" onClick={handleCheckEquipos}>
+                  <button
+                    className="estatusplataforma-btn estatusplataforma-btn-primary"
+                    onClick={handleCheckEquipos}
+                  >
                     Check equipos
                   </button>
                 </div>
               </div>
 
-              <p className="estatusplataforma-subtitle">Monitoreo de equipos por cliente</p>
+              <p className="estatusplataforma-subtitle">
+                Monitoreo de equipos por cliente
+              </p>
 
               {equiposData.fechaUltimoCheck && (
                 <p className="estatusplataforma-data-date">
-                  Datos actualizados: {formatDateTime(equiposData.fechaUltimoCheck)}
+                  Datos actualizados:{" "}
+                  {formatDateTime(equiposData.fechaUltimoCheck)}
                 </p>
               )}
 
               <div className="estatusplataforma-charts-grid">
                 <div className="estatusplataforma-chart-card">
-                  <h4 className="estatusplataforma-chart-title">Estatus de equipos por cliente</h4>
+                  <h4 className="estatusplataforma-chart-title">
+                    Estatus de equipos por cliente
+                  </h4>
                   <div
                     id="estatusClienteChart"
                     className="estatusplataforma-chart-container"
                     style={{
-                      height: '450px',
-                      minHeight: '450px',
-                      width: '100%'
+                      height: "450px",
+                      minHeight: "450px",
+                      width: "100%",
                     }}
                   >
-                    <Bar data={estatusClienteChartData} options={estatusClienteChartOptions} />
+                    <Bar
+                      data={estatusClienteChartData}
+                      options={estatusClienteChartOptions}
+                    />
                   </div>
                 </div>
 
                 <div className="estatusplataforma-chart-card">
-                  <h4 className="estatusplataforma-chart-title">Equipos por Plataforma</h4>
-                  <div id="plataformaChart" className="estatusplataforma-chart-container">
-                    <Bar data={plataformaChartData} options={plataformaChartOptions} />
+                  <h4 className="estatusplataforma-chart-title">
+                    Equipos por Plataforma
+                  </h4>
+                  <div
+                    id="plataformaChart"
+                    className="estatusplataforma-chart-container"
+                  >
+                    <Bar
+                      data={plataformaChartData}
+                      options={plataformaChartOptions}
+                    />
                   </div>
                 </div>
               </div>
 
               <div className="estatusplataforma-table-card">
-                <h4 className="estatusplataforma-table-title">Equipos Offline</h4>
+                <h4 className="estatusplataforma-table-title">
+                  Equipos Offline
+                </h4>
                 <div className="estatusplataforma-table-container">
                   <table className="estatusplataforma-table">
                     <thead>
@@ -1412,17 +1735,21 @@ const EquiposEstatusPlataforma = () => {
                     </thead>
                     <tbody>
                       {equiposData.equiposOffline.length > 0 ? (
-                        equiposData.equiposOffline.slice(0, visibleRows).map((equipo, index) => (
-                          <tr key={index}>
-                            <td>{equipo.cliente}</td>
-                            <td>{equipo.nombre}</td>
-                            <td>{equipo.plataforma}</td>
-                            <td>
-                              <span className="estatusplataforma-status-cross">✗</span>
-                            </td>
-                            <td>{equipo.motivo}</td>
-                          </tr>
-                        ))
+                        equiposData.equiposOffline
+                          .slice(0, visibleRows)
+                          .map((equipo, index) => (
+                            <tr key={index}>
+                              <td>{equipo.cliente}</td>
+                              <td>{equipo.nombre}</td>
+                              <td>{equipo.plataforma}</td>
+                              <td>
+                                <span className="estatusplataforma-status-cross">
+                                  ✗
+                                </span>
+                              </td>
+                              <td>{equipo.motivo}</td>
+                            </tr>
+                          ))
                       ) : (
                         <tr>
                           <td colSpan="5" className="estatusplataforma-no-data">
@@ -1436,36 +1763,47 @@ const EquiposEstatusPlataforma = () => {
 
                 {/* Botón para cargar más registros */}
                 {equiposData.equiposOffline.length > visibleRows && (
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    padding: '20px',
-                    borderTop: '1px solid #e5e7eb'
-                  }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      padding: "20px",
+                      borderTop: "1px solid #e5e7eb",
+                    }}
+                  >
                     <button
-                      onClick={() => setVisibleRows(prev => prev + 50)}
+                      onClick={() => setVisibleRows((prev) => prev + 50)}
                       style={{
-                        padding: '10px 24px',
-                        backgroundColor: '#3b82f6',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.2s'
+                        padding: "10px 24px",
+                        backgroundColor: "#3b82f6",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        cursor: "pointer",
+                        transition: "background-color 0.2s",
                       }}
-                      onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
-                      onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+                      onMouseEnter={(e) =>
+                        (e.target.style.backgroundColor = "#2563eb")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.target.style.backgroundColor = "#3b82f6")
+                      }
                     >
-                      Cargar más ({equiposData.equiposOffline.length - visibleRows} registros restantes)
+                      Cargar más (
+                      {equiposData.equiposOffline.length - visibleRows}{" "}
+                      registros restantes)
                     </button>
                   </div>
                 )}
               </div>
 
               <div className="estatusplataforma-pdf-button-container">
-                <button className="estatusplataforma-btn estatusplataforma-btn-pdf" onClick={handleGeneratePDF}>
+                <button
+                  className="estatusplataforma-btn estatusplataforma-btn-pdf"
+                  onClick={handleGeneratePDF}
+                >
                   Visualizar PDF
                 </button>
               </div>
@@ -1512,4 +1850,4 @@ const EquiposEstatusPlataforma = () => {
   );
 };
 
-export default EquiposEstatusPlataforma
+export default EquiposEstatusPlataforma;
