@@ -256,6 +256,25 @@ const processEquiposPorMotivo = (equiposOffline) => {
     .sort((a, b) => b.cantidad - a.cantidad);
 };
 
+const formatDesfase = (minutos) => {
+  const totalMin = Number.parseInt(minutos, 10);
+  if (Number.isNaN(totalMin)) return null;
+
+  if (totalMin < 60) return `${totalMin} min`;
+
+  const horas = Math.floor(totalMin / 60);
+  const minRestantes = totalMin % 60;
+
+  if (horas < 24) {
+    return minRestantes > 0 ? `${horas} h ${minRestantes} min` : `${horas} h`;
+  }
+
+  const dias = Math.floor(horas / 24);
+  const horasRestantes = horas % 24;
+
+  return horasRestantes > 0 ? `${dias} d ${horasRestantes} h` : `${dias} d`;
+};
+
 const CheckEquiposSidePanel = ({
   isOpen,
   onClose,
@@ -685,7 +704,9 @@ const CheckEquiposSidePanel = ({
                                   }}
                                 >
                                   Desfase GPS:{" "}
-                                  {equiposStatus[equipo.id].desfaseMinutos} min
+                                  {formatDesfase(
+                                    equiposStatus[equipo.id].desfaseMinutos,
+                                  ) ?? "N/D"}{" "}
                                   · última ubicación{" "}
                                   {equiposStatus[equipo.id].ultimoFix}
                                 </div>
