@@ -431,12 +431,28 @@ const CheckEquiposSidePanel = ({
       );
       const dataApis = await response.json();
 
+      const normalizarPlataforma = (nombre) =>
+        String(nombre || "")
+          .toUpperCase()
+          .replace(/[^A-Z]/g, "");
+
+      const PLATAFORMAS_API = ["TRACKSOLID", "WHATSGPS"];
+
       setEquiposStatus((prevStatus) => {
         const newStatus = { ...prevStatus };
         let actualizados = 0;
+        let omitidos = 0;
 
         equipos.forEach((equipo) => {
           const imeiLimpio = equipo.imei ? String(equipo.imei).trim() : null;
+          const plataformaEquipo = normalizarPlataforma(
+            equipo.plataforma?.nombrePlataforma,
+          );
+
+          if (!PLATAFORMAS_API.includes(plataformaEquipo)) {
+            omitidos++;
+            return;
+          }
 
           if (imeiLimpio && dataApis[imeiLimpio]) {
             const apiInfo = dataApis[imeiLimpio];
@@ -464,7 +480,12 @@ const CheckEquiposSidePanel = ({
         Swal.fire({
           icon: "success",
           title: "¡Autocompletado exitoso!",
-          text: `Se verificó el estatus de ${actualizados} equipos. Revisa la tabla y haz clic en Guardar Checklist.`,
+          text:
+            `Se verificó el estatus de ${actualizados} equipos. ` +
+            (omitidos > 0
+              ? `${omitidos} equipos no pertenecen a Tracksolid ni WhatsGPS y deben marcarse manualmente. `
+              : "") +
+            "Revisa la tabla y haz clic en Guardar Checklist.",
         });
 
         return newStatus;
