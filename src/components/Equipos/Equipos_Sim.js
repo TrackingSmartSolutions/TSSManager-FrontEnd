@@ -18,11 +18,33 @@ const fetchWithToken = async (url, options = {}) => {
     ...options.headers,
   };
   const response = await fetch(url, { ...options, headers });
-  if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`);
+  if (!response.ok) {
+    let detalle = "";
+    try {
+      const data = await response.clone().json();
+      detalle = data.message || data.error || "";
+    } catch (_) {
+      try {
+        detalle = await response.text();
+      } catch (__) {}
+    }
+    throw new Error(
+      detalle ||
+        `Error en la solicitud: ${response.status} - ${response.statusText}`,
+    );
+  }
   return response;
 };
 
-const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true, closeOnOverlayClick = true }) => {
+const Modal = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = "md",
+  canClose = true,
+  closeOnOverlayClick = true,
+}) => {
   useEffect(() => {
     if (isOpen) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "unset";
@@ -39,11 +61,21 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true,
   };
 
   return (
-    <div className="sim-modal-overlay" onClick={closeOnOverlayClick ? onClose : () => { }}>
-      <div className={`sim-modal-content ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
+    <div
+      className="sim-modal-overlay"
+      onClick={closeOnOverlayClick ? onClose : () => {}}
+    >
+      <div
+        className={`sim-modal-content ${sizeClasses[size]}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="sim-modal-header">
           <h2 className="sim-modal-title">{title}</h2>
-          {canClose && <button className="sim-modal-close" onClick={onClose}>✕</button>}
+          {canClose && (
+            <button className="sim-modal-close" onClick={onClose}>
+              ✕
+            </button>
+          )}
         </div>
         <div className="sim-modal-body">{children}</div>
       </div>
@@ -51,11 +83,23 @@ const Modal = ({ isOpen, onClose, title, children, size = "md", canClose = true,
   );
 };
 
-const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisponibles, allSims }) => {
+const SimFormModal = ({
+  isOpen,
+  onClose,
+  sim = null,
+  onSave,
+  equipos,
+  gruposDisponibles,
+  allSims,
+}) => {
   const [formData, setFormData] = useState({
     numero: "",
     tarifa: "POR_SEGUNDO",
-    vigencia: new Date().toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" }).split("/").reverse().join("-"),
+    vigencia: new Date()
+      .toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" })
+      .split("/")
+      .reverse()
+      .join("-"),
     recarga: 50,
     responsable: "TSS",
     principal: "NO",
@@ -73,7 +117,9 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
         setFormData({
           numero: sim.numero || "",
           tarifa: sim.tarifa || "POR_SEGUNDO",
-          vigencia: sim.vigencia ? new Date(sim.vigencia).toISOString().split("T")[0] : "",
+          vigencia: sim.vigencia
+            ? new Date(sim.vigencia).toISOString().split("T")[0]
+            : "",
           recarga: sim.recarga ? sim.recarga.toString() : "50",
           responsable: sim.responsable || "TSS",
           principal: sim.principal || "NO",
@@ -86,7 +132,11 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
         setFormData({
           numero: "",
           tarifa: "POR_SEGUNDO",
-          vigencia: new Date().toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" }).split("/").reverse().join("-"),
+          vigencia: new Date()
+            .toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" })
+            .split("/")
+            .reverse()
+            .join("-"),
           recarga: "50",
           responsable: "TSS",
           principal: hasAvailableGroups ? "NO" : "SI",
@@ -113,18 +163,23 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
-    if (name === 'numero') {
-      const numericValue = value.replace(/\D/g, '').slice(0, 10);
+    if (name === "numero") {
+      const numericValue = value.replace(/\D/g, "").slice(0, 10);
       setFormData((prev) => ({
         ...prev,
         [name]: numericValue,
       }));
-    } else if (name === 'tarifa') {
+    } else if (name === "tarifa") {
       setFormData((prev) => ({
         ...prev,
         tarifa: value,
-        grupo: value === 'M2M_GLOBAL_15' ? '0' : prev.grupo,
-        principal: value === 'M2M_GLOBAL_15' ? 'NO' : prev.principal
+        grupo:
+          value === "M2M_GLOBAL_15"
+            ? "0"
+            : prev.grupo === "0"
+              ? ""
+              : prev.grupo,
+        principal: value === "M2M_GLOBAL_15" ? "NO" : prev.principal,
       }));
     } else {
       setFormData((prev) => ({
@@ -138,14 +193,17 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
 
   const validateForm = () => {
     const newErrors = {};
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = new Date().toISOString().split("T")[0];
 
     // Validación del número
     if (!formData.numero.trim()) {
       newErrors.numero = "El número es obligatorio";
     } else if (!/^\d{10}$/.test(formData.numero)) {
       newErrors.numero = "El número debe tener exactamente 10 dígitos";
-    } else if (existingSims.includes(formData.numero) && (!sim || sim.numero !== formData.numero)) {
+    } else if (
+      existingSims.includes(formData.numero) &&
+      (!sim || sim.numero !== formData.numero)
+    ) {
       newErrors.numero = "El número ya está en uso por otra SIM";
     }
 
@@ -153,13 +211,22 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
       if (!formData.equipo) newErrors.equipo = "El equipo es obligatorio";
     }
 
-    if (!sim && formData.responsable === "TSS" && formData.principal === "NO" && !formData.grupo) {
+    if (
+      (!sim || saliendoDeM2M) &&
+      formData.responsable === "TSS" &&
+      formData.principal === "NO" &&
+      !formData.grupo
+    ) {
       newErrors.grupo = "El grupo es obligatorio cuando no es principal";
     } else if (formData.tarifa === "M2M_GLOBAL_15" && formData.grupo !== "0") {
       newErrors.grupo = "Las SIMs M2M Global 15 deben ir en el Grupo 0";
     }
 
-    if (formData.responsable === "TSS" && formData.vigencia && formData.vigencia < currentDate) {
+    if (
+      formData.responsable === "TSS" &&
+      formData.vigencia &&
+      formData.vigencia < currentDate
+    ) {
       newErrors.vigencia = "La vigencia no puede ser en el pasado";
     }
 
@@ -175,8 +242,16 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
     let grupoFinal = null;
     if (formData.responsable === "TSS") {
       if (sim) {
-        // Al editar, mantener el grupo original
-        grupoFinal = sim.grupo;
+        if (saliendoDeM2M) {
+          // Sale del Grupo 0: debe ir a un grupo real o convertirse en principal
+          grupoFinal =
+            formData.principal === "SI"
+              ? null
+              : parseInt(formData.grupo) || null;
+        } else {
+          // Al editar, mantener el grupo original
+          grupoFinal = sim.grupo;
+        }
       } else {
         // Al crear nueva SIM
         if (formData.principal === "SI") {
@@ -192,11 +267,13 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
     // Enviar IMEI en lugar de ID
     let equipoData = null;
     if (formData.equipo && formData.equipo !== "0") {
-      const equipoSeleccionado = equipos.find(eq => eq.imei === formData.equipo);
+      const equipoSeleccionado = equipos.find(
+        (eq) => eq.imei === formData.equipo,
+      );
       if (equipoSeleccionado) {
         equipoData = {
           imei: equipoSeleccionado.imei,
-          id: equipoSeleccionado.id
+          id: equipoSeleccionado.id,
         };
       }
     }
@@ -205,7 +282,8 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
       numero: formData.numero,
       tarifa: formData.tarifa,
       vigencia: formData.responsable === "TSS" ? formData.vigencia : null,
-      recarga: formData.responsable === "TSS" ? parseFloat(formData.recarga) : null,
+      recarga:
+        formData.responsable === "TSS" ? parseFloat(formData.recarga) : null,
       responsable: formData.responsable,
       principal: formData.principal,
       grupo: grupoFinal,
@@ -213,9 +291,10 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
       contrasena: formData.responsable === "TSS" ? formData.contrasena : null,
     };
 
-
     try {
-      const url = sim ? `${API_BASE_URL}/sims/${sim.id}` : `${API_BASE_URL}/sims`;
+      const url = sim
+        ? `${API_BASE_URL}/sims/${sim.id}`
+        : `${API_BASE_URL}/sims`;
       const method = sim ? "PUT" : "POST";
       const response = await fetchWithToken(url, {
         method,
@@ -235,7 +314,7 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
           if (errorData.message) {
             errorMessage = errorData.message;
           } else if (errorData.error) {
-            errorMessage = `${errorData.error}: ${errorData.message || 'Error desconocido'}`;
+            errorMessage = `${errorData.error}: ${errorData.message || "Error desconocido"}`;
           }
         } catch (parseError) {
           // Si no es JSON, obtener como texto
@@ -257,9 +336,10 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
       Swal.fire({
         icon: "success",
         title: "Éxito",
-        text: sim ? "SIM actualizada correctamente" : "SIM agregada correctamente",
+        text: sim
+          ? "SIM actualizada correctamente"
+          : "SIM agregada correctamente",
       });
-
     } catch (error) {
       console.error("Error completo:", error);
       console.error("Stack trace:", error.stack);
@@ -269,15 +349,22 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
 
       // Errores comunes que podemos manejar mejor
       if (errorText.includes("IllegalStateException")) {
-        errorText = "No se puede agregar la SIM: posiblemente el grupo está completo o ya existe una SIM principal en ese grupo";
+        errorText =
+          "No se puede agregar la SIM: posiblemente el grupo está completo o ya existe una SIM principal en ese grupo";
       } else if (errorText.includes("EntityNotFoundException")) {
-        errorText = "Equipo no encontrado. Verifique que el equipo existe y está disponible";
+        errorText =
+          "Equipo no encontrado. Verifique que el equipo existe y está disponible";
       } else if (errorText.includes("IllegalArgumentException")) {
-        errorText = "Los datos enviados no son válidos. Verifique todos los campos";
-      } else if (errorText.includes("Error crítico al crear transacción automática")) {
-        errorText = "Error al crear la cuenta por pagar automática. La SIM se creó pero requiere revisión manual.";
+        errorText =
+          "Los datos enviados no son válidos. Verifique todos los campos";
+      } else if (
+        errorText.includes("Error crítico al crear transacción automática")
+      ) {
+        errorText =
+          "Error al crear la cuenta por pagar automática. La SIM se creó pero requiere revisión manual.";
       } else if (errorText.includes("RuntimeException")) {
-        errorText = "Error interno del sistema. Contacte al administrador si persiste el problema.";
+        errorText =
+          "Error interno del sistema. Contacte al administrador si persiste el problema.";
       }
 
       Swal.fire({
@@ -285,7 +372,7 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
         title: "Error al guardar SIM",
         text: errorText,
         showConfirmButton: true,
-        footer: 'Si el problema persiste, revise los logs del servidor'
+        footer: "Si el problema persiste, revise los logs del servidor",
       });
     }
     onClose();
@@ -293,19 +380,31 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
 
   const isTssResponsable = formData.responsable === "TSS";
   const isPrincipal = formData.principal === "SI";
+  const saliendoDeM2M =
+    !!sim &&
+    sim.tarifa === "M2M_GLOBAL_15" &&
+    formData.tarifa !== "M2M_GLOBAL_15";
 
   const availableEquipos = equipos.filter(
     (equipo) =>
-      (equipo.tipo === "DEMO" || equipo.tipo === "VENDIDO" || equipo.tipo === "PERDIDO") &&
+      (equipo.tipo === "DEMO" ||
+        equipo.tipo === "VENDIDO" ||
+        equipo.tipo === "PERDIDO") &&
       !equipo.simReferenciada &&
-      equipo.estatus !== "ALMACEN"
+      equipo.estatus !== "ALMACEN",
   );
 
   const currentImei = sim?.equipo?.imei || sim?.equipoImei;
   const currentNombre = sim?.equipo?.nombre || sim?.equipoNombre || "Equipo";
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={sim ? "Editar SIM" : "Nueva SIM"} size="md" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={sim ? "Editar SIM" : "Nueva SIM"}
+      size="md"
+      closeOnOverlayClick={false}
+    >
       <form onSubmit={handleSubmit} className="sim-form">
         <div className="sim-form-group">
           <label htmlFor="numero" className="sim-form-label">
@@ -321,7 +420,9 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
             placeholder="Ingrese el número de SIM"
             maxLength="10"
           />
-          {errors.numero && <span className="sim-form-error">{errors.numero}</span>}
+          {errors.numero && (
+            <span className="sim-form-error">{errors.numero}</span>
+          )}
         </div>
         <div className="sim-form-group">
           <label htmlFor="tarifa" className="sim-form-label">
@@ -369,7 +470,7 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
                 value={formData.vigencia}
                 onChange={handleInputChange}
                 className="sim-form-control"
-                min={new Date().toISOString().split('T')[0]}
+                min={new Date().toISOString().split("T")[0]}
               />
             </div>
 
@@ -399,15 +500,20 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
                 value={formData.principal}
                 onChange={handleInputChange}
                 className="sim-form-control"
-                disabled={!gruposDisponibles.length || formData.tarifa === 'M2M_GLOBAL_15'}
+                disabled={
+                  !gruposDisponibles.length ||
+                  formData.tarifa === "M2M_GLOBAL_15"
+                }
               >
                 <option value="SI">Sí</option>
-                <option value="NO" disabled={!gruposDisponibles.length}>No</option>
+                <option value="NO" disabled={!gruposDisponibles.length}>
+                  No
+                </option>
               </select>
             </div>
 
-            {/* Solo mostrar campo de grupo al crear nuevas SIMs, no al editar */}
-            {!sim && (
+            {/* Grupo: al crear, o al editar cuando la SIM abandona el Grupo 0 (M2M) */}
+            {(!sim || saliendoDeM2M) && (
               <div className="sim-form-group">
                 <label htmlFor="grupo" className="sim-form-label">
                   Grupo <span className="required"> *</span>
@@ -417,8 +523,8 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
                   name="grupo"
                   value={formData.grupo}
                   onChange={handleInputChange}
-                  className={`sim-form-control ${errors.grupo ? "sim-form-control-error" : ""} ${formData.tarifa === 'M2M_GLOBAL_15' ? 'sim-form-control-disabled' : ''}`}
-                  disabled={isPrincipal || formData.tarifa === 'M2M_GLOBAL_15'}
+                  className={`sim-form-control ${errors.grupo ? "sim-form-control-error" : ""} ${formData.tarifa === "M2M_GLOBAL_15" ? "sim-form-control-disabled" : ""}`}
+                  disabled={isPrincipal || formData.tarifa === "M2M_GLOBAL_15"}
                   required={!isPrincipal}
                 >
                   <option value="">Seleccionar grupo</option>
@@ -427,12 +533,19 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
                       <option value="0">Grupo 0 (M2M)</option>
                     ) : (
                       gruposDisponibles
-                        .filter(grupo => grupo !== 0 && grupo !== 99)
+                        .filter((grupo) => grupo !== 0 && grupo !== 99)
                         .map((grupo) => {
-                          const simsInGroup = (allSims || []).filter((s) => s.grupo === grupo);
-                          const principalCount = simsInGroup.filter((s) => s.principal === "SI").length;
-                          const nonPrincipalCount = simsInGroup.filter((s) => s.principal === "NO").length;
-                          const remaining = 6 - (principalCount + nonPrincipalCount);
+                          const simsInGroup = (allSims || []).filter(
+                            (s) => s.grupo === grupo,
+                          );
+                          const principalCount = simsInGroup.filter(
+                            (s) => s.principal === "SI",
+                          ).length;
+                          const nonPrincipalCount = simsInGroup.filter(
+                            (s) => s.principal === "NO",
+                          ).length;
+                          const remaining =
+                            6 - (principalCount + nonPrincipalCount);
 
                           if (remaining <= 0) return null;
 
@@ -442,37 +555,45 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
                             </option>
                           );
                         })
-                        .filter(option => option !== null)
+                        .filter((option) => option !== null)
                     ))}
                 </select>
                 {!isPrincipal && (
                   <small className="sim-help-text">
-                    {formData.tarifa === 'M2M_GLOBAL_15'
-                      ? 'Las SIMs M2M Global 15 deben ir en el Grupo 0'
-                      : 'Seleccione un grupo disponible'}
+                    {formData.tarifa === "M2M_GLOBAL_15"
+                      ? "Las SIMs M2M Global 15 deben ir en el Grupo 0"
+                      : "Seleccione un grupo disponible"}
                   </small>
                 )}
-                {errors.grupo && <span className="sim-form-error">{errors.grupo}</span>}
+                {errors.grupo && (
+                  <span className="sim-form-error">{errors.grupo}</span>
+                )}
               </div>
             )}
 
             {/* Mostrar grupo actual solo como información en modo edición */}
-            {sim && isTssResponsable && (
+            {sim && isTssResponsable && !saliendoDeM2M && (
               <div className="sim-form-group">
                 <label className="sim-form-label">Grupo actual</label>
                 <input
                   type="text"
-                  value={sim.grupo !== null && sim.grupo !== undefined ? `Grupo ${sim.grupo}` : "N/A"}
+                  value={
+                    sim.grupo !== null && sim.grupo !== undefined
+                      ? `Grupo ${sim.grupo}`
+                      : "N/A"
+                  }
                   className="sim-form-control sim-form-control-disabled"
                   readOnly
                   style={{
-                    backgroundColor: '#f5f5f5',
-                    color: '#6b7280',
-                    border: '1px solid #d1d5db',
-                    opacity: 0.7
+                    backgroundColor: "#f5f5f5",
+                    color: "#6b7280",
+                    border: "1px solid #d1d5db",
+                    opacity: 0.7,
                   }}
                 />
-                <small className="sim-help-text">El grupo se mantiene sin cambios al editar</small>
+                <small className="sim-help-text">
+                  El grupo se mantiene sin cambios al editar
+                </small>
               </div>
             )}
 
@@ -486,7 +607,7 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
                 name="contrasena"
                 value={formData.contrasena}
                 onChange={handleInputChange}
-                className={`sim-form-control ${formData.tarifa === 'M2M_GLOBAL_15' ? 'sim-form-control-disabled' : ''}`}
+                className={`sim-form-control ${formData.tarifa === "M2M_GLOBAL_15" ? "sim-form-control-disabled" : ""}`}
                 placeholder="Contraseña de la SIM"
               />
             </div>
@@ -510,22 +631,30 @@ const SimFormModal = ({ isOpen, onClose, sim = null, onSave, equipos, gruposDisp
                 {equipo.nombre} ({equipo.tipo}) - IMEI: {equipo.imei}
               </option>
             ))}
-            {sim && currentImei && !availableEquipos.find((e) => e.imei === currentImei) && (
-              <option key={currentImei} value={currentImei}>
-                {currentNombre} - IMEI: {currentImei} [Vinculado]
-              </option>
-            )}
+            {sim &&
+              currentImei &&
+              !availableEquipos.find((e) => e.imei === currentImei) && (
+                <option key={currentImei} value={currentImei}>
+                  {currentNombre} - IMEI: {currentImei} [Vinculado]
+                </option>
+              )}
           </select>
           <small className="sim-help-text">
             {sim
               ? "Equipos disponibles (DEMO o VENDIDO) sin SIM, o el equipo actual vinculado"
               : "Solo equipos (DEMO o VENDIDO) sin SIM"}
           </small>
-          {errors.equipo && <span className="sim-form-error">{errors.equipo}</span>}
+          {errors.equipo && (
+            <span className="sim-form-error">{errors.equipo}</span>
+          )}
         </div>
 
         <div className="sim-form-actions">
-          <button type="button" onClick={onClose} className="sim-btn sim-btn-cancel">
+          <button
+            type="button"
+            onClick={onClose}
+            className="sim-btn sim-btn-cancel"
+          >
             Cancelar
           </button>
           <button type="submit" className="sim-btn sim-btn-primary">
@@ -550,7 +679,9 @@ const SimDetailsModal = ({ isOpen, onClose, sim = null, equipos }) => {
 
   const fetchUltimoSaldo = async (simId) => {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/sims/${simId}/ultimo-saldo`);
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/sims/${simId}/ultimo-saldo`,
+      );
       if (response.ok) {
         const data = await response.json();
         setUltimoSaldo(data);
@@ -565,10 +696,16 @@ const SimDetailsModal = ({ isOpen, onClose, sim = null, equipos }) => {
 
   if (!sim) return null;
 
-  const equipo = equipos.find(eq => eq.imei === sim.equipoImei);
+  const equipo = equipos.find((eq) => eq.imei === sim.equipoImei);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Detalles de SIM" size="md" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Detalles de SIM"
+      size="md"
+      closeOnOverlayClick={false}
+    >
       <div className="sim-form">
         <div className="sim-form-group">
           <label className="sim-form-label">Número</label>
@@ -584,8 +721,13 @@ const SimDetailsModal = ({ isOpen, onClose, sim = null, equipos }) => {
           <label className="sim-form-label">Tarifa</label>
           <input
             type="text"
-            value={sim.tarifa === "POR_SEGUNDO" ? "Por segundo" :
-              sim.tarifa === "SIN_LIMITE" ? "Sin límite" : "M2M Global 15"}
+            value={
+              sim.tarifa === "POR_SEGUNDO"
+                ? "Por segundo"
+                : sim.tarifa === "SIN_LIMITE"
+                  ? "Sin límite"
+                  : "M2M Global 15"
+            }
             className="sim-form-control"
             readOnly
           />
@@ -617,7 +759,15 @@ const SimDetailsModal = ({ isOpen, onClose, sim = null, equipos }) => {
               <label className="sim-form-label">Vigencia</label>
               <input
                 type="text"
-                value={sim.vigencia ? new Date(sim.vigencia + "T00:00:00-06:00").toLocaleDateString("es-MX", { timeZone: "America/Mexico_City" }) : "N/A"}
+                value={
+                  sim.vigencia
+                    ? new Date(
+                        sim.vigencia + "T00:00:00-06:00",
+                      ).toLocaleDateString("es-MX", {
+                        timeZone: "America/Mexico_City",
+                      })
+                    : "N/A"
+                }
                 className="sim-form-control"
                 readOnly
               />
@@ -647,7 +797,11 @@ const SimDetailsModal = ({ isOpen, onClose, sim = null, equipos }) => {
               <label className="sim-form-label">Grupo</label>
               <input
                 type="text"
-                value={sim.grupo !== null && sim.grupo !== undefined ? `Grupo ${sim.grupo}` : "N/A"}
+                value={
+                  sim.grupo !== null && sim.grupo !== undefined
+                    ? `Grupo ${sim.grupo}`
+                    : "N/A"
+                }
                 className="sim-form-control"
                 readOnly
               />
@@ -667,29 +821,35 @@ const SimDetailsModal = ({ isOpen, onClose, sim = null, equipos }) => {
 
         {sim.responsable === "TSS" && (
           <>
-            {sim.tarifa === "POR_SEGUNDO" && ultimoSaldo && ultimoSaldo.saldoActual && (
-              <div className="sim-form-group">
-                <label className="sim-form-label">Último saldo actual</label>
-                <input
-                  type="text"
-                  value={`$${ultimoSaldo.saldoActual}`}
-                  className="sim-form-control"
-                  readOnly
-                />
-              </div>
-            )}
+            {sim.tarifa === "POR_SEGUNDO" &&
+              ultimoSaldo &&
+              ultimoSaldo.saldoActual && (
+                <div className="sim-form-group">
+                  <label className="sim-form-label">Último saldo actual</label>
+                  <input
+                    type="text"
+                    value={`$${ultimoSaldo.saldoActual}`}
+                    className="sim-form-control"
+                    readOnly
+                  />
+                </div>
+              )}
 
-            {(sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") && ultimoSaldo && ultimoSaldo.datos && (
-              <div className="sim-form-group">
-                <label className="sim-form-label">Último datos registrados</label>
-                <input
-                  type="text"
-                  value={`${ultimoSaldo.datos} MB`}
-                  className="sim-form-control"
-                  readOnly
-                />
-              </div>
-            )}
+            {(sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") &&
+              ultimoSaldo &&
+              ultimoSaldo.datos && (
+                <div className="sim-form-group">
+                  <label className="sim-form-label">
+                    Último datos registrados
+                  </label>
+                  <input
+                    type="text"
+                    value={`${ultimoSaldo.datos} MB`}
+                    className="sim-form-control"
+                    readOnly
+                  />
+                </div>
+              )}
           </>
         )}
 
@@ -697,14 +857,22 @@ const SimDetailsModal = ({ isOpen, onClose, sim = null, equipos }) => {
           <label className="sim-form-label">Equipo</label>
           <input
             type="text"
-            value={equipo ? `${equipo.nombre} (${equipo.tipo}) - IMEI: ${equipo.imei}` : "Sin equipo"}
+            value={
+              equipo
+                ? `${equipo.nombre} (${equipo.tipo}) - IMEI: ${equipo.imei}`
+                : "Sin equipo"
+            }
             className="sim-form-control"
             readOnly
           />
         </div>
 
         <div className="sim-form-actions">
-          <button type="button" onClick={onClose} className="sim-btn sim-btn-primary">
+          <button
+            type="button"
+            onClick={onClose}
+            className="sim-btn sim-btn-primary"
+          >
             Cerrar
           </button>
         </div>
@@ -713,11 +881,22 @@ const SimDetailsModal = ({ isOpen, onClose, sim = null, equipos }) => {
   );
 };
 
-const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate }) => {
+const SaldosSidePanel = ({
+  isOpen,
+  onClose,
+  sim,
+  onSaveSaldo,
+  userRole,
+  onUpdate,
+}) => {
   const [formData, setFormData] = useState({
     saldoActual: "",
     datos: "",
-    fecha: new Date().toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" }).split("/").reverse().join("-"),
+    fecha: new Date()
+      .toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" })
+      .split("/")
+      .reverse()
+      .join("-"),
   });
   const [historialSaldos, setHistorialSaldos] = useState([]);
   const [errors, setErrors] = useState({});
@@ -728,7 +907,11 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
       setFormData({
         saldoActual: "",
         datos: "",
-        fecha: new Date().toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" }).split("/").reverse().join("-"),
+        fecha: new Date()
+          .toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" })
+          .split("/")
+          .reverse()
+          .join("-"),
       });
       setErrors({});
       fetchHistorialSaldos(sim.id);
@@ -737,7 +920,9 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
 
   const fetchHistorialSaldos = async (simId) => {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/sims/${simId}/historial`);
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/sims/${simId}/historial`,
+      );
       const data = await response.json();
       setHistorialSaldos(data);
     } catch (error) {
@@ -753,7 +938,9 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
       datos: registro.datos || "",
       fecha: registro.fecha.split("T")[0],
     });
-    document.querySelector('.sim-side-panel-content')?.scrollTo({ top: 0, behavior: 'smooth' });
+    document
+      .querySelector(".sim-side-panel-content")
+      ?.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleCancelEdit = () => {
@@ -761,30 +948,36 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
     setFormData({
       saldoActual: "",
       datos: "",
-      fecha: new Date().toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" }).split("/").reverse().join("-"),
+      fecha: new Date()
+        .toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" })
+        .split("/")
+        .reverse()
+        .join("-"),
     });
     setErrors({});
   };
 
   const handleDelete = async (id) => {
     Swal.fire({
-      title: '¿Estás seguro?',
+      title: "¿Estás seguro?",
       text: "No podrás revertir esto",
-      icon: 'warning',
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await fetchWithToken(`${API_BASE_URL}/sims/historial/${id}`, { method: 'DELETE' });
+          await fetchWithToken(`${API_BASE_URL}/sims/historial/${id}`, {
+            method: "DELETE",
+          });
           fetchHistorialSaldos(sim.id);
           if (onUpdate) onUpdate();
-          Swal.fire('Eliminado', 'El registro ha sido eliminado.', 'success');
+          Swal.fire("Eliminado", "El registro ha sido eliminado.", "success");
         } catch (error) {
-          Swal.fire('Error', 'No se pudo eliminar el registro', 'error');
+          Swal.fire("Error", "No se pudo eliminar el registro", "error");
         }
       }
     });
@@ -797,17 +990,28 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
     if (editingId) {
       try {
         const params = new URLSearchParams();
-        if (formData.saldoActual) params.append("saldoActual", parseFloat(formData.saldoActual).toFixed(2));
+        if (formData.saldoActual)
+          params.append(
+            "saldoActual",
+            parseFloat(formData.saldoActual).toFixed(2),
+          );
         if (formData.datos) params.append("datos", parseFloat(formData.datos));
         params.append("fecha", formData.fecha);
 
-        const response = await fetchWithToken(`${API_BASE_URL}/sims/historial/${editingId}?${params.toString()}`, {
-          method: "PUT",
-        });
+        const response = await fetchWithToken(
+          `${API_BASE_URL}/sims/historial/${editingId}?${params.toString()}`,
+          {
+            method: "PUT",
+          },
+        );
 
         if (!response.ok) throw new Error("Error al actualizar");
 
-        Swal.fire({ icon: "success", title: "Actualizado", text: "Registro actualizado correctamente" });
+        Swal.fire({
+          icon: "success",
+          title: "Actualizado",
+          text: "Registro actualizado correctamente",
+        });
         fetchHistorialSaldos(sim.id);
         if (onUpdate) onUpdate();
         handleCancelEdit();
@@ -818,8 +1022,14 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
     }
 
     const saldoData = {
-      saldoActual: sim.tarifa === "POR_SEGUNDO" ? parseFloat(formData.saldoActual).toFixed(2) : null,
-      datos: (sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") ? parseFloat(formData.datos) : null,
+      saldoActual:
+        sim.tarifa === "POR_SEGUNDO"
+          ? parseFloat(formData.saldoActual).toFixed(2)
+          : null,
+      datos:
+        sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15"
+          ? parseFloat(formData.datos)
+          : null,
       fecha: formData.fecha,
     };
 
@@ -827,7 +1037,11 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
     setFormData({
       saldoActual: "",
       datos: "",
-      fecha: new Date().toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" }).split("/").reverse().join("-"),
+      fecha: new Date()
+        .toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" })
+        .split("/")
+        .reverse()
+        .join("-"),
     });
   };
 
@@ -842,8 +1056,13 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
 
   const validateForm = () => {
     const newErrors = {};
-    if (sim.tarifa === "POR_SEGUNDO" && !formData.saldoActual) newErrors.saldoActual = "El saldo actual es obligatorio";
-    if ((sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") && !formData.datos) newErrors.datos = "Los datos son obligatorios";
+    if (sim.tarifa === "POR_SEGUNDO" && !formData.saldoActual)
+      newErrors.saldoActual = "El saldo actual es obligatorio";
+    if (
+      (sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") &&
+      !formData.datos
+    )
+      newErrors.datos = "Los datos son obligatorios";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -852,22 +1071,43 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
 
   return (
     <>
-      {isOpen && <div className="sim-side-panel-overlay" onClick={onClose}></div>}
+      {isOpen && (
+        <div className="sim-side-panel-overlay" onClick={onClose}></div>
+      )}
       <div className={`sim-side-panel ${isOpen ? "sim-side-panel-open" : ""}`}>
         <div className="sim-side-panel-header">
-          <h2 className="sim-side-panel-title">{editingId ? "Editar Saldo" : "Reporte Saldos"}</h2>
-          <button className="sim-side-panel-close" onClick={() => { handleCancelEdit(); onClose(); }}>✕</button>
+          <h2 className="sim-side-panel-title">
+            {editingId ? "Editar Saldo" : "Reporte Saldos"}
+          </h2>
+          <button
+            className="sim-side-panel-close"
+            onClick={() => {
+              handleCancelEdit();
+              onClose();
+            }}
+          >
+            ✕
+          </button>
         </div>
         <div className="sim-side-panel-content">
           <form onSubmit={handleSubmit} className="sim-saldos-form">
-
             <div className="sim-side-panel-form-group">
-              <label htmlFor="numero" className="sim-form-label">Número <span className="required"> *</span></label>
-              <input type="text" id="numero" value={sim.numero} className="sim-side-panel-form-control" readOnly />
+              <label htmlFor="numero" className="sim-form-label">
+                Número <span className="required"> *</span>
+              </label>
+              <input
+                type="text"
+                id="numero"
+                value={sim.numero}
+                className="sim-side-panel-form-control"
+                readOnly
+              />
             </div>
             {sim.tarifa === "POR_SEGUNDO" && (
               <div className="sim-side-panel-form-group">
-                <label htmlFor="saldoActual" className="sim-form-label">Saldo Actual <span className="required"> *</span></label>
+                <label htmlFor="saldoActual" className="sim-form-label">
+                  Saldo Actual <span className="required"> *</span>
+                </label>
                 <div className="sim-input-group">
                   <span className="sim-input-prefix">$</span>
                   <input
@@ -882,12 +1122,17 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
                     min="0"
                   />
                 </div>
-                {errors.saldoActual && <span className="sim-form-error">{errors.saldoActual}</span>}
+                {errors.saldoActual && (
+                  <span className="sim-form-error">{errors.saldoActual}</span>
+                )}
               </div>
             )}
-            {(sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") && (
+            {(sim.tarifa === "SIN_LIMITE" ||
+              sim.tarifa === "M2M_GLOBAL_15") && (
               <div className="sim-side-panel-form-group">
-                <label htmlFor="datos" className="sim-form-label">Datos <span className="required"> *</span></label>
+                <label htmlFor="datos" className="sim-form-label">
+                  Datos <span className="required"> *</span>
+                </label>
                 <div className="sim-input-group">
                   <input
                     type="number"
@@ -902,11 +1147,15 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
                   />
                   <span className="sim-input-suffix">MB</span>
                 </div>
-                {errors.datos && <span className="sim-form-error">{errors.datos}</span>}
+                {errors.datos && (
+                  <span className="sim-form-error">{errors.datos}</span>
+                )}
               </div>
             )}
             <div className="sim-side-panel-form-group">
-              <label htmlFor="fecha" className="sim-form-label">Fecha:</label>
+              <label htmlFor="fecha" className="sim-form-label">
+                Fecha:
+              </label>
               <input
                 type="date"
                 id="fecha"
@@ -917,8 +1166,14 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
               />
             </div>
 
-            <div className="sim-side-panel-form-actions" style={{ display: 'flex', gap: '10px' }}>
-              <button type="submit" className="sim-btn sim-btn-primary sim-btn-full-width">
+            <div
+              className="sim-side-panel-form-actions"
+              style={{ display: "flex", gap: "10px" }}
+            >
+              <button
+                type="submit"
+                className="sim-btn sim-btn-primary sim-btn-full-width"
+              >
                 {editingId ? "Actualizar" : "Guardar"}
               </button>
 
@@ -932,7 +1187,6 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
                 </button>
               )}
             </div>
-
           </form>
 
           <div className="sim-historial-section">
@@ -943,22 +1197,46 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
                   <tr>
                     <th>Fecha</th>
                     {sim.tarifa === "POR_SEGUNDO" && <th>Saldo Actual</th>}
-                    {(sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") && <th>Datos</th>}
+                    {(sim.tarifa === "SIN_LIMITE" ||
+                      sim.tarifa === "M2M_GLOBAL_15") && <th>Datos</th>}
 
-                    {userRole === "ADMINISTRADOR" && <th style={{ width: '90px' }}>Acciones</th>}
+                    {userRole === "ADMINISTRADOR" && (
+                      <th style={{ width: "90px" }}>Acciones</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
                   {historialSaldos.length > 0 ? (
                     historialSaldos.map((registro, index) => (
-                      <tr key={index} style={editingId === registro.id ? { backgroundColor: '#e6f7ff' } : {}}>
-                        <td>{new Date(registro.fecha + "T00:00:00-06:00").toLocaleDateString("es-MX", { timeZone: "America/Mexico_City" })}</td>
-                        {sim.tarifa === "POR_SEGUNDO" && <td>${registro.saldoActual ?? '0'}</td>}
-                        {(sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") && <td>{registro.datos ?? '0'} MB</td>}
+                      <tr
+                        key={index}
+                        style={
+                          editingId === registro.id
+                            ? { backgroundColor: "#e6f7ff" }
+                            : {}
+                        }
+                      >
+                        <td>
+                          {new Date(
+                            registro.fecha + "T00:00:00-06:00",
+                          ).toLocaleDateString("es-MX", {
+                            timeZone: "America/Mexico_City",
+                          })}
+                        </td>
+                        {sim.tarifa === "POR_SEGUNDO" && (
+                          <td>${registro.saldoActual ?? "0"}</td>
+                        )}
+                        {(sim.tarifa === "SIN_LIMITE" ||
+                          sim.tarifa === "M2M_GLOBAL_15") && (
+                          <td>{registro.datos ?? "0"} MB</td>
+                        )}
 
                         {userRole === "ADMINISTRADOR" && (
                           <td>
-                            <div className="sim-action-buttons" style={{ justifyContent: 'center' }}>
+                            <div
+                              className="sim-action-buttons"
+                              style={{ justifyContent: "center" }}
+                            >
                               <button
                                 type="button"
                                 className="sim-btn-action sim-edit"
@@ -978,12 +1256,14 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
                             </div>
                           </td>
                         )}
-
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={userRole === "ADMINISTRADOR" ? 4 : 3} className="sim-no-data">
+                      <td
+                        colSpan={userRole === "ADMINISTRADOR" ? 4 : 3}
+                        className="sim-no-data"
+                      >
                         No hay registros de saldos
                       </td>
                     </tr>
@@ -998,7 +1278,13 @@ const SaldosSidePanel = ({ isOpen, onClose, sim, onSaveSaldo, userRole, onUpdate
   );
 };
 
-const ConfirmarEliminacionModal = ({ isOpen, onClose, sim, onConfirm, hasEquipoVinculado = false }) => {
+const ConfirmarEliminacionModal = ({
+  isOpen,
+  onClose,
+  sim,
+  onConfirm,
+  hasEquipoVinculado = false,
+}) => {
   const handleConfirm = () => {
     onConfirm();
     onClose();
@@ -1008,7 +1294,11 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, sim, onConfirm, hasEquipoV
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={hasEquipoVinculado ? "Error al eliminar el registro" : "Confirmar eliminación"}
+      title={
+        hasEquipoVinculado
+          ? "Error al eliminar el registro"
+          : "Confirmar eliminación"
+      }
       size="sm"
       closeOnOverlayClick={false}
     >
@@ -1016,22 +1306,37 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, sim, onConfirm, hasEquipoV
         {hasEquipoVinculado ? (
           <div className="sim-warning-content">
             <p className="sim-warning-message">
-              No se puede eliminar la SIM porque está vinculada a un equipo. Desvincule la SIM primero.
+              No se puede eliminar la SIM porque está vinculada a un equipo.
+              Desvincule la SIM primero.
             </p>
             <div className="sim-form-actions">
-              <button type="button" onClick={onClose} className="sim-btn sim-btn-primary">
+              <button
+                type="button"
+                onClick={onClose}
+                className="sim-btn sim-btn-primary"
+              >
                 Continuar
               </button>
             </div>
           </div>
         ) : (
           <div className="sim-confirmation-content">
-            <p className="sim-confirmation-message">¿Seguro que quieres eliminar esta SIM?</p>
+            <p className="sim-confirmation-message">
+              ¿Seguro que quieres eliminar esta SIM?
+            </p>
             <div className="sim-form-actions">
-              <button type="button" onClick={onClose} className="sim-btn sim-btn-cancel">
+              <button
+                type="button"
+                onClick={onClose}
+                className="sim-btn sim-btn-cancel"
+              >
                 Cancelar
               </button>
-              <button type="button" onClick={handleConfirm} className="sim-btn sim-btn-confirm">
+              <button
+                type="button"
+                onClick={handleConfirm}
+                className="sim-btn sim-btn-confirm"
+              >
                 Confirmar
               </button>
             </div>
@@ -1052,7 +1357,7 @@ const EquiposSim = () => {
   const [filterGrupo, setFilterGrupo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [equiposLoaded, setEquiposLoaded] = useState(false);
-  const [ordenFechaVigencia, setOrdenFechaVigencia] = useState('asc');
+  const [ordenFechaVigencia, setOrdenFechaVigencia] = useState("asc");
   const [filterNumero, setFilterNumero] = useState("");
   const [alertasSaldo, setAlertasSaldo] = useState(new Set());
   const [alertasAprobadas, setAlertasAprobadas] = useState(new Set());
@@ -1072,13 +1377,13 @@ const EquiposSim = () => {
 
   const cargarAlertasAprobadas = async () => {
     try {
-      const result = await window.storage.get('alertas-aprobadas-sims');
+      const result = await window.storage.get("alertas-aprobadas-sims");
       if (result && result.value) {
         const alertas = JSON.parse(result.value);
         setAlertasAprobadas(new Set(alertas));
       }
     } catch (error) {
-      console.log('No hay alertas aprobadas previas o error al cargar:', error);
+      console.log("No hay alertas aprobadas previas o error al cargar:", error);
       setAlertasAprobadas(new Set());
     }
   };
@@ -1086,8 +1391,11 @@ const EquiposSim = () => {
   const loadEquiposIfNeeded = async () => {
     const now = Date.now();
 
-    if (equiposCache.current && equiposCacheTime.current &&
-      (now - equiposCacheTime.current) < CACHE_DURATION) {
+    if (
+      equiposCache.current &&
+      equiposCacheTime.current &&
+      now - equiposCacheTime.current < CACHE_DURATION
+    ) {
       setEquipos(equiposCache.current);
       setEquiposLoaded(true);
       return;
@@ -1095,7 +1403,9 @@ const EquiposSim = () => {
 
     if (!equiposLoaded) {
       try {
-        const equiposResponse = await fetchWithToken(`${API_BASE_URL}/sims/equipos-disponibles`);
+        const equiposResponse = await fetchWithToken(
+          `${API_BASE_URL}/sims/equipos-disponibles`,
+        );
         const equiposData = await equiposResponse.json();
 
         equiposCache.current = equiposData;
@@ -1111,7 +1421,11 @@ const EquiposSim = () => {
 
   useEffect(() => {
     const userRoleFromStorage = localStorage.getItem("userRol");
-    setUserRole(userRoleFromStorage === "ADMINISTRADOR" ? "ADMINISTRADOR" : userRoleFromStorage || "ADMINISTRADOR");
+    setUserRole(
+      userRoleFromStorage === "ADMINISTRADOR"
+        ? "ADMINISTRADOR"
+        : userRoleFromStorage || "ADMINISTRADOR",
+    );
 
     cargarAlertasAprobadas();
     fetchCriticalData();
@@ -1120,14 +1434,14 @@ const EquiposSim = () => {
   const fetchCriticalData = async () => {
     try {
       setIsLoading(true);
-      await Promise.all([
-        fetchAllGroups(),
-        fetchSims(),
-        fetchAllSims()
-      ]);
+      await Promise.all([fetchAllGroups(), fetchSims(), fetchAllSims()]);
     } catch (error) {
       console.error("Error loading critical data:", error);
-      Swal.fire({ icon: "error", title: "Error", text: "No se pudieron cargar los datos críticos" });
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudieron cargar los datos críticos",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -1150,29 +1464,36 @@ const EquiposSim = () => {
       setIsLoading(true);
 
       const params = new URLSearchParams();
-      if (filterGrupo) params.append('grupo', filterGrupo);
-      if (filterNumero) params.append('numero', filterNumero);
+      if (filterGrupo) params.append("grupo", filterGrupo);
+      if (filterNumero) params.append("numero", filterNumero);
 
-      const response = await fetchWithToken(`${API_BASE_URL}/sims/filtered?${params.toString()}`);
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/sims/filtered?${params.toString()}`,
+      );
       const simsData = await response.json();
 
       const simsWithEquipo = simsData.map((sim) => ({
         ...sim,
-        equipo: sim.equipoNombre ? {
-          nombre: sim.equipoNombre,
-          imei: sim.equipoImei
-        } : null,
-        ultimoSaldoRegistrado: "Cargando..." // Placeholder inicial
+        equipo: sim.equipoNombre
+          ? {
+              nombre: sim.equipoNombre,
+              imei: sim.equipoImei,
+            }
+          : null,
+        ultimoSaldoRegistrado: "Cargando...", // Placeholder inicial
       }));
 
       setSims(simsWithEquipo);
 
       // Cargar saldos en background sin bloquear la UI
       loadSaldosInBackground(simsWithEquipo);
-
     } catch (error) {
       console.error("Error loading SIMs:", error);
-      Swal.fire({ icon: "error", title: "Error", text: "Error al cargar SIMs" });
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Error al cargar SIMs",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -1194,99 +1515,124 @@ const EquiposSim = () => {
     for (let i = 0; i < simsToLoad.length; i += batchSize) {
       const batch = simsToLoad.slice(i, i + batchSize);
 
-      await Promise.all(batch.map(async (sim) => {
-        try {
-          const response = await fetch(`${API_BASE_URL}/sims/${sim.id}/ultimo-saldo`, {
-            headers: {
-              "Content-Type": "application/json",
-              ...(localStorage.getItem("token") ? { Authorization: `Bearer ${localStorage.getItem("token")}` } : {}),
-            },
-          });
-
-          let saldoText = "Sin registros";
-
-          if (response.ok && response.status !== 204) {
-            const saldoData = await response.json();
-
-            if (sim.tarifa === "POR_SEGUNDO") {
-              if ('saldoActual' in saldoData) {
-                saldoText = `$${saldoData.saldoActual || 0}`;
-              } else {
-                saldoText = "$0";
-              }
-            } else if (sim.tarifa === "SIN_LIMITE" || sim.tarifa === "M2M_GLOBAL_15") {
-              if ('datos' in saldoData) {
-                saldoText = `${saldoData.datos || 0} MB`;
-              } else {
-                saldoText = "0 MB";
-              }
-            }
-          } else if (response.status === 204) {
-            saldoText = "Sin registros";
-          } else if (!response.ok) {
-            console.error(`Error ${response.status} for SIM ${sim.id}`);
-            saldoText = "Error";
-          }
-
-          setSims(prevSims =>
-            prevSims.map(s =>
-              s.id === sim.id ? { ...s, ultimoSaldoRegistrado: saldoText } : s
-            )
-          );
-
-          if (sim.tarifa === "POR_SEGUNDO") {
-            try {
-              const caidaResponse = await fetch(`${API_BASE_URL}/sims/${sim.id}/verificar-caida-saldo`, {
+      await Promise.all(
+        batch.map(async (sim) => {
+          try {
+            const response = await fetch(
+              `${API_BASE_URL}/sims/${sim.id}/ultimo-saldo`,
+              {
                 headers: {
                   "Content-Type": "application/json",
-                  ...(localStorage.getItem("token") ? { Authorization: `Bearer ${localStorage.getItem("token")}` } : {}),
+                  ...(localStorage.getItem("token")
+                    ? {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                      }
+                    : {}),
                 },
-              });
+              },
+            );
 
-              if (caidaResponse.ok) {
-                const caidaData = await caidaResponse.json();
+            let saldoText = "Sin registros";
 
-                if (caidaData.tieneCaida) {
-                  setAlertasSaldo(prev => {
-                    const newSet = new Set(prev);
-                    newSet.add(sim.id);
-                    return newSet;
-                  });
+            if (response.ok && response.status !== 204) {
+              const saldoData = await response.json();
+
+              if (sim.tarifa === "POR_SEGUNDO") {
+                if ("saldoActual" in saldoData) {
+                  saldoText = `$${saldoData.saldoActual || 0}`;
                 } else {
-                  setAlertasSaldo(prev => {
-                    if (prev.has(sim.id)) {
-                      const newSet = new Set(prev);
-                      newSet.delete(sim.id);
-                      return newSet;
-                    }
-                    return prev;
-                  });
+                  saldoText = "$0";
+                }
+              } else if (
+                sim.tarifa === "SIN_LIMITE" ||
+                sim.tarifa === "M2M_GLOBAL_15"
+              ) {
+                if ("datos" in saldoData) {
+                  saldoText = `${saldoData.datos || 0} MB`;
+                } else {
+                  saldoText = "0 MB";
                 }
               }
-            } catch (error) {
-              console.error(`Error verificando caída de saldo para SIM ${sim.id}:`, error);
+            } else if (response.status === 204) {
+              saldoText = "Sin registros";
+            } else if (!response.ok) {
+              console.error(`Error ${response.status} for SIM ${sim.id}`);
+              saldoText = "Error";
             }
-          }
 
-        } catch (error) {
-          console.error(`Error loading saldo for SIM ${sim.id}:`, error);
-          setSims(prevSims =>
-            prevSims.map(s =>
-              s.id === sim.id ? { ...s, ultimoSaldoRegistrado: "Error" } : s
-            )
-          );
-        }
-      }));
+            setSims((prevSims) =>
+              prevSims.map((s) =>
+                s.id === sim.id
+                  ? { ...s, ultimoSaldoRegistrado: saldoText }
+                  : s,
+              ),
+            );
+
+            if (sim.tarifa === "POR_SEGUNDO") {
+              try {
+                const caidaResponse = await fetch(
+                  `${API_BASE_URL}/sims/${sim.id}/verificar-caida-saldo`,
+                  {
+                    headers: {
+                      "Content-Type": "application/json",
+                      ...(localStorage.getItem("token")
+                        ? {
+                            Authorization: `Bearer ${localStorage.getItem("token")}`,
+                          }
+                        : {}),
+                    },
+                  },
+                );
+
+                if (caidaResponse.ok) {
+                  const caidaData = await caidaResponse.json();
+
+                  if (caidaData.tieneCaida) {
+                    setAlertasSaldo((prev) => {
+                      const newSet = new Set(prev);
+                      newSet.add(sim.id);
+                      return newSet;
+                    });
+                  } else {
+                    setAlertasSaldo((prev) => {
+                      if (prev.has(sim.id)) {
+                        const newSet = new Set(prev);
+                        newSet.delete(sim.id);
+                        return newSet;
+                      }
+                      return prev;
+                    });
+                  }
+                }
+              } catch (error) {
+                console.error(
+                  `Error verificando caída de saldo para SIM ${sim.id}:`,
+                  error,
+                );
+              }
+            }
+          } catch (error) {
+            console.error(`Error loading saldo for SIM ${sim.id}:`, error);
+            setSims((prevSims) =>
+              prevSims.map((s) =>
+                s.id === sim.id ? { ...s, ultimoSaldoRegistrado: "Error" } : s,
+              ),
+            );
+          }
+        }),
+      );
 
       if (i + batchSize < simsToLoad.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
     }
   };
 
   const fetchAllGroups = async () => {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/sims/grupos-todos`);
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/sims/grupos-todos`,
+      );
       const grupos = await response.json();
       setGruposDisponibles(grupos);
     } catch (error) {
@@ -1295,15 +1641,11 @@ const EquiposSim = () => {
   };
 
   const fetchData = async () => {
-    await Promise.all([
-      fetchCriticalData(),
-      fetchAllSims()
-    ]);
+    await Promise.all([fetchCriticalData(), fetchAllSims()]);
   };
 
-
   const openModal = async (modalType, data = {}) => {
-    if (modalType === 'form') {
+    if (modalType === "form") {
       await loadEquiposIfNeeded();
     }
 
@@ -1347,7 +1689,9 @@ const EquiposSim = () => {
       case "sim":
         navigate("/equipos_sim");
         break;
-      case "creditos-plataforma": navigate("/equipos_creditosplataforma"); break;
+      case "creditos-plataforma":
+        navigate("/equipos_creditosplataforma");
+        break;
       default:
         break;
     }
@@ -1358,7 +1702,7 @@ const EquiposSim = () => {
       let imei = null;
       let nombre = null;
 
-      if (simResponse.equipo && typeof simResponse.equipo === 'object') {
+      if (simResponse.equipo && typeof simResponse.equipo === "object") {
         imei = simResponse.equipo.imei;
         nombre = simResponse.equipo.nombre;
       } else {
@@ -1368,26 +1712,31 @@ const EquiposSim = () => {
       if (!imei) return null;
 
       if (!nombre) {
-        const equipoEnLista = listaEquipos.find(e => e.imei === imei);
+        const equipoEnLista = listaEquipos.find((e) => e.imei === imei);
         if (equipoEnLista) {
           nombre = equipoEnLista.nombre;
-        }
-        else if (simAnterior && simAnterior.equipo && simAnterior.equipo.imei === imei) {
+        } else if (
+          simAnterior &&
+          simAnterior.equipo &&
+          simAnterior.equipo.imei === imei
+        ) {
           nombre = simAnterior.equipo.nombre;
         }
       }
 
       return {
         imei: imei,
-        nombre: nombre || "Desconocido"
+        nombre: nombre || "Desconocido",
       };
     };
 
     setSims((prev) => {
-      const existingSim = prev.find(s => s.id === simData.id);
+      const existingSim = prev.find((s) => s.id === simData.id);
       const isNew = !existingSim;
 
-      const saldoVisual = existingSim ? existingSim.ultimoSaldoRegistrado : (simData.ultimoSaldoRegistrado || "Sin registros");
+      const saldoVisual = existingSim
+        ? existingSim.ultimoSaldoRegistrado
+        : simData.ultimoSaldoRegistrado || "Sin registros";
 
       const equipoMapeado = resolverEquipo(simData, existingSim, equipos);
 
@@ -1396,20 +1745,20 @@ const EquiposSim = () => {
         recarga: simData.recarga,
         compañia: simData.tarifa === "M2M_GLOBAL_15" ? "M2M" : "Telcel",
         equipo: equipoMapeado,
-        ultimoSaldoRegistrado: existingSim ? existingSim.ultimoSaldoRegistrado : "Sin registros"
+        ultimoSaldoRegistrado: existingSim
+          ? existingSim.ultimoSaldoRegistrado
+          : "Sin registros",
       };
 
       if (isNew) {
         return [simWithEquipo, ...prev];
       } else {
-        return prev.map(sim =>
-          sim.id === simData.id ? simWithEquipo : sim
-        );
+        return prev.map((sim) => (sim.id === simData.id ? simWithEquipo : sim));
       }
     });
 
     setAllSims((prev) => {
-      const existingSim = prev.find(s => s.id === simData.id);
+      const existingSim = prev.find((s) => s.id === simData.id);
       const isNew = !existingSim;
 
       const equipoMapeado = resolverEquipo(simData, existingSim, equipos);
@@ -1418,22 +1767,22 @@ const EquiposSim = () => {
         ...simData,
         recarga: simData.recarga,
         compañia: simData.tarifa === "M2M_GLOBAL_15" ? "M2M" : "Telcel",
-        equipo: equipoMapeado
+        equipo: equipoMapeado,
       };
 
       if (isNew) {
         return [simWithEquipo, ...prev];
       } else {
-        return prev.map(sim =>
-          sim.id === simData.id ? simWithEquipo : sim
-        );
+        return prev.map((sim) => (sim.id === simData.id ? simWithEquipo : sim));
       }
     });
 
     Swal.fire({
       icon: "success",
       title: "Éxito",
-      text: simData.id ? "SIM actualizada correctamente" : "SIM agregada correctamente",
+      text: simData.id
+        ? "SIM actualizada correctamente"
+        : "SIM agregada correctamente",
     });
     fetchSims();
   };
@@ -1441,9 +1790,15 @@ const EquiposSim = () => {
   const handleDeleteSim = async () => {
     const simId = modals.confirmDelete.sim?.id;
     try {
-      await fetchWithToken(`${API_BASE_URL}/sims/${simId}`, { method: "DELETE" });
+      await fetchWithToken(`${API_BASE_URL}/sims/${simId}`, {
+        method: "DELETE",
+      });
       fetchData();
-      Swal.fire({ icon: "success", title: "Éxito", text: "SIM eliminada correctamente" });
+      Swal.fire({
+        icon: "success",
+        title: "Éxito",
+        text: "SIM eliminada correctamente",
+      });
     } catch (error) {
       Swal.fire({ icon: "error", title: "Error", text: error.message });
     }
@@ -1453,16 +1808,22 @@ const EquiposSim = () => {
   const handleSaveSaldo = async (simId, registroSaldo) => {
     try {
       const params = new URLSearchParams();
-      if (registroSaldo.saldoActual) params.append("saldoActual", registroSaldo.saldoActual);
+      if (registroSaldo.saldoActual)
+        params.append("saldoActual", registroSaldo.saldoActual);
       if (registroSaldo.datos) params.append("datos", registroSaldo.datos);
       if (registroSaldo.fecha) params.append("fecha", registroSaldo.fecha);
-      const response = await fetchWithToken(`${API_BASE_URL}/sims/${simId}/saldo?${params.toString()}`, {
-        method: "POST",
-      });
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/sims/${simId}/saldo?${params.toString()}`,
+        {
+          method: "POST",
+        },
+      );
       if (!response.ok) throw new Error("Error al guardar el saldo");
       const data = await response.json();
 
-      const historialResponse = await fetchWithToken(`${API_BASE_URL}/sims/${simId}/historial`);
+      const historialResponse = await fetchWithToken(
+        `${API_BASE_URL}/sims/${simId}/historial`,
+      );
       const historialData = await historialResponse.json();
       setModals((prev) => {
         const currentSim = prev.saldos.sim;
@@ -1495,11 +1856,17 @@ const EquiposSim = () => {
   };
 
   const formatDate = (dateString) => {
-    return dateString ? new Date(dateString + "T00:00:00-06:00").toLocaleDateString("es-MX", { timeZone: "America/Mexico_City" }) : "N/A";
+    return dateString
+      ? new Date(dateString + "T00:00:00-06:00").toLocaleDateString("es-MX", {
+          timeZone: "America/Mexico_City",
+        })
+      : "N/A";
   };
 
   const toggleOrdenFechaVigencia = () => {
-    setOrdenFechaVigencia(prevOrden => prevOrden === 'desc' ? 'asc' : 'desc');
+    setOrdenFechaVigencia((prevOrden) =>
+      prevOrden === "desc" ? "asc" : "desc",
+    );
   };
 
   const getSimsOrdenados = () => {
@@ -1510,7 +1877,7 @@ const EquiposSim = () => {
       const fechaB = b.vigencia ? new Date(b.vigencia).getTime() : 0;
 
       if (fechaA !== fechaB) {
-        if (ordenFechaVigencia === 'asc') {
+        if (ordenFechaVigencia === "asc") {
           return fechaA - fechaB;
         } else {
           return fechaB - fechaA;
@@ -1523,15 +1890,24 @@ const EquiposSim = () => {
   };
 
   const getSaldoClassName = (sim) => {
-    if (!sim.ultimoSaldoRegistrado || sim.ultimoSaldoRegistrado === "Sin registros" || sim.ultimoSaldoRegistrado === "N/A") {
+    if (
+      !sim.ultimoSaldoRegistrado ||
+      sim.ultimoSaldoRegistrado === "Sin registros" ||
+      sim.ultimoSaldoRegistrado === "N/A"
+    ) {
       return "";
     }
 
     let className = "";
 
     // Para tarifa POR_SEGUNDO (Saldos en dinero)
-    if (sim.tarifa === "POR_SEGUNDO" && sim.ultimoSaldoRegistrado.startsWith("$")) {
-      const saldoValue = parseFloat(sim.ultimoSaldoRegistrado.replace("$", "").trim());
+    if (
+      sim.tarifa === "POR_SEGUNDO" &&
+      sim.ultimoSaldoRegistrado.startsWith("$")
+    ) {
+      const saldoValue = parseFloat(
+        sim.ultimoSaldoRegistrado.replace("$", "").trim(),
+      );
 
       if (!isNaN(saldoValue)) {
         if (saldoValue < 10) {
@@ -1544,8 +1920,13 @@ const EquiposSim = () => {
     }
 
     // Para tarifa M2M_GLOBAL_15 (Datos)
-    if (sim.tarifa === "M2M_GLOBAL_15" && sim.ultimoSaldoRegistrado.includes("MB")) {
-      const datosValue = parseFloat(sim.ultimoSaldoRegistrado.replace("MB", "").trim());
+    if (
+      sim.tarifa === "M2M_GLOBAL_15" &&
+      sim.ultimoSaldoRegistrado.includes("MB")
+    ) {
+      const datosValue = parseFloat(
+        sim.ultimoSaldoRegistrado.replace("MB", "").trim(),
+      );
       if (!isNaN(datosValue) && datosValue > 15) {
         className = "sim-saldo-danger";
       }
@@ -1556,13 +1937,16 @@ const EquiposSim = () => {
 
   const aprobarAlertaSaldo = async (simId) => {
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/sims/${simId}/aprobar-alerta`, {
-        method: 'POST'
-      });
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/sims/${simId}/aprobar-alerta`,
+        {
+          method: "POST",
+        },
+      );
 
       if (!response.ok) throw new Error("Error al aprobar alerta");
 
-      setAlertasSaldo(prev => {
+      setAlertasSaldo((prev) => {
         const newSet = new Set(prev);
         newSet.delete(simId);
         return newSet;
@@ -1573,15 +1957,14 @@ const EquiposSim = () => {
         title: "Alerta aprobada",
         text: "La alerta ha sido marcada como revisada.",
         timer: 1500,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
-
     } catch (error) {
-      console.error('Error aprobando alerta:', error);
+      console.error("Error aprobando alerta:", error);
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "No se pudo aprobar la alerta"
+        text: "No se pudo aprobar la alerta",
       });
     }
   };
@@ -1603,19 +1986,34 @@ const EquiposSim = () => {
                 <h3 className="sim-sidebar-title">Equipos</h3>
               </div>
               <div className="sim-sidebar-menu">
-                <div className="sim-menu-item" onClick={() => handleMenuNavigation("estatus-plataforma")}>
+                <div
+                  className="sim-menu-item"
+                  onClick={() => handleMenuNavigation("estatus-plataforma")}
+                >
                   Estatus plataforma
                 </div>
-                <div className="sim-menu-item" onClick={() => handleMenuNavigation("modelos")}>
+                <div
+                  className="sim-menu-item"
+                  onClick={() => handleMenuNavigation("modelos")}
+                >
                   Modelos
                 </div>
-                <div className="sim-menu-item" onClick={() => handleMenuNavigation("proveedores")}>
+                <div
+                  className="sim-menu-item"
+                  onClick={() => handleMenuNavigation("proveedores")}
+                >
                   Proveedores
                 </div>
-                <div className="sim-menu-item" onClick={() => handleMenuNavigation("inventario")}>
+                <div
+                  className="sim-menu-item"
+                  onClick={() => handleMenuNavigation("inventario")}
+                >
                   Inventario de equipos
                 </div>
-                <div className="sim-menu-item sim-menu-item-active" onClick={() => handleMenuNavigation("sim")}>
+                <div
+                  className="sim-menu-item sim-menu-item-active"
+                  onClick={() => handleMenuNavigation("sim")}
+                >
                   SIM
                 </div>
                 <div
@@ -1631,7 +2029,9 @@ const EquiposSim = () => {
               <div className="sim-header">
                 <div className="sim-header-info">
                   <h3 className="sim-page-title">SIM</h3>
-                  <p className="sim-subtitle">Gestión de SIMs asociadas a equipos</p>
+                  <p className="sim-subtitle">
+                    Gestión de SIMs asociadas a equipos
+                  </p>
                 </div>
               </div>
 
@@ -1642,9 +2042,11 @@ const EquiposSim = () => {
                     <button
                       className="sim-btn sim-btn-secondary sim-btn-orden"
                       onClick={toggleOrdenFechaVigencia}
-                      title={`Cambiar a orden ${ordenFechaVigencia === 'desc' ? 'ascendente' : 'descendente'} por vigencia`}
+                      title={`Cambiar a orden ${ordenFechaVigencia === "desc" ? "ascendente" : "descendente"} por vigencia`}
                     >
-                      {ordenFechaVigencia === 'desc' ? '📅 ↓ Recientes primero' : '📅 ↑ Antiguas primero'}
+                      {ordenFechaVigencia === "desc"
+                        ? "📅 ↓ Recientes primero"
+                        : "📅 ↑ Antiguas primero"}
                     </button>
                     <input
                       type="text"
@@ -1673,7 +2075,10 @@ const EquiposSim = () => {
                           </option>
                         ))}
                     </select>
-                    <button className="sim-btn sim-btn-primary" onClick={() => openModal("form", { sim: null })}>
+                    <button
+                      className="sim-btn sim-btn-primary"
+                      onClick={() => openModal("form", { sim: null })}
+                    >
                       Agregar SIM
                     </button>
                   </div>
@@ -1697,74 +2102,99 @@ const EquiposSim = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {getSimsOrdenados()
-                        .map((sim) => (
-                          <tr key={sim.id} className={alertasSaldo.has(sim.id) ? "sim-row-alert-caida" : ""}>
-                            <td>{sim.numero}</td>
-                            <td>{sim.tarifa}</td>
-                            <td>{sim.tarifa === "M2M_GLOBAL_15" ? "M2M" : sim.compañia || "Telcel"}</td>
-                            <td>{formatDate(sim.vigencia)}</td>
-                            <td>{sim.recarga ? `$${sim.recarga}` : "N/A"}</td>
-                            <td>{sim.responsable}</td>
-                            <td>{sim.grupo !== null && sim.grupo !== undefined ? `Grupo ${sim.grupo}` : "N/A"}</td>
-                            <td>
-                              <span className={sim.principal === "SI" ? "sim-principal-si" : "sim-principal-no"}>
-                                {sim.principal}
-                              </span>
-                            </td>
-                            <td>{sim.equipo?.nombre || "N/A"}</td>
-                            <td className={getSaldoClassName(sim)}>
-                              {sim.ultimoSaldoRegistrado || "Sin registros"}
-                            </td>
-                            <td>{sim.contrasena || "N/A"}</td>
-                            <td>
-                              <div className="sim-action-buttons">
+                      {getSimsOrdenados().map((sim) => (
+                        <tr
+                          key={sim.id}
+                          className={
+                            alertasSaldo.has(sim.id)
+                              ? "sim-row-alert-caida"
+                              : ""
+                          }
+                        >
+                          <td>{sim.numero}</td>
+                          <td>{sim.tarifa}</td>
+                          <td>
+                            {sim.tarifa === "M2M_GLOBAL_15"
+                              ? "M2M"
+                              : sim.compañia || "Telcel"}
+                          </td>
+                          <td>{formatDate(sim.vigencia)}</td>
+                          <td>{sim.recarga ? `$${sim.recarga}` : "N/A"}</td>
+                          <td>{sim.responsable}</td>
+                          <td>
+                            {sim.grupo !== null && sim.grupo !== undefined
+                              ? `Grupo ${sim.grupo}`
+                              : "N/A"}
+                          </td>
+                          <td>
+                            <span
+                              className={
+                                sim.principal === "SI"
+                                  ? "sim-principal-si"
+                                  : "sim-principal-no"
+                              }
+                            >
+                              {sim.principal}
+                            </span>
+                          </td>
+                          <td>{sim.equipo?.nombre || "N/A"}</td>
+                          <td className={getSaldoClassName(sim)}>
+                            {sim.ultimoSaldoRegistrado || "Sin registros"}
+                          </td>
+                          <td>{sim.contrasena || "N/A"}</td>
+                          <td>
+                            <div className="sim-action-buttons">
+                              <button
+                                className="sim-btn-action sim-edit"
+                                onClick={() => openModal("form", { sim })}
+                                title="Editar"
+                              >
+                                <img src={editIcon} alt="Editar" />
+                              </button>
+                              <button
+                                className="sim-btn-action sim-details"
+                                onClick={() => openModal("details", { sim })}
+                                title="Ver detalles"
+                              >
+                                <img src={detailsIcon} alt="Ver detalles" />
+                              </button>
+                              {(userRole === "ADMINISTRADOR" ||
+                                userRole === "GESTOR") && (
                                 <button
-                                  className="sim-btn-action sim-edit"
-                                  onClick={() => openModal("form", { sim })}
-                                  title="Editar"
+                                  className="sim-btn-action sim-delete"
+                                  onClick={() => {
+                                    const hasEquipoVinculado =
+                                      sim.equipo !== null;
+                                    openModal("confirmDelete", {
+                                      sim,
+                                      hasEquipoVinculado,
+                                    });
+                                  }}
+                                  title="Eliminar"
                                 >
-                                  <img src={editIcon} alt="Editar" />
+                                  <img src={deleteIcon} alt="Eliminar" />
                                 </button>
+                              )}
+                              <button
+                                className="sim-btn-action sim-saldos"
+                                onClick={() => openModal("saldos", { sim })}
+                                title="Saldos"
+                              >
+                                <img src={balancesIcon} alt="Saldos" />
+                              </button>
+                              {alertasSaldo.has(sim.id) && (
                                 <button
-                                  className="sim-btn-action sim-details"
-                                  onClick={() => openModal("details", { sim })}
-                                  title="Ver detalles"
+                                  className="sim-btn-action sim-aprobar"
+                                  onClick={() => aprobarAlertaSaldo(sim.id)}
+                                  title="Aprobar alerta de caída"
                                 >
-                                  <img src={detailsIcon} alt="Ver detalles" />
+                                  <img src={aprobarIcon} alt="Aprobar" />
                                 </button>
-                                {(userRole === "ADMINISTRADOR" || userRole === "GESTOR") && (
-                                  <button
-                                    className="sim-btn-action sim-delete"
-                                    onClick={() => {
-                                      const hasEquipoVinculado = sim.equipo !== null;
-                                      openModal("confirmDelete", { sim, hasEquipoVinculado });
-                                    }}
-                                    title="Eliminar"
-                                  >
-                                    <img src={deleteIcon} alt="Eliminar" />
-                                  </button>
-                                )}
-                                <button
-                                  className="sim-btn-action sim-saldos"
-                                  onClick={() => openModal("saldos", { sim })}
-                                  title="Saldos"
-                                >
-                                  <img src={balancesIcon} alt="Saldos" />
-                                </button>
-                                {alertasSaldo.has(sim.id) && (
-                                  <button
-                                    className="sim-btn-action sim-aprobar"
-                                    onClick={() => aprobarAlertaSaldo(sim.id)}
-                                    title="Aprobar alerta de caída"
-                                  >
-                                    <img src={aprobarIcon} alt="Aprobar" />
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
                       {sims.length === 0 && (
                         <tr>
                           <td colSpan="12" className="sim-no-data">
@@ -1816,5 +2246,5 @@ const EquiposSim = () => {
   );
 };
 
-export default EquiposSim
+export default EquiposSim;
 export { SimDetailsModal };
