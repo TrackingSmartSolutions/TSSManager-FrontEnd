@@ -30,6 +30,18 @@ const fetchWithToken = async (url, options = {}) => {
   return response;
 };
 
+const limpiarNombreArchivo = (nombre) => {
+  if (!nombre) return "SIN_CLIENTE";
+  return nombre
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // quita acentos
+    .replace(/[^a-zA-Z0-9\s]/g, "") // quita . , & / etc.
+    .trim()
+    .replace(/\s+/g, "_") // espacios -> guion bajo
+    .toUpperCase()
+    .substring(0, 40); // evita nombres kilométricos
+};
+
 // Función para convertir números a letras
 const numeroALetras = (numero) => {
   const unidades = [
@@ -2103,7 +2115,13 @@ const AdminCotizaciones = () => {
       const blob = await response.blob();
 
       const url = window.URL.createObjectURL(blob);
-      const filename = `COTIZACION_${cotizacionId}_${new Date().toLocaleDateString("es-MX").replace(/\//g, "-")}.pdf`;
+
+      const cotizacionActual = cotizaciones.find((c) => c.id === cotizacionId);
+      const nombreCliente = limpiarNombreArchivo(
+        cotizacionActual?.clienteNombre,
+      );
+
+      const filename = `COTIZACION_${cotizacionId}_${nombreCliente}_${new Date().toLocaleDateString("es-MX").replace(/\//g, "-")}.pdf`;
 
       setPdfPreview({
         isOpen: true,

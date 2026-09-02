@@ -6,62 +6,127 @@ import Swal from "sweetalert2";
 import deleteIcon from "../../assets/icons/eliminar.png";
 import editIcon from "../../assets/icons/editar.png";
 import downloadIcon from "../../assets/icons/descarga.png";
-import stampIcon from "../../assets/icons/timbrar.png"
-import DatePicker from "react-datepicker"
-import "react-datepicker/dist/react-datepicker.css"
+import stampIcon from "../../assets/icons/timbrar.png";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { API_BASE_URL } from "../Config/Config";
 
 const fetchWithToken = async (url, options = {}) => {
   const token = localStorage.getItem("token");
   const headers = {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(!options.body || !(options.body instanceof FormData) ? { "Content-Type": "application/json" } : {}),
+    ...(!options.body || !(options.body instanceof FormData)
+      ? { "Content-Type": "application/json" }
+      : {}),
     ...options.headers,
   };
   const response = await fetch(url, { ...options, headers });
-  if (!response.ok) throw new Error(`Error en la solicitud: ${response.status} - ${response.statusText}`);
+  if (!response.ok)
+    throw new Error(
+      `Error en la solicitud: ${response.status} - ${response.statusText}`,
+    );
   return response;
 };
 
+const limpiarNombreArchivo = (nombre) => {
+  if (!nombre) return "SIN_CLIENTE";
+  return nombre
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // quita acentos
+    .replace(/[^a-zA-Z0-9\s]/g, "") // quita . , & / etc.
+    .trim()
+    .replace(/\s+/g, "_") // espacios -> guion bajo
+    .toUpperCase()
+    .substring(0, 40); // evita nombres kilométricos
+};
+
 // Componente Modal Base
-const Modal = ({ isOpen, onClose, title, children, size = "md", closeOnOverlayClick = true }) => {
+const Modal = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = "md",
+  closeOnOverlayClick = true,
+}) => {
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "unset";
-    return () => { document.body.style.overflow = "unset"; };
+    return () => {
+      document.body.style.overflow = "unset";
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   const overlayStyle = {
-    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1050,
   };
 
-  let widthStyle = '500px';
-  let maxWidthStyle = '95%';
+  let widthStyle = "500px";
+  let maxWidthStyle = "95%";
 
-  if (size === 'lg') widthStyle = '800px';
-  else if (size === 'xl') widthStyle = '950px';
+  if (size === "lg") widthStyle = "800px";
+  else if (size === "xl") widthStyle = "950px";
 
   const contentStyle = {
-    backgroundColor: 'white', borderRadius: '8px', padding: '20px',
-    maxHeight: '95vh', overflowY: 'auto', width: widthStyle, maxWidth: maxWidthStyle,
-    position: 'relative', boxShadow: '0 5px 15px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column'
+    backgroundColor: "white",
+    borderRadius: "8px",
+    padding: "20px",
+    maxHeight: "95vh",
+    overflowY: "auto",
+    width: widthStyle,
+    maxWidth: maxWidthStyle,
+    position: "relative",
+    boxShadow: "0 5px 15px rgba(0,0,0,0.5)",
+    display: "flex",
+    flexDirection: "column",
   };
 
   return (
-    <div style={overlayStyle} onClick={closeOnOverlayClick ? onClose : () => { }}>
+    <div
+      style={overlayStyle}
+      onClick={closeOnOverlayClick ? onClose : () => {}}
+    >
       <div style={contentStyle} onClick={(e) => e.stopPropagation()}>
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          marginBottom: '10px', borderBottom: '1px solid #dee2e6', paddingBottom: '10px'
-        }}>
-          <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>{title}</h2>
-          <button onClick={onClose} style={{
-            border: 'none', background: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#6c757d', padding: '0 5px'
-          }}>✕</button>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "10px",
+            borderBottom: "1px solid #dee2e6",
+            paddingBottom: "10px",
+          }}
+        >
+          <h2 style={{ margin: 0, fontSize: "1rem", fontWeight: 600 }}>
+            {title}
+          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              border: "none",
+              background: "none",
+              fontSize: "1.2rem",
+              cursor: "pointer",
+              color: "#6c757d",
+              padding: "0 5px",
+            }}
+          >
+            ✕
+          </button>
         </div>
-        <div style={{ overflowY: 'auto', maxHeight: '100%', padding: '0 12px' }}>
+        <div
+          style={{ overflowY: "auto", maxHeight: "100%", padding: "0 12px" }}
+        >
           {children}
         </div>
       </div>
@@ -74,34 +139,52 @@ const PdfPreviewModal = ({ isOpen, onClose, pdfUrl, onDownload }) => {
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Vista previa" size="xl" closeOnOverlayClick={false}>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Vista previa"
+      size="xl"
+      closeOnOverlayClick={false}
+    >
+      <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: "10px",
+          }}
+        >
           <button
             type="button"
             onClick={onDownload}
             className="facturacion-btn facturacion-btn-primary"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              backgroundColor: '#c73232',
-              borderColor: '#c73232',
-              color: '#ffffff'
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              backgroundColor: "#c73232",
+              borderColor: "#c73232",
+              color: "#ffffff",
             }}
           >
             Descargar PDF
           </button>
         </div>
 
-        <div style={{
-          border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden',
-          height: '75vh'
-        }}>
+        <div
+          style={{
+            border: "1px solid #ddd",
+            borderRadius: "4px",
+            overflow: "hidden",
+            height: "75vh",
+          }}
+        >
           <iframe
             src={`${pdfUrl}#view=FitH&navpanes=0&toolbar=0`}
             title="Vista Previa"
-            width="100%" height="100%" style={{ border: 'none' }}
+            width="100%"
+            height="100%"
+            style={{ border: "none" }}
           />
         </div>
       </div>
@@ -158,7 +241,7 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
 
   const handleInputChange = (field, value) => {
     if (field === "telefono") {
-      const numericValue = value.replace(/\D/g, '').slice(0, 10);
+      const numericValue = value.replace(/\D/g, "").slice(0, 10);
       setFormData((prev) => ({ ...prev, [field]: numericValue }));
     } else {
       setFormData((prev) => ({ ...prev, [field]: value }));
@@ -173,7 +256,10 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
     const file = e.target.files[0];
     if (file) {
       if (file.type !== "application/pdf") {
-        setErrors((prev) => ({ ...prev, constanciaRegimen: "Solo se permiten archivos PDF" }));
+        setErrors((prev) => ({
+          ...prev,
+          constanciaRegimen: "Solo se permiten archivos PDF",
+        }));
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
@@ -184,7 +270,11 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
         });
         return;
       }
-      setFormData((prev) => ({ ...prev, constanciaRegimen: file, constanciaRegimenUrl: "" }));
+      setFormData((prev) => ({
+        ...prev,
+        constanciaRegimen: file,
+        constanciaRegimenUrl: "",
+      }));
       setErrors((prev) => ({ ...prev, constanciaRegimen: "" }));
     }
   };
@@ -193,12 +283,15 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
     const newErrors = {};
 
     if (!formData.nombre.trim()) newErrors.nombre = "El nombre es obligatorio";
-    if (!formData.razonSocial.trim()) newErrors.razonSocial = "La razón social es obligatoria";
-    if (!formData.direccion.trim()) newErrors.direccion = "La dirección es obligatoria";
+    if (!formData.razonSocial.trim())
+      newErrors.razonSocial = "La razón social es obligatoria";
+    if (!formData.direccion.trim())
+      newErrors.direccion = "La dirección es obligatoria";
     if (!formData.rfc.trim()) {
       newErrors.rfc = "El RFC es obligatorio";
     } else if (!/^[A-Z0-9&]+$/.test(formData.rfc.trim())) {
-      newErrors.rfc = "El RFC solo debe contener letras mayúsculas, números y &";
+      newErrors.rfc =
+        "El RFC solo debe contener letras mayúsculas, números y &";
     } else if (formData.rfc.trim().length > 13) {
       newErrors.rfc = "El RFC no puede tener más de 13 caracteres";
     }
@@ -225,7 +318,10 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
         rfc: formData.rfc,
         telefono: formData.telefono,
       };
-      formDataToSend.append("emisor", new Blob([JSON.stringify(emisorData)], { type: "application/json" }));
+      formDataToSend.append(
+        "emisor",
+        new Blob([JSON.stringify(emisorData)], { type: "application/json" }),
+      );
       if (formData.constanciaRegimen) {
         formDataToSend.append("constanciaRegimen", formData.constanciaRegimen);
       }
@@ -233,15 +329,21 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
       try {
         let response;
         if (isEditing) {
-          response = await fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/emisores/${formData.id}`, {
-            method: "PUT",
-            body: formDataToSend,
-          });
+          response = await fetchWithToken(
+            `${API_BASE_URL}/solicitudes-factura-nota/emisores/${formData.id}`,
+            {
+              method: "PUT",
+              body: formDataToSend,
+            },
+          );
         } else {
-          response = await fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/emisores`, {
-            method: "POST",
-            body: formDataToSend,
-          });
+          response = await fetchWithToken(
+            `${API_BASE_URL}/solicitudes-factura-nota/emisores`,
+            {
+              method: "POST",
+              body: formDataToSend,
+            },
+          );
         }
         const savedEmisor = await response.json();
         onSave(savedEmisor);
@@ -249,7 +351,9 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
         Swal.fire({
           icon: "success",
           title: "Éxito",
-          text: isEditing ? "Emisor actualizado correctamente" : "Emisor agregado correctamente",
+          text: isEditing
+            ? "Emisor actualizado correctamente"
+            : "Emisor agregado correctamente",
         });
       } catch (error) {
         Swal.fire({ icon: "error", title: "Error", text: error.message });
@@ -260,10 +364,22 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? "Editar emisor" : "Nuevo emisor"} size="md" closeOnOverlayClick={false}>
-      <form onSubmit={handleSubmit} className="facturacion-form" encType="multipart/form-data">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isEditing ? "Editar emisor" : "Nuevo emisor"}
+      size="md"
+      closeOnOverlayClick={false}
+    >
+      <form
+        onSubmit={handleSubmit}
+        className="facturacion-form"
+        encType="multipart/form-data"
+      >
         <div className="facturacion-form-group">
-          <label htmlFor="nombre">Nombre <span className="required"> *</span></label>
+          <label htmlFor="nombre">
+            Nombre <span className="required"> *</span>
+          </label>
           <input
             type="text"
             id="nombre"
@@ -271,10 +387,14 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
             onChange={(e) => handleInputChange("nombre", e.target.value)}
             className={`facturacion-form-control ${errors.nombre ? "error" : ""}`}
           />
-          {errors.nombre && <span className="facturacion-error-message">{errors.nombre}</span>}
+          {errors.nombre && (
+            <span className="facturacion-error-message">{errors.nombre}</span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="razonSocial">Razón Social <span className="required"> *</span></label>
+          <label htmlFor="razonSocial">
+            Razón Social <span className="required"> *</span>
+          </label>
           <input
             type="text"
             id="razonSocial"
@@ -282,10 +402,16 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
             onChange={(e) => handleInputChange("razonSocial", e.target.value)}
             className={`facturacion-form-control ${errors.razonSocial ? "error" : ""}`}
           />
-          {errors.razonSocial && <span className="facturacion-error-message">{errors.razonSocial}</span>}
+          {errors.razonSocial && (
+            <span className="facturacion-error-message">
+              {errors.razonSocial}
+            </span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="direccion">Dirección <span className="required"> *</span></label>
+          <label htmlFor="direccion">
+            Dirección <span className="required"> *</span>
+          </label>
           <input
             type="text"
             id="direccion"
@@ -293,22 +419,34 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
             onChange={(e) => handleInputChange("direccion", e.target.value)}
             className={`facturacion-form-control ${errors.direccion ? "error" : ""}`}
           />
-          {errors.direccion && <span className="facturacion-error-message">{errors.direccion}</span>}
+          {errors.direccion && (
+            <span className="facturacion-error-message">
+              {errors.direccion}
+            </span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="rfc">RFC <span className="required"> *</span></label>
+          <label htmlFor="rfc">
+            RFC <span className="required"> *</span>
+          </label>
           <input
             type="text"
             id="rfc"
             value={formData.rfc}
-            onChange={(e) => handleInputChange("rfc", e.target.value.toUpperCase())}
+            onChange={(e) =>
+              handleInputChange("rfc", e.target.value.toUpperCase())
+            }
             className={`facturacion-form-control ${errors.rfc ? "error" : ""}`}
             maxLength={13}
           />
-          {errors.rfc && <span className="facturacion-error-message">{errors.rfc}</span>}
+          {errors.rfc && (
+            <span className="facturacion-error-message">{errors.rfc}</span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="telefono">Teléfono <span className="required"> *</span></label>
+          <label htmlFor="telefono">
+            Teléfono <span className="required"> *</span>
+          </label>
           <input
             type="text"
             id="telefono"
@@ -317,10 +455,14 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
             className={`facturacion-form-control ${errors.telefono ? "error" : ""}`}
             maxLength={10}
           />
-          {errors.telefono && <span className="facturacion-error-message">{errors.telefono}</span>}
+          {errors.telefono && (
+            <span className="facturacion-error-message">{errors.telefono}</span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="constanciaRegimen">Constancia de régimen de situación fiscal</label>
+          <label htmlFor="constanciaRegimen">
+            Constancia de régimen de situación fiscal
+          </label>
           <div className="facturacion-file-upload">
             <input
               type="file"
@@ -335,22 +477,39 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
                 {formData.constanciaRegimen
                   ? formData.constanciaRegimen.name || "Archivo seleccionado"
                   : formData.constanciaRegimenUrl
-                    ? formData.constanciaRegimenUrl.split("/").pop() || "Archivo existente"
+                    ? formData.constanciaRegimenUrl.split("/").pop() ||
+                      "Archivo existente"
                     : "Arrastra y suelta tu archivo aquí"}
               </div>
-              <div className="facturacion-file-upload-subtext">PDF máx. 5MB</div>
+              <div className="facturacion-file-upload-subtext">
+                PDF máx. 5MB
+              </div>
             </div>
           </div>
-          {errors.constanciaRegimen && <span className="facturacion-error-message">{errors.constanciaRegimen}</span>}
+          {errors.constanciaRegimen && (
+            <span className="facturacion-error-message">
+              {errors.constanciaRegimen}
+            </span>
+          )}
         </div>
         <div className="facturacion-form-actions">
-          <button type="button" onClick={onClose} className="facturacion-btn facturacion-btn-cancel">Cancelar</button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="facturacion-btn facturacion-btn-cancel"
+          >
+            Cancelar
+          </button>
           <button
             type="submit"
             className="facturacion-btn facturacion-btn-primary"
             disabled={isLoading}
           >
-            {isLoading ? "Guardando..." : (isEditing ? "Guardar cambios" : "Agregar")}
+            {isLoading
+              ? "Guardando..."
+              : isEditing
+                ? "Guardar cambios"
+                : "Agregar"}
           </button>
         </div>
       </form>
@@ -359,7 +518,15 @@ const EmisorModal = ({ isOpen, onClose, onSave, emisor = null }) => {
 };
 
 // Modal para Nueva/Editar Solicitud
-const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizaciones, cuentasPorCobrar, emisores }) => {
+const SolicitudModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  solicitud = null,
+  cotizaciones,
+  cuentasPorCobrar,
+  emisores,
+}) => {
   const [formData, setFormData] = useState({
     id: null,
     cotizacion: "",
@@ -386,23 +553,49 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
     { value: "G02", label: "G02 - Devoluciones, descuentos o bonificaciones" },
     { value: "G03", label: "G03 - Gastos en General" },
     { value: "I01", label: "I01 - Construcciones" },
-    { value: "I02", label: "I02 - Mobiliario y Equipo de Oficina por inversiones" },
+    {
+      value: "I02",
+      label: "I02 - Mobiliario y Equipo de Oficina por inversiones",
+    },
     { value: "I03", label: "I03 - Equipo de transporte" },
     { value: "I04", label: "I04 - Equipo de cómputo y accesorios" },
-    { value: "I05", label: "I05 - Dados, troqueles, moldes, matrices y herramientas" },
+    {
+      value: "I05",
+      label: "I05 - Dados, troqueles, moldes, matrices y herramientas",
+    },
     { value: "I06", label: "I06 - Comunicaciones telefónicas" },
     { value: "I07", label: "I07 - Comunicaciones satelitales" },
     { value: "I08", label: "I08 - Otra maquinaria y equipo" },
-    { value: "D01", label: "D01 - Honorarios médicos, dentales y hospitalarios" },
-    { value: "D02", label: "D02 - Gastos médicos por incapacidad o discapacidad" },
+    {
+      value: "D01",
+      label: "D01 - Honorarios médicos, dentales y hospitalarios",
+    },
+    {
+      value: "D02",
+      label: "D02 - Gastos médicos por incapacidad o discapacidad",
+    },
     { value: "D03", label: "D03 - Gastos funerales" },
     { value: "D04", label: "D04 - Donativos" },
-    { value: "D05", label: "D05 - Intereses reales efectivamente pagados por créditos hipotecarios (casa habitación)" },
+    {
+      value: "D05",
+      label:
+        "D05 - Intereses reales efectivamente pagados por créditos hipotecarios (casa habitación)",
+    },
     { value: "D06", label: "D06 - Aportaciones voluntarias al SAR" },
     { value: "D07", label: "D07 - Primas por seguros de gastos médicos" },
-    { value: "D08", label: "D08 - Gastos por transportación escolar obligatoria" },
-    { value: "D09", label: "D09 - Depósitos en cuentas para el ahorro, primas que tengan como base planes de pensiones" },
-    { value: "D10", label: "D10 - Pagos por servicios educativos (colegiaturas)" },
+    {
+      value: "D08",
+      label: "D08 - Gastos por transportación escolar obligatoria",
+    },
+    {
+      value: "D09",
+      label:
+        "D09 - Depósitos en cuentas para el ahorro, primas que tengan como base planes de pensiones",
+    },
+    {
+      value: "D10",
+      label: "D10 - Pagos por servicios educativos (colegiaturas)",
+    },
     { value: "P01", label: "P01 - Por definir" },
   ];
 
@@ -428,15 +621,45 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
   ];
 
   const clavesProductoServicio = [
-    { value: "25173108", label: "25173108 - Sistemas de navegación vehicular (Sistema GPS)" },
-    { value: "25173107", label: "25173107 - Sistemas de posicionamiento global de vehículos" },
-    { value: "43211710", label: "43211710 - Dispositivos de identificación de radio frecuencia" },
-    { value: "43212116", label: "43212116 - Impresoras de etiquetas de identificación de radio frecuencia rfid" },
-    { value: "81111810", label: "81111810 - Servicios de codificación de software" },
-    { value: "81111501", label: "81111501 - Diseño de aplicaciones de software de la unidad central" },
-    { value: "81111510", label: "81111510 - Servicios de desarrollo de aplicaciones para servidores" },
-    { value: "81112106", label: "81112106 - Proveedores de servicios de aplicación" },
-    { value: "81112105", label: "81112105 - Servicios de hospedaje de operación de sitios web" },
+    {
+      value: "25173108",
+      label: "25173108 - Sistemas de navegación vehicular (Sistema GPS)",
+    },
+    {
+      value: "25173107",
+      label: "25173107 - Sistemas de posicionamiento global de vehículos",
+    },
+    {
+      value: "43211710",
+      label: "43211710 - Dispositivos de identificación de radio frecuencia",
+    },
+    {
+      value: "43212116",
+      label:
+        "43212116 - Impresoras de etiquetas de identificación de radio frecuencia rfid",
+    },
+    {
+      value: "81111810",
+      label: "81111810 - Servicios de codificación de software",
+    },
+    {
+      value: "81111501",
+      label:
+        "81111501 - Diseño de aplicaciones de software de la unidad central",
+    },
+    {
+      value: "81111510",
+      label:
+        "81111510 - Servicios de desarrollo de aplicaciones para servidores",
+    },
+    {
+      value: "81112106",
+      label: "81112106 - Proveedores de servicios de aplicación",
+    },
+    {
+      value: "81112105",
+      label: "81112105 - Servicios de hospedaje de operación de sitios web",
+    },
     { value: "20121910", label: "20121910 - Sistemas de telemetría" },
   ];
 
@@ -453,16 +676,27 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
       if (solicitud) {
         setFormData({
           id: solicitud.id || null,
-          cotizacion: solicitud.cotizacionId ? String(solicitud.cotizacionId) : "",
-          fechaEmision: solicitud.fechaEmision ? solicitud.fechaEmision.split('T')[0] : "",
+          cotizacion: solicitud.cotizacionId
+            ? String(solicitud.cotizacionId)
+            : "",
+          fechaEmision: solicitud.fechaEmision
+            ? solicitud.fechaEmision.split("T")[0]
+            : "",
           metodoPago: solicitud.metodoPago || "",
           formaPago: solicitud.formaPago || "",
           tipo: solicitud.tipo || "",
           claveProductoServicio: solicitud.claveProductoServicio || "20121910",
           claveUnidad: solicitud.claveUnidad || "E48",
-          emisor: solicitud.emisorId ? String(solicitud.emisorId) : (solicitud.emisor?.id ? String(solicitud.emisor.id) : ""),
-          cuentaPorCobrar: solicitud.cuentaPorCobrarId ? String(solicitud.cuentaPorCobrarId) : "",
-          subtotal: solicitud.subtotal !== undefined ? String(solicitud.subtotal) : "",
+          emisor: solicitud.emisorId
+            ? String(solicitud.emisorId)
+            : solicitud.emisor?.id
+              ? String(solicitud.emisor.id)
+              : "",
+          cuentaPorCobrar: solicitud.cuentaPorCobrarId
+            ? String(solicitud.cuentaPorCobrarId)
+            : "",
+          subtotal:
+            solicitud.subtotal !== undefined ? String(solicitud.subtotal) : "",
           iva: solicitud.iva !== undefined ? String(solicitud.iva) : "",
           total: solicitud.total !== undefined ? String(solicitud.total) : "",
           importeLetra: solicitud.importeLetra || "",
@@ -472,7 +706,7 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
         setFormData({
           id: null,
           cotizacion: "",
-          fechaEmision: new Date().toLocaleDateString('en-CA'),
+          fechaEmision: new Date().toLocaleDateString("en-CA"),
           metodoPago: "",
           formaPago: "",
           tipo: "",
@@ -493,10 +727,14 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
 
   useEffect(() => {
     if (formData.cotizacion && cotizaciones) {
-      const cotizacionSeleccionada = cotizaciones.find((c) => c.id === parseInt(formData.cotizacion));
+      const cotizacionSeleccionada = cotizaciones.find(
+        (c) => c.id === parseInt(formData.cotizacion),
+      );
       if (cotizacionSeleccionada) {
         const empresa = cotizacionSeleccionada.empresaData;
-        const regimenRequiereRetencion = ["601", "627"].includes(empresa.regimenFiscal);
+        const regimenRequiereRetencion = ["601", "627"].includes(
+          empresa.regimenFiscal,
+        );
 
         setFormData((prev) => ({
           ...prev,
@@ -509,8 +747,15 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
         }));
 
         const empresaData = cotizacionSeleccionada.empresaData;
-        const requiredFields = ["domicilioFiscal", "rfc", "razonSocial", "regimenFiscal"];
-        const hasAllFiscalData = requiredFields.every((field) => !!empresaData[field]);
+        const requiredFields = [
+          "domicilioFiscal",
+          "rfc",
+          "razonSocial",
+          "regimenFiscal",
+        ];
+        const hasAllFiscalData = requiredFields.every(
+          (field) => !!empresaData[field],
+        );
 
         if (!hasAllFiscalData) {
           setFormData((prev) => ({
@@ -539,16 +784,27 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.metodoPago) newErrors.metodoPago = "El método de pago es obligatorio";
-    if (!formData.formaPago) newErrors.formaPago = "La forma de pago es obligatoria";
+    if (!formData.metodoPago)
+      newErrors.metodoPago = "El método de pago es obligatorio";
+    if (!formData.formaPago)
+      newErrors.formaPago = "La forma de pago es obligatoria";
     if (!formData.tipo) newErrors.tipo = "El tipo es obligatorio";
-    if (!formData.claveProductoServicio) newErrors.claveProductoServicio = "La clave producto/servicio es obligatoria";
-    if (!formData.claveUnidad) newErrors.claveUnidad = "La clave unidad es obligatoria";
+    if (!formData.claveProductoServicio)
+      newErrors.claveProductoServicio =
+        "La clave producto/servicio es obligatoria";
+    if (!formData.claveUnidad)
+      newErrors.claveUnidad = "La clave unidad es obligatoria";
     if (!formData.emisor) newErrors.emisor = "El emisor es obligatorio";
-    if (!formData.cuentaPorCobrar) newErrors.cuentaPorCobrar = "La cuenta por cobrar es obligatoria";
-    if (isEditing && !formData.fechaEmision) newErrors.fechaEmision = "La fecha de emisión es obligatoria";
-    if (formData.tipo === "SOLICITUD_DE_FACTURA" && (!formData.usoCfdi || formData.usoCfdi === "")) {
-      newErrors.usoCfdi = "El uso de CFDI es obligatorio para solicitudes de factura";
+    if (!formData.cuentaPorCobrar)
+      newErrors.cuentaPorCobrar = "La cuenta por cobrar es obligatoria";
+    if (isEditing && !formData.fechaEmision)
+      newErrors.fechaEmision = "La fecha de emisión es obligatoria";
+    if (
+      formData.tipo === "SOLICITUD_DE_FACTURA" &&
+      (!formData.usoCfdi || formData.usoCfdi === "")
+    ) {
+      newErrors.usoCfdi =
+        "El uso de CFDI es obligatorio para solicitudes de factura";
     }
 
     setErrors(newErrors);
@@ -557,10 +813,19 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
 
   const validateEmpresaFiscal = () => {
     if (formData.tipo === "SOLICITUD_DE_FACTURA") {
-      const cuentaPorCobrarData = cuentasPorCobrar.find((c) => c.id === formData.cuentaPorCobrar);
+      const cuentaPorCobrarData = cuentasPorCobrar.find(
+        (c) => c.id === formData.cuentaPorCobrar,
+      );
       if (cuentaPorCobrarData) {
-        const requiredFields = ["domicilioFiscal", "rfc", "razonSocial", "regimenFiscal"];
-        const hasAllFields = requiredFields.every((field) => cuentaPorCobrarData.cliente?.[field]);
+        const requiredFields = [
+          "domicilioFiscal",
+          "rfc",
+          "razonSocial",
+          "regimenFiscal",
+        ];
+        const hasAllFields = requiredFields.every(
+          (field) => cuentaPorCobrarData.cliente?.[field],
+        );
         return hasAllFields;
       }
     }
@@ -579,7 +844,9 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
         return;
       }
 
-      const cuentaPorCobrarData = cuentasPorCobrar.find((c) => c.id === formData.cuentaPorCobrar);
+      const cuentaPorCobrarData = cuentasPorCobrar.find(
+        (c) => c.id === formData.cuentaPorCobrar,
+      );
       const clienteId = cuentaPorCobrarData?.cliente?.id || null;
 
       const solicitudData = {
@@ -620,7 +887,9 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
         Swal.fire({
           icon: "success",
           title: "Éxito",
-          text: isEditing ? "Solicitud actualizada correctamente" : "Solicitud creada correctamente",
+          text: isEditing
+            ? "Solicitud actualizada correctamente"
+            : "Solicitud creada correctamente",
         });
       } catch (error) {
         Swal.fire({ icon: "error", title: "Error", text: error.message });
@@ -631,13 +900,19 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditing ? "Editar Solicitud de Factura/Nota" : "Nueva Solicitud de Factura/Nota"}
+      title={
+        isEditing
+          ? "Editar Solicitud de Factura/Nota"
+          : "Nueva Solicitud de Factura/Nota"
+      }
       size="md"
       closeOnOverlayClick={false}
     >
       <form onSubmit={handleSubmit} className="facturacion-form">
         <div className="facturacion-form-group">
-          <label htmlFor="cotizacion">Cotización <span className="required"> *</span></label>
+          <label htmlFor="cotizacion">
+            Cotización <span className="required"> *</span>
+          </label>
           <select
             id="cotizacion"
             value={formData.cotizacion}
@@ -647,25 +922,37 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
           >
             <option value="">Ninguna seleccionada</option>
             {cotizaciones.map((cotizacion) => (
-              <option key={cotizacion.id} value={cotizacion.id}>{cotizacion.clienteNombre} - {cotizacion.id}</option>
+              <option key={cotizacion.id} value={cotizacion.id}>
+                {cotizacion.clienteNombre} - {cotizacion.id}
+              </option>
             ))}
           </select>
         </div>
         {isEditing && (
           <div className="facturacion-form-group">
-            <label htmlFor="fechaEmision">Fecha Emisión <span className="required"> *</span></label>
+            <label htmlFor="fechaEmision">
+              Fecha Emisión <span className="required"> *</span>
+            </label>
             <input
               type="date"
               id="fechaEmision"
               value={formData.fechaEmision}
-              onChange={(e) => handleInputChange("fechaEmision", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("fechaEmision", e.target.value)
+              }
               className={`facturacion-form-control ${errors.fechaEmision ? "error" : ""}`}
             />
-            {errors.fechaEmision && <span className="facturacion-error-message">{errors.fechaEmision}</span>}
+            {errors.fechaEmision && (
+              <span className="facturacion-error-message">
+                {errors.fechaEmision}
+              </span>
+            )}
           </div>
         )}
         <div className="facturacion-form-group">
-          <label htmlFor="metodoPago">Método de pago <span className="required"> *</span></label>
+          <label htmlFor="metodoPago">
+            Método de pago <span className="required"> *</span>
+          </label>
           <select
             id="metodoPago"
             value={formData.metodoPago}
@@ -674,13 +961,21 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
           >
             <option value="">Seleccione un método</option>
             {metodosPago.map((metodo) => (
-              <option key={metodo.value} value={metodo.value}>{metodo.label}</option>
+              <option key={metodo.value} value={metodo.value}>
+                {metodo.label}
+              </option>
             ))}
           </select>
-          {errors.metodoPago && <span className="facturacion-error-message">{errors.metodoPago}</span>}
+          {errors.metodoPago && (
+            <span className="facturacion-error-message">
+              {errors.metodoPago}
+            </span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="formaPago">Forma de pago <span className="required"> *</span></label>
+          <label htmlFor="formaPago">
+            Forma de pago <span className="required"> *</span>
+          </label>
           <select
             id="formaPago"
             value={formData.formaPago}
@@ -689,13 +984,21 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
           >
             <option value="">Seleccione una forma</option>
             {formasPago.map((forma) => (
-              <option key={forma.value} value={forma.value}>{forma.label}</option>
+              <option key={forma.value} value={forma.value}>
+                {forma.label}
+              </option>
             ))}
           </select>
-          {errors.formaPago && <span className="facturacion-error-message">{errors.formaPago}</span>}
+          {errors.formaPago && (
+            <span className="facturacion-error-message">
+              {errors.formaPago}
+            </span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="tipo">Tipo <span className="required"> *</span></label>
+          <label htmlFor="tipo">
+            Tipo <span className="required"> *</span>
+          </label>
           <select
             id="tipo"
             value={formData.tipo}
@@ -704,17 +1007,29 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
           >
             <option value="">Seleccione un tipo</option>
             {tipos.map((tipo) => {
-              const cotizacionSeleccionada = formData.cotizacion && cotizaciones
-                ? cotizaciones.find((c) => c.id === parseInt(formData.cotizacion))
-                : null;
+              const cotizacionSeleccionada =
+                formData.cotizacion && cotizaciones
+                  ? cotizaciones.find(
+                      (c) => c.id === parseInt(formData.cotizacion),
+                    )
+                  : null;
               const empresaData = cotizacionSeleccionada?.empresaData || {};
-              const requiredFields = ["domicilioFiscal", "rfc", "razonSocial", "regimenFiscal"];
-              const hasAllFiscalData = requiredFields.every((field) => !!empresaData[field]);
+              const requiredFields = [
+                "domicilioFiscal",
+                "rfc",
+                "razonSocial",
+                "regimenFiscal",
+              ];
+              const hasAllFiscalData = requiredFields.every(
+                (field) => !!empresaData[field],
+              );
               return (
                 <option
                   key={tipo.value}
                   value={tipo.value}
-                  disabled={!hasAllFiscalData && tipo.value === "SOLICITUD_DE_FACTURA"}
+                  disabled={
+                    !hasAllFiscalData && tipo.value === "SOLICITUD_DE_FACTURA"
+                  }
                 >
                   {tipo.label}
                 </option>
@@ -723,27 +1038,43 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
           </select>
           {!hasAllFiscalData && (
             <small className="help-text">
-              Debe completar los datos fiscales (domicilio fiscal, RFC, razón social, régimen fiscal) de la empresa para poder generar una solicitud de factura.
+              Debe completar los datos fiscales (domicilio fiscal, RFC, razón
+              social, régimen fiscal) de la empresa para poder generar una
+              solicitud de factura.
             </small>
           )}
-          {errors.tipo && <span className="facturacion-error-message">{errors.tipo}</span>}
+          {errors.tipo && (
+            <span className="facturacion-error-message">{errors.tipo}</span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="claveProductoServicio">Clave Producto/Servicio <span className="required"> *</span></label>
+          <label htmlFor="claveProductoServicio">
+            Clave Producto/Servicio <span className="required"> *</span>
+          </label>
           <select
             id="claveProductoServicio"
             value={formData.claveProductoServicio}
-            onChange={(e) => handleInputChange("claveProductoServicio", e.target.value)}
+            onChange={(e) =>
+              handleInputChange("claveProductoServicio", e.target.value)
+            }
             className={`facturacion-form-control ${errors.claveProductoServicio ? "error" : ""}`}
           >
             {clavesProductoServicio.map((clave) => (
-              <option key={clave.value} value={clave.value}>{clave.label}</option>
+              <option key={clave.value} value={clave.value}>
+                {clave.label}
+              </option>
             ))}
           </select>
-          {errors.claveProductoServicio && <span className="facturacion-error-message">{errors.claveProductoServicio}</span>}
+          {errors.claveProductoServicio && (
+            <span className="facturacion-error-message">
+              {errors.claveProductoServicio}
+            </span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="claveUnidad">Clave Unidad <span className="required"> *</span></label>
+          <label htmlFor="claveUnidad">
+            Clave Unidad <span className="required"> *</span>
+          </label>
           <select
             id="claveUnidad"
             value={formData.claveUnidad}
@@ -751,13 +1082,21 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
             className={`facturacion-form-control ${errors.claveUnidad ? "error" : ""}`}
           >
             {clavesUnidad.map((clave) => (
-              <option key={clave.value} value={clave.value}>{clave.label}</option>
+              <option key={clave.value} value={clave.value}>
+                {clave.label}
+              </option>
             ))}
           </select>
-          {errors.claveUnidad && <span className="facturacion-error-message">{errors.claveUnidad}</span>}
+          {errors.claveUnidad && (
+            <span className="facturacion-error-message">
+              {errors.claveUnidad}
+            </span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="emisor">Emisor <span className="required"> *</span></label>
+          <label htmlFor="emisor">
+            Emisor <span className="required"> *</span>
+          </label>
           <select
             id="emisor"
             value={formData.emisor}
@@ -766,30 +1105,45 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
           >
             <option value="">Seleccione un emisor</option>
             {emisores.map((emisor) => (
-              <option key={emisor.id} value={emisor.id}>{emisor.nombre}</option>
+              <option key={emisor.id} value={emisor.id}>
+                {emisor.nombre}
+              </option>
             ))}
           </select>
-          {errors.emisor && <span className="facturacion-error-message">{errors.emisor}</span>}
+          {errors.emisor && (
+            <span className="facturacion-error-message">{errors.emisor}</span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="cuentaPorCobrar">Cuenta por Cobrar <span className="required"> *</span></label>
+          <label htmlFor="cuentaPorCobrar">
+            Cuenta por Cobrar <span className="required"> *</span>
+          </label>
           <select
             id="cuentaPorCobrar"
             value={formData.cuentaPorCobrar}
-            onChange={(e) => handleInputChange("cuentaPorCobrar", e.target.value)}
+            onChange={(e) =>
+              handleInputChange("cuentaPorCobrar", e.target.value)
+            }
             className={`facturacion-form-control ${errors.cuentaPorCobrar ? "error" : ""}`}
             disabled={true}
           >
             <option value="">Ninguna seleccionada</option>
-            {cuentasPorCobrar
-              .map((cuenta) => (
-                <option key={cuenta.id} value={cuenta.id}>{cuenta.folio}</option>
-              ))}
+            {cuentasPorCobrar.map((cuenta) => (
+              <option key={cuenta.id} value={cuenta.id}>
+                {cuenta.folio}
+              </option>
+            ))}
           </select>
-          {errors.cuentaPorCobrar && <span className="facturacion-error-message">{errors.cuentaPorCobrar}</span>}
+          {errors.cuentaPorCobrar && (
+            <span className="facturacion-error-message">
+              {errors.cuentaPorCobrar}
+            </span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="usoCfdi">Uso de CFDI <span className="required"> *</span></label>
+          <label htmlFor="usoCfdi">
+            Uso de CFDI <span className="required"> *</span>
+          </label>
           <select
             id="usoCfdi"
             value={formData.usoCfdi}
@@ -799,14 +1153,27 @@ const SolicitudModal = ({ isOpen, onClose, onSave, solicitud = null, cotizacione
           >
             <option value="">Seleccione un uso</option>
             {usosCfdi.map((uso) => (
-              <option key={uso.value} value={uso.value}>{uso.label}</option>
+              <option key={uso.value} value={uso.value}>
+                {uso.label}
+              </option>
             ))}
           </select>
-          {errors.usoCfdi && <span className="facturacion-error-message">{errors.usoCfdi}</span>}
+          {errors.usoCfdi && (
+            <span className="facturacion-error-message">{errors.usoCfdi}</span>
+          )}
         </div>
         <div className="facturacion-form-actions">
-          <button type="button" onClick={onClose} className="facturacion-btn facturacion-btn-cancel">Cancelar</button>
-          <button type="submit" className="facturacion-btn facturacion-btn-primary">
+          <button
+            type="button"
+            onClick={onClose}
+            className="facturacion-btn facturacion-btn-cancel"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="facturacion-btn facturacion-btn-primary"
+          >
             {isEditing ? "Guardar cambios" : "Crear"}
           </button>
         </div>
@@ -848,7 +1215,10 @@ const TimbrarModal = ({ isOpen, onClose, onSave, solicitud }) => {
     const file = e.target.files[0];
     if (file) {
       if (file.type !== "application/pdf") {
-        setErrors((prev) => ({ ...prev, facturaFiscal: "Solo se permiten archivos PDF" }));
+        setErrors((prev) => ({
+          ...prev,
+          facturaFiscal: "Solo se permiten archivos PDF",
+        }));
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
@@ -867,9 +1237,12 @@ const TimbrarModal = ({ isOpen, onClose, onSave, solicitud }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.folioFiscal.trim()) newErrors.folioFiscal = "El folio fiscal es obligatorio";
-    if (!formData.noSolicitud.trim()) newErrors.noSolicitud = "El número de solicitud es obligatorio";
-    if (!formData.facturaFiscal) newErrors.facturaFiscal = "El archivo de la factura es obligatorio";
+    if (!formData.folioFiscal.trim())
+      newErrors.folioFiscal = "El folio fiscal es obligatorio";
+    if (!formData.noSolicitud.trim())
+      newErrors.noSolicitud = "El número de solicitud es obligatorio";
+    if (!formData.facturaFiscal)
+      newErrors.facturaFiscal = "El archivo de la factura es obligatorio";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -880,17 +1253,28 @@ const TimbrarModal = ({ isOpen, onClose, onSave, solicitud }) => {
     if (validateForm()) {
       setIsLoading(true);
       const formDataToSend = new FormData();
-      formDataToSend.append("factura", new Blob([JSON.stringify({
-        folioFiscal: formData.folioFiscal,
-        noSolicitud: formData.noSolicitud,
-      })], { type: "application/json" }));
+      formDataToSend.append(
+        "factura",
+        new Blob(
+          [
+            JSON.stringify({
+              folioFiscal: formData.folioFiscal,
+              noSolicitud: formData.noSolicitud,
+            }),
+          ],
+          { type: "application/json" },
+        ),
+      );
       formDataToSend.append("archivo", formData.facturaFiscal);
 
       try {
-        const response = await fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/facturas`, {
-          method: "POST",
-          body: formDataToSend,
-        });
+        const response = await fetchWithToken(
+          `${API_BASE_URL}/solicitudes-factura-nota/facturas`,
+          {
+            method: "POST",
+            body: formDataToSend,
+          },
+        );
         const savedFactura = await response.json();
         onSave(savedFactura);
         onClose();
@@ -909,10 +1293,22 @@ const TimbrarModal = ({ isOpen, onClose, onSave, solicitud }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Timbrar Solicitud" size="md" closeOnOverlayClick={false}>
-      <form onSubmit={handleSubmit} className="facturacion-form" encType="multipart/form-data">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Timbrar Solicitud"
+      size="md"
+      closeOnOverlayClick={false}
+    >
+      <form
+        onSubmit={handleSubmit}
+        className="facturacion-form"
+        encType="multipart/form-data"
+      >
         <div className="facturacion-form-group">
-          <label htmlFor="folioFiscal">Folio Fiscal <span className="required"> *</span></label>
+          <label htmlFor="folioFiscal">
+            Folio Fiscal <span className="required"> *</span>
+          </label>
           <input
             type="text"
             id="folioFiscal"
@@ -920,10 +1316,16 @@ const TimbrarModal = ({ isOpen, onClose, onSave, solicitud }) => {
             onChange={(e) => handleInputChange("folioFiscal", e.target.value)}
             className={`facturacion-form-control ${errors.folioFiscal ? "error" : ""}`}
           />
-          {errors.folioFiscal && <span className="facturacion-error-message">{errors.folioFiscal}</span>}
+          {errors.folioFiscal && (
+            <span className="facturacion-error-message">
+              {errors.folioFiscal}
+            </span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="noSolicitud">No. Solicitud <span className="required"> *</span></label>
+          <label htmlFor="noSolicitud">
+            No. Solicitud <span className="required"> *</span>
+          </label>
           <input
             type="text"
             id="noSolicitud"
@@ -932,10 +1334,16 @@ const TimbrarModal = ({ isOpen, onClose, onSave, solicitud }) => {
             className={`facturacion-form-control ${errors.noSolicitud ? "error" : ""}`}
             readOnly
           />
-          {errors.noSolicitud && <span className="facturacion-error-message">{errors.noSolicitud}</span>}
+          {errors.noSolicitud && (
+            <span className="facturacion-error-message">
+              {errors.noSolicitud}
+            </span>
+          )}
         </div>
         <div className="facturacion-form-group">
-          <label htmlFor="facturaFiscal">Factura Fiscal <span className="required"> *</span></label>
+          <label htmlFor="facturaFiscal">
+            Factura Fiscal <span className="required"> *</span>
+          </label>
           <div className="facturacion-file-upload">
             <input
               type="file"
@@ -947,15 +1355,29 @@ const TimbrarModal = ({ isOpen, onClose, onSave, solicitud }) => {
             <div className="facturacion-file-upload-area">
               <div className="facturacion-file-upload-icon">📁</div>
               <div className="facturacion-file-upload-text">
-                {formData.facturaFiscal ? formData.facturaFiscal.name : "Arrastra y suelta tu archivo aquí"}
+                {formData.facturaFiscal
+                  ? formData.facturaFiscal.name
+                  : "Arrastra y suelta tu archivo aquí"}
               </div>
-              <div className="facturacion-file-upload-subtext">PDF máx. 5MB</div>
+              <div className="facturacion-file-upload-subtext">
+                PDF máx. 5MB
+              </div>
             </div>
           </div>
-          {errors.facturaFiscal && <span className="facturacion-error-message">{errors.facturaFiscal}</span>}
+          {errors.facturaFiscal && (
+            <span className="facturacion-error-message">
+              {errors.facturaFiscal}
+            </span>
+          )}
         </div>
         <div className="facturacion-form-actions">
-          <button type="button" onClick={onClose} className="facturacion-btn facturacion-btn-cancel">Cancelar</button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="facturacion-btn facturacion-btn-cancel"
+          >
+            Cancelar
+          </button>
           <button
             type="submit"
             className="facturacion-btn facturacion-btn-primary"
@@ -970,7 +1392,13 @@ const TimbrarModal = ({ isOpen, onClose, onSave, solicitud }) => {
 };
 
 // Modal de Confirmación de Eliminación
-const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, tipo, item }) => {
+const ConfirmarEliminacionModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  tipo,
+  item,
+}) => {
   const getMessage = () => {
     switch (tipo) {
       case "emisor":
@@ -983,7 +1411,13 @@ const ConfirmarEliminacionModal = ({ isOpen, onClose, onConfirm, tipo, item }) =
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirmar eliminación" size="sm" closeOnOverlayClick={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Confirmar eliminación"
+      size="sm"
+      closeOnOverlayClick={false}
+    >
       <div className="facturacion-confirmar-eliminacion">
         <div className="facturacion-confirmation-content">
           <p className="facturacion-confirmation-message">{getMessage()}</p>
@@ -1166,7 +1600,7 @@ const CustomDatePickerInput = ({ value, onClick, placeholder }) => (
 // Componente Principal
 const AdminFacturacion = () => {
   const navigate = useNavigate();
-  const userRol = localStorage.getItem("userRol")
+  const userRol = localStorage.getItem("userRol");
   const [emisores, setEmisores] = useState([]);
   const [emisorSeleccionado, setEmisorSeleccionado] = useState(0);
   const [solicitudes, setSolicitudes] = useState([]);
@@ -1174,7 +1608,7 @@ const AdminFacturacion = () => {
   const [cotizaciones, setCotizaciones] = useState([]);
   const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [ordenFecha, setOrdenFecha] = useState('asc');
+  const [ordenFecha, setOrdenFecha] = useState("asc");
   const [solicitudesTimbradas, setSolicitudesTimbradas] = useState(new Set());
   const [rangoFechas, setRangoFechas] = useState([null, null]);
   const [fechaInicio, fechaFin] = rangoFechas;
@@ -1183,21 +1617,32 @@ const AdminFacturacion = () => {
   const [pdfPreview, setPdfPreview] = useState({
     isOpen: false,
     url: null,
-    filename: ""
+    filename: "",
   });
 
   const [modals, setModals] = useState({
     emisor: { isOpen: false, emisor: null },
     solicitud: { isOpen: false, solicitud: null },
     timbrar: { isOpen: false, solicitud: null },
-    confirmarEliminacion: { isOpen: false, tipo: "", item: null, onConfirm: null },
+    confirmarEliminacion: {
+      isOpen: false,
+      tipo: "",
+      item: null,
+      onConfirm: null,
+    },
   });
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [emisoresResp, cotizacionesResp, cuentasResp, solicitudesResp, facturasResp] = await Promise.all([
+        const [
+          emisoresResp,
+          cotizacionesResp,
+          cuentasResp,
+          solicitudesResp,
+          facturasResp,
+        ] = await Promise.all([
           fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/emisores`),
           fetchWithToken(`${API_BASE_URL}/cotizaciones`),
           fetchWithToken(`${API_BASE_URL}/cuentas-por-cobrar`),
@@ -1214,9 +1659,8 @@ const AdminFacturacion = () => {
         setFacturas(facturasData);
 
         // Crear set de solicitudes timbradas
-        const timbradas = new Set(facturasData.map(f => f.noSolicitud));
+        const timbradas = new Set(facturasData.map((f) => f.noSolicitud));
         setSolicitudesTimbradas(timbradas);
-
       } catch (error) {
         Swal.fire({ icon: "error", title: "Error", text: error.message });
       } finally {
@@ -1275,11 +1719,13 @@ const AdminFacturacion = () => {
     setRangoFechas([null, null]);
   };
 
-  const receptoresUnicos = [...new Set(solicitudes.map(s => s.receptor))].filter(Boolean).sort();
+  const receptoresUnicos = [...new Set(solicitudes.map((s) => s.receptor))]
+    .filter(Boolean)
+    .sort();
 
   const handleSaveEmisor = (savedEmisor) => {
     setEmisores((prev) => {
-      const isEditing = prev.some(e => e.id === savedEmisor.id);
+      const isEditing = prev.some((e) => e.id === savedEmisor.id);
       if (isEditing) {
         return prev.map((e) => (e.id === savedEmisor.id ? savedEmisor : e));
       } else {
@@ -1297,9 +1743,12 @@ const AdminFacturacion = () => {
       item: emisor,
       onConfirm: async () => {
         try {
-          await fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/emisores/${emisor.id}`, {
-            method: "DELETE",
-          });
+          await fetchWithToken(
+            `${API_BASE_URL}/solicitudes-factura-nota/emisores/${emisor.id}`,
+            {
+              method: "DELETE",
+            },
+          );
           setEmisores((prev) => prev.filter((e) => e.id !== emisor.id));
           if (emisorSeleccionado >= emisores.length - 1) {
             setEmisorSeleccionado(Math.max(0, emisores.length - 2));
@@ -1319,9 +1768,11 @@ const AdminFacturacion = () => {
 
   const handleSaveSolicitud = (savedSolicitud) => {
     setSolicitudes((prev) => {
-      const isEditing = prev.some(s => s.id === savedSolicitud.id);
+      const isEditing = prev.some((s) => s.id === savedSolicitud.id);
       if (isEditing) {
-        return prev.map((s) => (s.id === savedSolicitud.id ? savedSolicitud : s));
+        return prev.map((s) =>
+          s.id === savedSolicitud.id ? savedSolicitud : s,
+        );
       } else {
         return [...prev, savedSolicitud];
       }
@@ -1334,9 +1785,12 @@ const AdminFacturacion = () => {
       item: solicitud,
       onConfirm: async () => {
         try {
-          await fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/${solicitud.id}`, {
-            method: "DELETE",
-          });
+          await fetchWithToken(
+            `${API_BASE_URL}/solicitudes-factura-nota/${solicitud.id}`,
+            {
+              method: "DELETE",
+            },
+          );
           setSolicitudes((prev) => prev.filter((s) => s.id !== solicitud.id));
           closeModal("confirmarEliminacion");
           Swal.fire({
@@ -1347,14 +1801,19 @@ const AdminFacturacion = () => {
         } catch (error) {
           let mensajeError = error.message;
 
-          if (error.message.includes("cuenta por cobrar asociada ya ha sido marcada como pagada")) {
-            mensajeError = "No se puede eliminar esta solicitud porque la cuenta por cobrar asociada ya está pagada.";
+          if (
+            error.message.includes(
+              "cuenta por cobrar asociada ya ha sido marcada como pagada",
+            )
+          ) {
+            mensajeError =
+              "No se puede eliminar esta solicitud porque la cuenta por cobrar asociada ya está pagada.";
           }
 
           Swal.fire({
             icon: "error",
             title: "No se puede eliminar",
-            text: mensajeError
+            text: mensajeError,
           });
         }
       },
@@ -1375,7 +1834,9 @@ const AdminFacturacion = () => {
 
   const handleTimbrarSolicitud = (savedFactura) => {
     setFacturas((prev) => [...prev, savedFactura]);
-    setSolicitudesTimbradas((prev) => new Set([...prev, savedFactura.noSolicitud]));
+    setSolicitudesTimbradas(
+      (prev) => new Set([...prev, savedFactura.noSolicitud]),
+    );
   };
 
   const handleDescargarPDF = async (solicitud) => {
@@ -1387,16 +1848,17 @@ const AdminFacturacion = () => {
           headers: {
             "Content-Type": "application/pdf",
           },
-        }
+        },
       );
 
-      if (!response.ok) throw new Error(`Error al descargar el PDF: ${response.statusText}`);
+      if (!response.ok)
+        throw new Error(`Error al descargar el PDF: ${response.statusText}`);
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${solicitud.identificador}_${new Date(solicitud.fechaEmision).toISOString().split('T')[0]}.pdf`;
+      a.download = `${solicitud.identificador}_${limpiarNombreArchivo(solicitud.receptor)}_${new Date(solicitud.fechaEmision).toISOString().split("T")[0]}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -1420,15 +1882,21 @@ const AdminFacturacion = () => {
     if (!factura.id) return;
 
     try {
-      const response = await fetchWithToken(`${API_BASE_URL}/solicitudes-factura-nota/facturas/${factura.id}/download`, {
-        method: "GET",
-      });
+      const response = await fetchWithToken(
+        `${API_BASE_URL}/solicitudes-factura-nota/facturas/${factura.id}/download`,
+        {
+          method: "GET",
+        },
+      );
 
-      if (!response.ok) throw new Error(`Error al descargar el archivo: ${response.statusText}`);
+      if (!response.ok)
+        throw new Error(
+          `Error al descargar el archivo: ${response.statusText}`,
+        );
 
       const blob = await response.blob();
 
-      if (blob.type === 'application/pdf') {
+      if (blob.type === "application/pdf") {
         const url = window.URL.createObjectURL(blob);
         const filename = factura.archivoUrl?.split("/").pop() || "factura.pdf";
 
@@ -1442,7 +1910,6 @@ const AdminFacturacion = () => {
         a.click();
         document.body.removeChild(a);
       }
-
     } catch (error) {
       Swal.fire({
         icon: "error",
@@ -1458,7 +1925,7 @@ const AdminFacturacion = () => {
 
   const handleDownloadFromPreview = () => {
     if (pdfPreview.url) {
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = pdfPreview.url;
       a.download = pdfPreview.filename;
       document.body.appendChild(a);
@@ -1482,14 +1949,14 @@ const AdminFacturacion = () => {
         {
           method: "GET",
           headers: { "Content-Type": "application/pdf" },
-        }
+        },
       );
 
       if (!response.ok) throw new Error(`Error al generar el PDF`);
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const filename = `${solicitud.identificador}_${new Date(solicitud.fechaEmision).toISOString().split('T')[0]}.pdf`;
+      const filename = `${solicitud.identificador}_${limpiarNombreArchivo(solicitud.receptor)}_${new Date(solicitud.fechaEmision).toISOString().split("T")[0]}.pdf`;
 
       handleOpenPreview(url, filename);
     } catch (error) {
@@ -1513,7 +1980,10 @@ const AdminFacturacion = () => {
   const navegarEmisor = (direccion) => {
     if (direccion === "anterior" && emisorSeleccionado > 0) {
       setEmisorSeleccionado(emisorSeleccionado - 1);
-    } else if (direccion === "siguiente" && emisorSeleccionado < emisores.length - 1) {
+    } else if (
+      direccion === "siguiente" &&
+      emisorSeleccionado < emisores.length - 1
+    ) {
       setEmisorSeleccionado(emisorSeleccionado + 1);
     }
   };
@@ -1521,23 +1991,35 @@ const AdminFacturacion = () => {
   const emisorActual = emisores[emisorSeleccionado];
 
   const solicitudesFiltradas = solicitudes.filter((solicitud) => {
-    const pasaReceptor = filtroReceptor === "" || solicitud.receptor === filtroReceptor;
+    const pasaReceptor =
+      filtroReceptor === "" || solicitud.receptor === filtroReceptor;
 
     const pasaTipo = filtroTipo === "" || solicitud.tipo === filtroTipo;
 
     let pasaFechas = true;
     if (fechaInicio || fechaFin) {
-      const fechaSol = new Date(solicitud.fechaEmision + 'T00:00:00');
+      const fechaSol = new Date(solicitud.fechaEmision + "T00:00:00");
 
       let inicio = fechaInicio ? new Date(fechaInicio) : null;
       let fin = fechaFin ? new Date(fechaFin) : null;
 
       // Normalizar fechas
       if (inicio) {
-        inicio = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
+        inicio = new Date(
+          inicio.getFullYear(),
+          inicio.getMonth(),
+          inicio.getDate(),
+        );
       }
       if (fin) {
-        fin = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59, 59);
+        fin = new Date(
+          fin.getFullYear(),
+          fin.getMonth(),
+          fin.getDate(),
+          23,
+          59,
+          59,
+        );
       }
 
       pasaFechas = (!inicio || fechaSol >= inicio) && (!fin || fechaSol <= fin);
@@ -1547,10 +2029,10 @@ const AdminFacturacion = () => {
   });
 
   const solicitudesOrdenadas = solicitudesFiltradas.sort((a, b) => {
-    const fechaA = new Date(a.fechaEmision || '1900-01-01');
-    const fechaB = new Date(b.fechaEmision || '1900-01-01');
+    const fechaA = new Date(a.fechaEmision || "1900-01-01");
+    const fechaB = new Date(b.fechaEmision || "1900-01-01");
 
-    if (ordenFecha === 'asc') {
+    if (ordenFecha === "asc") {
       return fechaA - fechaB;
     } else {
       return fechaB - fechaA;
@@ -1561,7 +2043,7 @@ const AdminFacturacion = () => {
     const fechaA = new Date(a.fechaCreacion || a.id);
     const fechaB = new Date(b.fechaCreacion || b.id);
 
-    if (ordenFecha === 'asc') {
+    if (ordenFecha === "asc") {
       return fechaA - fechaB;
     } else {
       return fechaB - fechaA;
@@ -1569,7 +2051,7 @@ const AdminFacturacion = () => {
   });
 
   const toggleOrdenFecha = () => {
-    setOrdenFecha(prevOrden => prevOrden === 'asc' ? 'desc' : 'asc');
+    setOrdenFecha((prevOrden) => (prevOrden === "asc" ? "desc" : "asc"));
   };
 
   return (
@@ -1590,16 +2072,53 @@ const AdminFacturacion = () => {
               </div>
               <div className="facturacion-sidebar-menu">
                 {userRol === "ADMINISTRADOR" && (
-                  <div className="facturacion-menu-item" onClick={() => handleMenuNavigation("balance")}>Balance</div>)}
-                <div className="facturacion-menu-item" onClick={() => handleMenuNavigation("transacciones")}>Transacciones</div>
-                <div className="facturacion-menu-item" onClick={() => handleMenuNavigation("cotizaciones")}>Cotizaciones</div>
-                <div className="facturacion-menu-item facturacion-menu-item-active" onClick={() => handleMenuNavigation("facturacion")}>
+                  <div
+                    className="facturacion-menu-item"
+                    onClick={() => handleMenuNavigation("balance")}
+                  >
+                    Balance
+                  </div>
+                )}
+                <div
+                  className="facturacion-menu-item"
+                  onClick={() => handleMenuNavigation("transacciones")}
+                >
+                  Transacciones
+                </div>
+                <div
+                  className="facturacion-menu-item"
+                  onClick={() => handleMenuNavigation("cotizaciones")}
+                >
+                  Cotizaciones
+                </div>
+                <div
+                  className="facturacion-menu-item facturacion-menu-item-active"
+                  onClick={() => handleMenuNavigation("facturacion")}
+                >
                   Facturas/Notas
                 </div>
-                <div className="facturacion-menu-item" onClick={() => handleMenuNavigation("cuentas-cobrar")}>Cuentas por Cobrar</div>
-                <div className="facturacion-menu-item" onClick={() => handleMenuNavigation("cuentas-pagar")}>Cuentas por Pagar</div>
-                <div className="facturacion-menu-item" onClick={() => handleMenuNavigation("caja-chica")}>Caja chica</div>
-                <div className="transacciones-menu-item" onClick={() => handleMenuNavigation("comisiones")}>
+                <div
+                  className="facturacion-menu-item"
+                  onClick={() => handleMenuNavigation("cuentas-cobrar")}
+                >
+                  Cuentas por Cobrar
+                </div>
+                <div
+                  className="facturacion-menu-item"
+                  onClick={() => handleMenuNavigation("cuentas-pagar")}
+                >
+                  Cuentas por Pagar
+                </div>
+                <div
+                  className="facturacion-menu-item"
+                  onClick={() => handleMenuNavigation("caja-chica")}
+                >
+                  Caja chica
+                </div>
+                <div
+                  className="transacciones-menu-item"
+                  onClick={() => handleMenuNavigation("comisiones")}
+                >
                   Comisiones
                 </div>
               </div>
@@ -1608,12 +2127,16 @@ const AdminFacturacion = () => {
               <div className="facturacion-header">
                 <div className="facturacion-header-info">
                   <h3 className="facturacion-page-title">Facturas/Notas</h3>
-                  <p className="facturacion-subtitle">Gestión de solicitudes de facturas, notas y facturas</p>
+                  <p className="facturacion-subtitle">
+                    Gestión de solicitudes de facturas, notas y facturas
+                  </p>
                 </div>
                 <div className="facturacion-header-actions">
                   <div className="facturacion-emisor-section">
                     <div className="facturacion-emisor-header">
-                      <span className="facturacion-emisor-label">Datos del emisor</span>
+                      <span className="facturacion-emisor-label">
+                        Datos del emisor
+                      </span>
                       <div className="facturacion-emisor-navigation">
                         <button
                           className="facturacion-nav-btn"
@@ -1634,23 +2157,37 @@ const AdminFacturacion = () => {
                     {emisorActual && (
                       <div className="facturacion-emisor-info">
                         <div className="facturacion-emisor-data">
-                          <span className="facturacion-emisor-name">Nombre: {emisorActual.nombre}</span>
-                          <span className="facturacion-emisor-rfc">RFC: {emisorActual.rfc}</span>
+                          <span className="facturacion-emisor-name">
+                            Nombre: {emisorActual.nombre}
+                          </span>
+                          <span className="facturacion-emisor-rfc">
+                            RFC: {emisorActual.rfc}
+                          </span>
                         </div>
                         <div className="facturacion-emisor-actions">
                           <button
                             className="facturacion-btn-icon"
-                            onClick={() => openModal("emisor", { emisor: emisorActual })}
+                            onClick={() =>
+                              openModal("emisor", { emisor: emisorActual })
+                            }
                             title="Editar emisor"
                           >
-                            <img src={editIcon || "/placeholder.svg"} alt="Editar" className="facturacion-icon" />
+                            <img
+                              src={editIcon || "/placeholder.svg"}
+                              alt="Editar"
+                              className="facturacion-icon"
+                            />
                           </button>
                           <button
                             className="facturacion-btn-icon"
                             onClick={() => handleDeleteEmisor(emisorActual)}
                             title="Eliminar emisor"
                           >
-                            <img src={deleteIcon || "/placeholder.svg"} alt="Eliminar" className="facturacion-icon" />
+                            <img
+                              src={deleteIcon || "/placeholder.svg"}
+                              alt="Eliminar"
+                              className="facturacion-icon"
+                            />
                           </button>
                         </div>
                       </div>
@@ -1666,17 +2203,20 @@ const AdminFacturacion = () => {
               </div>
               <div className="facturacion-table-card">
                 <div className="facturacion-table-header">
-                  <h4 className="facturacion-table-title">Solicitudes de Facturas y Notas</h4>
+                  <h4 className="facturacion-table-title">
+                    Solicitudes de Facturas y Notas
+                  </h4>
                   <div className="facturacion-filters-container">
-
                     <div className="facturacion-filter-container">
-                      <div style={{ height: '21px' }}></div>
+                      <div style={{ height: "21px" }}></div>
                       <button
                         className="facturacion-btn-orden"
                         onClick={toggleOrdenFecha}
-                        title={`Cambiar a orden ${ordenFecha === 'asc' ? 'descendente' : 'ascendente'}`}
+                        title={`Cambiar a orden ${ordenFecha === "asc" ? "descendente" : "ascendente"}`}
                       >
-                        {ordenFecha === 'asc' ? '📅 ↑ Antiguas primero' : '📅 ↓ Recientes primero'}
+                        {ordenFecha === "asc"
+                          ? "📅 ↑ Antiguas primero"
+                          : "📅 ↓ Recientes primero"}
                       </button>
                     </div>
 
@@ -1689,13 +2229,17 @@ const AdminFacturacion = () => {
                         className="facturacion-filter-select"
                       >
                         <option value="">Todos los tipos</option>
-                        <option value="SOLICITUD_DE_FACTURA">Solicitud de Factura</option>
+                        <option value="SOLICITUD_DE_FACTURA">
+                          Solicitud de Factura
+                        </option>
                         <option value="NOTA">Nota</option>
                       </select>
                     </div>
 
                     <div className="facturacion-filter-container">
-                      <label htmlFor="filtroReceptor">Filtrar por receptor:</label>
+                      <label htmlFor="filtroReceptor">
+                        Filtrar por receptor:
+                      </label>
                       <select
                         id="filtroReceptor"
                         value={filtroReceptor}
@@ -1731,10 +2275,12 @@ const AdminFacturacion = () => {
                     </div>
 
                     <div className="facturacion-filter-container">
-                      <div style={{ height: '21px' }}></div>
+                      <div style={{ height: "21px" }}></div>
                       <button
                         className="facturacion-btn facturacion-btn-primary"
-                        onClick={() => openModal("solicitud", { solicitud: null })}
+                        onClick={() =>
+                          openModal("solicitud", { solicitud: null })
+                        }
                       >
                         Generar
                       </button>
@@ -1761,15 +2307,18 @@ const AdminFacturacion = () => {
                       {solicitudesOrdenadas.length > 0 ? (
                         solicitudesOrdenadas.map((solicitud) => {
                           const cuentaAsociada = cuentasPorCobrar.find(
-                            c => c.id === solicitud.cuentaPorCobrarId
+                            (c) => c.id === solicitud.cuentaPorCobrarId,
                           );
-                          const esCuentaPagada = cuentaAsociada?.estatus === "PAGADO";
+                          const esCuentaPagada =
+                            cuentaAsociada?.estatus === "PAGADO";
                           return (
                             <tr key={solicitud.id}>
                               <td>{solicitud.identificador}</td>
                               <td>{solicitud.fechaEmision || "N/A"}</td>
                               <td>{solicitud.receptor || "N/A"}</td>
-                              <td className="facturacion-concepto-cell">{solicitud.concepto || "N/A"}</td>
+                              <td className="facturacion-concepto-cell">
+                                {solicitud.concepto || "N/A"}
+                              </td>
                               <td>${(solicitud.total || 0).toFixed(2)}</td>
                               <td>
                                 {solicitud.formaPago === "01"
@@ -1793,27 +2342,43 @@ const AdminFacturacion = () => {
                               <td>{solicitud.folio || "N/A"}</td>
                               <td>
                                 <span
-                                  className={`facturacion-estatus-badge ${solicitud.estatusCuentaPorCobrar === "PAGADO"
-                                    ? "facturacion-estatus-pagado"
-                                    : "facturacion-estatus-pendiente"
-                                    }`}
+                                  className={`facturacion-estatus-badge ${
+                                    solicitud.estatusCuentaPorCobrar ===
+                                    "PAGADO"
+                                      ? "facturacion-estatus-pagado"
+                                      : "facturacion-estatus-pendiente"
+                                  }`}
                                 >
-                                  {solicitud.estatusCuentaPorCobrar === "PAGADO" ? "Pagado" : "Pendiente"}
+                                  {solicitud.estatusCuentaPorCobrar === "PAGADO"
+                                    ? "Pagado"
+                                    : "Pendiente"}
                                 </span>
                               </td>
                               <td>
                                 <div className="facturacion-actions">
                                   <button
                                     className="facturacion-action-btn facturacion-edit-btn"
-                                    onClick={() => openModal("solicitud", { solicitud })}
+                                    onClick={() =>
+                                      openModal("solicitud", { solicitud })
+                                    }
                                     title="Editar"
                                   >
-                                    <img src={editIcon || "/placeholder.svg"} alt="Editar" className="facturacion-action-icon" />
+                                    <img
+                                      src={editIcon || "/placeholder.svg"}
+                                      alt="Editar"
+                                      className="facturacion-action-icon"
+                                    />
                                   </button>
                                   <button
-                                    className={`facturacion-action-btn facturacion-delete-btn ${esCuentaPagada ? 'facturacion-btn-disabled' : ''
-                                      }`}
-                                    onClick={() => !esCuentaPagada && handleDeleteSolicitud(solicitud)}
+                                    className={`facturacion-action-btn facturacion-delete-btn ${
+                                      esCuentaPagada
+                                        ? "facturacion-btn-disabled"
+                                        : ""
+                                    }`}
+                                    onClick={() =>
+                                      !esCuentaPagada &&
+                                      handleDeleteSolicitud(solicitud)
+                                    }
                                     disabled={esCuentaPagada}
                                     title={
                                       esCuentaPagada
@@ -1821,23 +2386,45 @@ const AdminFacturacion = () => {
                                         : "Eliminar"
                                     }
                                   >
-                                    <img src={deleteIcon} alt="Eliminar" className="facturacion-action-icon" />
+                                    <img
+                                      src={deleteIcon}
+                                      alt="Eliminar"
+                                      className="facturacion-action-icon"
+                                    />
                                   </button>
                                   <button
                                     className="facturacion-action-btn facturacion-download-btn"
-                                    onClick={() => handleVisualizarDirecto(solicitud)}
+                                    onClick={() =>
+                                      handleVisualizarDirecto(solicitud)
+                                    }
                                     title="Visualizar PDF"
                                   >
-                                    <img src={downloadIcon || "/placeholder.svg"} alt="Editar conceptos" className="facturacion-action-icon" />
+                                    <img
+                                      src={downloadIcon || "/placeholder.svg"}
+                                      alt="Editar conceptos"
+                                      className="facturacion-action-icon"
+                                    />
                                   </button>
-                                  {solicitud.tipo === "SOLICITUD_DE_FACTURA" && (
+                                  {solicitud.tipo ===
+                                    "SOLICITUD_DE_FACTURA" && (
                                     <button
-                                      className={`facturacion-action-btn ${solicitudesTimbradas.has(solicitud.identificador)
-                                        ? 'facturacion-stamp-btn-vinculada'
-                                        : 'facturacion-stamp-btn-disponible'
-                                        }`}
-                                      onClick={() => handleTimbrarClick(solicitud)}
-                                      title={solicitudesTimbradas.has(solicitud.identificador) ? "Ya timbrada" : "Timbrar"}
+                                      className={`facturacion-action-btn ${
+                                        solicitudesTimbradas.has(
+                                          solicitud.identificador,
+                                        )
+                                          ? "facturacion-stamp-btn-vinculada"
+                                          : "facturacion-stamp-btn-disponible"
+                                      }`}
+                                      onClick={() =>
+                                        handleTimbrarClick(solicitud)
+                                      }
+                                      title={
+                                        solicitudesTimbradas.has(
+                                          solicitud.identificador,
+                                        )
+                                          ? "Ya timbrada"
+                                          : "Timbrar"
+                                      }
                                     >
                                       <img
                                         src={stampIcon || "/placeholder.svg"}
@@ -1853,7 +2440,9 @@ const AdminFacturacion = () => {
                         })
                       ) : (
                         <tr>
-                          <td colSpan="9" className="facturacion-no-data">No hay solicitudes registradas</td>
+                          <td colSpan="9" className="facturacion-no-data">
+                            No hay solicitudes registradas
+                          </td>
                         </tr>
                       )}
                     </tbody>
@@ -1884,10 +2473,16 @@ const AdminFacturacion = () => {
                                 </span>
                                 <button
                                   className="facturacion-action-btn facturacion-download-btn"
-                                  onClick={() => handleDescargarFactura(factura)}
+                                  onClick={() =>
+                                    handleDescargarFactura(factura)
+                                  }
                                   title="Descargar"
                                 >
-                                  <img src={downloadIcon || "/placeholder.svg"} alt="Descargar" className="facturacion-action-icon" />
+                                  <img
+                                    src={downloadIcon || "/placeholder.svg"}
+                                    alt="Descargar"
+                                    className="facturacion-action-icon"
+                                  />
                                 </button>
                               </div>
                             </td>
@@ -1895,7 +2490,9 @@ const AdminFacturacion = () => {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="3" className="facturacion-no-data">No hay facturas timbradas</td>
+                          <td colSpan="3" className="facturacion-no-data">
+                            No hay facturas timbradas
+                          </td>
                         </tr>
                       )}
                     </tbody>
