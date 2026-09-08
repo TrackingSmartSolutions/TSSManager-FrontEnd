@@ -412,6 +412,8 @@ const EquiposCreditosPlataforma = () => {
       }
 
       const blob = await response.blob();
+      if (blob.size === 0) throw new Error("El PDF generado está vacío");
+
       const blobUrl = window.URL.createObjectURL(blob);
 
       setPdfPreview({

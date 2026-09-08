@@ -1042,23 +1042,24 @@ const AdminCuentasPagar = () => {
         `${API_BASE_URL}/cuentas-por-pagar/reporte/pdf?${params.toString()}`,
       );
 
-      if (response.ok) {
-        const blob = await response.blob();
+      if (!response.ok) throw new Error("Error al generar el reporte");
 
-        const url = window.URL.createObjectURL(blob);
+      const blob = await response.blob();
+      if (blob.size === 0) throw new Error("El PDF generado está vacío");
 
-        const now = new Date();
-        const timestamp = now.toISOString().split("T")[0];
-        const estatusSuffix =
-          filtroEstatus !== "Todas" ? `_${filtroEstatus}` : "";
-        const filename = `reporte_cuentas_por_pagar_${timestamp}${estatusSuffix}.pdf`;
+      const url = window.URL.createObjectURL(blob);
 
-        setPdfPreview({
-          isOpen: true,
-          url: url,
-          filename: filename,
-        });
-      }
+      const now = new Date();
+      const timestamp = now.toISOString().split("T")[0];
+      const estatusSuffix =
+        filtroEstatus !== "Todas" ? `_${filtroEstatus}` : "";
+      const filename = `reporte_cuentas_por_pagar_${timestamp}${estatusSuffix}.pdf`;
+
+      setPdfPreview({
+        isOpen: true,
+        url: url,
+        filename: filename,
+      });
     } catch (error) {
       console.error("Error al generar reporte:", error);
       Swal.fire({
@@ -1128,22 +1129,24 @@ const AdminCuentasPagar = () => {
         `${API_BASE_URL}/cuentas-por-pagar/reporte/pdf-resumido?${params.toString()}`,
       );
 
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
+      if (!response.ok) throw new Error("Error al generar el reporte resumido");
 
-        const now = new Date();
-        const timestamp = now.toISOString().split("T")[0];
-        const estatusSuffix =
-          filtroEstatus !== "Todas" ? `_${filtroEstatus}` : "";
-        const filename = `reporte_resumido_cuentas_por_pagar_${timestamp}${estatusSuffix}.pdf`;
+      const blob = await response.blob();
+      if (blob.size === 0) throw new Error("El PDF generado está vacío");
 
-        setPdfPreviewResumido({
-          isOpen: true,
-          url: url,
-          filename: filename,
-        });
-      }
+      const url = window.URL.createObjectURL(blob);
+
+      const now = new Date();
+      const timestamp = now.toISOString().split("T")[0];
+      const estatusSuffix =
+        filtroEstatus !== "Todas" ? `_${filtroEstatus}` : "";
+      const filename = `reporte_resumido_cuentas_por_pagar_${timestamp}${estatusSuffix}.pdf`;
+
+      setPdfPreviewResumido({
+        isOpen: true,
+        url: url,
+        filename: filename,
+      });
     } catch (error) {
       console.error("Error al generar reporte resumido:", error);
       Swal.fire({

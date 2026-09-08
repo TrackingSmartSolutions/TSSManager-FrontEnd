@@ -2113,6 +2113,7 @@ const AdminCotizaciones = () => {
       if (!response.ok) throw new Error("Error downloading PDF");
 
       const blob = await response.blob();
+      if (blob.size === 0) throw new Error("El PDF generado está vacío");
 
       const url = window.URL.createObjectURL(blob);
 

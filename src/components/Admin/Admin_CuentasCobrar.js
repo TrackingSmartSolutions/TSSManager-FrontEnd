@@ -2392,6 +2392,8 @@ const AdminCuentasCobrar = () => {
         );
 
       const blob = await response.blob();
+      if (blob.size === 0) throw new Error("El archivo generado está vacío");
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

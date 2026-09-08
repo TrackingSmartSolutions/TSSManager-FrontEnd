@@ -1497,6 +1497,8 @@ const ConfirmarEliminacionModal = ({
       if (!response.ok) throw new Error(`Error al descargar el PDF: ${response.statusText}`);
 
       const blob = await response.blob();
+      if (blob.size === 0) throw new Error("El PDF generado está vacío");
+
       const url = window.URL.createObjectURL(blob);
       const filename = `${solicitud.identificador}_${new Date(solicitud.fechaEmision).toISOString().split('T')[0]}.pdf`;
 
@@ -1855,6 +1857,8 @@ const AdminFacturacion = () => {
         throw new Error(`Error al descargar el PDF: ${response.statusText}`);
 
       const blob = await response.blob();
+      if (blob.size === 0) throw new Error("El PDF generado está vacío");
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -1895,6 +1899,7 @@ const AdminFacturacion = () => {
         );
 
       const blob = await response.blob();
+      if (blob.size === 0) throw new Error("El archivo generado está vacío");
 
       if (blob.type === "application/pdf") {
         const url = window.URL.createObjectURL(blob);
@@ -1955,6 +1960,8 @@ const AdminFacturacion = () => {
       if (!response.ok) throw new Error(`Error al generar el PDF`);
 
       const blob = await response.blob();
+      if (blob.size === 0) throw new Error("El PDF generado está vacío");
+
       const url = window.URL.createObjectURL(blob);
       const filename = `${solicitud.identificador}_${limpiarNombreArchivo(solicitud.receptor)}_${new Date(solicitud.fechaEmision).toISOString().split("T")[0]}.pdf`;
 
